@@ -366,9 +366,9 @@ export function showStoryStage(scene, {
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
       const ch6Cast=meetCastLayout==='yokohamaGift' && template?.kind==='meet'
         ? a.role==='yokohamaArkon'
-          ? {x:402,feetY:599,height:299}
+          ? {x:420,feetY:599,height:299}
           :a.role==='yokohamaSayaka'
-            ? {x:608,feetY:599,height:291}:null
+            ? {x:560,feetY:599,height:291}:null
         :null;
       // Only RWB restoration: position Arkon at the engine-bay side, and
       // Sayaka right beside him. Derive from the canonical workshop hero
