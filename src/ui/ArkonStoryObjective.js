@@ -15,6 +15,7 @@ import {ARKON_CHAPTER_07} from '../data/arkonChapter07.js?v=20261023-r669';
 import {ch7Progress} from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import {ARKON_CHAPTER_08} from '../data/arkonChapter08.js?v=20261023-r672';
 import {ARKON_CHAPTER_09} from '../data/arkonChapter09.js?v=20261023-r673';
+import {ARKON_CHAPTER_10} from '../data/arkonChapter10.js?v=20261023-r674';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -24,9 +25,29 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter10Done'))return {
+    heading:'ARKON\'S STORY // COMPLETE',
+    message:'Ginza Gallery is open. Arkon and Sayaka are business partners, and their quiet investment in Daichi and a new driver begins another story.',
+    progress:'THE ROAD AHEAD // THE END',
+  };
+  if(active?.id===ARKON_CHAPTER_10.id){
+    const phase=get('arkonStoryPhase')||'chapter10Recovery';
+    const count=Math.max(0,Number(get('arkonStoryChapter10ProjectsDone')||0));
+    const stages={
+      chapter10Recovery:['A FAMILIAR SOUND','The contractual dispute has been settled. Return to the work you love.'],
+      chapter10Restorations:['BACK TO THE CRAFT','Complete three genuine customer restorations at Warehouse HQ.'],
+      chapter10TestDrive:['JUST FOR FUN','Run the friendly Daikoku test. No stakes, no special advantages.'],
+      chapter10Ginza:['GINZA GALLERY','Open the gallery with Sayaka. Her partnership is more than a curatorial job.'],
+      chapter10Investment:['A LITTLE OPPORTUNITY','Support Daichi and a promising family friend who loves cars.'],
+      chapter10FinalDrive:['THE ROAD AHEAD','One final evening beneath the Yokohama Ferris wheel.'],
+    };
+    const [heading,message]=stages[phase]||['THE ROAD AHEAD','Continue Chapter 10.'];
+    return {heading,message,progress:'RESTORATIONS '+count+'/3  //  CHAPTER 10'};
+  }
   if(get('arkonStoryChapter09Done'))return {
-    heading:'CHAPTER 09 COMPLETE',
-    message:'Arkon refused the questionable certification. Sayaka helped him leave safely; the contract dispute and financial risks remain for Chapter 10.',
+    canStartChapter10:Boolean(get('arkonStoryChapter09Refused')),
+    heading:'CHAPTER 10 // THE ROAD AHEAD',
+    message:'Return to Warehouse HQ for the final chapter: rebuild honestly, open Ginza with Sayaka, and discover what comes next.',
     progress:'NO WAY OUT // COMPLETED',
   };
   if(active?.id===ARKON_CHAPTER_09.id){
@@ -315,10 +336,10 @@ export function showArkonStoryObjective(scene) {
   const isResume=Boolean(info.canResumeChapter04 &&
     checkpoint?.id==='arkonChapter04' ||
     info.canResumeChapter07 && checkpoint?.id==='arkonChapter07');
-  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||isResume) &&
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||info.canStartChapter10||isResume) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
     (scene.registry.get('workshopLocationId')==='shinonomeCanalYard' ||
-     ((info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||info.canResumeChapter07) &&
+     ((info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||info.canStartChapter10||info.canResumeChapter07) &&
        scene.registry.get('workshopLocationId')==='shinonomeWarehouseStrip')) &&
     !scene.game?.storyDirector?.status?.active &&
     (isResume||!checkpoint));
@@ -326,12 +347,14 @@ export function showArkonStoryObjective(scene) {
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    const chapterId=info.canStartChapter09?'arkonChapter09':
+    const chapterId=info.canStartChapter10?'arkonChapter10':
+      info.canStartChapter09?'arkonChapter09':
       info.canStartChapter08?'arkonChapter08':
       info.canStartChapter07||info.canResumeChapter07?'arkonChapter07':
       info.canStartChapter06?'arkonChapter06':
       info.canStartChapter05?'arkonChapter05':'arkonChapter04';
     const beginLabel=isResume?'CONTINUE '+(info.canResumeChapter07?'CHAPTER 07':'CHAPTER 04'):
+      info.canStartChapter10?'BEGIN CHAPTER 10':
       info.canStartChapter09?'BEGIN CHAPTER 09':
       info.canStartChapter08?'BEGIN CHAPTER 08':
       info.canStartChapter07?'BEGIN CHAPTER 07':
