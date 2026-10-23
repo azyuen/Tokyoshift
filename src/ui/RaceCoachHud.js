@@ -51,6 +51,7 @@ export const PHONE_CALL_PRESENTATION = Object.freeze({
 // head-and-shoulders silhouette once into a transparent texture; it never
 // reveals the identity of an intentionally unknown customer (including Sayaka).
 export const ANONYMOUS_CALLER_TEXTURE='phoneAnonymousCallerSilhouette';
+export const ANONYMOUS_CALLER_PATH='assets/Ui/phone_unknown.png';
 export const ANONYMOUS_CALLER_VISUAL=Object.freeze({
   faceAnchor:Object.freeze({x:.5,y:.37,headHeight:.37}),
 });
