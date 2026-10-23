@@ -14,6 +14,7 @@ import {ch6Progress} from '../data/arkonChapter06Work.js?v=20261023-r671';
 import {ARKON_CHAPTER_07} from '../data/arkonChapter07.js?v=20261023-r669';
 import {ch7Progress} from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import {ARKON_CHAPTER_08} from '../data/arkonChapter08.js?v=20261023-r672';
+import {ARKON_CHAPTER_09} from '../data/arkonChapter09.js?v=20261023-r673';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -23,7 +24,26 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter09Done'))return {
+    heading:'CHAPTER 09 COMPLETE',
+    message:'Arkon refused the questionable certification. Sayaka helped him leave safely; the contract dispute and financial risks remain for Chapter 10.',
+    progress:'NO WAY OUT // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_09.id){
+    const phase=get('arkonStoryPhase')||'chapter09Contracts';
+    const count=Math.max(0,Number(get('arkonStoryChapter09RacesDone')||0));
+    const steps={
+      chapter09Contracts:['THE GOLDEN CAGE','Check the new private programme and complete the first real demonstration race.'],
+      chapter09Pressure:['DAIKOKU // RAISED PRESSURE','The paperwork no longer adds up. Complete the second demonstration race.'],
+      chapter09SayakaReturns:['THE PORSCHE RETURNS','Talk with Sayaka. She cannot decide for Arkon, but she can stand beside him.'],
+      chapter09FinalMeet:['THE LAST SIGNATURE','Decline the unverifiable certification and leave the meet with independent support.'],
+      chapter09RoadHome:['THE ROAD HOME','An honest decision does not erase the consequences.'],
+    };
+    const [heading,message]=steps[phase]||['NO WAY OUT','Continue Chapter 09.'];
+    return {heading,message,progress:'DEMONSTRATION RACES '+count+'/2  //  ARKON DEN // CHAPTER 09'};
+  }
   if(get('arkonStoryChapter08Done'))return {
+    canStartChapter09:Boolean(get('arkonStoryChapter08ContractSigned')),
     heading:'CHAPTER 08 COMPLETE',
     message:'The Shibuya deal is signed. Warehouse HQ is committed under a conditional guarantee. Arkon and Sayaka are still speaking, but something has changed.',
     progress:'THE PRICE OF AMBITION // COMPLETED',
@@ -295,10 +315,10 @@ export function showArkonStoryObjective(scene) {
   const isResume=Boolean(info.canResumeChapter04 &&
     checkpoint?.id==='arkonChapter04' ||
     info.canResumeChapter07 && checkpoint?.id==='arkonChapter07');
-  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||isResume) &&
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||isResume) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
     (scene.registry.get('workshopLocationId')==='shinonomeCanalYard' ||
-     ((info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canResumeChapter07) &&
+     ((info.canStartChapter06||info.canStartChapter07||info.canStartChapter08||info.canStartChapter09||info.canResumeChapter07) &&
        scene.registry.get('workshopLocationId')==='shinonomeWarehouseStrip')) &&
     !scene.game?.storyDirector?.status?.active &&
     (isResume||!checkpoint));
@@ -306,11 +326,13 @@ export function showArkonStoryObjective(scene) {
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    const chapterId=info.canStartChapter08?'arkonChapter08':
+    const chapterId=info.canStartChapter09?'arkonChapter09':
+      info.canStartChapter08?'arkonChapter08':
       info.canStartChapter07||info.canResumeChapter07?'arkonChapter07':
       info.canStartChapter06?'arkonChapter06':
       info.canStartChapter05?'arkonChapter05':'arkonChapter04';
     const beginLabel=isResume?'CONTINUE '+(info.canResumeChapter07?'CHAPTER 07':'CHAPTER 04'):
+      info.canStartChapter09?'BEGIN CHAPTER 09':
       info.canStartChapter08?'BEGIN CHAPTER 08':
       info.canStartChapter07?'BEGIN CHAPTER 07':
       info.canStartChapter06?'BEGIN CHAPTER 06':

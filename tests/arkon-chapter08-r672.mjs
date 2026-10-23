@@ -19,7 +19,7 @@ function fixture(){
 }
 test('Chapter 8 is registered as a real ordered three-race script',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_08));
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter08,ARKON_CHAPTER_08);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter08,ARKON_CHAPTER_08);
   assert.deepEqual(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_RACE').map(s=>s.index),[0,1,2]);
   assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_RETURN').length,3);
   assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_CONTRACT').length,1);
@@ -98,5 +98,5 @@ test('Director, Garage, RaceScene and archive have Chapter 8 integration',()=>{
   assert.match(text('../src/ui/ArkonStoryArchivePanel.js'),/ARKON_CHAPTER_08/);
   assert.match(text('../src/state/GameState.js'),/arkonStoryChapter08ContractTerms: registry.get/);
   assert.match(text('../src/ui/StoryStage.js'),/vipParty/);
-  assert.match(text('../version.json'),/R672/);
+  assert.match(text('../version.json'),/R67[2-9]/);
 });

@@ -15,7 +15,7 @@ const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
   chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
   chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':
   chapter===6?'arkonChapter06':chapter===7?'arkonChapter07':
-  chapter===8?'arkonChapter08':null;
+  chapter===8?'arkonChapter08':chapter===9?'arkonChapter09':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -41,8 +41,11 @@ export function getArkonPlayableChapters(registry){
   const c8=registry.get('arkonStoryChapter07Done') ||
     registry.get('storyDirectorProgress')?.id==='arkonChapter08' ||
     registry.get('arkonStoryChapter08Done');
+  const c9=registry.get('arkonStoryChapter08Done') ||
+    registry.get('storyDirectorProgress')?.id==='arkonChapter09' ||
+    registry.get('arkonStoryChapter09Done');
   return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),
-    ...(c5?[5]:[]),...(c6?[6]:[]),...(c7?[7]:[]),...(c8?[8]:[])];
+    ...(c5?[5]:[]),...(c6?[6]:[]),...(c7?[7]:[]),...(c8?[8]:[]),...(c9?[9]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -62,7 +65,8 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryPhase',chapter===1?'opening':
     chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':
     chapter===4?'chapter04Arrival':chapter===5?'chapter05Breakthrough':
-    chapter===6?'chapter06Commissions':chapter===7?'chapter07Business':'chapter08Together');
+    chapter===6?'chapter06Commissions':chapter===7?'chapter07Business':
+    chapter===8?'chapter08Together':'chapter09Contracts');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
@@ -72,13 +76,25 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter05Done',chapter>=6);
   registry.set('arkonStoryChapter06Done',chapter>=7);
   registry.set('arkonStoryChapter07Done',chapter>=8);
-  registry.set('arkonStoryChapter08Done',false);
-  registry.set('arkonStoryChapter08RacesDone',0);
+  registry.set('arkonStoryChapter08Done',chapter>=9);
+  registry.set('arkonStoryChapter09Done',false);
+  registry.set('arkonStoryChapter09RacesDone',0);
+  registry.set('arkonStoryChapter09Race',null);
+  registry.set('arkonStoryChapter09RaceResult',null);
+  registry.set('arkonStoryChapter09LastResult',null);
+  registry.set('arkonStoryChapter09ResolvedToLeave',false);
+  registry.set('arkonStoryChapter09Refused',false);
+  registry.set('arkonStoryChapter09ExitStatus',null);
+  registry.set('arkonStoryChapter08RacesDone',chapter>=9?3:0);
   registry.set('arkonStoryChapter08Race',null);
   registry.set('arkonStoryChapter08RaceResult',null);
   registry.set('arkonStoryChapter08LastResult',null);
-  registry.set('arkonStoryChapter08ContractSigned',false);
-  registry.set('arkonStoryChapter08ContractTerms',null);
+  registry.set('arkonStoryChapter08ContractSigned',chapter>=9);
+  registry.set('arkonStoryChapter08ContractTerms',chapter>=9
+    ?{project:'Private racing engineering programme',
+      assurance:'Engineering sign-off and performance guarantees',
+      security:'Warehouse HQ business assets named as conditional security',
+      status:'signed; no default or loss assessed'}:null);
   registry.set('arkonStoryChapter07Work',null);
   registry.set('arkonStoryChapter07Race',null);
   registry.set('arkonStoryChapter07RaceResult',null);

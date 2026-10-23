@@ -1,3 +1,9 @@
+## R673 implementation note — Chapter 09: NO WAY OUT
+
+Arkon's high-value private contracts lead to suspicious paperwork and inflated collector-car valuations. Two genuine private demonstrations give way to Arkon's refusal to certify an unverifiable car sale at a tense Shibuya event. Sayaka returns in her gifted black RWB Porsche, challenges his willingness to leave prestige behind, and helps him secure independent professional advice and depart safely. No Yakuza is named or established, and unresolved contract and financial issues continue into Chapter 10. Chapter 09 is a playable Arkon Story progression with save checkpoints, standalone race handling and replay isolation; see [R673 implementation](ARKON_CHAPTER_09_R673.md). No Career Chapter 09 or Ginza reveal was changed.
+
+---
+
 # Tokyo SHIFT — Arkon Den Story Arc: Creative Checkpoint
 
 ## R670 presentation refinement — Chapter 05 meet storytelling

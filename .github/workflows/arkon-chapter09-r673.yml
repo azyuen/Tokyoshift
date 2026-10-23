@@ -1,0 +1,46 @@
+name: Arkon Chapter 09 R673
+on:
+  push:
+    branches: [main, feature/arkon-ch09-r673]
+    paths:
+      - 'src/data/arkonChapter09*.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/**'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter09-r673.mjs'
+      - '.github/workflows/arkon-chapter09-r673.yml'
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter09*.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/**'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter09-r673.mjs'
+jobs:
+  chapter09:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/data/arkonChapter09.js
+          node --check src/data/arkonChapter09Races.js
+          node --check src/story/StoryDirector.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+      - name: Chapter 9 and prior-chapter regressions
+        run: |
+          node --test tests/arkon-chapter09-r673.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter07-r669.mjs
+      - name: Import integrity and story objective
+        run: node --test tests/startup-import-integrity-r508.mjs tests/arkon-chapter-replay-r657.mjs
