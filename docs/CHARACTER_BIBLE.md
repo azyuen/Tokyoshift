@@ -1,3 +1,9 @@
+## Arkon Story Chapter 09 continuity (R673, 23 October 2026)
+
+The Chapter 08 private organiser remains **unnamed**. Through Chapter 09, Arkon encounters suspicious valuations, resale histories and questionable paperwork, but no organisation is confirmed or named. Sayaka hears troubling rumours, returns in the black RWB Porsche (her own car since Chapter 06), and asks Arkon to recover the integrity he showed by refusing to sign off the unsafe Porsche in Chapter 04. Arkon consciously declines the new unverifiable certification at a Shibuya event and leaves with Sayaka after seeking independent advice. His past signatures, contractual exposure, reputation and the future of Warehouse HQ remain unresolved. They begin repairing trust but do not declare a romantic relationship. Ginza Gallery has not been founded. See [Chapter 09 record](ARKON_CHAPTER_09_R673.md).
+
+---
+
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
 ## Story-era continuity clarification — 23 October 2026 (Arkon Chapter 05)
