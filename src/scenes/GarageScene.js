@@ -2958,7 +2958,8 @@ export default class GarageScene extends Phaser.Scene {
       const transport = getWorkshopTransferCost(current.id, workshop.id);
       const canMove = unlocked && !here && !full &&
         cash >= transport && Boolean(this.selectedCarId) &&
-        !cars[this.selectedCarId]?.crewLoan;
+        !cars[this.selectedCarId]?.crewLoan &&
+        !isArkonRwbRestoration(this.registry,this.selectedCarId);
       const canGo = unlocked && !here;
       add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
         .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
@@ -4596,7 +4597,8 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showEmptyGarageState() {
-    this.headerCarText.setText('NO CAR');
+    this.headerCarText.setText(this.registry.get('gameMode')==='arkonStory'
+      ? 'CANAL YARD // WORK IN PROGRESS':'NO CAR');
     this.specValueTexts.engine.setText('—');
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
@@ -4621,7 +4623,9 @@ export default class GarageScene extends Phaser.Scene {
       .setFillStyle(0x17181d, 1)
       .setStrokeStyle(1, 0x514f55, 1);
     this.meetButtonLabel
-      ?.setText(ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+      ?.setText(this.registry.get('gameMode')==='arkonStory'
+        ? 'WORKSHOP // STORY IN PROGRESS'
+        : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
       .setColor('#817d84');
     this.updateMoveCarButtonState();
 
