@@ -13,7 +13,8 @@ const OWNER='__arkonStoryPlayableReplayOwner';
 const sessions=new WeakMap();
 const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
   chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
-  chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':null;
+  chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':
+  chapter===6?'arkonChapter06':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -30,7 +31,10 @@ export function getArkonPlayableChapters(registry){
     ['arkonChapter04'].includes(registry.get('storyDirectorProgress')?.id);
   const c5=registry.get('arkonStoryChapter04Done') ||
     registry.get('storyDirectorProgress')?.id==='arkonChapter05';
-  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[])];
+  const c6=registry.get('arkonStoryChapter05Done')||
+    registry.get('storyDirectorProgress')?.id==='arkonChapter06'||
+    registry.get('arkonStoryChapter06Done');
+  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[]),...(c6?[6]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -49,19 +53,41 @@ export function beginArkonPlayableReplay(scene,chapter) {
   scene.game?.storyDirector?.stop?.();
   registry.set('arkonStoryPhase',chapter===1?'opening':
     chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':
-    chapter===4?'chapter04Arrival':'chapter05Breakthrough');
+    chapter===4?'chapter04Arrival':chapter===5?'chapter05Breakthrough':'chapter06Commissions');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
   registry.set('arkonStoryChapter03Done',chapter>3);
   registry.set('arkonStoryChapter04Done',chapter>=5);
   registry.set('arkonStoryChapter04Work',null);
-  registry.set('arkonStoryChapter05Done',false);
+  registry.set('arkonStoryChapter05Done',chapter>=6);
+  registry.set('arkonStoryChapter06Done',false);
+  registry.set('arkonStoryChapter06Accounts',null);
+  registry.set('arkonStoryChapter06Cruise',null);
+  registry.set('arkonStoryChapter06CruiseFinished',false);
   registry.set('arkonStoryChapter05JobsDone',0);
   registry.set('arkonStoryChapter05RaceResult',null);
   registry.set('arkonStoryChapter05Results',{});
   registry.set('arkonStoryChapter05Loan',null);
   if(chapter<5)registry.set('arkonStoryRwbProject',null);
+  if(chapter>=5){
+    // Completed Chapter 06 saves no longer own the gifted Porsche.
+    // Restore an UNREPAIRED project only inside this temporary replay.
+    const raw=registry.get('arkonStoryRwbProject')||{};
+    registry.set('arkonStoryRwbProject',{
+      ...raw,acquired:true,gifted:false,owner:'arkonDen',
+      carId:'rwbStellaPorsche',roadworthy:false,restorationStage:0,
+      independentInspection:false,certification:null,outstandingFinance:3000000,
+      status:'structural-and-engine-restoration-required'
+    });
+    registry.set('ownedCarIds',[...new Set([
+      ...(registry.get('ownedCarIds')||[]),'rwbStellaPorsche'])]);
+    registry.set('carStates',{...(registry.get('carStates')||{}),
+      rwbStellaPorsche:{immutable:true,tuningLocked:true,storedProject:true,
+        roadworthy:false,collector:true}});
+    registry.set('carGarageLocations',{...(registry.get('carGarageLocations')||{}),
+      rwbStellaPorsche:'shinonomeCanalYard'});
+  }
   // Earlier chapters and Chapter 04's opening must not inherit the later
   // acquired project. Sandbox it away and restore it verbatim on exit.
   const originalCars=[...(registry.get('ownedCarIds')||[])];
@@ -88,7 +114,7 @@ export function beginArkonPlayableReplay(scene,chapter) {
   const owned=registry.get('ownedCarIds')||[];
   const selected=registry.get('selectedCarId');
   const locations={...(registry.get('carGarageLocations')||{})};
-  if(selected&&owned.includes(selected) && chapter!==4)
+  if(selected&&owned.includes(selected) && chapter!==4 && selected!=='rwbStellaPorsche')
     locations[selected]=canal?'shinonomeCanalYard':'shinonomeWorkshop';
   registry.set('carGarageLocations',normaliseCarGarageLocations(
     owned,locations,canal?1:0));
