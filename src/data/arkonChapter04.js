@@ -16,7 +16,7 @@ const manga=(title,lines,cast={left:A,right:S})=>({
       ? (speaker==='right'?pose||'oshiageNeutral':'oshiageNeutral'):'idle',
   })),
 });
-const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId='$SELECTED_CAR',motion=null)=>[
+const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId=null,motion=null)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId:'$CURRENT_WORKSHOP',stageMode:'native',
     privateMeet:false,composition:'car-behind-cast',
@@ -26,8 +26,8 @@ const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId='$SELECTED_CAR',m
 const pair=(ar='storyIdle',sa='oshiageNeutral')=>[
   {id:A,pose:ar},{id:S,pose:sa,role:'observer'},
 ];
-const owner=(text)=>['system',text,'','OWNER'];
-const appraiser=(text)=>['system',text,'','APPRAISER'];
+const K='kenjiOkabe'; // Existing neutral expert sprite, shared with Tokyo Auto Market.
+const appraiser=text=>['right',text,'normal'];
 
 export const ARKON_CHAPTER_04={
   id:'arkonChapter04',
@@ -53,7 +53,7 @@ export const ARKON_CHAPTER_04={
         {speaker:'player',text:'Bring its history and service records.'},
       ]},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Porsche'},
-    ...workshop('A DELIVERY WORTH NOTICING',[{id:A,pose:'storySurprised'}],'rwbStellaPorsche','arrive'),
+    ...workshop('A DELIVERY WORTH NOTICING',[{id:A,pose:'storySurprised'}],'rwbStellaPorsche','roll-in-left'),
     manga('SOMETHING SPECIAL',[
       ark('No... That is a real RWB.','storySurprised'),
       ark('I was expecting a troublesome Silvia, not a Porsche with its own postcode.','storyLaughing'),
@@ -75,14 +75,20 @@ export const ARKON_CHAPTER_04={
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Inspection'},
     ...workshop('THE CLIENT // TERMS',[{id:A,pose:'storyMechanic'}],'rwbStellaPorsche'),
-    manga('THE PAPERWORK',[
-      owner('The buyer expects a car ready for serious driving. I need your report before the weekend.'),
-      ark('Then I need the accident history, previous repair invoices and time on the lift.','storySerious'),
-      owner('It was maintained by professionals. You were recommended because you work quickly.'),
-      ark('Quickly is not the same as guessing.','storySerious'),
-      appraiser('I will be here when you finish. The buyer requested an independent witness.'),
-      ark('Good. Let us find out what we actually have.','storyMechanic'),
-    ],{left:A}),
+    {type:'PHONE',title:'THE OWNER // TERMS',presentationMode:'openingSwipe',callerId:'',callerName:'NO CALLER ID',
+      pages:[
+        {speaker:'caller',text:'The buyer expects a car ready for serious driving. I need your report before the weekend.'},
+        {speaker:'player',text:'Then I need the accident history, previous repair invoices and time on the lift.'},
+        {speaker:'caller',text:'It was maintained by professionals. You were recommended because you work quickly.'},
+        {speaker:'player',text:'Quickly is not the same as guessing.'},
+      ]},
+    ...workshop('THE INDEPENDENT APPRAISER',[{id:A,pose:'storyMechanic'},{id:K,pose:'normal',role:'observer'}],'rwbStellaPorsche'),
+    manga('A SECOND OPINION',[
+      appraiser('Kenji Okabe. The buyer requested a truly independent inspection.'),
+      ark('That is exactly what I am doing.','storyMechanic'),
+      appraiser('Good. I will be here to witness the findings.'),
+      ark('Let us find out what we actually have.','storySerious'),
+    ],{left:A,right:K}),
     {type:'HOLD_SCENE',label:'BEGIN THE INSPECTION',caption:'CHECK THE CAR, NOT THE CLAIMS'},
     {type:'CHOICE',key:'arkonRwbInspection',title:'THE FIRST WARNING',
       subtitle:'The rear alignment readings do not agree. What will you inspect first?',
@@ -115,15 +121,20 @@ export const ARKON_CHAPTER_04={
     ],{left:A}),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Ethics'},
     ...workshop('A SIGNATURE HE WILL NOT GIVE',[{id:A,pose:'storySerious'}],'rwbStellaPorsche'),
-    manga('THE OFFER',[
-      owner('A buyer is waiting. I cannot afford delays over old repairs.'),
-      ark('It needs a structural inspection and proper repairs. I cannot certify it for performance use.','storySerious'),
-      owner('Then just leave that part out. I will double the completion payment.'),
-      ark('You want my signature on a report I know is wrong?','storySurprised'),
-      owner('I want to close the sale. You want to keep this workshop.'),
-      appraiser('For the record, I am asking for the actual findings.'),
-      ark('You will get them.','storySerious'),
-    ],{left:A}),
+    {type:'PHONE',title:'THE CLIENT // AN UNACCEPTABLE REQUEST',presentationMode:'openingSwipe',callerId:'',callerName:'NO CALLER ID',
+      pages:[
+        {speaker:'caller',text:'A buyer is waiting. I cannot afford delays over old repairs.'},
+        {speaker:'player',text:'It needs a structural inspection and proper repairs. I cannot certify it for performance use.'},
+        {speaker:'caller',text:'Then just leave that part out. I will double the completion payment.'},
+        {speaker:'player',text:'You want my signature on a report I know is wrong?'},
+        {speaker:'caller',text:'I want to close the sale. You want to keep this workshop.'},
+        {speaker:'player',text:'You will get an honest report.'},
+      ]},
+    ...workshop('A WITNESS TO THE DECISION',[{id:A,pose:'storySerious'},{id:K,pose:'normal',role:'observer'}],'rwbStellaPorsche'),
+    manga('WHAT THE APPRAISER HEARD',[
+      appraiser('For the record, the actual findings are what the buyer requires.'),
+      ark('And those are the findings I will give.','storySerious'),
+    ],{left:A,right:K}),
     {type:'CHOICE',key:'arkonRwbIntegrity',title:'THE PRICE OF A SIGNATURE',
       subtitle:'The client wants a clean report. How will Arkon refuse?',
       choices:[
@@ -133,25 +144,27 @@ export const ARKON_CHAPTER_04={
           description:'Refuse certification and release the car with the findings.'},
       ]},
     {type:'LABEL',name:'fullReport'},
-    manga('A REPORT THAT TELLS THE TRUTH',[
-      ark('I will write the full report. What you choose to do with the repairs is up to you.','storySerious'),
-      owner('Then you will not see another yen from me.'),
-      ark('That is your decision. Mine is to put my name on the truth.','storySerious'),
-    ],{left:A}),
+    {type:'PHONE',title:'THE REPORT // NO CALLER ID',presentationMode:'openingSwipe',callerId:'',callerName:'NO CALLER ID',
+      pages:[
+        {speaker:'player',text:'I will write the full report. What you choose to do with the repairs is up to you.'},
+        {speaker:'caller',text:'Then you will not see another yen from me.'},
+        {speaker:'player',text:'That is your decision. Mine is to put my name on the truth.'},
+      ]},
     {type:'GOTO',to:'afterOwner'},
     {type:'LABEL',name:'returnCar'},
-    manga('THE JOB IS OVER',[
-      ark('I am ending the commission. You can collect the car with the inspection findings.','storySerious'),
-      owner('You cannot afford to turn me away.'),
-      ark('Possibly. But I cannot afford what happens if somebody gets hurt.','storySerious'),
-    ],{left:A}),
+    {type:'PHONE',title:'THE COMMISSION ENDS // NO CALLER ID',presentationMode:'openingSwipe',callerId:'',callerName:'NO CALLER ID',
+      pages:[
+        {speaker:'player',text:'I am ending the commission. You can collect the car with the inspection findings.'},
+        {speaker:'caller',text:'You cannot afford to turn me away.'},
+        {speaker:'player',text:'Possibly. But I cannot afford what happens if somebody gets hurt.'},
+      ]},
     {type:'LABEL',name:'afterOwner'},
     manga('AN EMPTY BAY',[
       appraiser('You know that could have been a very profitable signature.'),
       ark('A good mechanic should know what a car can do. And when it should not be driven.','storyThinking'),
       appraiser('I will remember that.'),
       ark('I would rather you remember the report.','storySheepish'),
-    ],{left:A}),
+    ],{left:A,right:K}),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04LowPoint'},
     ...workshop('LATE // CANAL YARD',[{id:A,pose:'storyThinking'}],null),
     manga('THE COST',[
@@ -176,7 +189,7 @@ export const ARKON_CHAPTER_04={
       say('Worse. Eat.','oshiageHappy'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Auction'},
-    ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],'$SELECTED_CAR'),
+    ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],null),
     manga('BACK TO THE ORDINARY WORK',[
       ark('Back to the 240Z. Back to paying jobs. Back to trying not to think about the Porsche.','storyMechanic'),
       ark('An ordinary day would be nice.','storySheepish'),
@@ -223,14 +236,15 @@ export const ARKON_CHAPTER_04={
     ],{left:A}),
     {type:'LABEL',name:'winningBid'},
     {type:'ARKON_RWB_PURCHASE'},
-    manga('SUCCESSFUL BIDDER',[
-      appraiser('The other bidder has withdrawn. Congratulations. The Porsche is yours.'),
-      ark('...Oh. I actually won.','storySurprised'),
-      appraiser('Please arrange collection. And read the repayment schedule carefully.'),
-      ark('That is exactly what I am afraid of.','storySheepish'),
-    ],{left:A}),
+    {type:'PHONE',title:'SUCCESSFUL BID // KENJI OKABE',presentationMode:'openingSwipe',callerId:K,callerName:'KENJI OKABE',
+      pages:[
+        {speaker:'caller',text:'The other bidder has withdrawn. Congratulations. The Porsche is yours.'},
+        {speaker:'player',text:'...Oh. I actually won.'},
+        {speaker:'caller',text:'Please arrange collection. And read the repayment schedule carefully.'},
+        {speaker:'player',text:'That is exactly what I am afraid of.'},
+      ]},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Finale'},
-    ...workshop('CANAL YARD // ONE MORE DELIVERY',[{id:A,pose:'storySheepish'}],'rwbStellaPorsche','arrive'),
+    ...workshop('CANAL YARD // ONE MORE DELIVERY',[{id:A,pose:'storySheepish'}],'rwbStellaPorsche','roll-in-left'),
     manga('IT CAME BACK',[
       ark('Same transporter. Same Porsche. Very different paperwork.','storyThinking'),
       ark('At least this time I know exactly what is wrong with it.','storySerious'),

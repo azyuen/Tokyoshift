@@ -3,7 +3,7 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r657';
+} from './StoryScript.js?v=20261023-r665';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
@@ -11,10 +11,10 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r664';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
-import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r659';
+import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r662';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
@@ -399,8 +399,20 @@ export class StoryDirector {
               scene.registry.get('gameMode')!=='arkonStory'){
             this.error='RWB AUCTION OUTSIDE ARKON STORY';return;
           }
-          if(!this.session.preview && !recordArkonRwbPurchase(scene.registry)){
-            this.error='RWB AUCTION COULD NOT BE RECORDED';return;
+          if(!this.session.preview){
+            if(!recordArkonRwbPurchase(scene.registry)){
+              this.error='RWB AUCTION COULD NOT BE RECORDED';return;
+            }
+            // The now-owned, undriveable Porsche occupies a real garage card
+            // without becoming the selected race car. Update UI immediately.
+            scene.ownedCarIds=(scene.registry.get('ownedCarIds')||[]).filter(id=>cars[id]);
+            scene.carGarageLocations=scene.registry.get('carGarageLocations')||{};
+            // Show the restoration as the selected workshop exhibit, while
+            // selectCar() seals its tuning, travel and transport controls.
+            scene.selectCar?.('rwbStellaPorsche',{remember:false});
+            scene.renderGaragePage?.();
+            scene.refreshArkonRwbLoanHud?.();
+            scene.cashText?.setText('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
           }
           this.advance();continue;
         }
@@ -633,11 +645,32 @@ export class StoryDirector {
           }
           if (step.privateMeet && sceneName(scene)==='MeetScene')
             scene.setStoryEncounterActive?.(true);
-          const stage=showStoryStage(scene,step);
+          // Never put dialogue on top of the moving Porsche. Its native
+          // garage roll must reach the stop position before the next prompt.
+          const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
+          if(rolling)this.wait={kind:'dialogue',index};
+          const stage=showStoryStage(scene,rolling?{
+            ...step,onArrivalComplete:()=>{
+              if(this.session?.index===index && this.wait?.index===index)
+                this.advance();
+            },
+          }:step);
           if(this.session.id==='arkonChapter04' && !stage){
             this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
           }
+          if(rolling)return;
           this.advance(); continue;
+        }
+        if(type==='FADE_STORY_ACTOR'){
+          if(!scene._storyDirectorStage?.fadeActor){
+            this.error='STORY ACTOR FADE UNAVAILABLE';return;
+          }
+          this.wait={kind:'dialogue',index};
+          scene._storyDirectorStage.fadeActor(step.actorId,step.ms||900,()=>{
+            if(this.session?.index===index && this.wait?.index===index)
+              this.advance();
+          });
+          return;
         }
         if (type === 'CLEAR_STAGE') {
           this.clearStage();

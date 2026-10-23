@@ -55,7 +55,7 @@ test('R659 all chapter scene establishing shots require player-controlled progre
   assert.match(objective,/scene\.time\.delayedCall\(1,/);
 });
 
-test('R659 RWB auction stores a safe restoration project, cash paid only once',()=>{
+test('R665 RWB auction stores an immobile restoration, deducts once and reserves a slot',()=>{
   const reg=registry({gameMode:'arkonStory',arkonStoryChapter03Done:true,cash:16000});
   assert.equal(recordArkonRwbPurchase(reg),true);
   assert.equal(reg.get('cash'),10000);
@@ -68,7 +68,10 @@ test('R659 RWB auction stores a safe restoration project, cash paid only once',(
   assert.equal(car.outstandingFinance,ARKON_RWB_AUCTION_PRICE-6000);
   assert.equal(recordArkonRwbPurchase(reg),true);
   assert.equal(reg.get('cash'),10000);
-  assert.ok(!reg.get('ownedCarIds')?.includes('rwbStellaPorsche'));
+  assert.ok(reg.get('ownedCarIds')?.includes('rwbStellaPorsche'));
+  assert.equal(reg.get('carGarageLocations').rwbStellaPorsche,'shinonomeCanalYard');
+  assert.equal(reg.get('carStates').rwbStellaPorsche.tuningLocked,true);
+  assert.equal(reg.get('carStates').rwbStellaPorsche.roadworthy,false);
   const poor=registry({gameMode:'arkonStory',arkonStoryChapter03Done:true,cash:1000});
   assert.equal(recordArkonRwbPurchase(poor),true);
   assert.equal(poor.get('cash'),0);

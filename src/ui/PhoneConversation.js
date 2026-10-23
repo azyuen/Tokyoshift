@@ -8,8 +8,8 @@ import {
 } from '../data/characters.js?v=20261011-r477';
 import {
   createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
-  ensureAnonymousCallerPortrait, ANONYMOUS_CALLER_VISUAL,
-} from './RaceCoachHud.js?v=20261023-r664';
+  ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
+} from './RaceCoachHud.js?v=20261023-r665';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -136,7 +136,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261023-r664')
+    import('./OpeningPhonePrototype.js?v=20261023-r665')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {
@@ -170,7 +170,7 @@ export function playPhoneConversation(scene, {
   // preserve the caller's name, while the ringing screen carries the long label.
   const callerHeading = name.split(' // ')[0].trim() || name;
   const portraitAsset = callerId ? getPhoneCallerPortrait(callerId,callerPose)
-    : (()=>{const key=ensureAnonymousCallerPortrait(scene);return key?{key}:null;})();
+    : {key:ANONYMOUS_CALLER_TEXTURE,path:ANONYMOUS_CALLER_PATH};
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
   const playerPortraitAsset = getPhoneCallerPortrait(playerCharacterId, 'idle');
   const playerActor = characters[playerCharacterId];

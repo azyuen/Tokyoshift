@@ -51,7 +51,7 @@ import {
 } from '../data/partUninstall.js?v=20261020-r619';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r657';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r657';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r665';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
@@ -66,6 +66,7 @@ import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r662';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261023-r658';
+import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261018-r586';
@@ -1692,6 +1693,17 @@ export default class GarageScene extends Phaser.Scene {
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
+    this.refreshArkonRwbLoanHud();
+  }
+
+  refreshArkonRwbLoanHud() {
+    const value=getArkonRwbLoan(this.registry);
+    if(!this.arkonRwbLoanText?.active){
+      this.arkonRwbLoanText=this.add.text(1512,63,'',{
+        fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ff8189'
+      }).setOrigin(1,.5).setDepth(42);
+    }
+    this.arkonRwbLoanText.setText(value?'(LOAN  ¥ '+value.toLocaleString('en-US')+')':'');
   }
 
   showCouponsPopup() {
@@ -1915,7 +1927,8 @@ export default class GarageScene extends Phaser.Scene {
   isSelectedCarTuningLocked() {
     const car = cars[this.selectedCarId];
     const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
-    return Boolean(car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
+    return Boolean(isArkonRwbRestoration(this.registry,this.selectedCarId) ||
+      car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
   }
 
   refreshTuningCategoryAvailability() {
@@ -1925,7 +1938,9 @@ export default class GarageScene extends Phaser.Scene {
       this.tuningStatusText
         .setText(
           locked
-            ? 'COLLECTOR SPEC (TUNING SEALED)'
+            ? (isArkonRwbRestoration(this.registry,this.selectedCarId)
+                ? 'RESTORATION PROJECT // REPAIRS REQUIRED'
+                : 'COLLECTOR SPEC (TUNING SEALED)')
             : 'TUNING // ' + this.getActiveWorkshop().shortLabel
         )
         .setColor(locked ? '#d7a0b8' : '#8cc8ec');
@@ -2188,6 +2203,11 @@ export default class GarageScene extends Phaser.Scene {
         lineSpacing: 0,
       }).setOrigin(0.5).setDepth(48));
 
+      if(isArkonRwbRestoration(this.registry,id)){
+        add(this.add.text(x,y+46,'RESTORATION // NO DRIVE',{
+          fontFamily:PIXEL_FONT,fontSize:'6px',color:'#ff989d'
+        }).setOrigin(.5).setDepth(49));
+      }
       box.on('pointerup', pointer => {
         const movedX = Math.abs(pointer.x - pointer.downX);
         const movedY = Math.abs(pointer.y - pointer.downY);
@@ -2306,7 +2326,8 @@ export default class GarageScene extends Phaser.Scene {
       cars[this.selectedCarId]?.crewLoan ||
       this.engineMode ||
       this.secondaryMode ||
-      this.chassisMode
+      this.chassisMode ||
+      isArkonRwbRestoration(this.registry,this.selectedCarId)
     ) return;
 
     this.syncGarageAssignments();
@@ -2937,7 +2958,8 @@ export default class GarageScene extends Phaser.Scene {
       const transport = getWorkshopTransferCost(current.id, workshop.id);
       const canMove = unlocked && !here && !full &&
         cash >= transport && Boolean(this.selectedCarId) &&
-        !cars[this.selectedCarId]?.crewLoan;
+        !cars[this.selectedCarId]?.crewLoan &&
+        !isArkonRwbRestoration(this.registry,this.selectedCarId);
       const canGo = unlocked && !here;
       add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
         .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
@@ -4316,10 +4338,12 @@ export default class GarageScene extends Phaser.Scene {
     const rearWheel = this.add.image(rearX, rearY, wheelVisual.wheelKey)
       .setScale(fit.rear.wheelScale)
       .setDepth(depth);
+    rearWheel.storyRollRadius=fit.rear.backingRadius||Math.max(8,rearWheel.displayWidth/2);
 
     const frontWheel = this.add.image(frontX, frontY, wheelVisual.wheelKey)
       .setScale(fit.front.wheelScale)
       .setDepth(depth);
+    frontWheel.storyRollRadius=fit.front.backingRadius||Math.max(8,frontWheel.displayWidth/2);
 
     const rearWheelBacking = this.add.circle(
       rearX,
@@ -4477,7 +4501,8 @@ export default class GarageScene extends Phaser.Scene {
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
-    if (remember && !this.crewMode && !cars[id]?.crewLoan) {
+    if (remember && !this.crewMode && !cars[id]?.crewLoan &&
+        !isArkonRwbRestoration(this.registry,id)) {
       choosePersonalCar(this.registry, id);
     }
     const crewMember = this.syncSelectedRaceDriver();
@@ -4545,10 +4570,16 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     if (this.meetButton) {
-      this.meetButton.setInteractive({ useHandCursor: true })
-        .setFillStyle(0x0c2827, 1)
-        .setStrokeStyle(2, 0x62e8c7, 1);
-      this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#f1fffb');
+      if(isArkonRwbRestoration(this.registry,id)){
+        this.meetButton.disableInteractive().setFillStyle(0x1a1e24,1)
+          .setStrokeStyle(1,0x715662);
+        this.meetButtonLabel?.setText('RESTORATION ONLY').setColor('#ff98a0');
+      }else{
+        this.meetButton.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0c2827, 1)
+          .setStrokeStyle(2, 0x62e8c7, 1);
+        this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#f1fffb');
+      }
     }
 
     this.updateMoveCarButtonState();
@@ -4566,7 +4597,8 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showEmptyGarageState() {
-    this.headerCarText.setText('NO CAR');
+    this.headerCarText.setText(this.registry.get('gameMode')==='arkonStory'
+      ? 'CANAL YARD // WORK IN PROGRESS':'NO CAR');
     this.specValueTexts.engine.setText('—');
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
@@ -4591,12 +4623,15 @@ export default class GarageScene extends Phaser.Scene {
       .setFillStyle(0x17181d, 1)
       .setStrokeStyle(1, 0x514f55, 1);
     this.meetButtonLabel
-      ?.setText(ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+      ?.setText(this.registry.get('gameMode')==='arkonStory'
+        ? 'WORKSHOP // STORY IN PROGRESS'
+        : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
       .setColor('#817d84');
     this.updateMoveCarButtonState();
 
     // The first visit is deliberately empty, not a pink-slip game over.
-    if (['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))) return;
+    if (['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter')) ||
+        this.registry.get('gameMode')==='arkonStory') return;
 
     this.add.rectangle(710, 360, 720, 148, 0x050b12, 0.78)
       .setStrokeStyle(1, 0x315470, 0.64)

@@ -11,7 +11,7 @@ import {
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r664';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r662';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -906,13 +906,15 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isStoryCruise) this.setupArkonStoryCruise();
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if(isArkonPlayableReplay(this.registry)){
-      const replayButton=this.add.rectangle(1340,114,320,42,0x2c1922,0.96)
-        .setDepth(91).setScrollFactor(0).setStrokeStyle(2,0xffba97)
+      const replayButton=this.add.rectangle(172,35,282,42,0x2c1922,0.96)
+        .setDepth(2600).setScrollFactor(0).setStrokeStyle(2,0xffba97)
         .setInteractive({useHandCursor:true});
-      const replayLabel=this.add.text(1340,114,'EXIT CHAPTER REPLAY',{
+      const replayLabel=this.add.text(172,35,'EXIT CHAPTER REPLAY',{
         fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ffdec6',
-      }).setOrigin(.5).setDepth(92).setScrollFactor(0);
-      replayButton.on('pointerdown',()=>endArkonPlayableReplay(this));
+      }).setOrigin(.5).setDepth(2601).setScrollFactor(0);
+      replayButton.on('pointerdown',()=>{
+        if(!endArkonPlayableReplay(this))console.warn('[Arkon] Cannot exit race replay');
+      });
       this.replayExitButton={replayButton,replayLabel};
     }
 

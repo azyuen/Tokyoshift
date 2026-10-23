@@ -4,8 +4,8 @@ import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
 import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
-  ensureAnonymousCallerPortrait, ANONYMOUS_CALLER_VISUAL,
-} from './RaceCoachHud.js?v=20261023-r664';
+  ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
+} from './RaceCoachHud.js?v=20261023-r665';
 import { PHONE_CARD_SWIPE_DISTANCE } from './CompactDialogueLayout.js?v=20261022-r640';
 
 const PIXEL = '"Silkscreen", monospace';
@@ -106,10 +106,7 @@ export function playOpeningPhonePrototype(scene, {
   if (!chapter.length) return { played: false, reason: 'empty', active: false };
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || 'renMizuno';
   const assets = getOpeningPhoneAssets(callerId, callerPose, playerCharacterId);
-  if(!callerId){
-    const key=ensureAnonymousCallerPortrait(scene);
-    if(key)assets.caller={key};
-  }
+  if(!callerId)assets.caller={key:ANONYMOUS_CALLER_TEXTURE,path:ANONYMOUS_CALLER_PATH};
   const fullVars = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'Driver').trim() || 'Driver',
     ...variables,
