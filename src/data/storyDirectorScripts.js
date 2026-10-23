@@ -4,7 +4,7 @@ import { ARKON_CHAPTER_02 } from './arkonChapter02.js?v=20261023-r662';
 import { ARKON_CHAPTER_03 } from './arkonChapter03.js?v=20261023-r664';
 import { ARKON_CHAPTER_04 } from './arkonChapter04.js?v=20261023-r667';
 import { ARKON_CHAPTER_05 } from './arkonChapter05.js?v=20261023-r670';
-import { ARKON_CHAPTER_06 } from './arkonChapter06.js?v=20261023-r668';
+import { ARKON_CHAPTER_06 } from './arkonChapter06.js?v=20261023-r671';
 import { ARKON_CHAPTER_07 } from './arkonChapter07.js?v=20261023-r669';
 // Developer-only smoke scripts. These are NOT career canon and do not
 // automatically trigger for ordinary players. No rewards or narrative flags.
