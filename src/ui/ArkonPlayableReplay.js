@@ -53,6 +53,18 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter03Done',chapter>3);
   registry.set('arkonStoryChapter04Done',false);
   registry.set('arkonStoryRwbProject',null);
+  // Earlier chapters and Chapter 04's opening must not inherit the later
+  // acquired project. Sandbox it away and restore it verbatim on exit.
+  const originalCars=[...(registry.get('ownedCarIds')||[])];
+  if(originalCars.includes('rwbStellaPorsche')){
+    registry.set('ownedCarIds',originalCars.filter(id=>id!=='rwbStellaPorsche'));
+    const states={...(registry.get('carStates')||{})};delete states.rwbStellaPorsche;
+    registry.set('carStates',states);
+    const sites={...(registry.get('carGarageLocations')||{})};delete sites.rwbStellaPorsche;
+    registry.set('carGarageLocations',sites);
+    if(registry.get('selectedCarId')==='rwbStellaPorsche')
+      registry.set('selectedCarId',originalCars.find(id=>id!=='rwbStellaPorsche')||null);
+  }
   registry.set('arkonStoryChapter02FishPaid',false);
   registry.set('arkonStoryChapter02RivalResult',null);
   registry.set('arkonStoryRivalResult',null);
