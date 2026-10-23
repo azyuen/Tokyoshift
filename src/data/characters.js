@@ -1921,6 +1921,21 @@ regionExclusive: true, teamRole: 'core',
       },
     },
   },
+  // Story-only Shibuya VIP event promoter. Intentionally unnamed until later
+  // chapters establish his identity; the generic portrait is not a Career rival.
+  storyVipPromoter: {
+    id:'storyVipPromoter',name:'Private Event Promoter',
+    selectable:false,rivalEligible:false,
+    archetype:'The Polished Deal-Maker',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryVipPromoter',
+      path:'assets/Characters/male_sub_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryVipPromoterIdle',
+          path:'assets/Characters/male_sub_idle.png'},
+      },
+    },
+  },
   arkonDen: {
     id: 'arkonDen',
     name: 'Arkon Den',
