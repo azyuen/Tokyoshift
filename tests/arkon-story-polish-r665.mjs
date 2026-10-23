@@ -57,7 +57,7 @@ test('R665 Chapter 04 rolls actual wheels in, not a body-only entrance or fade j
   assert.match(garage,/frontWheel\.storyRollRadius=/);
   const director=src('../src/story/StoryDirector.js');
   assert.match(director,/const rolling=this\.session\.id==='arkonChapter04'/);
-  assert.match(director,/onArrivalComplete:()=>/);
+  assert.ok(director.includes('onArrivalComplete:()=>'));
 });
 
 test('R665 chapter 04 anonymous owner always speaks by phone, appraiser has an existing real sprite',()=>{
