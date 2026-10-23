@@ -86,7 +86,7 @@ export function getArkonCh6Job(s,index){
     maxKW:rotary?allowedMax:original.maxKW,
     limits,restrictionLabel:rotary?'FACTORY BOOST ONLY // NO TURBO UPGRADES':null,
     allowPaint:false,
-    pay:CH6_FEES[index],
+    chapter:6,pay:CH6_FEES[index],
     client:rotary?'DAIKOKU ROTARY OWNER // RX-7 SA22C':
       'INDEPENDENT PREMIUM SERVICE // CONTRACT '+(index+1)};
 }
