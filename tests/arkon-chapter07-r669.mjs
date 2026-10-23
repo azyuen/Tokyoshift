@@ -19,7 +19,8 @@ const reg=(values={})=>({values,get(k){return this.values[k]},set(k,v){this.valu
 const ordered=[ENGINE_PART_ORDER,DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER];
 const all=Object.fromEntries(ordered.flat().map(id=>[id,1]));
 function fixture(){
- return reg({gameMode:'arkonStory',arkonStoryChapter06Done:true,
+ return reg({gameMode:'arkonStory',firstName:'Arkon',lastName:'Den',playerCharacterId:'arkonDen',
+  arkonStoryChapter06Done:true,
   arkonStoryChapter07Done:false,arkonStoryWarehouseUnlocked:true,garageTier:2,
   workshopLocationId:'shinonomeWarehouseStrip',cash:2000000,
   selectedCarId:'240z',preferredCarId:'240z',ownedCarIds:['240z'],
@@ -39,7 +40,7 @@ const tune=(s,level)=>{
 };
 test('R669 validates Chapter 07 and keeps Chapter 08 out of scope',()=>{
  assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_07));
- assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter07,ARKON_CHAPTER_07);
+ assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter07,ARKON_CHAPTER_07);
  assert.deepEqual(ARKON_CHAPTER_07.steps.filter(x=>x.type==='ARKON_CH7_JOB').map(x=>x.index),[0,1,2]);
  assert.deepEqual(ARKON_CHAPTER_07.steps.filter(x=>x.type==='ARKON_CH7_WORK').map(x=>x.stage),[1,2]);
  assert.deepEqual(ARKON_CHAPTER_07.steps.filter(x=>x.type==='ARKON_CH7_RACE').map(x=>x.index),[0,1]);
