@@ -10,7 +10,7 @@ import {
 import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import { CINEMATIC_FRAMES } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
-import { showStoryStage } from './StoryStage.js?v=20261023-r663';
+import { showStoryStage } from './StoryStage.js?v=20261023-r665';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
