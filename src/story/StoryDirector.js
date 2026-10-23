@@ -1006,8 +1006,10 @@ export class StoryDirector {
           // Never put dialogue on top of the moving Porsche. Its native
           // garage roll must reach the stop position before the next prompt.
           const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
-          const revealing=this.session.id==='arkonChapter05' &&
-            step.meetDuel===true && Number(step.fadeInMs)>0;
+          const revealing=(this.session.id==='arkonChapter05' &&
+              step.meetDuel===true ||
+              this.session.id==='arkonChapter06') &&
+            Number(step.fadeInMs)>0;
           if(rolling||revealing)this.wait={kind:'dialogue',index};
           const stage=showStoryStage(scene,(rolling||revealing)?{
             ...step,onArrivalComplete:()=>{
@@ -1016,7 +1018,7 @@ export class StoryDirector {
             },
           }:step);
           if((this.session.id==='arkonChapter04'||revealing) && !stage){
-            this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
+            this.error='STORY STAGE UNAVAILABLE';return;
           }
           if(rolling||revealing)return;
           this.advance(); continue;
@@ -1053,7 +1055,29 @@ export class StoryDirector {
           if (sceneCutsceneActive(scene) || scene._compactStoryDialogue?.active) return;
           const onDone = () => {
             if (!this.session || this.wait?.index !== index) return;
-            this.advance();
+            if(this.session.id!=='arkonChapter06' || type!=='MANGA'){
+              this.advance();return;
+            }
+            // Dialogue must fully dissolve before revealing the existing
+            // workshop/Meet stage. The NEXT cutscene cannot auto-pop up.
+            scene.time.delayedCall(140,()=>{
+              if(this.session?.id!=='arkonChapter06' ||
+                 this.session.index!==index||this.wait?.index!==index)return;
+              const prompt=showStoryContinuePrompt(scene,{
+                label:'CONTINUE WHEN READY',
+                caption:'TAKE IN THE SCENE',
+                revealMs:950,
+                onContinue:()=>{
+                  if(this.session?.index===index&&this.wait?.index===index)
+                    this.advance();
+                },
+                onCancel:({reason})=>{
+                  if(this.session?.index===index && reason!=='shutdown')
+                    this.error='STORY SCENERY HOLD CANCELLED';
+                },
+              });
+              if(!prompt) this.advance();
+            });
           };
           const onCancel = payload => {
             if (!this.session || this.wait?.index !== index) return;
