@@ -11,7 +11,7 @@ export const CH7_HERO_ID='arkonLibertyWalk240z';
 export const CH7_JOB_FEES=Object.freeze([1100000,1300000,1500000]);
 export const CH7_RACES=Object.freeze([
   Object.freeze({district:'YOKOHAMA',venue:'yokohamaMinatoMirai',opponentCarId:'r32',
-    opponentId:'masatoKurosawa',label:'YOKOHAMA // THE FIRST 240Z TEST'}),
+    opponentId:'reikaTachibana',label:'YOKOHAMA // THE FIRST 240Z TEST'}),
   Object.freeze({district:'DAIKOKU',venue:'daikokuPA',opponentCarId:'evo6',
     opponentId:'tetsuoMori',label:'DAIKOKU // THE FULL BUILD'}),
 ]);
