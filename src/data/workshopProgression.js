@@ -326,7 +326,14 @@ export function getArkonStoryWorkshopTier(source) {
     ['arkonChapter03','arkonChapter04'].includes(checkpoint);
   // A future authored chapter explicitly sets this flag. Never infer HQ
   // ownership from wins, money, old career tiers, or the chapter number.
-  const warehouse = Boolean(progressionSourceValue(source,'arkonStoryWarehouseUnlocked'));
+  // A completed Chapter 06 irrevocably owns Warehouse HQ. Repair legacy
+  // profiles where the earlier chapter flagged completion but missed the
+  // workshop unlock; also allow Chapters 07–10 from their checkpoints.
+  const warehouse = Boolean(progressionSourceValue(source,'arkonStoryWarehouseUnlocked')) ||
+    Boolean(progressionSourceValue(source,'arkonStoryChapter06Done')) ||
+    ['arkonChapter07','arkonChapter08','arkonChapter09','arkonChapter10']
+      .includes(checkpoint) ||
+    chapter>=7;
   return warehouse ? 2 : canal ? 1 : 0;
 }
 

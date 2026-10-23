@@ -1,5 +1,5 @@
 import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r668';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from './ArkonPlayableReplay.js?v=20261023-r668';
+
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
 import {
   getControlSettings,
@@ -25,7 +25,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20261023-r657';
+} from '../state/GameState.js?v=20261024-r675';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20261009-r451';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import {
@@ -84,22 +84,9 @@ export function addSettingsButton(scene, x = 995, y = 35) {
 
   const devCutscenes = addDevCutsceneButton(scene, x - 115, y);
   const storyHelp = addArkonStoryObjectiveButton(scene, x - 56, y);
-  let replayExit=null;
-  if(isArkonPlayableReplay(scene.registry)){
-    // Higher than manga/phone/choice layers: exit must remain clickable
-    // even when replay pauses gameplay inside a conversation.
-    replayExit=scene.add.rectangle(172,35,282,42,0x3c2023,1)
-      .setScrollFactor(0).setStrokeStyle(2,0xffbd98).setDepth(2600)
-      .setInteractive({useHandCursor:true});
-    const label=scene.add.text(172,35,'EXIT CHAPTER REPLAY',{
-      fontFamily:'"Silkscreen", monospace',fontSize:'9px',color:'#ffe5d8',
-    }).setOrigin(.5).setScrollFactor(0).setDepth(2601);
-    replayExit.on('pointerdown',()=>{
-      if(!endArkonPlayableReplay(scene))console.warn('[Arkon] Replay exit unavailable');
-    });
-    replayExit.label=label;
-  }
-  return { button, cog, devCutscenes, storyHelp, replayExit };
+  // R675: replay exit is rendered across Garage, Meet, Race and story
+  // cutscenes by StoryDirector, at the upper-left of the main stage.
+  return { button, cog, devCutscenes, storyHelp, replayExit:null };
 }
 
 function showRenameDriverPanel(scene, onSaved = null) {

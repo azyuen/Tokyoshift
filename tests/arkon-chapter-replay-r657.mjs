@@ -189,7 +189,7 @@ test('Live chapter replay shares one session module and waits for the destinatio
   const callers=[
     'src/ui/ArkonStoryArchivePanel.js',
     'src/story/StoryDirector.js',
-    'src/scenes/RaceScene.js',
+    'src/ui/ArkonReplayExit.js',
   ];
   const ids=callers.map(path=>
     code(path).match(/ArkonPlayableReplay\.js\?v=([0-9a-z-]+)/)?.[1]);

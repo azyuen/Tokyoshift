@@ -19,7 +19,7 @@ test('R671 rotary owner brings an SA22C RX-7, never a Honda Prelude',()=>{
  assert.match(job.name,/RX-7|RX7|SA22C/i);
  assert.ok(job.targetKW>=job.stockKW);
  assert.ok(job.maxKW>=job.targetKW);
- assert.equal(job.pay,1600000);
+ assert.equal(job.pay,2700000);
  const other=getArkonCh6Job({arkonStoryChapter03Seed:271},0);
  assert.ok(other&&other.index===0&&other.carId);
 });
@@ -81,8 +81,8 @@ test('R671 actual Yokohama Ferris wheel is selected before entering MeetScene',(
  assert.ok(stage.characters[1].flipX);
  const renderer=file('../src/ui/StoryStage.js');
  assert.match(renderer,/x:815,y:409,targetWidth:518/);
- assert.match(renderer,/x:402,feetY:599,height:299/);
- assert.match(renderer,/x:608,feetY:599,height:291/);
+ assert.match(renderer,/x:420,feetY:599,height:299/);
+ assert.match(renderer,/x:560,feetY:599,height:291/);
 });
 test('R671 restored couple art, no footer, and five-second fade BEFORE concluding popup',()=>{
  const finale=file('../src/ui/ArkonChapter06Finale.js');

@@ -122,11 +122,14 @@ test('R665 existing R659 story saves migrate project into slot without Career co
 test('R665 recount can exit over cutscenes and restores prior car/replay flags',()=>{
   const settings=src('../src/ui/SettingsPanel.js');
   const race=src('../src/scenes/RaceScene.js');
+  const overlay=src('../src/ui/ArkonReplayExit.js');
+  const director=src('../src/story/StoryDirector.js');
   const replay=src('../src/ui/ArkonPlayableReplay.js');
-  assert.match(settings,/rectangle\(172,35,282,42/);
-  assert.match(settings,/setDepth\(2600\)/);
-  assert.match(race,/rectangle\(172,35,282,42/);
-  assert.match(race,/setDepth\(2600\)/);
+  assert.doesNotMatch(settings,/rectangle\(172,35,282,42/);
+  assert.doesNotMatch(race,/rectangle\(172,35,282,42/);
+  assert.match(overlay,/setDepth\(depth\)/);
+  assert.match(overlay,/90000/);
+  assert.match(director,/syncArkonReplayExit\(this.activeScene\(\)\)/);
   assert.match(replay,/sessions\.delete\(registry\)/);
   assert.match(replay,/restore\(registry,session\.original\)/);
   assert.match(replay,/originalCars\.filter\(id=>id!=='rwbStellaPorsche'\)/);

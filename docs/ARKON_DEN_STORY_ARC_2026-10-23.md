@@ -1,5 +1,16 @@
 ## R673 implementation note — Chapter 09: NO WAY OUT
 
+## R675 Chapter 06 corrections — balance, relationship and UI (24 October 2026)
+
+- Three paid specialist projects now earn **¥2.4m, ¥2.7m and ¥3.0m**, credited to the actual bank as customers pay. **Total ¥8.1m**. Mandatory commitments: Warehouse HQ fit-out ¥750k, prepaid Warehouse HQ rent for **three months ¥900k**, Porsche debt ¥3m, certified repairs ¥900k. Net new earnings after those commitments: **¥2.55m** (plus existing cash). On Chapter 06 end, the remaining reserve is **not** credited twice. Active old saves reconcile once, and completed older Chapter 06 saves receive a once-only ¥2.4m net profit correction. Do not change already settled Career balances.
+- Daikoku's SA22C client requests **factory turbo hardware only; no turbo upgrades**, with a reachable target computed from the same engine simulation used for tuning. No Chapter 06 client owns a repaint choice; no colour picker appears.
+- RWB repair scene: Arkon faces the engine bay, Sayaka wears home attire and stands close to his left; the green checklist confirmation label renders above the button. RWB thumbnails use a pink model name only, with **MAJOR REPAIRS REQUIRED** on the right when still unsafe. Workshop header shows bank and loan entirely inside its banner; the loan disappears when paid off.
+- End-of-Chapter-06 Porsche gift dialogue is warmer and less abrupt. Arkon is vulnerable without giving a theatrical speech; Sayaka answers with restraint, they share an awkward silence, and he asks to **enjoy the view**. Sayaka smiles and fades before the already-established watching-pair artwork.
+- Full gameplay chapter replay can exit from a single, high-depth button at the **upper-left of the main background area** across Garage, Meet, Race and dialogue overlays. The redundant '?'-style button beside Settings is removed.
+- Every Arkon Story profile that has **completed Chapter 06** automatically gains permanent Warehouse HQ access for Chapter 07, including old saves with missing unlock flags. Other game modes do not get a free workshop.
+
+---
+
 Arkon's high-value private contracts lead to suspicious paperwork and inflated collector-car valuations. Two genuine private demonstrations give way to Arkon's refusal to certify an unverifiable car sale at a tense Shibuya event. Sayaka returns in her gifted black RWB Porsche, challenges his willingness to leave prestige behind, and helps him secure independent professional advice and depart safely. No Yakuza is named or established, and unresolved contract and financial issues continue into Chapter 10. Chapter 09 is a playable Arkon Story progression with save checkpoints, standalone race handling and replay isolation; see [R673 implementation](ARKON_CHAPTER_09_R673.md). No Career Chapter 09 or Ginza reveal was changed.
 
 ---

@@ -6,11 +6,11 @@ import {
 } from './StoryScript.js?v=20261023-r672';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r672';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261024-r675';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r672';
-import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r675';
+import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
 import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r669';
@@ -20,7 +20,7 @@ import {
   getArkonCh6Job,recordArkonCh6Job,leaseArkonCh6Warehouse,
   settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
   beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
-} from '../data/arkonChapter06Work.js?v=20261023-r671';
+} from '../data/arkonChapter06Work.js?v=20261024-r675';
 import {
   ch7Progress,startArkonCh7Work,finishArkonCh7Work,
   getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,
@@ -36,11 +36,12 @@ import {recordArkonCh10Project,startArkonCh10Race,finishArkonCh10Race,
 import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js?v=20261023-r674';
 import {showArkonCh10Restoration} from '../ui/ArkonChapter10Restoration.js?v=20261023-r674';
 import {showArkonChapter10Finale} from '../ui/ArkonChapter10Finale.js?v=20261023-r674';
-import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r671';
+import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261024-r675';
 import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r671';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
+import {syncArkonReplayExit} from '../ui/ArkonReplayExit.js?v=20261024-r675';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
@@ -320,6 +321,9 @@ export class StoryDirector {
     if (this.wait?.kind === 'event' && this.wait.event === event) this.advance();
   }
   tick() {
+    // Replays can occupy Garage, Meet, Race and modal cutscene screens.
+    // Render a single always-interactive exit in the scene foreground.
+    syncArkonReplayExit(this.activeScene());
     if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
     if (!this.session) {
       const registry=this.game.registry;
@@ -605,6 +609,7 @@ export class StoryDirector {
                  !recordArkonCh6Job(scene.registry,step.index)){
                 this.error='CHAPTER 06 INVOICE FAILED';return;
               }
+              scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
               saveSessionState(scene.registry);
               this.advance();
             },
@@ -631,6 +636,8 @@ export class StoryDirector {
             if(!settleArkonCh6PorscheLoan(scene.registry)){
               this.error='PORSCHE FINANCE ACCOUNT NOT READY';return;
             }
+            scene.refreshArkonRwbLoanHud?.();
+            scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
             saveSessionState(scene.registry);
             this.advance();continue;
           }
@@ -650,6 +657,7 @@ export class StoryDirector {
                 if(!recordArkonCh6Restoration(scene.registry,step.index)){
                   this.error='PORSCHE RESTORATION CHECK FAILED';return false;
                 }
+                scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
                 saveSessionState(scene.registry);
                 this.advance();return true;
               },
