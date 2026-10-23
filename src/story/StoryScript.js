@@ -15,6 +15,8 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'ARKON_CH7_CONVERT','ARKON_CH7_SOLO','ARKON_CH7_SOLO_RETURN',
   'ARKON_CH8_RACE','ARKON_CH8_RETURN','ARKON_CH8_CONTRACT',
   'ARKON_CH9_RACE','ARKON_CH9_RETURN','ARKON_CH9_REFUSE',
+  'ARKON_CH10_SETTLEMENT','ARKON_CH10_RESTORE','ARKON_CH10_RACE','ARKON_CH10_RETURN',
+  'ARKON_CH10_GINZA','ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA','ARKON_CH10_FINALE',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -68,6 +70,9 @@ export function validateStoryScript(script) {
     }
     if(type==='ARKON_CH8_RACE' && (!Number.isInteger(step.index) || step.index<0 || step.index>2)) {
       throw new Error('Arkon Chapter 08 race index must be 0-2 at '+index);
+    }
+    if(type==='ARKON_CH10_RESTORE' && (!Number.isInteger(step.index) || step.index<0 || step.index>2)) {
+      throw new Error('Arkon Chapter 10 restoration index must be 0-2 at '+index);
     }
     if(type==='ARKON_CH9_RACE' && (!Number.isInteger(step.index) || step.index<0 || step.index>1)) {
       throw new Error('Arkon Chapter 09 race index must be 0-1 at '+index);
