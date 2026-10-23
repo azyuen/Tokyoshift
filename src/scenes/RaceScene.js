@@ -163,9 +163,12 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     if(this.registry.get('gameMode')==='arkonStory' &&
       this.registry.get('arkonStoryChapter06Cruise')?.active){
-      // Reuse established compact Story passenger portraits, no new outfits.
+      // The restored-Porsche night drive follows hours of workshop work;
+      // Sayaka has changed out of her Oshiage instructor outfit.
+      queueImage('arkonSayakaWatchingStory',
+        'assets/Characters/Main/arkon_sayaka_watching.png');
       for(const [id,poses] of [
-        ['sayakaFujieda',['oshiageRelaxed','oshiageHappy','oshiageReviewing','oshiageSerious']],
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
         ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy']],
       ])for(const pose of poses){
         const asset=characters[id]?.visual?.poseAssets?.[pose];
@@ -1645,13 +1648,13 @@ export default class RaceScene extends Phaser.Scene {
     this.hud.update(pt,'YOKOHAMA // NIGHT DRIVE // NO RACE');
     this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
     const lines=[
-      [1,'sayaka','You really did bring the Porsche back.','oshiageRelaxed'],
+      [1,'sayaka','You really did bring the Porsche back.','homeNormal'],
       [4.5,'arkon','I remembered the first time I saw it. On the transporter.','storySerious'],
-      [8,'sayaka','You looked as though it might swallow your entire workshop.','oshiageHappy'],
+      [8,'sayaka','You looked as though it might swallow your entire workshop.','homeHappy'],
       [12,'arkon','It nearly did.','storyCoolShy'],
-      [15,'sayaka','It feels wonderful. Very different from the broken car.','oshiageReviewing'],
+      [15,'sayaka','It feels wonderful. Very different from the broken car.','homeSerious'],
       [18,'arkon','I wanted you to be the first to ride in it.','storySerious'],
-      [21,'sayaka','That is unexpectedly thoughtful.','oshiageHappy'],
+      [21,'sayaka','That is unexpectedly thoughtful.','homeHappy'],
     ];
     while(this.arkonCh6LineIndex<lines.length &&
           this.arkonCh6Seconds>=lines[this.arkonCh6LineIndex][0]){
