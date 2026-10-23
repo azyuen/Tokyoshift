@@ -67,7 +67,7 @@ export function showArkonCh10Restoration(scene,index,{onComplete}={}){
     fontFamily:PIXEL,fontSize:'9px',color:'#ffffff',
   }).setOrigin(.5).setDepth(1802).setScrollFactor(0));
   const refresh=()=>{
-    rows.forEach((r,i)=>r.rect.setAlpha(i>done?.5:1));
+    rows.forEach((r,i)=>r.rect.setAlpha(i>done ? .5 : 1));
     finish.setAlpha(done===3?1:.36);
     finishLabel.setAlpha(done===3?1:.36);
   };
