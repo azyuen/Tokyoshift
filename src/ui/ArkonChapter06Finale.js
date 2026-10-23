@@ -1,7 +1,7 @@
 // R671 — the ACTUAL approved Arkon/Sayaka rear-view asset replaces the
 // provisional block silhouettes. No artificial black footer over Yokohama.
 // After a long uninterrupted fade, Chapter 06's conclusion appears.
-import {showStoryStage} from './StoryStage.js?v=20261023-r671';
+import {showStoryStage} from './StoryStage.js?v=20261024-r675';
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
 const WHEEL_VENUE='meet:yokohamaMinatoMirai:night';
 const WATCH_ASSET={
