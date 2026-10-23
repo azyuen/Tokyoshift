@@ -86,13 +86,17 @@ export function addSettingsButton(scene, x = 995, y = 35) {
   const storyHelp = addArkonStoryObjectiveButton(scene, x - 56, y);
   let replayExit=null;
   if(isArkonPlayableReplay(scene.registry)){
-    replayExit=scene.add.rectangle(x-260,y,185,38,0x3c2023,1)
-      .setStrokeStyle(2,0xffbd98).setDepth(43)
+    // Higher than manga/phone/choice layers: exit must remain clickable
+    // even when replay pauses gameplay inside a conversation.
+    replayExit=scene.add.rectangle(172,35,282,42,0x3c2023,1)
+      .setScrollFactor(0).setStrokeStyle(2,0xffbd98).setDepth(2600)
       .setInteractive({useHandCursor:true});
-    const label=scene.add.text(x-260,y,'EXIT CHAPTER REPLAY',{
+    const label=scene.add.text(172,35,'EXIT CHAPTER REPLAY',{
       fontFamily:'"Silkscreen", monospace',fontSize:'9px',color:'#ffe5d8',
-    }).setOrigin(.5).setDepth(44);
-    replayExit.on('pointerdown',()=>endArkonPlayableReplay(scene));
+    }).setOrigin(.5).setScrollFactor(0).setDepth(2601);
+    replayExit.on('pointerdown',()=>{
+      if(!endArkonPlayableReplay(scene))console.warn('[Arkon] Replay exit unavailable');
+    });
     replayExit.label=label;
   }
   return { button, cog, devCutscenes, storyHelp, replayExit };
