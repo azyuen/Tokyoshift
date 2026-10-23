@@ -79,7 +79,7 @@ export function beginArkonPlayableReplay(scene,chapter) {
   const owned=registry.get('ownedCarIds')||[];
   const selected=registry.get('selectedCarId');
   const locations={...(registry.get('carGarageLocations')||{})};
-  if(selected&&owned.includes(selected))
+  if(selected&&owned.includes(selected) && chapter!==4)
     locations[selected]=canal?'shinonomeCanalYard':'shinonomeWorkshop';
   registry.set('carGarageLocations',normaliseCarGarageLocations(
     owned,locations,canal?1:0));
