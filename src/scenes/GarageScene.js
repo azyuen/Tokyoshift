@@ -143,7 +143,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r663';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r666';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
