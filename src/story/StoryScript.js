@@ -7,7 +7,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'CHOICE', 'WAIT_MS', 'HOLD_SCENE', 'VENUE', 'DEV_HERO_RACE', 'RETURN_LOAN', 'ARKON_CHALLENGE_RACE',
   'WAIT_WIN_DELTA', 'ARKON_DOCK_PAYMENT', 'STORY_CRUISE',
   'ARKON_CUSTOMER_JOB', 'ARKON_MX5_RACE', 'ARKON_MX5_RETURN',
-  'ARKON_RWB_PURCHASE', 'FADE_STORY_ACTOR',
+  'ARKON_RWB_PURCHASE', 'FADE_STORY_ACTOR', 'ARKON_CH5_RACE', 'ARKON_CH5_RETURN',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -50,6 +50,9 @@ export function validateStoryScript(script) {
     }
     if (type==='ARKON_CUSTOMER_JOB' && (!Number.isInteger(step.index) || step.index<0 || step.index>5)) {
       throw new Error('Customer jobs must have an index from 0 through 5 at ' + index);
+    }
+    if(type === 'ARKON_CH5_RACE' && (!Number.isInteger(step.index) || step.index<0 || step.index>3)) {
+      throw new Error('Arkon Chapter 05 test-race index must be 0-3 at '+index);
     }
     if (type === 'START_RACE' && step.scene && step.scene !== 'RaceScene') {
       throw new Error('START_RACE can only enter RaceScene');
