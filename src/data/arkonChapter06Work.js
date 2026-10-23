@@ -74,10 +74,18 @@ export function getArkonCh6Job(s,index){
   if(!original||!car)return null;
   const stockKW=Math.round(Number(car.powerKW||0));
   const maxKW=getArkonCustomerPower(carId,CANAL_YARD_MAX);
-  const requested=Math.ceil(stockKW*1.17/5)*5;
+  // The rotary owner wants a stock turbo, not an added boost upgrade.
+  // Feasibility is evaluated by THE SAME tuning physics used by the panel.
+  const limits=rotary?{turbo:0}:null;
+  const allowedMax=rotary
+    ?getArkonCustomerPower(carId,{...CANAL_YARD_MAX,turbo:0})
+    :maxKW;
+  const requested=Math.ceil(stockKW*(rotary?1.10:1.17)/5)*5;
   return {...original,carId,name:car.shortName||car.name,stockKW,
-    targetKW:rotary?Math.min(requested,maxKW):original.targetKW,
-    maxKW:rotary?maxKW:original.maxKW,
+    targetKW:rotary?Math.min(requested,allowedMax):original.targetKW,
+    maxKW:rotary?allowedMax:original.maxKW,
+    limits,restrictionLabel:rotary?'FACTORY BOOST ONLY // NO TURBO UPGRADES':null,
+    allowPaint:false,
     pay:CH6_FEES[index],
     client:rotary?'DAIKOKU ROTARY OWNER // RX-7 SA22C':
       'INDEPENDENT PREMIUM SERVICE // CONTRACT '+(index+1)};
