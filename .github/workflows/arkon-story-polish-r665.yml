@@ -1,0 +1,55 @@
+name: R665 Arkon story presentation and finance
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter03.js'
+      - 'src/data/arkonChapter04.js'
+      - 'src/data/arkonChapter04Ledger.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/ui/ArkonCustomerTuning.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/SettingsPanel.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/arkon-story-polish-r665.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter03.js'
+      - 'src/data/arkonChapter04.js'
+      - 'src/data/arkonChapter04Ledger.js'
+      - 'src/ui/StoryStage.js'
+      - 'tests/arkon-story-polish-r665.mjs'
+jobs:
+  story:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: |
+          node --check src/data/arkonChapter03.js
+          node --check src/data/arkonChapter04.js
+          node --check src/data/arkonChapter04Ledger.js
+          node --check src/story/StoryDirector.js
+          node --check src/story/StoryScript.js
+          node --check src/ui/ArkonCustomerTuning.js
+          node --check src/ui/StoryStage.js
+          node --check src/ui/PhoneConversation.js
+          node --check src/ui/OpeningPhonePrototype.js
+          node --check src/ui/ArkonPlayableReplay.js
+          node --check src/ui/SettingsPanel.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+      - name: Regression tests
+        run: |
+          node --test tests/arkon-story-polish-r665.mjs tests/arkon-chapter03-r656.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs
