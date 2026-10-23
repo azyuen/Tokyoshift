@@ -189,7 +189,7 @@ export const ARKON_CHAPTER_04={
       say('Worse. Eat.','oshiageHappy'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Auction'},
-    ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],'$SELECTED_CAR'),
+    ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],null),
     manga('BACK TO THE ORDINARY WORK',[
       ark('Back to the 240Z. Back to paying jobs. Back to trying not to think about the Porsche.','storyMechanic'),
       ark('An ordinary day would be nice.','storySheepish'),
