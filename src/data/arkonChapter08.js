@@ -6,14 +6,21 @@ const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='homeNormal')=>['right',text,pose];
 const vip=(text,pose='idle')=>['right',text,pose];
-const manga=(title,lines,right=S,left=A)=>({
-  type:'MANGA',title,characters:{left,right},
-  pages:lines.map(([speaker,text,pose])=>({
-    speaker,text,
-    leftPose:left===A?(speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
-    rightPose:right===S?(speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
-  })),
-});
+const manga=(title,lines,right=S,left=A)=>{
+  // Formalwear remains consistent while either person speaks at the gala;
+  // no casual-outfit flash between alternating dialogue panels.
+  const formal=lines.some(([, ,pose])=>pose==='ginzaSuit'||pose==='ginzaDress');
+  return {
+    type:'MANGA',title,characters:{left,right},
+    pages:lines.map(([speaker,text,pose])=>({
+      speaker,text,
+      leftPose:left===A?(speaker==='left'?pose||(formal?'ginzaSuit':'storyTalking')
+        :formal?'ginzaSuit':'storyIdle'):'idle',
+      rightPose:right===S?(speaker==='right'?pose||(formal?'ginzaDress':'homeNormal')
+        :formal?'ginzaDress':'homeNormal'):'idle',
+    })),
+  };
+};
 const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId:bg,stageMode:'native',
@@ -249,7 +256,7 @@ export const ARKON_CHAPTER_08={
     manga('THE PRICE OF AMBITION',[
       ark('It is the biggest deal I have ever signed.','storyThinking'),
       ark('I should be celebrating.','storySerious'),
-    ],A),
+    ],V),
     {type:'SET_FLAG',key:'arkonStoryChapter08Done',value:true},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08Complete'},
     {type:'CLEAR_STAGE'},
