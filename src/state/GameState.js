@@ -98,6 +98,12 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter04Done: false,
     arkonStoryChapter05Done: false,
     arkonStoryChapter06Done: false,
+    arkonStoryChapter07Done: false,
+    arkonStoryChapter07Work: null,
+    arkonStoryChapter07Race: null,
+    arkonStoryChapter07RaceResult: null,
+    arkonStoryChapter07Solo: null,
+    arkonStoryChapter07SoloFinished: false,
     arkonStoryChapter06Accounts: null,
     arkonStoryChapter06Cruise: null,
     arkonStoryChapter06CruiseFinished: false,
@@ -1242,6 +1248,26 @@ export function normaliseState(input = {}) {
     arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
     arkonStoryChapter05Done: storyMode && Boolean(input.arkonStoryChapter05Done),
     arkonStoryChapter06Done: storyMode && Boolean(input.arkonStoryChapter06Done),
+    arkonStoryChapter07Done: storyMode && Boolean(input.arkonStoryChapter07Done),
+    arkonStoryChapter07Work: storyMode && input.arkonStoryChapter07Work &&
+      typeof input.arkonStoryChapter07Work==='object' ? {
+        stage:Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter07Work.stage)||0))),
+        jobsDone:Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter07Work.jobsDone)||0))),
+        racesDone:Math.max(0,Math.min(2,Math.floor(Number(input.arkonStoryChapter07Work.racesDone)||0))),
+        shops:[...new Set((Array.isArray(input.arkonStoryChapter07Work.shops)
+          ?input.arkonStoryChapter07Work.shops:[]).filter(x=>
+            ['ODAIBA','SHIBUYA','SHINJUKU','YOKOHAMA','DAIKOKU','SHINAGAWA','TATSUMI'].includes(x)))],
+        converted:Boolean(input.arkonStoryChapter07Work.converted),
+      }:null,
+    arkonStoryChapter07Race: storyMode && input.arkonStoryChapter07Race?.active
+      ?clonePlain(input.arkonStoryChapter07Race):null,
+    arkonStoryChapter07RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter07RaceResult)
+      ?input.arkonStoryChapter07RaceResult:null,
+    arkonStoryChapter07Solo: storyMode && input.arkonStoryChapter07Solo?.active
+      ?clonePlain(input.arkonStoryChapter07Solo):null,
+    arkonStoryChapter07SoloFinished: storyMode &&
+      Boolean(input.arkonStoryChapter07SoloFinished),
     arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
       typeof input.arkonStoryChapter06Accounts==='object'
       ? clonePlain(input.arkonStoryChapter06Accounts):null,
