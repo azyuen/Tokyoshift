@@ -14,7 +14,7 @@ import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r662';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
