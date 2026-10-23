@@ -1,4 +1,4 @@
-// R674 — THE ROAD AHEAD. Arkon's Story has a complete positive ending.
+// R674 — THE ROAD AHEAD. Aruken's Story has a complete positive ending.
 // Direct continuation of Chapter 09: debts are handled, not magicked away.
 // Family friend -> restored starter choice -> Daichi support (no racing father).
 const A='arkonDen',S='sayakaFujieda';
@@ -19,7 +19,7 @@ const staged=(label,backgroundId,cast,cars=[],options={})=>[
   {type:'STAGE',backgroundId,stageMode:'native',composition:'car-behind-cast',
     fadeInMs:850,privateMeet:backgroundId.startsWith('meet:'),
     characters:cast,cars,...options},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE ROAD AHEAD',revealMs:550},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // THE ROAD AHEAD',revealMs:550},
 ];
 const casual=[{id:A,pose:'storyIdle',role:'player'},
   {id:S,pose:'homeNormal',role:'companion'}];
@@ -30,7 +30,7 @@ const shop=(label,car='arkonLibertyWalk240z')=>
 const restore=index=>({type:'ARKON_CH10_RESTORE',index});
 export const ARKON_CHAPTER_10={
   id:'arkonChapter10',
-  title:'ARKON DEN // CHAPTER 10: THE ROAD AHEAD',
+  title:'ARUKEN DENZAKI // CHAPTER 10: THE ROAD AHEAD',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:10},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter10Recovery',timeOfDay:'day'},
@@ -40,12 +40,12 @@ export const ARKON_CHAPTER_10={
       ark('What?','storyIdle'),
       say('You ignoring your phone.','homeHappy'),
       ark('They can leave a message. This car is not going to fix itself.','storyMechanic'),
-      say('How are you, Arkon? Really?','homeNormal'),
+      say('How are you, Aruken? Really?','homeNormal'),
       ark('The accountants and advisers have finished negotiating. Some claims were withdrawn. The remainder cost us.','storySerious'),
       ark('We kept Warehouse HQ. We have fewer customers, but every invoice is honest.','storyThinking'),
       say('And how does that feel?'),
       ark('Surprisingly good. I finished work before dinner yesterday.','storySheepish'),
-      say('Who are you, and what have you done with Arkon Den?','homeHappy'),
+      say('Who are you, and what have you done with Aruken Denzaki?','homeHappy'),
       ark('Apparently there is a world outside this workshop.','storyLaughing'),
       say('I have been trying to tell you.','homeHappy'),
     ]),
@@ -75,7 +75,7 @@ export const ARKON_CHAPTER_10={
       ark('Tetsuo called about this GC8. The engine is his speciality.','storyThinking'),
       say('You are working together?','homeHappy'),
       ark('He knows the platform better. I can handle the rest.','storyMechanic'),
-      say('Arkon Den admitting somebody knows more than he does?','homeHappy'),
+      say('Aruken Denzaki admitting somebody knows more than he does?','homeHappy'),
       ark('Do not spread it around.','storySheepish'),
     ]),
     restore(1),
@@ -115,7 +115,7 @@ export const ARKON_CHAPTER_10={
     manga('SOMETHING SPECIAL',[
       say('This collector knows the history of every bolt on this R32.','homeNormal'),
       ark('Then we should preserve what makes it special.','storyThinking'),
-      say('That is almost philosophical, Arkon.','homeHappy'),
+      say('That is almost philosophical, Aruken.','homeHappy'),
       ark('Do not worry. I am still charging for labour.','storyConfidentSmirk'),
     ]),
     restore(2),
@@ -209,7 +209,7 @@ export const ARKON_CHAPTER_10={
       ark('Have you seen what you do to the tyres? Absolutely not.','storySheepish'),
       say('And now a gallery. A workshop. And a couple of young troublemakers we are apparently sponsoring.','homeHappy'),
       ark('Do not remind me.','storyConfidentSmirk'),
-      say('Are you happy, Arkon?','homeNormal'),
+      say('Are you happy, Aruken?','homeNormal'),
       ark('Yeah. I really am.','storyCoolShy'),
       ark('What about you?','storyTalking'),
       say('Very.','homeHappy'),

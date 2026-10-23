@@ -1,4 +1,4 @@
-// R659 — Arkon Chapter 04: The Price of Trust.
+// R659 — Aruken Chapter 04: The Price of Trust.
 // Same live Garage/Meet-native stage geometry and modular vehicle renderer.
 // Deliberate HOLD_SCENE boundaries: no timed dialogue, races, pink-slip offers,
 // showroom unlocks, or free roadworthy RWB. The car remains a restoration project.
@@ -21,7 +21,7 @@ const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId=null,motion=null)
   {type:'STAGE',backgroundId:'$CURRENT_WORKSHOP',stageMode:'native',
     privateMeet:false,composition:'car-behind-cast',
     characters:cast,cars:carId?[{carId}]:[],...(motion?{motion}:{})},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE PRICE OF TRUST'},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // THE PRICE OF TRUST'},
 ];
 const pair=(ar='storyIdle',sa='oshiageNeutral')=>[
   {id:A,pose:ar},{id:S,pose:sa,role:'observer'},
@@ -31,7 +31,7 @@ const appraiser=text=>['right',text,'normal'];
 
 export const ARKON_CHAPTER_04={
   id:'arkonChapter04',
-  title:'ARKON DEN // CHAPTER 04: THE PRICE OF TRUST',
+  title:'ARUKEN DENZAKI // CHAPTER 04: THE PRICE OF TRUST',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:4},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Arrival',timeOfDay:'night'},
@@ -65,7 +65,7 @@ export const ARKON_CHAPTER_04={
       ark('I did not know it was coming.','storySheepish'),
       say('It is beautiful.','oshiageHappy'),
       ark('You like it?','storySurprised'),
-      say('I can recognise a good car, Arkon.','oshiageRelaxed'),
+      say('I can recognise a good car, Aruken.','oshiageRelaxed'),
       ark('And yet you trusted me with the Mazda.','storyConfidentSmirk'),
       say('That was a calculated risk.','oshiageHappy'),
       ark('This one may be slightly more expensive to get wrong.','storyThinking'),
@@ -136,7 +136,7 @@ export const ARKON_CHAPTER_04={
       ark('And those are the findings I will give.','storySerious'),
     ],{left:A,right:K}),
     {type:'CHOICE',key:'arkonRwbIntegrity',title:'THE PRICE OF A SIGNATURE',
-      subtitle:'The client wants a clean report. How will Arkon refuse?',
+      subtitle:'The client wants a clean report. How will Aruken refuse?',
       choices:[
         {id:'report',to:'fullReport',label:'INSIST ON A COMPLETE REPORT',
           description:'Put the safety findings in writing.'},
@@ -228,7 +228,7 @@ export const ARKON_CHAPTER_04={
       subtitle:'The car is sold with every defect disclosed. The loan documents are ready.',
       choices:[
         {id:'measure',to:'bidCalculated',label:'CHECK EVERY COST ONCE MORE',
-          description:'Arkon makes a final careful calculation.'},
+          description:'Aruken makes a final careful calculation.'},
         {id:'commit',to:'bidCommit',label:'SUBMIT THE MAXIMUM BID',
           description:'Take the risk with a fully disclosed, broken car.'},
       ]},
@@ -264,7 +264,7 @@ export const ARKON_CHAPTER_04={
     manga('A TERRIBLE FINANCIAL DECISION',[
       say('No.','oshiageSerious'),
       ark('Hello to you too.','storySheepish'),
-      say('Arkon. Please tell me you did not.','oshiageReviewing'),
+      say('Aruken. Please tell me you did not.','oshiageReviewing'),
       ark('I did not.','storyConfidentSmirk'),
       say('...','oshiageSerious'),
       ark('I may have bought a Porsche.','storySheepish'),

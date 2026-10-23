@@ -1,4 +1,4 @@
-// R648 — spoiler-free, only visible in Arkon's separate Story Mode.
+// R648 — spoiler-free, only visible in Aruken's separate Story Mode.
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 
@@ -26,8 +26,8 @@ export function getArkonStoryObjective(registry) {
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
   if(get('arkonStoryChapter10Done'))return {
-    heading:'ARKON\'S STORY // COMPLETE',
-    message:'Ginza Gallery is open. Arkon and Sayaka are business partners, and their quiet investment in Daichi and a new driver begins another story.',
+    heading:'ARUKEN\'S STORY // COMPLETE',
+    message:'Ginza Gallery is open. Aruken and Sayaka are business partners, and their quiet investment in Daichi and a new driver begins another story.',
     progress:'THE ROAD AHEAD // THE END',
   };
   if(active?.id===ARKON_CHAPTER_10.id){
@@ -56,17 +56,17 @@ export function getArkonStoryObjective(registry) {
     const steps={
       chapter09Contracts:['THE GOLDEN CAGE','Check the new private programme and complete the first real demonstration race.'],
       chapter09Pressure:['DAIKOKU // RAISED PRESSURE','The paperwork no longer adds up. Complete the second demonstration race.'],
-      chapter09SayakaReturns:['THE PORSCHE RETURNS','Talk with Sayaka. She cannot decide for Arkon, but she can stand beside him.'],
+      chapter09SayakaReturns:['THE PORSCHE RETURNS','Talk with Sayaka. She cannot decide for Aruken, but she can stand beside him.'],
       chapter09FinalMeet:['THE LAST SIGNATURE','Decline the unverifiable certification and leave the meet with independent support.'],
       chapter09RoadHome:['THE ROAD HOME','An honest decision does not erase the consequences.'],
     };
     const [heading,message]=steps[phase]||['NO WAY OUT','Continue Chapter 09.'];
-    return {heading,message,progress:'DEMONSTRATION RACES '+count+'/2  //  ARKON DEN // CHAPTER 09'};
+    return {heading,message,progress:'DEMONSTRATION RACES '+count+'/2  //  ARUKEN DENZAKI // CHAPTER 09'};
   }
   if(get('arkonStoryChapter08Done'))return {
     canStartChapter09:Boolean(get('arkonStoryChapter08ContractSigned')),
     heading:'CHAPTER 08 COMPLETE',
-    message:'The Shibuya deal is signed. Warehouse HQ is committed under a conditional guarantee. Arkon and Sayaka are still speaking, but something has changed.',
+    message:'The Shibuya deal is signed. Warehouse HQ is committed under a conditional guarantee. Aruken and Sayaka are still speaking, but something has changed.',
     progress:'THE PRICE OF AMBITION // COMPLETED',
   };
   if(active?.id===ARKON_CHAPTER_08.id){
@@ -81,7 +81,7 @@ export function getArkonStoryObjective(registry) {
       chapter08VipParty:['THE SHIBUYA PARTY','An uncomfortable offer, a difficult conversation, and a consequential decision.'],
     };
     const [heading,message]=entries[phase]||['THE PRICE OF AMBITION','Continue Chapter 08.'];
-    return {heading,message,progress:'PRIVATE RACES '+count+'/3  //  ARKON DEN // CHAPTER 08'};
+    return {heading,message,progress:'PRIVATE RACES '+count+'/3  //  ARUKEN DENZAKI // CHAPTER 08'};
   }
   if(get('arkonStoryChapter07Done'))return {
     canStartChapter08:true,
@@ -110,7 +110,7 @@ export function getArkonStoryObjective(registry) {
       chapter07SoloDrive:['THE LONELIEST DRIVE','A cinematic solo drive. The passenger seat is empty.'],
     };
     const [heading,message]=goals[phase]||['NEVER ENOUGH','Continue Chapter 07.'];
-    return {heading,message,progress:'ARKON DEN // CHAPTER 07'};
+    return {heading,message,progress:'ARUKEN DENZAKI // CHAPTER 07'};
   }
   if(get('arkonStoryChapter06Done'))return {
     canStartChapter07:true,
@@ -134,7 +134,7 @@ export function getArkonStoryObjective(registry) {
         ? 'CONTRACTS '+a.jobsDone+'/3  //  RESERVED  ¥ '+Number(a.escrow||0).toLocaleString('en-AU')
         :phase==='chapter06Restoration'
         ? 'VERIFIED WORK '+a.restorationDone+'/3  //  FINANCE '+(a.financeCleared?'PAID':'DUE')
-        :'ARKON DEN // CHAPTER 06'};
+        :'ARUKEN DENZAKI // CHAPTER 06'};
   }
   if(get('arkonStoryChapter05Done'))return {
     canStartChapter06:true,
@@ -152,12 +152,12 @@ export function getArkonStoryObjective(registry) {
       chapter05Daigo:['A FAMILIAR AE86','Complete Daigo Kirishima\'s challenge with Sayaka beside you.'],
     };
     const [heading,message]=stages[phase]||['THE FASTEST PAIR IN TOKYO','Continue the chapter at the workshop or meet.'];
-    return {heading,message,progress:'ARKON DEN // CHAPTER 05'};
+    return {heading,message,progress:'ARUKEN DENZAKI // CHAPTER 05'};
   }
   if(get('arkonStoryChapter04Done'))return {
     canStartChapter05:true,
     heading:'CHAPTER 05 // THE FASTEST PAIR',
-    message:'A collector wants Arkon to restore and test a Mine\'s R34. Return to Canal Yard and choose BEGIN CHAPTER 05. The RWB stays under restoration.',
+    message:'A collector wants Aruken to restore and test a Mine\'s R34. Return to Canal Yard and choose BEGIN CHAPTER 05. The RWB stays under restoration.',
     progress:'CHAPTER 04 COMPLETED // A NEW COMMISSION',
   };
   if(active?.id===ARKON_CHAPTER_04.id){
@@ -185,7 +185,7 @@ export function getArkonStoryObjective(registry) {
       chapter04Finale:['THE TRANSPORTER RETURNS','Complete Chapter 04 at the workshop.'],
     };
     const [heading,message]=stages[phase]||['THE PRICE OF TRUST','Return to the workshop and continue the story.'];
-    return {heading,message,progress:'ARKON DEN // CHAPTER 04'};
+    return {heading,message,progress:'ARUKEN DENZAKI // CHAPTER 04'};
   }
   if(get('arkonStoryChapter03Done'))return {
     canStartChapter04:true,
@@ -227,7 +227,7 @@ export function getArkonStoryObjective(registry) {
       ? 'WINS '+Math.min(2,Math.max(0,wins-baseline))+' / 2' : 'STORY SCENE';
     const goals={
       chapter02Opening:['UNWELCOME COMPANY','Continue Chapter 02 at the Meet.'],
-      chapter02Earn:['KEEP YOUR FOOT IN','Win two street races. Arkon needs another way to earn money.'],
+      chapter02Earn:['KEEP YOUR FOOT IN','Win two street races. Aruken needs another way to earn money.'],
       chapter02MeetRepair:['THE 240Z NEEDS WORK','Win two more races, then return to a Meet.'],
       chapter02Driving:['THE LONG WAY HOME','Complete the rolling drive with Sayaka. If interrupted, return to a Meet to resume.'],
       chapter02AfterWorkshop:['ONE MORE TEST','Win two more races. Daigo wants another run.'],
@@ -238,7 +238,7 @@ export function getArkonStoryObjective(registry) {
   }
   if(get('arkonStoryChapter01RevisedDone') && !active)return {
     heading:'CHAPTER 02 // THE LONG WAY HOME',
-    message:'Visit a street meet to begin Arkon\'s next chapter.',
+    message:'Visit a street meet to begin Aruken\'s next chapter.',
     progress:'CHAPTER 01 COMPLETE',
   };
   if(revised){
@@ -316,7 +316,7 @@ export function showArkonStoryObjective(scene) {
     .setDepth(depth).setInteractive());
   add(scene.add.rectangle(780,420,820,535,0x091a27,.99)
     .setStrokeStyle(2,0x69cada,1).setDepth(depth+1));
-  add(scene.add.text(780,230,'ARKON DEN // STORY MODE',{
+  add(scene.add.text(780,230,'ARUKEN DENZAKI // STORY MODE',{
     fontFamily:PIXEL,fontSize:'17px',color:'#f4fbff'
   }).setOrigin(.5).setDepth(depth+2));
   add(scene.add.text(780,293,info.heading,{

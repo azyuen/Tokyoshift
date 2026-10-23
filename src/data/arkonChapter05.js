@@ -1,4 +1,4 @@
-// R666 — Arkon Story Chapter 05, a playable, upbeat workshop/race chapter.
+// R666 — Aruken Story Chapter 05, a playable, upbeat workshop/race chapter.
 // Customer cars are loans for real race tests. Daigo Kirishima ALWAYS brings
 // his own AE86; he is the persistent, ordinary show-off from Chapters 01–02.
 const A='arkonDen',S='sayakaFujieda',K='kenjiOkabe',D='storyDaigoKirishima';
@@ -56,7 +56,7 @@ const leaveDaigo=()=>[
 
 export const ARKON_CHAPTER_05={
   id:'arkonChapter05',
-  title:'ARKON DEN // CHAPTER 05: THE FASTEST PAIR IN TOKYO',
+  title:'ARUKEN DENZAKI // CHAPTER 05: THE FASTEST PAIR IN TOKYO',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:5},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter05Breakthrough',timeOfDay:'night'},
@@ -68,7 +68,7 @@ export const ARKON_CHAPTER_05={
     ],{left:A}),
     {type:'PHONE',title:'CANAL YARD // KENJI OKABE',callerId:K,callerName:'KENJI OKABE',
       presentationMode:'openingSwipe',pages:[
-        {speaker:'caller',text:'Arkon. I spoke to a collector about your Porsche inspection.'},
+        {speaker:'caller',text:'Aruken. I spoke to a collector about your Porsche inspection.'},
         {speaker:'player',text:'Please tell me the lender has forgotten the loan.'},
         {speaker:'caller',text:'No. But the collector wants the same honesty applied to a Mine\'s R34.'},
         {speaker:'caller',text:'He has paid larger workshops to chase a recurring fault. None fixed it.'},
@@ -232,7 +232,7 @@ export const ARKON_CHAPTER_05={
       ark('What next project?','storySurprised'),
       say('I said you would have to ask him. I have lessons in the morning.','oshiageRelaxed'),
       ark('You make a remarkably effective business partner.','storyConfidentSmirk'),
-      say('I am your friend, Arkon. And I rather like seeing you succeed.','oshiageHappy'),
+      say('I am your friend, Aruken. And I rather like seeing you succeed.','oshiageHappy'),
     ]),
     {type:'LOCATION',scene:'GarageScene',
       data:{crewMode:false,workshopLocationId:'shinonomeCanalYard'}},
@@ -301,7 +301,7 @@ export const ARKON_CHAPTER_05={
       {id:D,pose:'idle',role:'observer'},
     ]),
     manga('DAIGO FINALLY GETS THE MESSAGE',[
-      ['left','Well, Arkon. Nice run. Very nice run.','idle'],
+      ['left','Well, Aruken. Nice run. Very nice run.','idle'],
       ['right','You are being surprisingly gracious.','oshiageReviewing'],
       ['left','I have decided to give up, Sayaka. Officially.','idle'],
       ['right','From racing?','oshiageNeutral'],
@@ -330,7 +330,7 @@ export const ARKON_CHAPTER_05={
       say('That man is insufferable.','oshiageRelaxed'),
       ark('Completely.','storySheepish'),
       ark('Fastest pair in Tokyo, though. Has a certain ring to it.','storyConfidentSmirk'),
-      say('Do not push your luck, Arkon.','oshiageHappy'),
+      say('Do not push your luck, Aruken.','oshiageHappy'),
       ark('Would not dream of it.','storyCoolShy'),
     ]),
     {type:'HOLD_SCENE',label:'CHAPTER 05 COMPLETE',caption:'THE FASTEST PAIR IN TOKYO'},

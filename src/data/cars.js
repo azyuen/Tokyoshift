@@ -2270,13 +2270,13 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
 addCollectorExpansion(cars);
 applyHeroCarAssets(cars);
 
-// Arkon Story Chapter 07: the same personally owned 240Z gets bespoke body
+// Aruken Story Chapter 07: the same personally owned 240Z gets bespoke body
 // art after a real maximum build. Separate ID avoids altering Career's 240Z.
 // No power/mass/grip bonuses: identical underlying engineering and saved tune.
 cars.arkonLibertyWalk240z={
   ...cars['240z'],
   id:'arkonLibertyWalk240z',
-  name:'Liberty Walk Datsun 240Z // Arkon Den',
+  name:'Liberty Walk Datsun 240Z // Aruken Denzaki',
   shortName:'LB 240Z',
   storyBodyConversion:true,
   visual:{

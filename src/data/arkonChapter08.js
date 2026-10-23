@@ -1,5 +1,5 @@
 // R672 — CHAPTER 08: THE PRICE OF AMBITION.
-// Sayaka and Arkon remain close, even as his new circle unsettles her.
+// Sayaka and Aruken remain close, even as his new circle unsettles her.
 // Three player-driven races resolve honestly; the gala ends in a signed risk,
 // not a manufactured mechanical failure, breakup or Chapter 09 cliff event.
 const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
@@ -27,7 +27,7 @@ const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
     privateMeet:bg.startsWith('meet:'),composition:'car-behind-cast',
     vipParty,fadeInMs:vipParty?900:0,characters:cast,cars},
   {type:'HOLD_SCENE',label,
-    caption:vipParty?'SHIBUYA // THE PRIVATE NIGHT':'ARKON DEN // THE PRICE OF AMBITION',
+    caption:vipParty?'SHIBUYA // THE PRIVATE NIGHT':'ARUKEN DENZAKI // THE PRICE OF AMBITION',
     revealMs:vipParty?650:0},
 ];
 const ordinary=[{id:A,pose:'storyIdle'},{id:S,pose:'homeNormal',role:'observer'}];
@@ -53,7 +53,7 @@ const race=index=>[
 ];
 export const ARKON_CHAPTER_08={
   id:'arkonChapter08',
-  title:'ARKON DEN // CHAPTER 08: THE PRICE OF AMBITION',
+  title:'ARUKEN DENZAKI // CHAPTER 08: THE PRICE OF AMBITION',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:8},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08Together',timeOfDay:'night'},
@@ -70,7 +70,7 @@ export const ARKON_CHAPTER_08={
     {type:'PHONE',title:'WAREHOUSE HQ // AN EXCLUSIVE INVITATION',
       callerId:'',callerName:'PRIVATE EVENT ORGANISER',
       presentationMode:'openingSwipe',pages:[
-        {speaker:'caller',text:'Arkon Den? Your Liberty Walk Z has attracted some serious attention.'},
+        {speaker:'caller',text:'Aruken Denzaki? Your Liberty Walk Z has attracted some serious attention.'},
         {speaker:'player',text:'I hope they liked the engineering underneath it.'},
         {speaker:'caller',text:'We have a private invitational in Shinagawa. Cash stakes, selective entries. Interested?'},
         {speaker:'player',text:'Send the rules. I do not race blind.'},
@@ -143,7 +143,7 @@ export const ARKON_CHAPTER_08={
       ark('A VIP evening in Shibuya. Serious collectors. I could use your help.','storyConfident'),
       say('Oh. Business.','homeSerious'),
       ark('You are brilliant with people. And I wanted you there.','storyTalking'),
-      say('...Alright, Arkon. I will come.','homeNormal'),
+      say('...Alright, Aruken. I will come.','homeNormal'),
       ark('Fantastic. You will not regret it.','storyConfident'),
       say('I hope not.','homeSerious'),
     ]),
@@ -178,7 +178,7 @@ export const ARKON_CHAPTER_08={
     ]),
     ...party('SHIBUYA // THE VIP CIRCLE'),
     manga('THE PERFECT INTRODUCTION',[
-      vip('Arkon Den. The man behind the Liberty Walk. A pleasure at last.'),
+      vip('Aruken Denzaki. The man behind the Liberty Walk. A pleasure at last.'),
       ark('Good evening. I was hoping to meet your team.','ginzaSuit'),
       vip('We have ambitious clients. They dislike hearing that a deadline is impossible.'),
       ark('A safe result takes as long as the engineering requires.','ginzaSuit'),
@@ -200,7 +200,7 @@ export const ARKON_CHAPTER_08={
       ark('Let me review the full terms.','ginzaSuit'),
     ],V),
     manga('THE MAN WITH THE PORSCHE',[
-      say('Arkon. Can we talk?','ginzaDress'),
+      say('Aruken. Can we talk?','ginzaDress'),
       ark('Of course. What is wrong?','ginzaSuit'),
       say('That contract. Are you really considering it?','ginzaDress'),
       ark('This could be the biggest opportunity we have ever had.','ginzaSuit'),
@@ -217,18 +217,18 @@ export const ARKON_CHAPTER_08={
       say('You have built a wonderful business. People respect you. What more do you need?','ginzaDress'),
       ark('I just want to make something of myself.','ginzaSuit'),
       say('You already have.','ginzaDress'),
-      say('Please, Arkon. Let us leave. We can talk properly at home.','ginzaDress'),
+      say('Please, Aruken. Let us leave. We can talk properly at home.','ginzaDress'),
       ark('I cannot abandon a deal like this.','ginzaSuit'),
       say('Then I am going. I am not asking you to give up your dreams.','ginzaDress'),
       say('I am asking you not to lose yourself chasing them.','ginzaDress'),
     ]),
     manga('AN INTERRUPTION',[
-      vip('Arkon! Our partners are ready to finalise the arrangement.'),
+      vip('Aruken! Our partners are ready to finalise the arrangement.'),
       ark('Yes. Just a moment.','ginzaSuit'),
     ],V),
     manga('ANOTHER TIME',[
       ark('Sayaka, can we talk about this later?','ginzaSuit'),
-      say('Of course, Arkon.','ginzaDress'),
+      say('Of course, Aruken.','ginzaDress'),
     ]),
     {type:'HOLD_SCENE',label:'SAYAKA WAITS',
       caption:'SHIBUYA // THE MUSIC CONTINUES',revealMs:600},
@@ -244,7 +244,7 @@ export const ARKON_CHAPTER_08={
       ark('...I understand.','ginzaSuit'),
     ],V),
     manga('THE SIGNATURE',[
-      vip('So, Arkon. Shall we proceed?'),
+      vip('So, Aruken. Shall we proceed?'),
       ark('Yes.','ginzaSuit'),
       vip('Excellent. Welcome aboard.'),
     ],V),

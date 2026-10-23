@@ -59,7 +59,7 @@ export function showArkonChapter10Finale(scene,{onComplete}={}){
   const button=add(scene.add.rectangle(1354,747,345,63,0x173a42,.96)
     .setStrokeStyle(2,0x90e7d6).setDepth(1510).setScrollFactor(0)
     .setInteractive({useHandCursor:true}));
-  const label=add(scene.add.text(1354,747,'FINISH ARKON STORY  >',{
+  const label=add(scene.add.text(1354,747,'FINISH ARUKEN STORY  >',{
     fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',
   }).setOrigin(.5).setDepth(1511).setScrollFactor(0));
   const black=add(scene.add.rectangle(780,420,1560,840,0x02060e,1)
@@ -73,7 +73,7 @@ export function showArkonChapter10Finale(scene,{onComplete}={}){
         add(scene.add.text(780,355,'TOKYO SHIFT',{
           fontFamily:PIXEL,fontSize:'22px',color:'#fff1d5',
         }).setOrigin(.5).setDepth(1720).setScrollFactor(0));
-        add(scene.add.text(780,414,'ARKON DEN  //  THE END',{
+        add(scene.add.text(780,414,'ARUKEN DENZAKI  //  THE END',{
           fontFamily:PIXEL,fontSize:'14px',color:'#d6efe9',
         }).setOrigin(.5).setDepth(1720).setScrollFactor(0));
         const exit=add(scene.add.rectangle(780,515,330,57,0x1d5756,1)

@@ -1,3 +1,4 @@
+import { getInGamePlayerDisplayName } from '../data/characterDisplayName.js?v=20261024-r677';
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
@@ -3737,10 +3738,7 @@ export default class RaceScene extends Phaser.Scene {
       );
     });
 
-    const playerDisplayName = [
-      String(this.registry.get('firstName') || '').trim(),
-      String(this.registry.get('lastName') || '').trim(),
-    ].filter(Boolean).join(' ') || playerCharacter.name;
+    const playerDisplayName = getInGamePlayerDisplayName(this.registry);
     const rivalDisplayName = chapter08Race ? 'UNKNOWN DRIVER' : rivalCharacter.name;
 
     // Return to the angled manga panels from R381, but crop the portrait image

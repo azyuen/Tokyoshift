@@ -1,4 +1,4 @@
-// R655 — Arkon's second chapter is an independent, save-gated origin story.
+// R655 — Aruken's second chapter is an independent, save-gated origin story.
 // All ordinary races still use production driving physics. The dockside Forester
 // is a STORY PROP using its stock modular car artwork, not a player reward.
 const A='arkonDen', S='sayakaFujieda', D='storyDaigoKirishima', F='storyDockForeman';
@@ -21,7 +21,7 @@ const present=(label,characters,cars=[{carId:'$SELECTED_CAR'}],backgroundId='$CU
   {type:'STAGE',backgroundId,privateMeet:true,
     stageMode:backgroundId==='$CURRENT_MEET'?'native':'story',
     composition:'conversation-balanced',characters,cars,...extras},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE LONG WAY HOME'},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // THE LONG WAY HOME'},
 ];
 const meetCast=[
   {id:A,pose:'storyIdle'},
@@ -31,7 +31,7 @@ const meetCast=[
 
 export const ARKON_CHAPTER_02 = {
   id:'arkonChapter02',
-  title:'ARKON DEN // CHAPTER 02: THE LONG WAY HOME',
+  title:'ARUKEN DENZAKI // CHAPTER 02: THE LONG WAY HOME',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:2},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02Opening',timeOfDay:'night'},
@@ -42,7 +42,7 @@ export const ARKON_CHAPTER_02 = {
       ark('He appears to have found us anyway.','storyLaughing'),
     ]),
     manga('ANOTHER PERFECT ENTRANCE',[
-      daigo('Arkon. Still driving the 240Z? I respect your commitment to automotive history.'),
+      daigo('Aruken. Still driving the 240Z? I respect your commitment to automotive history.'),
       say('Good evening, Daigo.','oshiageNeutral'),
       daigo('Sayaka, dinner? There is somewhere in Ginza I think you would like.'),
       say('I have plans.','oshiageReviewing'),
@@ -88,7 +88,7 @@ export const ARKON_CHAPTER_02 = {
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02MeetRepair',timeOfDay:'night'},
     {type:'WAIT_WIN_DELTA',key:'ch2BeforeRepair',count:2,scene:'MeetScene'},
 
-    // Only here does Sayaka catch Arkon with tools at the Meet: not at home.
+    // Only here does Sayaka catch Aruken with tools at the Meet: not at home.
     ...present('THE 240Z // AFTER THE RUNS',[
       {id:A,pose:'storyMechanicCrouch',role:'carMechanic'},
       {id:S,pose:'oshiageReviewing',role:'observer'},
@@ -120,7 +120,7 @@ export const ARKON_CHAPTER_02 = {
       say('Almost always. Now where is that workshop?','oshiageRelaxed'),
     ]),
     {type:'CLEAR_STAGE'},
-    ...present("ARKON'S PLACE // BAD COFFEE",[
+    ...present("ARUKEN'S PLACE // BAD COFFEE",[
       {id:A,pose:'storyMechanicEngine'},
       {id:S,pose:'oshiageRelaxed'},
     ],[{carId:'$SELECTED_CAR'}],

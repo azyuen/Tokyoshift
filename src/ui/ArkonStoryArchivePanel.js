@@ -1,4 +1,4 @@
-// R661 — Arkon's Story recount opens FULL GAMEPLAY replay by default.
+// R661 — Aruken's Story recount opens FULL GAMEPLAY replay by default.
 // Watching only the dialogue is a separately labelled, optional shortcut.
 // Neither path changes the real profile, and restart remains opt-in.
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
@@ -167,7 +167,7 @@ export function showArkonStoryArchivePanel(scene) {
     .setDepth(depth).setInteractive());
   add(scene.add.rectangle(780,415,950,535,0x0b1d2d,.995)
     .setStrokeStyle(3,0x79d6e8).setDepth(depth+1));
-  add(scene.add.text(780,209,'ARKON DEN // RECOUNT STORY',{
+  add(scene.add.text(780,209,'ARUKEN DENZAKI // RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'16px',color:'#f2faff',
   }).setOrigin(.5).setDepth(depth+2));
   const chapter=scene.registry.get('arkonStoryChapter10Done') ||
@@ -278,7 +278,7 @@ export function showArkonStoryArchivePanel(scene) {
       fontFamily:PIXEL,fontSize:'16px',color:'#ffbdca',
     }).setOrigin(.5).setDepth(depth+11));
     add(scene.add.text(780,386,
-      'Your Arkon Story races, cars, money and choices will reset.\nOther profiles and Arkon Dev Career are not changed.',{
+      'Your Aruken Story races, cars, money and choices will reset.\nOther profiles and the Arkon Den developer Career save are not changed.',{
         fontFamily:BODY,fontSize:'21px',color:'#ffffff',
         align:'center',wordWrap:{width:790},
       }).setOrigin(.5).setDepth(depth+11));

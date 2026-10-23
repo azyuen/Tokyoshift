@@ -45,7 +45,7 @@ export function showArkonRwbContract(scene,{onContinue}={}){
   }).setOrigin(.5).setDepth(depth+3));
   text(319,552,'CONDITION: STRUCTURAL + ENGINE RESTORATION REQUIRED',16,'#192735',PIXEL);
   text(319,587,'THE PORSCHE OCCUPIES A GARAGE SLOT. NO RACING OR TUNING.',17,'#1f2934');
-  own(scene.add.text(1190,630,'ARKON DEN',{
+  own(scene.add.text(1190,630,'ARUKEN DENZAKI',{
     fontFamily:BODY,fontSize:'28px',fontStyle:'italic',color:'#1b3448'
   }).setOrigin(1,.5).setDepth(depth+3));
   own(scene.add.rectangle(1190,650,224,2,0x1e3445,1).setOrigin(1,.5).setDepth(depth+3));

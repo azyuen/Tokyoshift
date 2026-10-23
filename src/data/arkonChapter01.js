@@ -1,7 +1,7 @@
 import { ARKON_CHAPTER_01_EXTENDED_STEPS } from './arkonChapter01Extended.js?v=20261022-r649';
 // A one-chapter-at-a-time historical campaign, separate from Career.
 export const ARKON_CHAPTER_01 = {
-  id:'arkonChapter01', title:'ARKON DEN // CHAPTER 01',
+  id:'arkonChapter01', title:'ARUKEN DENZAKI // CHAPTER 01',
   steps:[
     {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
       composition:'car-behind-cast',
@@ -82,7 +82,7 @@ export const ARKON_CHAPTER_01 = {
     {type:'MANGA',title:'AFTER HOURS',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
         {speaker:'right',rightPose:'homeNormal',text:'I am Sayaka, by the way.'},
-        {speaker:'left',leftPose:'devTalking',text:'Arkon.'},
+        {speaker:'left',leftPose:'devTalking',text:'Aruken.'},
         {speaker:'right',rightPose:'homeSerious',text:'I know.'},
       ]},
     {type:'CLEAR_STAGE'},

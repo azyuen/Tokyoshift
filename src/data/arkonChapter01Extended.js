@@ -1,4 +1,4 @@
-// R649 — the second half of Arkon's first chapter. No changes to Career canon.
+// R649 — the second half of Aruken's first chapter. No changes to Career canon.
 // Real race milestones and saved scene checkpoints; no hidden car stat boosts.
 const manga=(title,lines,characters={left:'arkonDen',right:'sayakaFujieda'})=>({
   type:'MANGA',title,characters,
@@ -72,7 +72,7 @@ export const ARKON_CHAPTER_01_EXTENDED_STEPS = [
     ['a','And then?'],
     ['s','Then decide whether you need parts or practice.'],
     ['a','Will you be here to check my results?','devLaughing'],
-    ['s','I have things to do, Arkon. I do not live at the meet.'],
+    ['s','I have things to do, Aruken. I do not live at the meet.'],
     ['a','Noted.'],
     ['s','You can leave the figures with the desk. If I have a moment, I will look.'],
     ['a','That sounded almost like an invitation.'],
@@ -232,7 +232,7 @@ export const ARKON_CHAPTER_01_EXTENDED_STEPS = [
     ['a','There is a place near the bridge that does terrible coffee.'],
     ['s','You are inviting me somewhere with terrible coffee?'],
     ['a','I cannot afford to promise good coffee. I can promise I will stop talking about lap times.'],
-    ['s','Drag times, Arkon. We are not driving in circles.','homeHappy'],
+    ['s','Drag times, Aruken. We are not driving in circles.','homeHappy'],
     ['a','See? I already need you there.'],
   ]),
   {type:'CLEAR_STAGE'},
@@ -313,7 +313,7 @@ export const ARKON_CHAPTER_01_EXTENDED_STEPS = [
     ['a','That sounds like another challenge.'],
     ['s','You do seem to enjoy those.','homeHappy'],
     ['a','I suppose I will have to earn the next conversation.'],
-    ['s','You could just say hello, Arkon.','homeNormal'],
+    ['s','You could just say hello, Aruken.','homeNormal'],
     ['a','Right. I am still learning the basics.','devLaughing'],
   ]),
   {type:'CLEAR_STAGE'},

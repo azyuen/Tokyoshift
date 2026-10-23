@@ -3,7 +3,7 @@ import { characters } from '../data/characters.js?v=20261021-r629';
 import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js?v=20261022-r640';
 
 // Both speakers share the notch-safe compact reading zone. Sayaka's portrait anchors the
-// left edge; Arkon's portrait faces in from the RIGHT of the same bubble.
+// left edge; Aruken's portrait faces in from the RIGHT of the same bubble.
 // Longer/wider bubbles hold 4-5 lines without clipping; the centre/right
 // driving field, bottom pedals and speed cluster remain unobstructed.
 const GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS;
@@ -26,7 +26,7 @@ export function createGinzaBanterHud(scene,{storyCruise=false,chapter03=false}={
       initialPose,
     });
   const left = create('SAYAKA', sayakaVisual, sayakaKey, 'left', GINZA_CHAT_LAYOUT.left,sayakaPose);
-  const right = create('ARKON', arkonVisual, arkonKey, 'right', GINZA_CHAT_LAYOUT.right,arkonPose);
+  const right = create('ARUKEN', arkonVisual, arkonKey, 'right', GINZA_CHAT_LAYOUT.right,arkonPose);
   const toggle = (hud, visible) => hud.objects.forEach(obj => obj?.setVisible?.(visible));
   const hide = () => { toggle(left, false); toggle(right, false); };
   hide();

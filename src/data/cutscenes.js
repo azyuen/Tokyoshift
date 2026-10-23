@@ -1062,7 +1062,7 @@ export const CUTSCENES = {
     pages: [
       { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "Seven drivers. You've built a team people across Tokyo respect. Well done." },
       { speaker: 'right', pose: 'idle', text: "Sayaka? I thought you were managing the Ginza collection." },
-      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. And I've spent years at the meets helping drivers and engineers with strategy. Arkon will tell you how opinionated I can be." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. And I've spent years at the meets helping drivers and engineers with strategy. Aruken will tell you how opinionated I can be." },
       { speaker: 'right', pose: 'idle', text: "You never mentioned that." },
       { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "It wasn't the right time. Now you're entering the professional circuit. If you'll have me, I'll join as your team strategist." },
       { speaker: 'right', pose: 'idle', text: "Welcome to the team." },

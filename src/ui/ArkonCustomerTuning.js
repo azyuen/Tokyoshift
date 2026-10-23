@@ -1,4 +1,4 @@
-// R660 — Arkon's paid guest-car jobs use the same THREE-PANEL framing and
+// R660 — Aruken's paid guest-car jobs use the same THREE-PANEL framing and
 // foreground coordinates as the ordinary Canal Yard Garage. All customer cars
 // remain temporary displays; changes never mutate owned cars or player tuning.
 import {
@@ -47,7 +47,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
     .setDepth(depth).setScrollFactor(0).setInteractive());
 
   // Match the normal 620px Canal Yard car and 500px wheel-contact line.
-  // Arkon stands a little smaller and BEHIND the car, not over its bonnet.
+  // Aruken stands a little smaller and BEHIND the car, not over its bonnet.
   // The customer's wheels track the slow drive-in distance until it stops.
   stage=showStoryStage(scene,{
     backgroundId:'workshop:shinonomeCanalYard:night',
@@ -104,7 +104,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
     :'CUSTOMER '+(job.index+1)+' / 5  //  PARTS PAID BY CLIENT';
   text(50,35,'CANAL YARD  //  CUSTOMER TUNING',16);
   text(50,62,subtitle,9,'#8cc8ec');
-  text(1163,24,'ARKON BANK BALANCE',9,'#8cc8ec',PIXEL,1);
+  text(1163,24,'ARUKEN BANK BALANCE',9,'#8cc8ec',PIXEL,1);
   text(1512,52,money(scene.registry?.get?.('cash')),17,'#ffe08a',PIXEL,1);
 
   text(SIDE.x+20,SIDE.y+26,'ENGINE MODIFICATIONS',11,'#8cc8ec');
@@ -223,7 +223,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
       ? 'Requested specification reached. The car is ready for handover.'
       : job.maximum
         ? 'Fit every Canal Yard engine upgrade to complete the build.'
-        : 'Tap each part to select upgrades. Client pays parts; Arkon earns labour.');
+        : 'Tap each part to select upgrades. Client pays parts; Aruken earns labour.');
   }
 
   const control={active:true,destroy:clean,levels};

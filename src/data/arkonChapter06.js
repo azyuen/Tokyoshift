@@ -1,4 +1,4 @@
-// R668 — Chapter 06: Arkon and Sayaka's positive business/relationship peak.
+// R668 — Chapter 06: Aruken and Sayaka's positive business/relationship peak.
 // Same black repossessed RWB: repay finance, restore, independently certify,
 // cinematic no-input drive, then personal gift to Sayaka under the Ferris wheel.
 const A='arkonDen',S='sayakaFujieda',K='kenjiOkabe';
@@ -42,7 +42,7 @@ const stage=(caption,backgroundId,cars=[],cast=together)=>[
     meetCarLayout:backgroundId.startsWith('meet:')?'yokohamaGift':null,
     meetCastLayout:backgroundId.startsWith('meet:')?'yokohamaGift':null,
     characters:cast,cars},
-  {type:'HOLD_SCENE',label:caption,caption:'ARKON DEN // EVERYTHING WE BUILT',
+  {type:'HOLD_SCENE',label:caption,caption:'ARUKEN DENZAKI // EVERYTHING WE BUILT',
     revealMs:800},
 ];
 const workshop=(caption,car)=>{
@@ -53,7 +53,7 @@ const workshop=(caption,car)=>{
 };
 export const ARKON_CHAPTER_06={
   id:'arkonChapter06',
-  title:'ARKON DEN // CHAPTER 06: EVERYTHING WE BUILT',
+  title:'ARUKEN DENZAKI // CHAPTER 06: EVERYTHING WE BUILT',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:6},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter06Commissions',timeOfDay:'day'},
@@ -68,7 +68,7 @@ export const ARKON_CHAPTER_06={
     ]),
     {type:'PHONE',title:'NEW INVOICES // KENJI OKABE',callerId:K,callerName:'KENJI OKABE',
       presentationMode:'openingSwipe',pages:[
-        {speaker:'caller',text:'Arkon. Your Mine\'s owner is telling everyone who repaired his car.'},
+        {speaker:'caller',text:'Aruken. Your Mine\'s owner is telling everyone who repaired his car.'},
         {speaker:'player',text:'I hope he mentioned the paperwork.'},
         {speaker:'caller',text:'He did. Three paying commissions are confirmed, and the owners have signed the work orders.'},
         {speaker:'player',text:'I cannot take the risk without knowing the costs.'},
@@ -211,15 +211,15 @@ export const ARKON_CHAPTER_06={
       say('I wanted to see you find your feet again.','homeNormal'),
       ark('I did not realise it then, but I started looking forward to those evenings.','storyCoolShy'),
       ark('Not just because there was more work coming in.','storyCoolShy'),
-      say('Arkon...','homeNormal'),
+      say('Aruken...','homeNormal'),
     ]),
     {type:'CHOICE',key:'ch6GiftWords',title:'UNDER THE YOKOHAMA LIGHTS',
-      subtitle:'Arkon has one more thing to tell Sayaka.',
+      subtitle:'Aruken has one more thing to tell Sayaka.',
       choices:[
         {id:'simple',to:'giftSimple',label:'TELL HER SIMPLY',
           description:'A quiet thank-you, without a prepared speech.'},
         {id:'playful',to:'giftPlayful',label:'TRY TO MAKE HER LAUGH',
-          description:'Arkon stays Arkon, even for a moment like this.'},
+          description:'Aruken stays Aruken, even for a moment like this.'},
       ]},
     {type:'LABEL',name:'giftSimple'},
     manga('JUST TWO WORDS',[
@@ -239,13 +239,13 @@ export const ARKON_CHAPTER_06={
       ark('Sayaka... the Porsche is yours.','storySerious'),
       say('Wait. You cannot mean that.','homeSerious'),
       ark('It is repaired, inspected and completely paid for. I had the papers prepared.','storyTalking'),
-      say('Arkon, that is an extraordinary thing to give someone.','homeSerious'),
+      say('Aruken, that is an extraordinary thing to give someone.','homeSerious'),
       ark('I know. I spent a lot of time wondering if I could even ask you to take it.','storyCoolShy'),
       ark('But when things were at their worst, you stayed. You gave me hope.','storySerious'),
       ark('I wanted this car, of all things, to become a good memory for you too.','storyCoolShy'),
       say('I... I really do not know what to say.','homeNormal'),
       ark('You do not have to answer tonight.','storySheepish'),
-      say('I am grateful, Arkon. More than I can put into words.','homeNormal'),
+      say('I am grateful, Aruken. More than I can put into words.','homeNormal'),
       ark('Well... guess that is what I needed to tell you...','storyCoolShy'),
       say('...','homeNormal'),
       ark('How about we just enjoy the view?','storyCoolShy'),
