@@ -219,6 +219,11 @@ export function giftArkonCh6Porsche(s){
     owned.find(id=>cars[id])||null);
   if(read(s,'preferredCarId')==='rwbStellaPorsche')set(s,'preferredCarId',
     owned.find(id=>cars[id])||null);
+  // Chapter 07 must be accessible immediately without visiting a Career
+  // unlock menu or waiting for a reload.
+  set(s,'arkonStoryWarehouseUnlocked',true);
+  set(s,'garageTier',Math.max(2,n(read(s,'garageTier'))));
+  set(s,'workshopLocationId','shinonomeWarehouseStrip');
   // A private personal transfer, not Ginza Gallery inventory or Career reward.
   set(s,'arkonStoryRwbProject',{...p,gifted:true,owner:'sayakaFujieda',
     status:'gifted-to-sayaka-with-roadworthiness-certificate',acquired:true,
