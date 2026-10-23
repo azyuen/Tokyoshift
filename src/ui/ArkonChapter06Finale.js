@@ -3,12 +3,17 @@
 // After a long uninterrupted fade, Chapter 06's conclusion appears.
 import {showStoryStage} from './StoryStage.js?v=20261023-r671';
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
+const WHEEL_VENUE='meet:yokohamaMinatoMirai:night';
 const WATCH_ASSET={
   key:'arkonSayakaWatchingStory',
   path:'assets/Characters/Main/arkon_sayaka_watching.png',
 };
 export function showArkonChapter06Finale(scene,{onComplete}={}){
   if(!scene?.add||scene._arkonCh6Finale?.active)return null;
+  // Never render the couple over the previous/incorrect Meet background.
+  const meet='meet:'+(scene.selectedMeetLocation||
+    scene.registry?.get?.('meetLocation'))+':'+(scene.worldPhase||'night');
+  if(meet!==WHEEL_VENUE)return null;
   let closed=false,ending=false;
   const objects=[],add=o=>(objects.push(o),o);
   // The Meet was switched to the Ferris wheel before RaceScene exited.
