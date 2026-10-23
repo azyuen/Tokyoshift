@@ -104,7 +104,7 @@ export const ARKON_CHAPTER_06={
     {type:'ARKON_CH6_REPAY'},
     manga('THE LETTER',[
       ark('The finance company has confirmed the Porsche debt is paid in full.','storySerious'),
-      say('Three million yen. Really gone?','oshiageSurprised'),
+      say('Three million yen. Really gone?','oshiageHappy'),
       ark('The invoices paid for it. Not a prize, not somebody rescuing me.','storySerious'),
       say('You earned it.','oshiageHappy'),
       ark('I still need to rebuild the thing.','storySheepish'),
