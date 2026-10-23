@@ -16,6 +16,7 @@ export function showStoryStage(scene, {
   backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
   castBehindCar = false, characterScale = 1, onArrivalComplete = null,
   meetDuel = false, fadeInMs = 0,
+  meetCarLayout = null, meetCastLayout = null,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -221,10 +222,13 @@ export function showStoryStage(scene, {
         layerBias:carInFront?2:-1,
       }):null;
       const duelCar=duel?getChapter05DuelCar(i):null;
-      const x=Number(duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(duelCar?.targetWidth??template?.car.targetWidth??c.width??
+      const ch6Car=meetCarLayout==='yokohamaGift' &&
+        template?.kind==='meet' && i===0
+        ? {x:815,y:409,targetWidth:518,flipX:false}:null;
+      const x=Number(ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
+      const groundY=Number(ch6Car?.y??duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
         (c.depth??(carInFront
@@ -241,8 +245,8 @@ export function showStoryStage(scene, {
           // Meet createCarDisplay owns the original wheel/body centre conversion.
           // Preserve the EXACT previous native single-car geometry for all
           // other chapters. Only Chapter 05's explicit matchup uses two bays.
-          if(duel)carObjects=scene.createCarDisplay(c.model,x,groundY,
-            targetWidth,layer,duelCar.flipX,
+          if(duel||ch6Car)carObjects=scene.createCarDisplay(c.model,x,groundY,
+            targetWidth,layer,(duelCar||ch6Car).flipX,
             c.paintColor??getCarPaintColor(
               (scene.registry.get('carStates')||{})[c.carId]||{}));
           else carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
@@ -321,8 +325,14 @@ export function showStoryStage(scene, {
     });
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
-      const assigned=duel?getChapter05DuelActor(a.role):
-        template?getNativeCastPlacement(template,i,actors.length,a.role):null;
+      const ch6Cast=meetCastLayout==='yokohamaGift' && template?.kind==='meet'
+        ? a.role==='yokohamaArkon'
+          ? {x:402,feetY:599,height:299}
+          :a.role==='yokohamaSayaka'
+            ? {x:608,feetY:599,height:291}:null
+        :null;
+      const assigned=ch6Cast??(duel?getChapter05DuelActor(a.role):
+        template?getNativeCastPlacement(template,i,actors.length,a.role):null);
       const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
         sourceWidth:viewport?.sourceWidth||1672,
@@ -344,6 +354,7 @@ export function showStoryStage(scene, {
       const sprite=addImage(a.asset,x,feet,null,height,layer,
         a.fadeInMs ? 0 : 1,true);
       if(sprite){
+        if(a.flipX)sprite.setFlipX(true);
         actorImages.set(a.id,sprite);
         if(duel && a.approach && scene.tweens?.add){
           // Daigo's shameless attempt to get closer to Sayaka happens while

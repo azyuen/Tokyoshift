@@ -6,10 +6,10 @@ import {
 } from './StoryScript.js?v=20261023-r670';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r670';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r671';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r670';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r671';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
@@ -20,14 +20,14 @@ import {
   getArkonCh6Job,recordArkonCh6Job,leaseArkonCh6Warehouse,
   settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
   beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
-} from '../data/arkonChapter06Work.js?v=20261023-r668';
+} from '../data/arkonChapter06Work.js?v=20261023-r671';
 import {
   ch7Progress,startArkonCh7Work,finishArkonCh7Work,
   getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,
   convertArkonCh7Car,startArkonCh7SoloDrive,finishArkonCh7SoloDrive
 } from '../data/arkonChapter07Progress.js?v=20261023-r669';
-import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r668';
-import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r668';
+import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r671';
+import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r671';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
@@ -1006,8 +1006,10 @@ export class StoryDirector {
           // Never put dialogue on top of the moving Porsche. Its native
           // garage roll must reach the stop position before the next prompt.
           const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
-          const revealing=this.session.id==='arkonChapter05' &&
-            step.meetDuel===true && Number(step.fadeInMs)>0;
+          const revealing=(this.session.id==='arkonChapter05' &&
+              step.meetDuel===true ||
+              this.session.id==='arkonChapter06') &&
+            Number(step.fadeInMs)>0;
           if(rolling||revealing)this.wait={kind:'dialogue',index};
           const stage=showStoryStage(scene,(rolling||revealing)?{
             ...step,onArrivalComplete:()=>{
@@ -1016,7 +1018,7 @@ export class StoryDirector {
             },
           }:step);
           if((this.session.id==='arkonChapter04'||revealing) && !stage){
-            this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
+            this.error='STORY STAGE UNAVAILABLE';return;
           }
           if(rolling||revealing)return;
           this.advance(); continue;
@@ -1053,7 +1055,29 @@ export class StoryDirector {
           if (sceneCutsceneActive(scene) || scene._compactStoryDialogue?.active) return;
           const onDone = () => {
             if (!this.session || this.wait?.index !== index) return;
-            this.advance();
+            if(this.session.id!=='arkonChapter06' || type!=='MANGA'){
+              this.advance();return;
+            }
+            // Dialogue must fully dissolve before revealing the existing
+            // workshop/Meet stage. The NEXT cutscene cannot auto-pop up.
+            scene.time.delayedCall(140,()=>{
+              if(this.session?.id!=='arkonChapter06' ||
+                 this.session.index!==index||this.wait?.index!==index)return;
+              const prompt=showStoryContinuePrompt(scene,{
+                label:'CONTINUE WHEN READY',
+                caption:'TAKE IN THE SCENE',
+                revealMs:950,
+                onContinue:()=>{
+                  if(this.session?.index===index&&this.wait?.index===index)
+                    this.advance();
+                },
+                onCancel:({reason})=>{
+                  if(this.session?.index===index && reason!=='shutdown')
+                    this.error='STORY SCENERY HOLD CANCELLED';
+                },
+              });
+              if(!prompt) this.advance();
+            });
           };
           const onCancel = payload => {
             if (!this.session || this.wait?.index !== index) return;

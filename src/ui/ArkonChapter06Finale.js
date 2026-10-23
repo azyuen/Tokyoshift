@@ -1,75 +1,123 @@
-// R668 — Yokohama night ending. A quiet pixel-art rear-view pair.
-// Drawn in Phaser so no new image file or third-party art is required.
-// It sits over the actual authored Minato Mirai/Ferris-wheel Meet panorama.
-import {showStoryStage} from './StoryStage.js?v=20261023-r665';
+// R671 — the ACTUAL approved Arkon/Sayaka rear-view asset replaces the
+// provisional block silhouettes. No artificial black footer over Yokohama.
+// After a long uninterrupted fade, Chapter 06's conclusion appears.
+import {showStoryStage} from './StoryStage.js?v=20261023-r671';
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
+const WHEEL_VENUE='meet:yokohamaMinatoMirai:night';
+const WATCH_ASSET={
+  key:'arkonSayakaWatchingStory',
+  path:'assets/Characters/Main/arkon_sayaka_watching.png',
+};
 export function showArkonChapter06Finale(scene,{onComplete}={}){
   if(!scene?.add||scene._arkonCh6Finale?.active)return null;
-  let closed=false;const depth=1700,items=[],add=o=>(items.push(o),o);
+  // Never render the couple over the previous/incorrect Meet background.
+  const meet='meet:'+(scene.selectedMeetLocation||
+    scene.registry?.get?.('meetLocation'))+':'+(scene.worldPhase||'night');
+  if(meet!==WHEEL_VENUE)return null;
+  let closed=false,ending=false;
+  const objects=[],add=o=>(objects.push(o),o);
+  // The Meet was switched to the Ferris wheel before RaceScene exited.
+  // Reuse its live scenery and only draw the lifted, smaller RWB on top.
   const stage=showStoryStage(scene,{
-    backgroundId:'meet:yokohamaMinatoMirai:night',
-    stageMode:'native',privateMeet:true,characters:[],
+    backgroundId:'$CURRENT_MEET',
+    stageMode:'native',characters:[],depth:158,
     cars:[{carId:'rwbStellaPorsche'}],
+    meetCarLayout:'yokohamaGift',
   });
   if(!stage)return null;
-  const clean=()=>{
+  const destroy=()=>{
     if(closed)return;
     closed=true;
-    items.forEach(x=>x?.destroy?.());
+    scene.load?.off?.(Phaser.Loader.Events.COMPLETE,displayPair);
+    objects.forEach(o=>{
+      scene.tweens?.killTweensOf?.(o);
+      o?.destroy?.();
+    });
     stage?.destroy?.();
-    scene.events?.off?.('shutdown',clean);
+    scene.events?.off?.('shutdown',destroy);
     if(scene._arkonCh6Finale===control)scene._arkonCh6Finale=null;
   };
-  add(scene.add.rectangle(780,420,1560,840,0x050a14,.26)
-    .setDepth(depth).setInteractive().setScrollFactor(0));
-  // Low-opacity foreground vignette, full-screen but panorama stays visible.
-  add(scene.add.rectangle(780,743,1560,194,0x02070d,.93)
-    .setDepth(depth+3).setScrollFactor(0));
-  // Two deliberately back-facing pixel-art figures looking over the bay.
-  // Arkon: dark charcoal collar, short hair with grey at the temples.
-  const g=add(scene.add.graphics().setDepth(depth+2).setScrollFactor(0));
-  g.fillStyle(0x070e18,.40);g.fillEllipse(606,624,270,28);
-  // Arkon coat, tapered legs and shoulders.
-  g.fillStyle(0x1a2433,1);
-  g.fillRect(486,502,108,109);g.fillRect(500,607,37,29);g.fillRect(550,607,35,29);
-  g.fillRect(473,518,21,95);g.fillRect(591,518,20,89);
-  g.fillStyle(0x0d111b,1);g.fillRect(499,633,38,10);g.fillRect(549,633,38,10);
-  g.fillStyle(0x29323f,1);g.fillRect(494,506,10,100);g.fillRect(579,506,10,100);
-  g.fillStyle(0xc4a083,1);g.fillRect(513,472,57,36);
-  g.fillStyle(0x111820,1);g.fillRect(507,445,70,32);
-  g.fillRect(507,463,12,21);g.fillRect(566,463,12,21);
-  g.fillStyle(0x7b7b7c,1);g.fillRect(507,468,6,11);g.fillRect(570,468,7,11);
-  // Sayaka: shoulder-length dark hair, narrow-waisted coat, slight turn.
-  g.fillStyle(0x271d2a,1);
-  g.fillRect(646,512,91,97);g.fillRect(659,604,32,31);g.fillRect(702,604,29,31);
-  g.fillRect(633,528,18,78);g.fillRect(736,528,19,75);
-  g.fillStyle(0x11121a,1);g.fillRect(658,633,33,10);g.fillRect(701,633,33,10);
-  g.fillStyle(0x482e3e,1);g.fillRect(656,520,11,82);g.fillRect(724,520,9,81);
-  g.fillStyle(0xcba88c,1);g.fillRect(668,471,46,39);
-  g.fillStyle(0x171521,1);g.fillRect(659,452,62,23);g.fillRect(655,466,15,66);
-  g.fillRect(713,466,13,52);
-  // Their arms meet near the center; keep the moment understated.
-  g.fillStyle(0x1a2433,1);g.fillRect(594,551,29,15);
-  g.fillStyle(0x271d2a,1);g.fillRect(619,553,30,14);
-  g.fillStyle(0xb89985,1);g.fillRect(620,556,17,9);
-  add(scene.add.text(780,680,'EVERYTHING WE BUILT',{
-    fontFamily:PIXEL,fontSize:'22px',color:'#f8ecce'
-  }).setOrigin(.5).setDepth(depth+5).setScrollFactor(0));
-  add(scene.add.text(780,732,'YOKOHAMA  //  JUST THE TWO OF THEM',{
-    fontFamily:BODY,fontSize:'16px',color:'#b5d9e5'
-  }).setOrigin(.5).setDepth(depth+5).setScrollFactor(0));
-  const button=add(scene.add.rectangle(780,788,344,54,0x123c46,1)
-    .setStrokeStyle(2,0x9fe4d8).setDepth(depth+7)
-    .setInteractive({useHandCursor:true}).setScrollFactor(0));
-  add(scene.add.text(780,788,'COMPLETE CHAPTER 06  >',{
-    fontFamily:PIXEL,fontSize:'11px',color:'#f2ffff'
-  }).setOrigin(.5).setDepth(depth+8).setScrollFactor(0));
-  button.once('pointerdown',()=>{
-    if(closed)return;
-    clean();onComplete?.();
-  });
-  const control={active:true,destroy:clean};
+  const control={active:true,destroy};
   scene._arkonCh6Finale=control;
-  scene.events?.once('shutdown',clean);
+  scene.events?.once?.('shutdown',destroy);
+  const blocker=add(scene.add.rectangle(780,420,1560,840,0x000000,.0001)
+    .setDepth(1400).setScrollFactor(0).setInteractive());
+  // The complete photograph remains unobstructed: no black baseline/strip.
+  const displayPair=()=>{
+    if(closed||scene.sys?.isActive?.()===false ||
+      !scene.textures?.exists?.(WATCH_ASSET.key))return;
+    const texture=scene.textures.get(WATCH_ASSET.key);
+    const src=texture.getSourceImage();
+    const height=382;
+    const width=height*(src?.width||1024)/Math.max(1,src?.height||1536);
+    const pair=add(scene.add.image(461,613,WATCH_ASSET.key)
+      .setOrigin(.5,1).setDisplaySize(width,height)
+      .setDepth(1450).setScrollFactor(0));
+    pair.setAlpha(0);
+    scene.tweens?.add?.({targets:pair,alpha:1,duration:1800,ease:'Sine.InOut'});
+  };
+  if(scene.textures.exists(WATCH_ASSET.key))displayPair();
+  else{
+    scene.load.image(WATCH_ASSET.key,WATCH_ASSET.path);
+    scene.load.once(Phaser.Loader.Events.COMPLETE,displayPair);
+    if(!scene.load.isLoading())scene.load.start();
+  }
+  const title=add(scene.add.text(790,137,'EVERYTHING WE BUILT',{
+    fontFamily:PIXEL,fontSize:'17px',color:'#fff2dd',
+    stroke:'#172233',strokeThickness:5,
+  }).setOrigin(.5).setDepth(1490).setScrollFactor(0));
+  const subtitle=add(scene.add.text(790,171,'YOKOHAMA  //  JUST THE TWO OF THEM',{
+    fontFamily:BODY,fontSize:'15px',color:'#d5e9f0',
+    stroke:'#172233',strokeThickness:4,
+  }).setOrigin(.5).setDepth(1490).setScrollFactor(0));
+  void title;void subtitle;void blocker;
+  // An unobtrusive Continue control lives in the right action column;
+  // the waterfront image is not hidden by large bottom bars.
+  const button=add(scene.add.rectangle(1360,748,322,64,0x173a42,.96)
+    .setStrokeStyle(2,0x90e7d6)
+    .setDepth(1510).setScrollFactor(0)
+    .setInteractive({useHandCursor:true}));
+  const label=add(scene.add.text(1360,748,'FINISH CHAPTER 06  >',{
+    fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
+  }).setOrigin(.5).setDepth(1511).setScrollFactor(0));
+  const black=add(scene.add.rectangle(780,420,1560,840,0x02060e,1)
+    .setAlpha(0).setDepth(1700).setScrollFactor(0));
+  const showEndingCard=()=>{
+    if(closed)return;
+    const popup=add(scene.add.rectangle(780,421,845,337,0x0a1d2b,.99)
+      .setStrokeStyle(2,0x9bcad7)
+      .setDepth(1720).setScrollFactor(0));
+    const headline=add(scene.add.text(780,352,'CHAPTER 06 COMPLETE',{
+      fontFamily:PIXEL,fontSize:'22px',color:'#ffe7b7',
+    }).setOrigin(.5).setDepth(1721).setScrollFactor(0));
+    const description=add(scene.add.text(780,410,
+      'EVERYTHING WE BUILT\nTHE PORSCHE NOW BELONGS TO SAYAKA',{
+        fontFamily:BODY,fontSize:'20px',color:'#e4edf5',
+        align:'center',lineSpacing:9,
+      }).setOrigin(.5).setDepth(1721).setScrollFactor(0));
+    const exit=add(scene.add.rectangle(780,518,334,58,0x1d5756,1)
+      .setStrokeStyle(2,0x9be7dc).setDepth(1722)
+      .setScrollFactor(0).setInteractive({useHandCursor:true}));
+    const exitLabel=add(scene.add.text(780,518,'RETURN TO TOKYO',{
+      fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(1723).setScrollFactor(0));
+    void popup;void headline;void description;void exitLabel;
+    exit.once('pointerdown',()=>{
+      if(closed)return;
+      destroy();onComplete?.();
+    });
+  };
+  button.once('pointerdown',()=>{
+    if(ending||closed)return;
+    ending=true;
+    button.disableInteractive().setVisible(false);
+    label.setVisible(false);
+    // 5 seconds, no immediate popup: let the final waterfront image fade
+    // completely into black before revealing the chapter completion.
+    scene.tweens.add({targets:black,alpha:1,duration:5000,
+      ease:'Sine.InOut',onComplete:()=>{
+        if(!closed)scene.time.delayedCall(900,showEndingCard);
+      }});
+  });
   return control;
 }
