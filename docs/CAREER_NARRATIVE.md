@@ -1,5 +1,8 @@
 # Tokyo SHIFT — Career narrative and emotional beats
 
+> **Owner-approved story change — 23 October 2026 / R674:** Retire the father's ex-professional-driver identity, any inherited racing prestige, father–Sayaka team-strategist connection, and the planned secret father reveal at championship victory. The player is an ordinary enthusiast who loves cars. Sayaka has been a family friend for years. Arkon restores an affordable starter car (AE86 or Civic EF); she and Arkon discreetly help Daichi and the new driver start in Tokyo. Sayaka's skills and eventual Pro Circuit team-strategy role derive from her own experience and Arkon's prequel, not an undisclosed relationship with the player's father. Arkon and Sayaka own Ginza Gallery together (50/50). **Old material in this document is retained for history but is superseded wherever it conflicts.** See [R674 Chapter 10](ARKON_CHAPTER_10_R674.md).
+
+
 Adopted planning reference: 11 October 2026.
 Purpose: preserve the career synopsis, emotional-depth discussion and owner-approved Sayaka/father backstory in one place for upcoming cutscene work.
 Companions: [Character Bible](CHARACTER_BIBLE.md), [Narrative authoring](NARRATIVE_AUTHORING.md), [Professional circuit blueprint](DRAG_COMPLEX_BLUEPRINT.md).
