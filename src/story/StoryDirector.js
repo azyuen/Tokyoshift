@@ -28,6 +28,8 @@ import {
 } from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import {startArkonCh8Race,finishArkonCh8Race,recordArkonCh8Contract}
   from '../data/arkonChapter08Races.js?v=20261023-r672';
+import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
+  from '../data/arkonChapter09Races.js?v=20261023-r673';
 import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r671';
 import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r671';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
@@ -120,6 +122,13 @@ export class StoryDirector {
          scene.registry.get('arkonStoryChapter08Done') ||
          (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
            scene.registry.get('workshopLocationId')!=='shinonomeWarehouseStrip'))))return false;
+    if (compiled.script.id==='arkonChapter09' &&
+        (scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter08Done') ||
+         !scene.registry.get('arkonStoryChapter08ContractSigned') ||
+         scene.registry.get('arkonStoryChapter09Done') ||
+         (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+           scene.registry.get('workshopLocationId')!=='shinonomeWarehouseStrip'))))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -177,6 +186,13 @@ export class StoryDirector {
        !scene._pendingSafeSceneStart){
       queueSafeSceneStart(scene,'RaceScene');
       return false;
+    }
+    if(checkpoint.id==='arkonChapter09' &&
+       scene.registry?.get?.('arkonStoryChapter09Race')?.active &&
+       !scene.registry.get('arkonStoryChapter09RaceResult') &&
+       sceneName(scene)!=='RaceScene' &&
+       !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
     }
     if(checkpoint.id==='arkonChapter08' &&
        scene.registry?.get?.('arkonStoryChapter08Race')?.active &&
@@ -664,6 +680,38 @@ export class StoryDirector {
             return;
           }
         }
+        if(type==='ARKON_CH9_RACE'){
+          if(this.session.id!=='arkonChapter09' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !['GarageScene','MeetScene'].includes(sceneName(scene)) ||
+             !startArkonCh9Race(scene.registry,step.index)){
+            this.error='CHAPTER 09 DEMONSTRATION UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            scene.registry.set('arkonStoryChapter09RaceResult','forfeit');
+            finishArkonCh9Race(scene.registry);
+            this.error='CHAPTER 09 RACE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH9_RETURN'){
+          if(this.session.id!=='arkonChapter09' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='MeetScene' ||
+             !finishArkonCh9Race(scene.registry)){
+            this.error='CHAPTER 09 RACE RESULT NOT RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH9_REFUSE'){
+          if(this.session.id!=='arkonChapter09' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !recordArkonCh9Refusal(scene.registry)){
+            this.error='CHAPTER 09 REFUSAL CANNOT BE RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
         if(type==='ARKON_CH8_RACE'){
           if(this.session.id!=='arkonChapter08' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
@@ -992,7 +1040,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08'].includes(this.session.id) &&
+            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -1149,7 +1197,7 @@ export class StoryDirector {
             })
             : playMangaCutscene(scene,definition,{
               preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id) ||
-                ['arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08'].includes(this.session.id),
+                ['arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
