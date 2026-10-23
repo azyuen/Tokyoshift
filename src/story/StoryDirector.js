@@ -642,10 +642,20 @@ export class StoryDirector {
           }
           if (step.privateMeet && sceneName(scene)==='MeetScene')
             scene.setStoryEncounterActive?.(true);
-          const stage=showStoryStage(scene,step);
+          // Never put dialogue on top of the moving Porsche. Its native
+          // garage roll must reach the stop position before the next prompt.
+          const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
+          if(rolling)this.wait={kind:'dialogue',index};
+          const stage=showStoryStage(scene,rolling?{
+            ...step,onArrivalComplete:()=>{
+              if(this.session?.index===index && this.wait?.index===index)
+                this.advance();
+            },
+          }:step);
           if(this.session.id==='arkonChapter04' && !stage){
             this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
           }
+          if(rolling)return;
           this.advance(); continue;
         }
         if(type==='FADE_STORY_ACTOR'){
