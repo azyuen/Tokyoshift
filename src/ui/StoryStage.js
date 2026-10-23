@@ -192,7 +192,9 @@ export function showStoryStage(scene, {
       const groundY=Number(estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
-        (c.depth??estimate?.depth??(vehicleDepth+i)));
+        (c.depth??(carInFront
+          ?Math.max(vehicleDepth+i,estimate?.depth??vehicleDepth+i)
+          :Math.min(vehicleDepth+i,estimate?.depth??vehicleDepth+i))));
       if(c.model){
         let carObjects=null;
         if(template?.kind==='workshop' && typeof scene.createCarDisplay==='function'){
@@ -293,7 +295,9 @@ export function showStoryStage(scene, {
       const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
         (Number.isFinite(Number(characterScale))?Number(characterScale):1);
       const layer=Number(template?(portraitDepth+i):
-        (a.depth??estimate?.depth??(portraitDepth+i)));
+        (a.depth??(carInFront
+          ?Math.min(portraitDepth+i,estimate?.depth??portraitDepth+i)
+          :Math.max(portraitDepth+i,estimate?.depth??portraitDepth+i))));
       const sprite=addImage(a.asset,x,feet,null,height,layer,
         a.fadeInMs ? 0 : 1,true);
       if(sprite){
