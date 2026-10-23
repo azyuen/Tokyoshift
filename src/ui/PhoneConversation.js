@@ -9,7 +9,7 @@ import {
 import {
   createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
   ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
-} from './RaceCoachHud.js?v=20261023-r664';
+} from './RaceCoachHud.js?v=20261023-r665';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -136,7 +136,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261023-r664')
+    import('./OpeningPhonePrototype.js?v=20261023-r665')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {
