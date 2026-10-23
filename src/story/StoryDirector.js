@@ -3,13 +3,13 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r668';
+} from './StoryScript.js?v=20261023-r670';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r670';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r669';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r670';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
@@ -36,7 +36,7 @@ import {
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
-import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
+import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r670';
 import { cars } from '../data/cars.js?v=20261023-r669';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
@@ -405,6 +405,7 @@ export class StoryDirector {
           this.wait={kind:'dialogue',index};
           const prompt=showStoryContinuePrompt(scene,{
             label:step.label||'CONTINUE STORY',caption:step.caption||'',
+            revealMs:step.revealMs||0,
             onContinue:()=>{
               if(this.session?.index===index && this.wait?.index===index)
                 this.advance();
@@ -1005,18 +1006,33 @@ export class StoryDirector {
           // Never put dialogue on top of the moving Porsche. Its native
           // garage roll must reach the stop position before the next prompt.
           const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
-          if(rolling)this.wait={kind:'dialogue',index};
-          const stage=showStoryStage(scene,rolling?{
+          const revealing=this.session.id==='arkonChapter05' &&
+            step.meetDuel===true && Number(step.fadeInMs)>0;
+          if(rolling||revealing)this.wait={kind:'dialogue',index};
+          const stage=showStoryStage(scene,(rolling||revealing)?{
             ...step,onArrivalComplete:()=>{
               if(this.session?.index===index && this.wait?.index===index)
                 this.advance();
             },
           }:step);
-          if(this.session.id==='arkonChapter04' && !stage){
+          if((this.session.id==='arkonChapter04'||revealing) && !stage){
             this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
           }
-          if(rolling)return;
+          if(rolling||revealing)return;
           this.advance(); continue;
+        }
+        if(type==='STORY_CAR_EXIT'){
+          if(this.session.id!=='arkonChapter05' ||
+             sceneName(scene)!=='MeetScene' ||
+             !scene._storyDirectorStage?.exitCar){
+            this.error='CHAPTER 05 MEET CAR EXIT UNAVAILABLE';return;
+          }
+          this.wait={kind:'dialogue',index};
+          scene._storyDirectorStage.exitCar(step.slot??1,step.ms||3000,()=>{
+            if(this.session?.index===index && this.wait?.index===index)
+              this.advance();
+          });
+          return;
         }
         if(type==='FADE_STORY_ACTOR'){
           if(!scene._storyDirectorStage?.fadeActor){

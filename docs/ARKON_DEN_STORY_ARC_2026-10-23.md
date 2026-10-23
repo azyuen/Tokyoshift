@@ -1,5 +1,12 @@
 # Tokyo SHIFT — Arkon Den Story Arc: Creative Checkpoint
 
+## R670 presentation refinement — Chapter 05 meet storytelling
+
+The three customer-car tests and Daigo's AE86 finale retain the same real physics, rewards, and relationship dialogue. Their **Meet tableaux now show two foreground cars instead of one oversized hero car**, using the native Meet renderer and a Chapter-05-only calibrated duel layout: Arkon and Sayaka together on the left, Reika/Tetsuo/Ren/Daigo on the right. Daigo takes a few hopeful steps towards Sayaka when he first appears; he never changes cars or becomes rich. Rival introductions now include explicit respectful test challenges. Each meet reveal fades into the actual location background, holds for a **manual Continue**, and offers another player-controlled pause after dialogue before the race. At the goodbye, Daigo fades from view and his AE86 visibly reverses to the right offscreen; the pair remain together beside Arkon's car. A checkpoint migration preserves saves started under R666/R669 without repeating race commission fees. All other chapters and Career preserve their original single-car scene dimensions.
+
+---
+
+
 ## R668 implementation record — Chapter 06: Everything We Built
 
 - **Deployed scope in R668:** Three more paid service jobs use the existing physical Canal Yard tuning interface. Agreed invoice fees (¥1.4m, ¥1.6m, ¥1.8m) are ring-fenced rather than immediately credited to spending cash. The total ¥4.8m covers Warehouse HQ's ¥750k premises/equipment spend, the RWB's established ¥3m liability, and ¥900k across three structural, powertrain and independently verified safety work packages. The remaining ¥150k is released as profit at the end, once, with every finance step checkpointed.

@@ -5,6 +5,7 @@ const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 export function showStoryContinuePrompt(scene,{
   label='CONTINUE STORY',caption='',onContinue=null,onCancel=null,depth=1158,
+  revealMs=0,
 }={}) {
   if(!scene?.add || scene._storyContinuePrompt?.active) return null;
   const width=Number(scene.scale?.width||1560);
@@ -58,8 +59,25 @@ export function showStoryContinuePrompt(scene,{
   scene._storyContinuePrompt=control;
   scene.events?.once?.('shutdown',abort);
   scene.events?.once?.('destroy',abort);
+  const revealDuration=Math.max(0,Math.min(1800,Number(revealMs)||0));
+  if(revealDuration)hit.disableInteractive();
   hit.on('pointerdown',()=>{if(clear())onContinue?.();});
   title.setAlpha(0);plate.setAlpha(0);
-  scene.tweens?.add?.({targets:[title,plate],alpha:1,duration:260,ease:'Sine.Out'});
+  const displayPrompt=()=>{
+    if(!active)return;
+    hit.setInteractive({useHandCursor:true});
+    scene.tweens?.add?.({targets:[title,plate],alpha:1,duration:360,ease:'Sine.Out'});
+  };
+  if(revealDuration){
+    // Fade the dialogue away into a wide clear view of this exact Meet,
+    // THEN reveal the user's Continue control. Never auto-advance.
+    const veil=add(scene.add.rectangle(stage.x+stage.w/2,stage.y+stage.h/2,
+      stage.w,stage.h,0x040a13,1).setDepth(depth+4).setScrollFactor(0));
+    scene.tweens?.add?.({targets:veil,alpha:0,duration:revealDuration,
+      ease:'Sine.InOut',onComplete:()=>{
+        veil.destroy();
+        displayPrompt();
+      }});
+  }else displayPrompt();
   return control;
 }

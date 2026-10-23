@@ -97,6 +97,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter03Done: false,
     arkonStoryChapter04Done: false,
     arkonStoryChapter05Done: false,
+    arkonStoryCh5PacingVersion: 1,
     arkonStoryChapter06Done: false,
     arkonStoryChapter07Done: false,
     arkonStoryChapter07Work: null,
@@ -1247,6 +1248,7 @@ export function normaliseState(input = {}) {
     arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
     arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
     arkonStoryChapter05Done: storyMode && Boolean(input.arkonStoryChapter05Done),
+    arkonStoryCh5PacingVersion:storyMode?1:0,
     arkonStoryChapter06Done: storyMode && Boolean(input.arkonStoryChapter06Done),
     arkonStoryChapter07Done: storyMode && Boolean(input.arkonStoryChapter07Done),
     arkonStoryChapter07Work: storyMode && input.arkonStoryChapter07Work &&
@@ -1411,7 +1413,15 @@ export function normaliseState(input = {}) {
       input.storyDirectorProgress.index >= 0 &&
       Number.isSafeInteger(input.storyDirectorProgress.ownerSlot)
         ? { id: input.storyDirectorProgress.id,
-            index: input.storyDirectorProgress.index,
+            // R670 inserts two challenger conversations and one rematch
+             // scenery hold. Translate old numeric checkpoints exactly once.
+             index: storyMode && input.storyDirectorProgress.id==='arkonChapter05' &&
+               !input.arkonStoryCh5PacingVersion
+               ? input.storyDirectorProgress.index +
+                 (input.storyDirectorProgress.index>=110?3:
+                  input.storyDirectorProgress.index>=78?2:
+                  input.storyDirectorProgress.index>=57?1:0)
+               : input.storyDirectorProgress.index,
             ownerSlot: input.storyDirectorProgress.ownerSlot, version: 1,
             ...(input.storyDirectorProgress.vars &&
                typeof input.storyDirectorProgress.vars==='object' &&
@@ -1694,6 +1704,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
     arkonStoryChapter04Done: Boolean(registry.get('arkonStoryChapter04Done')),
     arkonStoryChapter05Done: Boolean(registry.get('arkonStoryChapter05Done')),
+    arkonStoryCh5PacingVersion:1,
     arkonStoryChapter06Done: Boolean(registry.get('arkonStoryChapter06Done')),
     arkonStoryChapter06Accounts: registry.get('arkonStoryChapter06Accounts')||null,
     arkonStoryChapter06Cruise: registry.get('arkonStoryChapter06Cruise')||null,
