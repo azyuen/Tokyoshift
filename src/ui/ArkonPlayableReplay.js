@@ -3,7 +3,7 @@
 // Never writes into the real
 // Arkon Story or Developer save. The live profile is restored on exit, and a
 // page reload simply loads the untouched persisted save.
-import {getActiveProfileIndex} from '../state/GameState.js?v=20261023-r657';
+import {getActiveProfileIndex} from '../state/GameState.js?v=20261024-r675';
 import {createStoryCheckpoint} from '../story/StoryScript.js?v=20261023-r657';
 import {queueSafeSceneStart} from './SafeSceneTransition.js?v=20261017-r573';
 import {normaliseCarGarageLocations} from '../data/workshopProgression.js?v=20261023-r662';
