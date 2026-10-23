@@ -27,7 +27,7 @@ export const CUTSCENES = {
       { speaker: 'left', pose: 'win', text: "I left a copy at your place. Have a read when you get home." },
       { speaker: 'right', pose: 'idle', text: "Thanks. Good bumping into you, but I'd better head back. I've got to wait for my car." },
       { speaker: 'left', pose: 'win', text: "You're getting a car? You can do your own Tokyo SHIFT then!" },
-      { speaker: 'right', pose: 'idle', text: "I don't think it's like that. A family friend is dropping it off. It's from my dad." },
+      { speaker: 'right', pose: 'idle', text: "Sayaka's bringing it over. She's known my family for years, and she heard how much I love cars." },
       { speaker: 'left', pose: 'win', text: "Then you'd better go! Can't wait to see what it is. I'll come by later.", emphasis: true },
     ],
     finalActionLabel: 'GO TO MAP',
@@ -40,7 +40,7 @@ export const CUTSCENES = {
     once: true,
     characters: { left: 'sayakaFujieda', right: '$PLAYER' },
     pages: [
-      { speaker: 'left', pose: 'homeNormal', text: "Your father said you needed this... I have no idea why, though." },
+      { speaker: 'left', pose: 'homeNormal', text: "Your parents say you never stop talking about cars. A friend and I helped find you a good one." },
       { speaker: 'right', pose: 'idle', text: "Wow, I can't believe I've finally got my own car!" },
       { speaker: 'left', pose: 'homeNormal', text: "It's decent enough, I guess. Do you even know how to drive?" },
       { speaker: 'right', pose: 'idle', text: "Just press accelerate, right?" },
@@ -94,8 +94,8 @@ export const CUTSCENES = {
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
       { speaker: 'left', pose: 'idle', text: "After all these years talking about driving, you finally got one of your own." },
-      { speaker: 'right', pose: 'idle', text: "I guess it makes sense my dad would get me one." },
-      { speaker: 'left', pose: 'idle', text: "And he picked a good one. It's like he knew you're going to race it. Guess you can't shake it when you're an ex-pro driver." },
+      { speaker: 'right', pose: 'idle', text: "Sayaka said some friends helped get it ready. I still can't believe it's mine." },
+      { speaker: 'left', pose: 'idle', text: "They've picked a good one. Nothing fancy, but plenty of potential. You've always wanted to get out and race." },
       { speaker: 'right', pose: 'idle', text: "It looks stock to me, though?" },
       { speaker: 'left', pose: 'win', text: "Good thing your childhood friend knows which end of a spanner to hold. We'll get some life out of it." },
       { speaker: 'left', pose: 'idle', text: "Engine, gearing, grip — we can tune it here. Bigger upgrades will need a better-equipped workshop." },
@@ -1050,8 +1050,8 @@ export const CUTSCENES = {
     finalActionLabel: 'UNLOCK GINZA',
   },
 
-  // Only reveal Sayaka's professional past after the Ginza encounter and a
-  // legitimate seven-member street crew. The pro venue controls that gate.
+  // Reveal Sayaka's practical strategy experience after Ginza and a legitimate
+  // seven-member crew. She is a family friend, NOT the player's father's strategist.
   proCircuitStrategistReveal: {
     id: 'proCircuitStrategistReveal',
     category: 'PRO CIRCUIT / STORY',
@@ -1060,9 +1060,9 @@ export const CUTSCENES = {
     once: true,
     characters: { left: 'sayakaFujieda', right: '$PLAYER' },
     pages: [
-      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "Seven drivers. You've assembled a real team. Your father would recognise what that takes." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "Seven drivers. You've built a team people across Tokyo respect. Well done." },
       { speaker: 'right', pose: 'idle', text: "Sayaka? I thought you were managing the Ginza collection." },
-      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. But back when your father raced, I was a racing-team strategist. I helped plan his team's runs." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. And I've spent years at the meets helping drivers and engineers with strategy. Arkon will tell you how opinionated I can be." },
       { speaker: 'right', pose: 'idle', text: "You never mentioned that." },
       { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "It wasn't the right time. Now you're entering the professional circuit. If you'll have me, I'll join as your team strategist." },
       { speaker: 'right', pose: 'idle', text: "Welcome to the team." },
