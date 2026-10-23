@@ -1124,3 +1124,12 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 
 
 **Opening phone pilot (R515):** Sayaka rings the player after the magazine first-car choice. The centre phone sprite vibrates until the green pick-up control is pressed, then her home portrait/dialogue slide in as a joined pale-blue card. The card swipes upward before the player's selected avatar appears on the right, delivering “Great, see you in the garage!” The car is delivered only after the player's reply finishes. The staged animation is currently for the opening call only, not every phone conversation.
+
+
+## R672 — Arkon Story Chapter 08 relationship and supporting-character continuity (23 October 2026)
+
+- **Arkon Den:** At his commercial peak after the Liberty Walk 240Z build, he still sincerely cares for Sayaka but prioritises contracts, networking, accolades and investor attention. He accepts the conditional Shibuya engineering programme guarantee tied to Warehouse HQ business assets, in spite of recognising the principle behind Sayaka's warnings. This is a signed risk, **not yet an engineering failure, bankruptcy or criminal affiliation**.
+- **Sayaka Fujieda:** Continues working full time at Oshiage and visiting Arkon's workshop. She joins three exclusive races as passenger, responds affectionately to Arkon and wears her existing evening dress at a Shibuya VIP gathering. She asks him to walk away from a troubling transaction; when he refuses, she departs the *party alone*. **The relationship has not ended; no confession, breakup, intentional unreturned calls or later reconciliation outcome is authored here.**
+- **Private Event Promoter (`storyVipPromoter`):** Unnamed, polished story-only supporting role. Facilitates the Shibuya engineering proposal and negotiates deadline, guarantees and conditional asset security. Uses a generic substitute portrait until a bespoke character asset exists. His name, criminality, private motives, other affiliations and any potential connection to Arkon's past are **unresolved**, not established facts.
+- The Arkon Story-only Shibuya gala does not reveal, create or precede a Career/Ginza Gallery job for Sayaka; the same RWB Porsche gifted in Chapter 06 remains hers.
+- Implementation details and supported scene/race mechanics: [ARKON_CHAPTER_08_R672.md](ARKON_CHAPTER_08_R672.md). Do not assume this story-only gala modifies any Career Chapter 08/09 cutscene or pro-season result.
