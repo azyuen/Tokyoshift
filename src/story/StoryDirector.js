@@ -30,6 +30,12 @@ import {startArkonCh8Race,finishArkonCh8Race,recordArkonCh8Contract}
   from '../data/arkonChapter08Races.js?v=20261023-r672';
 import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
   from '../data/arkonChapter09Races.js?v=20261023-r673';
+import {recordArkonCh10Project,startArkonCh10Race,finishArkonCh10Race,
+  openArkonCh10Ginza,recordArkonCh10Investment,prepareArkonCh10Yokohama,
+  settleArkonCh10Dispute} from '../data/arkonChapter10Work.js?v=20261023-r674';
+import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js?v=20261023-r674';
+import {showArkonCh10Restoration} from '../ui/ArkonChapter10Restoration.js?v=20261023-r674';
+import {showArkonChapter10Finale} from '../ui/ArkonChapter10Finale.js?v=20261023-r674';
 import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r671';
 import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r671';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
@@ -129,6 +135,13 @@ export class StoryDirector {
          scene.registry.get('arkonStoryChapter09Done') ||
          (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
            scene.registry.get('workshopLocationId')!=='shinonomeWarehouseStrip'))))return false;
+    if (compiled.script.id==='arkonChapter10' &&
+        (scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter09Done') ||
+         !scene.registry.get('arkonStoryChapter09Refused') ||
+         scene.registry.get('arkonStoryChapter10Done') ||
+         (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+           scene.registry.get('workshopLocationId')!=='shinonomeWarehouseStrip'))))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -186,6 +199,12 @@ export class StoryDirector {
        !scene._pendingSafeSceneStart){
       queueSafeSceneStart(scene,'RaceScene');
       return false;
+    }
+    if(checkpoint.id==='arkonChapter10' &&
+       scene.registry?.get?.('arkonStoryChapter10Race')?.active &&
+       !scene.registry.get('arkonStoryChapter10RaceResult') &&
+       sceneName(scene)!=='RaceScene' && !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
     }
     if(checkpoint.id==='arkonChapter09' &&
        scene.registry?.get?.('arkonStoryChapter09Race')?.active &&
@@ -680,6 +699,79 @@ export class StoryDirector {
             return;
           }
         }
+        if(['ARKON_CH10_SETTLEMENT','ARKON_CH10_GINZA',
+            'ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA'].includes(type)){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='CHAPTER 10 ACTION OUTSIDE ARKON STORY';return;
+          }
+          const action=type==='ARKON_CH10_SETTLEMENT'?settleArkonCh10Dispute:
+            type==='ARKON_CH10_GINZA'?openArkonCh10Ginza:
+            type==='ARKON_CH10_INVEST'?recordArkonCh10Investment:
+            prepareArkonCh10Yokohama;
+          if(!action(scene.registry)){
+            this.error='CHAPTER 10 MILESTONE NOT READY: '+type;return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH10_RESTORE'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='GarageScene' || scene.crewMode ||
+             Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)!==step.index ||
+             !ARKON_CH10_PROJECTS[step.index]){
+            this.error='CHAPTER 10 RESTORATION NOT READY';return;
+          }
+          this.wait={kind:'dialogue',index};
+          const control=showArkonCh10Restoration(scene,step.index,{onComplete:()=>{
+            if(this.session?.index!==index||this.wait?.index!==index)return;
+            if(!recordArkonCh10Project(scene.registry,step.index)){
+              this.error='CHAPTER 10 RESTORATION COULD NOT BE SAVED';return;
+            }
+            saveSessionState(scene.registry);this.advance();
+          }});
+          if(!control){this.wait=null;this.error='CHAPTER 10 RESTORATION PANEL UNAVAILABLE';}
+          return;
+        }
+        if(type==='ARKON_CH10_RACE'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !['GarageScene','MeetScene'].includes(sceneName(scene)) ||
+             !startArkonCh10Race(scene.registry)){
+            this.error='CHAPTER 10 FRIENDLY RACE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            scene.registry.set('arkonStoryChapter10RaceResult','forfeit');
+            finishArkonCh10Race(scene.registry);
+            this.error='CHAPTER 10 RACE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH10_RETURN'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='MeetScene' ||
+             !finishArkonCh10Race(scene.registry)){
+            this.error='CHAPTER 10 FRIENDLY RACE RESULT NOT RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH10_FINALE'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='MeetScene' ||
+             !scene.registry.get('arkonStoryCareerSeed') ||
+             !scene.registry.get('arkonStoryGinzaPartnership')){
+            this.error='ARKON STORY FINALE IS NOT READY';return;
+          }
+          this.wait={kind:'dialogue',index};
+          const control=showArkonChapter10Finale(scene,{onComplete:()=>{
+            if(this.session?.index===index&&this.wait?.index===index)this.advance();
+          }});
+          if(!control){this.wait=null;this.error='FINAL YOKOHAMA SCENE UNAVAILABLE';}
+          return;
+        }
         if(type==='ARKON_CH9_RACE'){
           if(this.session.id!=='arkonChapter09' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
@@ -1040,7 +1132,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09'].includes(this.session.id) &&
+            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09','arkonChapter10'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -1197,7 +1289,7 @@ export class StoryDirector {
             })
             : playMangaCutscene(scene,definition,{
               preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id) ||
-                ['arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09'].includes(this.session.id),
+                ['arkonChapter05','arkonChapter06','arkonChapter07','arkonChapter08','arkonChapter09','arkonChapter10'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
