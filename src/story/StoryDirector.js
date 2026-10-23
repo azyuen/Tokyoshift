@@ -9,9 +9,10 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r664';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r666';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
+import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
@@ -77,6 +78,12 @@ export class StoryDirector {
          scene.registry.get('gameMode')!=='arkonStory' ||
          !scene.registry.get('arkonStoryChapter03Done') ||
          scene.registry.get('arkonStoryChapter04Done')))return false;
+    if (compiled.script.id==='arkonChapter05' &&
+        (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+         scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter04Done') ||
+         scene.registry.get('arkonStoryChapter05Done') ||
+         scene.registry.get('arkonStoryChapter05Loan')?.active))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -416,7 +423,34 @@ export class StoryDirector {
           }
           this.advance();continue;
         }
-        if(type==='ARKON_MX5_RACE'){
+        if(type==='ARKON_CH5_RACE'){
+          if(this.session.id!=='arkonChapter05' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !['GarageScene','MeetScene'].includes(sceneName(scene)) ||
+             !startArkonCh5TestRace(scene.registry,step.index)){
+            this.error='CHAPTER 05 CUSTOMER TEST DRIVE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);
+          this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            scene.registry.set('arkonStoryChapter05RaceResult','forfeit');
+            finishArkonCh5TestRace(scene.registry);
+            this.error='CHAPTER 05 RACE TRANSITION FAILED';return;
+          }
+          this.advance();
+          this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH5_RETURN'){
+          if(this.session.id!=='arkonChapter05' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='MeetScene' ||
+             !finishArkonCh5TestRace(scene.registry)){
+            this.error='CHAPTER 05 CUSTOMER CAR COULD NOT BE RETURNED';return;
+          }
+          saveSessionState(scene.registry);
+          this.advance();continue;
+        }
+        if(type==='ARKON_MX5_RACE'){ 
           // One continuous REAL road sequence: solo MX-5 rolling test drive,
           // Arkon/Sayaka in-race banter, S15 joins, paused decision, real
           // rolling-start race on acceptance. No intermediate Meet or manga.
@@ -587,7 +621,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04'].includes(this.session.id) &&
+            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -704,7 +738,7 @@ export class StoryDirector {
               ...step, onComplete:onDone,onCancel,
             })
             : playMangaCutscene(scene,definition,{
-              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id),
+              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04','arkonChapter05'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
