@@ -1689,11 +1689,10 @@ export default class GarageScene extends Phaser.Scene {
 
     // Keep utility buttons clear of the enlarged W/L record on phone layouts.
     addSettingsButton(this, 925, 35);
-    if(!this.crewMode && this.registry.get('gameMode')==='arkonStory')
-      addArkonStoryObjectiveButton(this,985,35);
+    // SettingsButton owns the single Story Objective; no duplicate '?' here.
 
 
-    this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
+    this.cashText = this.add.text(1512, 23, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
     this.refreshArkonRwbLoanHud();
@@ -1702,7 +1701,7 @@ export default class GarageScene extends Phaser.Scene {
   refreshArkonRwbLoanHud() {
     const value=getArkonRwbLoan(this.registry);
     if(!this.arkonRwbLoanText?.active){
-      this.arkonRwbLoanText=this.add.text(1512,63,'',{
+      this.arkonRwbLoanText=this.add.text(1512,47,'',{
         fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ff8189'
       }).setOrigin(1,.5).setDepth(42);
     }
@@ -1942,7 +1941,8 @@ export default class GarageScene extends Phaser.Scene {
         .setText(
           locked
             ? (isArkonRwbRestoration(this.registry,this.selectedCarId)
-                ? 'RESTORATION PROJECT // REPAIRS REQUIRED'
+                ? ((this.registry.get('arkonStoryRwbProject')?.roadworthy)
+                    ? 'RESTORATION COMPLETE':'MAJOR REPAIRS REQUIRED')
                 : 'COLLECTOR SPEC (TUNING SEALED)')
             : 'TUNING // ' + this.getActiveWorkshop().shortLabel
         )
@@ -2201,15 +2201,14 @@ export default class GarageScene extends Phaser.Scene {
       const label = add(this.add.text(x, y + 34, cardLabel, {
         fontFamily: PIXEL_FONT,
         fontSize: this.crewMode ? '8px' : '9px',
-        color: active ? '#ffffff' : '#b8cad7',
+        color: isArkonRwbRestoration(this.registry,id)?'#ff87b0':
+          active ? '#ffffff' : '#b8cad7',
         align: 'center',
         lineSpacing: 0,
       }).setOrigin(0.5).setDepth(48));
 
       if(isArkonRwbRestoration(this.registry,id)){
-        add(this.add.text(x,y+46,'RESTORATION // NO DRIVE',{
-          fontFamily:PIXEL_FONT,fontSize:'6px',color:'#ff989d'
-        }).setOrigin(.5).setDepth(49));
+        // RWB label already turns pink; no second pink warning in the card.
       }
       box.on('pointerup', pointer => {
         const movedX = Math.abs(pointer.x - pointer.downX);
