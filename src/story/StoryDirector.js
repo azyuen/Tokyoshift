@@ -41,6 +41,7 @@ import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
+import {syncArkonReplayExit} from '../ui/ArkonReplayExit.js?v=20261024-r675';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
@@ -320,6 +321,9 @@ export class StoryDirector {
     if (this.wait?.kind === 'event' && this.wait.event === event) this.advance();
   }
   tick() {
+    // Replays can occupy Garage, Meet, Race and modal cutscene screens.
+    // Render a single always-interactive exit in the scene foreground.
+    syncArkonReplayExit(this.activeScene());
     if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
     if (!this.session) {
       const registry=this.game.registry;
@@ -605,6 +609,7 @@ export class StoryDirector {
                  !recordArkonCh6Job(scene.registry,step.index)){
                 this.error='CHAPTER 06 INVOICE FAILED';return;
               }
+              scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
               saveSessionState(scene.registry);
               this.advance();
             },
@@ -631,6 +636,8 @@ export class StoryDirector {
             if(!settleArkonCh6PorscheLoan(scene.registry)){
               this.error='PORSCHE FINANCE ACCOUNT NOT READY';return;
             }
+            scene.refreshArkonRwbLoanHud?.();
+            scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
             saveSessionState(scene.registry);
             this.advance();continue;
           }
