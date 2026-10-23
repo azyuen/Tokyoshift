@@ -16,7 +16,7 @@ const manga=(title,lines,cast={left:A,right:S})=>({
       ? (speaker==='right'?pose||'oshiageNeutral':'oshiageNeutral'):'idle',
   })),
 });
-const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId='$SELECTED_CAR',motion=null)=>[
+const workshop=(label,cast=[{id:A,pose:'storyMechanic'}],carId=null,motion=null)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId:'$CURRENT_WORKSHOP',stageMode:'native',
     privateMeet:false,composition:'car-behind-cast',
