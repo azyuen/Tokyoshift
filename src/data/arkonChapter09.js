@@ -146,12 +146,16 @@ export const ARKON_CHAPTER_09={
       {id:S,pose:'ginzaDress',role:'companion'},
       {id:V,pose:'idle',role:'observer'},
     ],[{carId:'rwbStellaPorsche'}]),
-    manga('AN EXIT',[
-      say('Arkon. Our advisers are waiting.','ginzaDress'),
+    manga('THE INVESTOR',[
       vip('There will be matters to settle.'),
       ark('Then we can address them properly. Not here.','ginzaSuit'),
-      say('Good evening.','ginzaDress'),
+      vip('We will be in touch.'),
     ],V),
+    manga('AN EXIT',[
+      say('Arkon. Our advisers are waiting.','ginzaDress'),
+      ark('I am ready.','ginzaSuit'),
+      say('Good evening.','ginzaDress'),
+    ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09RoadHome',timeOfDay:'night'},
     ...stage('TOKYO // THE ROAD HOME','meet:yokohamaMinatoMirai:night',together,
       [{carId:'rwbStellaPorsche'}],true),
