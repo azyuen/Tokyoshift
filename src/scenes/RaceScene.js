@@ -58,7 +58,7 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261023-r653';
+} from '../data/characters.js?v=20261023-r672';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
