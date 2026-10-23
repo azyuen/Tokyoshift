@@ -12,19 +12,45 @@ const manga=(title,lines,cast={left:A,right:S})=>({
   })),
 });
 const pair=[{id:A,pose:'storyMechanic'},{id:S,pose:'oshiageRelaxed',role:'observer'}];
-const hold=(label,caption='THE FASTEST PAIR IN TOKYO')=>
-  ({type:'HOLD_SCENE',label,caption});
-const stage=(backgroundId,characters,cars=[],caption='THE FASTEST PAIR IN TOKYO')=>[
+const hold=(label,caption='THE FASTEST PAIR IN TOKYO',revealMs=0)=>
+  ({type:'HOLD_SCENE',label,caption,revealMs});
+const stage=(backgroundId,characters,cars=[],caption='THE FASTEST PAIR IN TOKYO',duel=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId,stageMode:'native',
     privateMeet:backgroundId.startsWith('meet:'),composition:'car-behind-cast',
+    meetDuel:duel,fadeInMs:duel?780:0,
     characters,cars},
   hold(caption),
 ];
 const bay=(caption,carId,cast=pair)=>stage('$CURRENT_WORKSHOP',cast,
   carId?[{carId}]:[],caption);
-const meet=(venue,caption,carId,cast=pair)=>stage('meet:'+venue+':night',cast,
-  carId?[{carId}]:[],caption);
+const rivals={
+  shinagawaTennozu:{id:'reikaTachibana',carId:'fc3s'},
+  daikokuPA:{id:'tetsuoMori',carId:'3000gt'},
+  shinjukuGodzilla:{id:'renKurosawa',carId:'evo5'},
+  shibuyaDogenzaka:{id:D,carId:'ae86'},
+};
+const meet=(venue,caption,carId,cast=pair)=>{
+  const rival=rivals[venue];
+  const getPose=id=>cast.find(actor=>actor.id===id)?.pose;
+  const playerCar=venue==='shibuyaDogenzaka'?'$SELECTED_CAR':carId;
+  return stage('meet:'+venue+':night',[
+    {id:A,pose:getPose(A)||'storyIdle',role:'player'},
+    {id:S,pose:getPose(S)||'oshiageRelaxed',role:'companion'},
+    {id:rival.id,pose:getPose(rival.id)||'idle',role:'challenger'},
+  ],[{carId:playerCar},{carId:rival.carId}],caption,true);
+};
+const leaveDaigo=()=>[
+  {type:'STORY_CAR_EXIT',slot:1,ms:3200},
+  {type:'STAGE',backgroundId:'meet:shibuyaDogenzaka:night',
+    stageMode:'native',privateMeet:true,meetDuel:true,fadeInMs:780,
+    composition:'car-behind-cast',
+    characters:[
+      {id:A,pose:'storyCoolShy',role:'player'},
+      {id:S,pose:'oshiageRelaxed',role:'companion'},
+    ],cars:[{carId:'$SELECTED_CAR'}]},
+  hold('JUST THE TWO OF THEM'),
+];
 
 export const ARKON_CHAPTER_05={
   id:'arkonChapter05',
@@ -87,14 +113,14 @@ export const ARKON_CHAPTER_05={
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter05R34Test'},
     ...meet('shinagawaTennozu','SHINAGAWA // THE FIRST REAL TEST','minesR34'),
-    manga('WORD GETS AROUND',[
-      say('Reika says this is the first time he has seen a Mine\'s car here in months.','oshiageNeutral'),
-      ark('And he wants to test whether the mechanic has earned his invoice?','storySheepish'),
-      say('Something like that. He knows how to drive.','oshiageReviewing'),
-      ark('Good. So do I. Usually.','storyConfidentSmirk'),
-      say('I shall keep a detailed record of the exceptions.','oshiageHappy'),
-    ]),
-    {type:'CLEAR_STAGE'},
+    manga('REIKA // THE SHINAGAWA CHALLENGE',[
+      ['left','Sayaka tells me this Mine\'s R34 has finally been sorted.','idle'],
+      ['right','The owner wanted the fault fixed, not a headline.','storySerious'],
+      ['left','Then let us see the repair hold together under load. My FC is ready.','idle'],
+      ['right','A clean quarter mile. No stakes and no damage.','storyConfidentSmirk'],
+      ['left','Exactly. You and Sayaka came all this way. I would hate to disappoint.','idle'],
+    ],{left:'reikaTachibana',right:A}),
+    hold('SHINAGAWA // READY TO RACE','TWO CARS // YOUR CALL',760),
     {type:'ARKON_CH5_RACE',index:0},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH5_RETURN'},
@@ -146,7 +172,14 @@ export const ARKON_CHAPTER_05={
       say('I enjoy seeing whether your work lives up to your confidence.','oshiageHappy'),
     ]),
     ...meet('daikokuPA','DAIKOKU // A ROTARY AND A CHALLENGE','reAmemiyaRx7'),
-    {type:'CLEAR_STAGE'},
+    manga('TETSUO // THE ENGINE BUILDER',[
+      ['left','That is the RE Amemiya RX-7 everyone is talking about?','idle'],
+      ['right','The cooling and boost are sorted. The owner asked for a road check.','storySerious'],
+      ['left','Good. I brought the 3000GT. One run and we will know if the fix holds.','idle'],
+      ['right','Careful. You might enjoy it.','storyConfidentSmirk'],
+      ['left','Ha! Sayaka, watch him. I intend to make him work for it.','idle'],
+    ],{left:'tetsuoMori',right:A}),
+    hold('DAIKOKU // READY TO RACE','TWO CARS // YOUR CALL',760),
     {type:'ARKON_CH5_RACE',index:1},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH5_RETURN'},
@@ -178,7 +211,15 @@ export const ARKON_CHAPTER_05={
       say('Shinjuku. And I believe Ren Kurosawa will be there.','oshiageRelaxed'),
     ]),
     ...meet('shinjukuGodzilla','SHINJUKU // THE SUPRA TEST','topSecretSupra'),
-    {type:'CLEAR_STAGE'},
+    manga('REN // THE SHINJUKU TEST',[
+      ['left','So you are the mechanic with the Top Secret Supra.','idle'],
+      ['right','I am its mechanic. The car still belongs to my customer.','storySerious'],
+      ['left','Naturally. I will bring my Evo V. Let us see what your tune does off the line.','idle'],
+      ['right','As long as both cars go home intact.','storySheepish'],
+      ['left','Sayaka has already warned me you are difficult to impress.','idle'],
+      ['right','She would know.','storyConfidentSmirk'],
+    ],{left:'renKurosawa',right:A}),
+    hold('SHINJUKU // READY TO RACE','TWO CARS // YOUR CALL',760),
     {type:'ARKON_CH5_RACE',index:2},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH5_RETURN'},
@@ -229,7 +270,7 @@ export const ARKON_CHAPTER_05={
       ark('That is a very low opinion of my driving.','storySheepish'),
       say('I have seen your invoices.','oshiageHappy'),
     ]),
-    {type:'CLEAR_STAGE'},
+    hold('DOGENZAKA // ACCEPT DAIGO\'S CHALLENGE','THE SAME AE86 // THE SAME DAIGO',760),
     {type:'ARKON_CH5_RACE',index:3},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH5_RETURN'},
@@ -247,6 +288,7 @@ export const ARKON_CHAPTER_05={
     ]),
     {type:'GOTO',to:'rematch'},
     {type:'LABEL',name:'rematch'},
+    hold('DOGENZAKA // DAIGO WANTS ANOTHER RUN','CONTINUE WHEN YOU ARE READY',760),
     {type:'ARKON_CH5_RACE',index:3},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH5_RETURN'},
@@ -281,7 +323,7 @@ export const ARKON_CHAPTER_05={
       ['left','Good night, fastest couple in Tokyo!','idle'],
     ],{left:D,right:S}),
     {type:'FADE_STORY_ACTOR',actorId:D,ms:900},
-    ...meet('shibuyaDogenzaka','JUST THE TWO OF THEM','$SELECTED_CAR'),
+    ...leaveDaigo(),
     manga('AN UNUSUALLY QUIET MOMENT',[
       say('That man is insufferable.','oshiageRelaxed'),
       ark('Completely.','storySheepish'),
