@@ -1418,7 +1418,7 @@ export function normaliseState(input = {}) {
              index: storyMode && input.storyDirectorProgress.id==='arkonChapter05' &&
                !input.arkonStoryCh5PacingVersion
                ? input.storyDirectorProgress.index +
-                 (input.storyDirectorProgress.index>=109?3:
+                 (input.storyDirectorProgress.index>=110?3:
                   input.storyDirectorProgress.index>=78?2:
                   input.storyDirectorProgress.index>=57?1:0)
                : input.storyDirectorProgress.index,
