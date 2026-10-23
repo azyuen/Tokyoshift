@@ -7,13 +7,13 @@ const read=(s,k)=>typeof s?.get==='function'?s.get(k):s?.[k];
 const put=(s,k,v)=>s.set(k,v);
 export const ARKON_CH5_LOAN_KEY='arkonStoryChapter05Loan';
 export const ARKON_CH5_COMMISSIONS=Object.freeze([
-  Object.freeze({carId:'minesR34',opponentCarId:'r34',opponentId:'renMizuno',
+  Object.freeze({carId:'minesR34',opponentCarId:'fc3s',opponentId:'reikaTachibana',
     district:'SHINAGAWA',venue:'shinagawaTennozu',fee:450000,
     client:'PRIVATE SKYLINE COLLECTOR',label:'SHINAGAWA // MINE\'S R34'}),
-  Object.freeze({carId:'reAmemiyaRx7',opponentCarId:'rx7fd',opponentId:'reinaShibata',
+  Object.freeze({carId:'reAmemiyaRx7',opponentCarId:'3000gt',opponentId:'tetsuoMori',
     district:'DAIKOKU',venue:'daikokuPA',fee:600000,
     client:'ROTARY COLLECTION',label:'DAIKOKU // RE AMEMIYA FD'}),
-  Object.freeze({carId:'topSecretSupra',opponentCarId:'jza80',opponentId:'rikuAkamine',
+  Object.freeze({carId:'topSecretSupra',opponentCarId:'evo5',opponentId:'renKurosawa',
     district:'SHINJUKU',venue:'shinjukuGodzilla',fee:780000,
     client:'PRIVATE SUPRA OWNER',label:'SHINJUKU // TOP SECRET SUPRA'}),
   Object.freeze({carId:null,opponentCarId:'ae86',opponentId:'storyDaigoKirishima',
