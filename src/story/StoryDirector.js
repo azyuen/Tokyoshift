@@ -13,6 +13,7 @@ import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=202610
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r667';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
@@ -437,6 +438,14 @@ export class StoryDirector {
           // all gameplay objectives are met and CONTINUE is pressed.
           this.checkpoint();
           this.stop();
+          // Present the actual task checklist once, after the previous
+          // dialogue and private stage have fully cleared. It dismisses back
+          // to ordinary Garage/Meet gameplay; no automatic cutscene resumes.
+          if(!work.started)scene.time?.delayedCall?.(120,()=>{
+            if(scene.sys?.isActive?.() &&
+               scene.registry.get('arkonStoryPhase')==='chapter04Rebuild')
+              showArkonStoryObjective(scene);
+          });
           return;
         }
         if(type==='ARKON_RWB_CONTRACT'){
