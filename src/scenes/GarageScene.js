@@ -1,3 +1,4 @@
+import { boostSupportMessage } from '../data/engineeringFeedback.js';
 import {engineeringLabel,tuningPotentialSummary} from '../data/stockClasses.js';
 import {parkPerformanceParts,restorePerformanceParts} from '../data/factorySetup.js';
 import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
@@ -4799,9 +4800,7 @@ export default class GarageScene extends Phaser.Scene {
     return this.getWorkshopAdjustedCost(baseCost);
   }
 
-  refreshEngineMode() {
-    if (!this.engineMode || !this.selectedCarId) return;
-
+  getEnginePreviewBuild() {
     const car = cars[this.selectedCarId];
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
@@ -4812,6 +4811,13 @@ export default class GarageScene extends Phaser.Scene {
       stock: false,
     };
     const preview=buildCarFromState(car,engines[car.engine],previewState);
+    return {preview, previewState};
+  }
+
+  refreshEngineMode() {
+    if (!this.engineMode || !this.selectedCarId) return;
+    const car = cars[this.selectedCarId];
+    const {preview, previewState} = this.getEnginePreviewBuild();
     const previewRating = getPowerTorqueDisplay(car, previewState, preview.car);
 
     Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
@@ -4834,7 +4840,8 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePreviewText?.setText(
       'POWER  ' + previewRating.powerLabel + '\n' +
       'TORQUE ' + previewRating.torqueLabel + '\n' +
-      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar' + (preview.car.engineering?.limitingHardware!=='none'&&preview.car.engineering?' // '+preview.car.engineering.limitingHardware.toUpperCase():'')
+      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar\n' +
+      boostSupportMessage(preview.car, this.pendingEngineTuning)
     );
 
     const cash = Number(this.registry.get('cash') || 0);

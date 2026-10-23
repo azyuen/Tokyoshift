@@ -1,0 +1,18 @@
+{
+  "browser": "153.0.8010.0",
+  "viewport": {
+    "width": 1024,
+    "height": 768
+  },
+  "localPhaser": true,
+  "result": {
+    "previewText": "POWER  EST. 200–250 kW\nTORQUE EST. 400–450 Nm\nBOOST  1.00 bar\nBOOST LIMITED: upgrade FUEL / ECU",
+    "power": 232,
+    "weight": 1512,
+    "expectedPower": 232,
+    "expectedWeight": 1512,
+    "cost": 380000
+  },
+  "errors": [],
+  "scope": "Local synthetic profile; actual workshop preview and unsupported turbo warning. No purchase, race or deployment in this run."
+}
