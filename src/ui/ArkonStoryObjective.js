@@ -6,7 +6,8 @@ import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r657';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
-import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r659';
+import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r667';
+import {getArkonCh4WorkProgress} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261023-r666';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
@@ -42,6 +43,19 @@ export function getArkonStoryObjective(registry) {
   };
   if(active?.id===ARKON_CHAPTER_04.id){
     const phase=get('arkonStoryPhase')||'chapter04Arrival';
+    if(phase==='chapter04Rebuild'){
+      const work=getArkonCh4WorkProgress(registry);
+      return {
+        heading:work.ready?'THE 240Z IS READY':'REBUILD YOUR REPUTATION',
+        message:work.ready
+          ?'All goals complete. Return to Canal Yard and choose CONTINUE CHAPTER 04 to find out what happens next.'
+          :'Fit at least Level 1 in ALL 16 tuning parts on the 240Z (use Canal Yard for the workshop-only upgrades). Win 3 regular cash races and one complete Street Showdown in your 240Z.',
+        progress:'L1 PARTS '+work.partsDone+'/'+work.partsTotal+
+          '   //   RACES '+work.cashWins+'/3'+
+          '   //   SHOWDOWN '+work.showdownWins+'/1',
+        canResumeChapter04:work.ready,
+      };
+    }
     const stages={
       chapter04Arrival:['THE NEW COMMISSION','Continue the arrival at the workshop.'],
       chapter04Porsche:['A RARE PORSCHE','Examine the RWB and speak with Sayaka.'],
@@ -199,17 +213,21 @@ export function showArkonStoryObjective(scene) {
   add(scene.add.text(780,530,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
-  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05) &&
+  const checkpoint=scene.registry.get('storyDirectorProgress');
+  const isResume=Boolean(info.canResumeChapter04 &&
+    checkpoint?.id==='arkonChapter04');
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||isResume) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
     scene.registry.get('workshopLocationId')==='shinonomeCanalYard' &&
     !scene.game?.storyDirector?.status?.active &&
-    !scene.registry.get('storyDirectorProgress'));
+    (isResume||!checkpoint));
   if(canBegin){
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
     const chapterId=info.canStartChapter05?'arkonChapter05':'arkonChapter04';
-    const beginLabel=info.canStartChapter05?'BEGIN CHAPTER 05':'BEGIN CHAPTER 04';
+    const beginLabel=isResume?'CONTINUE CHAPTER 04':
+      info.canStartChapter05?'BEGIN CHAPTER 05':'BEGIN CHAPTER 04';
     add(scene.add.text(780,565,beginLabel,{
       fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+3));
@@ -218,8 +236,9 @@ export function showArkonStoryObjective(scene) {
       // Defer out of the pointer handler that destroys this modal. No
       // automatic hand-off, no underlying Meet invitation gets a click.
       scene.time.delayedCall(1,()=>{
-        if(scene.sys?.isActive?.() && !scene.game?.storyDirector?.start?.(chapterId))
-          scene.showWorkshopToast?.('CHAPTER 04 COULD NOT START');
+        const opts=isResume?{index:checkpoint.index,vars:checkpoint.vars||{}}:undefined;
+        if(scene.sys?.isActive?.() && !scene.game?.storyDirector?.start?.(chapterId,opts))
+          scene.showWorkshopToast?.('CHAPTER COULD NOT CONTINUE');
       });
     });
   }

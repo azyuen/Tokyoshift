@@ -3,14 +3,17 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r665';
+} from './StoryScript.js?v=20261023-r667';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r666';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r667';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
+import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
+import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r667';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
@@ -149,6 +152,12 @@ export class StoryDirector {
       if(driveIndex>=0)
         return this.start(checkpoint.id,{index:driveIndex,vars:checkpoint.vars});
     }
+    // Chapter 04's driving/tuning interlude is genuine free gameplay.
+    // Never auto-launch the next scene behind an active Meet, replay or
+    // pink-slip; only the Story Objective's resume action may restart it.
+    if(checkpoint.id==='arkonChapter04' &&
+       this.scripts.get(checkpoint.id)?.script?.steps?.[checkpoint.index]?.type==='ARKON_CH4_WORK')
+      return false;
     return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
   }
   checkpoint() {
@@ -410,6 +419,46 @@ export class StoryDirector {
             },
           });
           if(!control){this.wait=null;this.error='CUSTOMER TUNING PANEL FAILED';}
+          return;
+        }
+        if(type==='ARKON_CH4_WORK'){
+          if(this.session.id!=='arkonChapter04' ||
+             scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='240Z WORK INTERLUDE OUTSIDE CHAPTER 04';return;
+          }
+          const work=getArkonCh4WorkProgress(scene.registry);
+          if(work.ready){
+            this.advance();continue;
+          }
+          if(!work.started && !startArkonCh4Work(scene.registry)){
+            this.error='COULD NOT START 240Z WORK OBJECTIVE';return;
+          }
+          // Stop with a retained checkpoint. Normal Garage/Meet controls
+          // now have exclusive ownership; the story remains paused until
+          // all gameplay objectives are met and CONTINUE is pressed.
+          this.checkpoint();
+          this.stop();
+          // Present the actual task checklist once, after the previous
+          // dialogue and private stage have fully cleared. It dismisses back
+          // to ordinary Garage/Meet gameplay; no automatic cutscene resumes.
+          if(!work.started)scene.time?.delayedCall?.(120,()=>{
+            if(scene.sys?.isActive?.() &&
+               scene.registry.get('arkonStoryPhase')==='chapter04Rebuild')
+              showArkonStoryObjective(scene);
+          });
+          return;
+        }
+        if(type==='ARKON_RWB_CONTRACT'){
+          if(this.session.id!=='arkonChapter04' ||
+             scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='LOAN CONTRACT OUTSIDE CHAPTER 04';return;
+          }
+          this.wait={kind:'dialogue',index};
+          const card=showArkonRwbContract(scene,{onContinue:()=>{
+            if(this.session?.index===index&&this.wait?.index===index)
+              this.advance();
+          }});
+          if(!card){this.wait=null;this.error='LOAN CONTRACT UNAVAILABLE';}
           return;
         }
         if(type==='ARKON_RWB_PURCHASE'){

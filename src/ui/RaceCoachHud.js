@@ -209,6 +209,20 @@ export function createRaceDialogueHud(scene, {
     const texture = scene.textures.get(key);
     texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const source = texture.getSourceImage();
+    if(key===ANONYMOUS_CALLER_TEXTURE){
+      // phone_unknown.png is a COMPLETE graphic, not a character face.
+      // Fit its whole canvas within the regular phone portrait aperture.
+      // Face detection otherwise zooms into a tiny section of the artwork.
+      const sw=Math.max(1,Number(source.naturalWidth||source.width||1));
+      const sh=Math.max(1,Number(source.naturalHeight||source.height||1));
+      const padding=5;
+      const zoom=Math.min((face.width-padding*2)/sw,
+        (face.height-padding*2)/sh);
+      portrait.setScale(zoom);
+      portrait.setPosition(face.x+(face.width-sw*zoom)/2,
+        face.y+(face.height-sh*zoom)/2);
+      return;
+    }
     const anchor = resolveCharacterFaceAnchor(source, key, characterVisual, pose);
     const zoom = Math.max(0.12, Math.min(2.2,
       face.headHeight / Math.max(1, anchor.headHeight)));

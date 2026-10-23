@@ -82,7 +82,7 @@ export const ARKON_CHAPTER_04={
         {speaker:'caller',text:'It was maintained by professionals. You were recommended because you work quickly.'},
         {speaker:'player',text:'Quickly is not the same as guessing.'},
       ]},
-    ...workshop('THE INDEPENDENT APPRAISER',[{id:A,pose:'storyMechanic'},{id:K,pose:'normal',role:'observer'}],'rwbStellaPorsche'),
+    ...workshop('KENJI OKABE // INDEPENDENT APPRAISER',[{id:A,pose:'storyMechanic'},{id:K,pose:'normal',role:'observer'}],'rwbStellaPorsche'),
     manga('A SECOND OPINION',[
       appraiser('Kenji Okabe. The buyer requested a truly independent inspection.'),
       ark('That is exactly what I am doing.','storyMechanic'),
@@ -192,10 +192,20 @@ export const ARKON_CHAPTER_04={
     ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],null),
     manga('BACK TO THE ORDINARY WORK',[
       ark('Back to the 240Z. Back to paying jobs. Back to trying not to think about the Porsche.','storyMechanic'),
-      ark('An ordinary day would be nice.','storySheepish'),
+      ark('Three clean wins, a Street Showdown and a properly sorted 240Z.','storyThinking'),
+      ark('No pretending I am a professional until every part is at least Level 1.','storySerious'),
+      ark('The Porsche can wait. I have a reputation to rebuild first.','storyConfident'),
+    ],{left:A}),
+    {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Rebuild'},
+    {type:'ARKON_CH4_WORK'},
+    ...workshop('THE PHONE RINGS AGAIN',[{id:A,pose:'storySurprised'}],null),
+    manga('THE WORK IS PAYING OFF',[
+      ark('Every component is at least Level 1. The 240Z is finally becoming a car I can trust.','storyConfident'),
+      ark('Three more wins. A full Street Showdown. Maybe there is life after the Porsche.','storyThinking'),
+      ark('Wait. That number looks familiar...','storySurprised'),
     ],{left:A}),
     {type:'PHONE',title:'CANAL YARD // AN OLD REPORT',
-      presentationMode:'openingSwipe',callerId:'',callerName:'INDEPENDENT APPRAISER',
+      presentationMode:'openingSwipe',callerId:K,callerName:'KENJI OKABE',
       pages:[
         {speaker:'caller',text:'Remember the black Porsche?'},
         {speaker:'player',text:'Difficult to forget.'},
@@ -236,6 +246,7 @@ export const ARKON_CHAPTER_04={
     ],{left:A}),
     {type:'LABEL',name:'winningBid'},
     {type:'ARKON_RWB_PURCHASE'},
+    {type:'ARKON_RWB_CONTRACT'},
     {type:'PHONE',title:'SUCCESSFUL BID // KENJI OKABE',presentationMode:'openingSwipe',callerId:K,callerName:'KENJI OKABE',
       pages:[
         {speaker:'caller',text:'The other bidder has withdrawn. Congratulations. The Porsche is yours.'},

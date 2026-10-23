@@ -5,7 +5,7 @@ import {
 } from '../data/characters.js?v=20261011-r477';
 import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
   ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
-} from './RaceCoachHud.js?v=20261023-r665';
+} from './RaceCoachHud.js?v=20261023-r667';
 import { PHONE_CARD_SWIPE_DISTANCE } from './CompactDialogueLayout.js?v=20261022-r640';
 
 const PIXEL = '"Silkscreen", monospace';

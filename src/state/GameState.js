@@ -104,6 +104,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryCanalYardUnlocked: false,
     arkonStoryWarehouseUnlocked: false,
     arkonStoryRwbProject: null,
+    arkonStoryChapter04Work: null,
     arkonStoryCustomerJobsDone: 0,
     arkonStoryMx5CustomerTuning: null,
     arkonStoryChapter03Seed: 0,
@@ -1238,6 +1239,11 @@ export function normaliseState(input = {}) {
     arkonStoryChapter05Results: storyMode &&
       input.arkonStoryChapter05Results && typeof input.arkonStoryChapter05Results==='object'
       ? clonePlain(input.arkonStoryChapter05Results):{},
+    arkonStoryChapter04Work: storyMode && input.arkonStoryChapter04Work?.started
+      ? {started:true,
+          cashWins:Math.max(0,Math.min(3,Math.trunc(Number(input.arkonStoryChapter04Work.cashWins)||0))),
+          showdownWins:Math.max(0,Math.min(1,Math.trunc(Number(input.arkonStoryChapter04Work.showdownWins)||0))) }
+      : null,
     arkonStoryRwbProject: storyMode && input.arkonStoryRwbProject?.acquired &&
       input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
       ? {
@@ -1641,6 +1647,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter05RaceResult: registry.get('arkonStoryChapter05RaceResult')||null,
     arkonStoryChapter05Results: registry.get('arkonStoryChapter05Results')||{},
     arkonStoryRwbProject: registry.get('arkonStoryRwbProject') || null,
+    arkonStoryChapter04Work: registry.get('arkonStoryChapter04Work') || null,
     arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
     arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
     arkonStoryMx5CustomerTuning: registry.get('arkonStoryMx5CustomerTuning')||null,

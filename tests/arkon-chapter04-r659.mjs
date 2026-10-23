@@ -102,5 +102,6 @@ test('R659 no side effects on regular Meet offers or Career Ginza',()=>{
   const director=source('../src/story/StoryDirector.js');
   assert.match(director,/scene\._arkonStoryObjectiveOpen/);
   const objective=source('../src/ui/ArkonStoryObjective.js');
-  assert.match(objective,/!scene\.registry\.get\('storyDirectorProgress'\)/);
+  assert.match(objective,/isResume\|\|!checkpoint/);
+  assert.match(objective,/checkpoint\?\.id==='arkonChapter04'/);
 });
