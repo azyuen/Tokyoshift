@@ -79,11 +79,11 @@ export class StoryDirector {
          !scene.registry.get('arkonStoryChapter03Done') ||
          scene.registry.get('arkonStoryChapter04Done')))return false;
     if (compiled.script.id==='arkonChapter05' &&
-        (sceneName(scene)!=='GarageScene' || scene.crewMode ||
-         scene.registry.get('gameMode')!=='arkonStory' ||
+        (scene.registry.get('gameMode')!=='arkonStory' ||
          !scene.registry.get('arkonStoryChapter04Done') ||
          scene.registry.get('arkonStoryChapter05Done') ||
-         scene.registry.get('arkonStoryChapter05Loan')?.active))return false;
+         (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+           scene.registry.get('arkonStoryChapter05Loan')?.active))))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -123,6 +123,17 @@ export class StoryDirector {
       return false;
     }
     if(scene._pendingSafeSceneStart)return false;
+    // After a mid-race reload, the loan and race context are still saved.
+    // Return to the actual RaceScene rather than accepting an unpaid/untested
+    // car at the next Meet or leaving the chapter stalled indefinitely.
+    if(checkpoint.id==='arkonChapter05' &&
+       scene.registry?.get?.('arkonStoryChapter05Loan')?.active &&
+       !scene.registry.get('arkonStoryChapter05RaceResult') &&
+       sceneName(scene)!=='RaceScene' &&
+       ['GarageScene','MeetScene'].includes(sceneName(scene))){
+      queueSafeSceneStart(scene,'RaceScene');
+      return false;
+    }
     // R663 authored the Chapter 03 test drive as manga. Preserve older
     // mid-chapter saves: if the Mazda build is finished but its road result
     // is still unset, resume at the NEW live drive rather than treating the
