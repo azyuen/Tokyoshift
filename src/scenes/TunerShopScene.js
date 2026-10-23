@@ -1,3 +1,4 @@
+import {recordArkonCh7TunerVisit} from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -188,6 +189,8 @@ export default class TunerShopScene extends Phaser.Scene {
       visitedAt: previousVisit.visitedAt || Date.now(),
     };
     this.registry.set('tunerShopProgress', progress);
+    // Record actual in-world specialist visits, not authored montage cards.
+    recordArkonCh7TunerVisit(this.registry,this.regionId);
     if (this.shop.heroCarId) {
       recordCarMagazineSightings(this.registry, [{
         carId: this.shop.heroCarId,
