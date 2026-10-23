@@ -36,9 +36,9 @@ export function getArkonStoryObjective(registry) {
   }
   if(get('arkonStoryChapter04Done'))return {
     canStartChapter05:true,
-    heading:'CHAPTER 04 COMPLETE',
-    message:'The Price of Trust. The RWB Porsche is an unsafe restoration project, not a race-ready car.',
-    progress:'THE PRICE OF TRUST // COMPLETED',
+    heading:'CHAPTER 05 // THE FASTEST PAIR',
+    message:'A collector wants Arkon to restore and test a Mine\'s R34. Return to Canal Yard and choose BEGIN CHAPTER 05. The RWB stays under restoration.',
+    progress:'CHAPTER 04 COMPLETED // A NEW COMMISSION',
   };
   if(active?.id===ARKON_CHAPTER_04.id){
     const phase=get('arkonStoryPhase')||'chapter04Arrival';
