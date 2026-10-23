@@ -1,5 +1,5 @@
-import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r667';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from './ArkonPlayableReplay.js?v=20261023-r665';
+import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r668';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from './ArkonPlayableReplay.js?v=20261023-r668';
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
 import {
   getControlSettings,
