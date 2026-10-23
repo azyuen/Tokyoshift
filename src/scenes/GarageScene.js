@@ -4316,10 +4316,12 @@ export default class GarageScene extends Phaser.Scene {
     const rearWheel = this.add.image(rearX, rearY, wheelVisual.wheelKey)
       .setScale(fit.rear.wheelScale)
       .setDepth(depth);
+    rearWheel.storyRollRadius=fit.rear.backingRadius||Math.max(8,rearWheel.displayWidth/2);
 
     const frontWheel = this.add.image(frontX, frontY, wheelVisual.wheelKey)
       .setScale(fit.front.wheelScale)
       .setDepth(depth);
+    frontWheel.storyRollRadius=fit.front.backingRadius||Math.max(8,frontWheel.displayWidth/2);
 
     const rearWheelBacking = this.add.circle(
       rearX,
