@@ -258,13 +258,16 @@ export function showStoryStage(scene, {
         layerBias:carInFront?2:-1,
       }):null;
       const duelCar=duel?getChapter05DuelCar(i):null;
+      const finaleCar=meetCarLayout==='yokohamaFinale' && template?.kind==='meet'
+        ? i===0?{x:710,y:412,targetWidth:345,flipX:false}
+          :{x:1015,y:412,targetWidth:405,flipX:false}:null;
       const ch6Car=meetCarLayout==='yokohamaGift' &&
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
-      const x=Number(ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
+      const x=Number(finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(ch6Car?.y??duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
+      const groundY=Number(finaleCar?.y??ch6Car?.y??duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
         (c.depth??(carInFront
@@ -281,8 +284,8 @@ export function showStoryStage(scene, {
           // Meet createCarDisplay owns the original wheel/body centre conversion.
           // Preserve the EXACT previous native single-car geometry for all
           // other chapters. Only Chapter 05's explicit matchup uses two bays.
-          if(duel||ch6Car)carObjects=scene.createCarDisplay(c.model,x,groundY,
-            targetWidth,layer,(duelCar||ch6Car).flipX,
+          if(duel||ch6Car||finaleCar)carObjects=scene.createCarDisplay(c.model,x,groundY,
+            targetWidth,layer,(finaleCar||duelCar||ch6Car).flipX,
             c.paintColor??getCarPaintColor(
               (scene.registry.get('carStates')||{})[c.carId]||{}));
           else carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
