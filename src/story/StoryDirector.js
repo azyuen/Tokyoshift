@@ -9,11 +9,11 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r668';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r669';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r668';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r669';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import {
@@ -21,18 +21,23 @@ import {
   settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
   beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
 } from '../data/arkonChapter06Work.js?v=20261023-r668';
+import {
+  ch7Progress,startArkonCh7Work,finishArkonCh7Work,
+  getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,
+  convertArkonCh7Car,startArkonCh7SoloDrive,finishArkonCh7SoloDrive
+} from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r668';
 import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r668';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r668';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261023-r669';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
 } from '../data/devVaultStory.js?v=20261022-r643';
@@ -101,6 +106,12 @@ export class StoryDirector {
          (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
            !['shinonomeCanalYard','shinonomeWarehouseStrip']
              .includes(scene.registry.get('workshopLocationId'))))))return false;
+    if (compiled.script.id==='arkonChapter07' &&
+        (scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter06Done') ||
+         scene.registry.get('arkonStoryChapter07Done') ||
+         (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+           scene.registry.get('workshopLocationId')!=='shinonomeWarehouseStrip'))))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -159,6 +170,20 @@ export class StoryDirector {
       queueSafeSceneStart(scene,'RaceScene');
       return false;
     }
+    if(checkpoint.id==='arkonChapter07' &&
+       scene.registry?.get?.('arkonStoryChapter07Race')?.active &&
+       !scene.registry.get('arkonStoryChapter07RaceResult') &&
+       sceneName(scene)!=='RaceScene' &&
+       !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
+    }
+    if(checkpoint.id==='arkonChapter07' &&
+       scene.registry?.get?.('arkonStoryChapter07Solo')?.active &&
+       !scene.registry.get('arkonStoryChapter07Solo')?.completed &&
+       sceneName(scene)!=='RaceScene' &&
+       !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
+    }
     // R663 authored the Chapter 03 test drive as manga. Preserve older
     // mid-chapter saves: if the Mazda build is finished but its road result
     // is still unset, resume at the NEW live drive rather than treating the
@@ -179,6 +204,9 @@ export class StoryDirector {
     // pink-slip; only the Story Objective's resume action may restart it.
     if(checkpoint.id==='arkonChapter04' &&
        this.scripts.get(checkpoint.id)?.script?.steps?.[checkpoint.index]?.type==='ARKON_CH4_WORK')
+      return false;
+    if(checkpoint.id==='arkonChapter07' &&
+      this.scripts.get(checkpoint.id)?.script?.steps?.[checkpoint.index]?.type==='ARKON_CH7_WORK')
       return false;
     return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
   }
@@ -620,6 +648,104 @@ export class StoryDirector {
             return;
           }
         }
+        if(type==='ARKON_CH7_JOB'){
+          if(this.session.id!=='arkonChapter07'||
+              scene.registry.get('gameMode')!=='arkonStory'||
+              sceneName(scene)!=='GarageScene'){
+            this.error='CHAPTER 07 COMMISSION REQUIRES WAREHOUSE HQ';return;
+          }
+          const p=ch7Progress(scene.registry);
+          if(p.jobsDone>step.index){this.advance();continue;}
+          if(p.jobsDone!==step.index){
+            this.error='CHAPTER 07 COMMISSION ORDER MISMATCH';return;
+          }
+          const job=getArkonCh7Job(scene.registry,step.index);
+          if(!job){this.error='CHAPTER 07 CONTRACT NOT READY';return;}
+          this.wait={kind:'dialogue',index};
+          const control=showArkonCustomerTuning(scene,job,{onComplete:()=>{
+            if(this.session?.index!==index||this.wait?.index!==index)return;
+            if(!this.session.preview&&!recordArkonCh7Job(scene.registry,step.index)){
+              this.error='CHAPTER 07 INVOICE FAILED';return;
+            }
+            saveSessionState(scene.registry);this.advance();
+          }});
+          if(!control){this.wait=null;this.error='CHAPTER 07 TUNING PANEL UNAVAILABLE';}
+          return;
+        }
+        if(type==='ARKON_CH7_WORK'){
+          if(this.session.id!=='arkonChapter07' ||
+            scene.registry.get('gameMode')!=='arkonStory' ||
+            sceneName(scene)!=='GarageScene'){
+            this.error='CHAPTER 07 240Z WORK REQUIRES WAREHOUSE HQ';return;
+          }
+          const p=ch7Progress(scene.registry);
+          if(p.stage===step.stage && p.ready){
+            if(!finishArkonCh7Work(scene.registry,step.stage)){
+              this.error='CHAPTER 07 BUILD VALIDATION FAILED';return;
+            }
+            saveSessionState(scene.registry);this.advance();continue;
+          }
+          if(!startArkonCh7Work(scene.registry,step.stage)){
+            this.error='CHAPTER 07 BUILD STAGE UNAVAILABLE';return;
+          }
+          // Ordinary garage upgrades and genuine tuner-shop visits are now
+          // player-controlled. Retain the checkpoint; no auto-running scenes.
+          this.checkpoint();this.stop();
+          scene.time?.delayedCall?.(120,()=>{
+            if(scene.sys?.isActive?.() && scene.registry.get('gameMode')==='arkonStory')
+              showArkonStoryObjective(scene);
+          });
+          return;
+        }
+        if(type==='ARKON_CH7_RACE'){
+          if(this.session.id!=='arkonChapter07'||
+            scene.registry.get('gameMode')!=='arkonStory'||
+            !['GarageScene','MeetScene'].includes(sceneName(scene))||
+            !startArkonCh7Race(scene.registry,step.index)){
+            this.error='CHAPTER 07 PROVING RUN UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);
+          this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            scene.registry.set('arkonStoryChapter07RaceResult','forfeit');
+            finishArkonCh7Race(scene.registry);
+            this.error='CHAPTER 07 RACE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH7_RETURN'){
+          if(this.session.id!=='arkonChapter07'||
+            scene.registry.get('gameMode')!=='arkonStory'||
+            sceneName(scene)!=='MeetScene'||!finishArkonCh7Race(scene.registry)){
+            this.error='CHAPTER 07 TEST RESULT NOT RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH7_CONVERT'){
+          if(this.session.id!=='arkonChapter07'||sceneName(scene)!=='GarageScene'||
+            !convertArkonCh7Car(scene.registry)){
+            this.error='LIBERTY WALK CONVERSION NOT READY';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH7_SOLO'){
+          if(this.session.id!=='arkonChapter07'||
+            !startArkonCh7SoloDrive(scene.registry)){
+            this.error='CHAPTER 07 SOLO DRIVE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='SOLO DRIVE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH7_SOLO_RETURN'){
+          if(this.session.id!=='arkonChapter07'||sceneName(scene)!=='MeetScene'||
+            !finishArkonCh7SoloDrive(scene.registry)){
+            this.error='SOLO DRIVE HAS NOT ENDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
         if(type==='ARKON_CH5_RACE'){
           if(this.session.id!=='arkonChapter05' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
@@ -936,7 +1062,7 @@ export class StoryDirector {
             })
             : playMangaCutscene(scene,definition,{
               preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id) ||
-                ['arkonChapter05','arkonChapter06'].includes(this.session.id),
+                ['arkonChapter05','arkonChapter06','arkonChapter07'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,

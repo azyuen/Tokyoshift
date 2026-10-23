@@ -210,3 +210,20 @@ Additional plot pressure ideas, NOT decided: intense collector deadlines, an imp
 > Continue **Tokyo SHIFT Arkon Den Story Mode** from `docs/ARKON_DEN_STORY_ARC_2026-10-23.md`. This is the approved creative checkpoint for Chapter 04's repossessed RWB ending, Chapter 05's lucrative exceptional-car restoration business, the growth through acquisitions to Ginza Gallery, Arkon/Sayaka's conflict and reconciliation, the RWB gift, and Arkon's playful jealousy over Sayaka's old friend (the Career player's father) as she follows her dream back into racing-team strategy. Read `CHARACTER_BIBLE.md`, `CAREER_NARRATIVE.md` and `NARRATIVE_AUTHORING.md` too. **Do not change game code yet.** First help script Chapter 04 in scene-by-scene detail and bridge it to Chapter 05. Preserve the distinction between approved direction, proposed dialogue and existing implementation.
 
 **Checkpoint is complete as a narrative record; no gameplay deployment implied.**
+
+
+## R669 — Chapter 07: NEVER ENOUGH (implemented 23 October 2026)
+
+After Chapter 06's quiet Ferris-wheel gift, Warehouse HQ thrives. Arkon begins Chapter 07 in a suit: Sayaka lightly teases and compliments him. A growing run of customer contracts funds his escalating ambition.
+
+**The playable throughline** is Arkon's personally owned Datsun 240Z. Across two checkpoints, the player genuinely upgrades all 16 engine, drivetrain, chassis and exhaust/NOS parts to at least Level 2 and then Level 3. Arkon visits two, then four *distinct* regional tuner houses and meets the existing specialist community; two true races test his car between build milestones. These requirements are Arkon Story-only and never grant free Career upgrades. His commissions pay normal chapter-specific wages; the story does not give him phantom horsepower or synthetic race victories.
+
+Sayaka tries to spend time with him: she mentions his unused driving lesson vouchers, offers an old favourite dinner and gently notices his old professional-engineering patterns. Arkon means well, but repeatedly reschedules.
+
+After the player has maxed the genuine 240Z build, Arkon undertakes an extensive body conversion. The saved, tuned and personally owned 240Z becomes the Chapter 07 Liberty Walk 240Z, using the existing `assets/Cars/hero/liberty_walk_240z_hero_body.png` while retaining the true engineering build. This is a body transformation, not a free newly tuned collector car.
+
+At the unveiling, Sayaka is impressed but tries to voice her worries. Two business calls interrupt her. She quietly leaves, declining Arkon's late-night offer of another ride. A third lucrative deal follows. Arkon then realises she's gone and takes the new 240Z into Tokyo alone. **The final drive is cinematic**, with an empty passenger seat, a first unanswered call to Sayaka, an incoming successful business call, a red traffic light and a second unanswered call. No jealous villain, betrayal or accusation. Fade to black.
+
+**Chapter 08 remains unimplemented and intentionally unmodified.** Its thematic direction has not been locked by the user.
+
+Implementation: `src/data/arkonChapter07.js`, `src/data/arkonChapter07Progress.js`, Story Director, Story Objective, normalised save/recount/replay, real tuner visits, real RaceScene test runs, Chapter 07 solo cinema, bespoke asset alias in `cars.js`, plus R669 regression tests. Existing Chapter 05/06 narrative and gifted RWB ownership remain unchanged.

@@ -11,6 +11,8 @@ import {getArkonCh4WorkProgress} from '../data/arkonChapter04Work.js?v=20261023-
 import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261023-r666';
 import {ARKON_CHAPTER_06} from '../data/arkonChapter06.js?v=20261023-r668';
 import {ch6Progress} from '../data/arkonChapter06Work.js?v=20261023-r668';
+import {ARKON_CHAPTER_07} from '../data/arkonChapter07.js?v=20261023-r669';
+import {ch7Progress} from '../data/arkonChapter07Progress.js?v=20261023-r669';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -20,10 +22,41 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter07Done'))return {
+    heading:'CHAPTER 07 COMPLETE',message:'Never Enough. The Liberty Walk 240Z is finished, but Arkon has begun to lose sight of Sayaka.',
+    progress:'NEVER ENOUGH // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_07.id){
+    const phase=get('arkonStoryPhase')||'chapter07Business';
+    const p=ch7Progress(registry);
+    if(['chapter07FirstBuild','chapter07FinalBuild'].includes(phase)){
+      const first=phase==='chapter07FirstBuild';
+      const done=first?p.level2:p.level3;
+      return {
+        heading:first?'THE 240Z // REGIONAL BUILD':'THE 240Z // MAXIMUM BUILD',
+        message:'Use real Warehouse HQ upgrades on your own 240Z. Visit '+(first?2:4)+
+          ' distinct regional tuner houses for mechanical introductions. Then return to Warehouse HQ and press CONTINUE CHAPTER 07.',
+        progress:'LEVEL '+(first?'2':'3')+' PARTS '+done+'/'+p.partsTotal+
+          '   //   TUNER HOUSES '+(p.shops?.length||0)+'/'+p.shopGoal,
+        canResumeChapter07:p.ready,
+      };
+    }
+    const goals={
+      chapter07Business:['THE MAN IN THE SUIT','Complete the first signed commission and launch the 240Z build.'],
+      chapter07MoreBusiness:['ANOTHER BIG CONTRACT','Complete another customer commission and speak to Sayaka.'],
+      chapter07Bodywork:['LIBERTY WALK // 240Z','Finish the bespoke bodywork and reveal the converted car.'],
+      chapter07SoloDrive:['THE LONELIEST DRIVE','A cinematic solo drive. The passenger seat is empty.'],
+    };
+    const [heading,message]=goals[phase]||['NEVER ENOUGH','Continue Chapter 07.'];
+    return {heading,message,progress:'ARKON DEN // CHAPTER 07'};
+  }
   if(get('arkonStoryChapter06Done'))return {
-    heading:'CHAPTER 06 COMPLETE',message:'Everything We Built. The Porsche is certified and belongs to Sayaka. Warehouse HQ is open.',
+    canStartChapter07:true,
+    heading:'CHAPTER 07 // NEVER ENOUGH',
+    message:'At Warehouse HQ, open Story Objective and begin Chapter 07. Contracts, specialist tuner visits and the 240Z await.',
     progress:'EVERYTHING WE BUILT // COMPLETED',
   };
+
   if(active?.id===ARKON_CHAPTER_06.id){
     const phase=get('arkonStoryPhase')||'chapter06Commissions';
     const a=ch6Progress(registry);
@@ -239,20 +272,24 @@ export function showArkonStoryObjective(scene) {
   }).setOrigin(.5).setDepth(depth+2));
   const checkpoint=scene.registry.get('storyDirectorProgress');
   const isResume=Boolean(info.canResumeChapter04 &&
-    checkpoint?.id==='arkonChapter04');
-  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||isResume) &&
+    checkpoint?.id==='arkonChapter04' ||
+    info.canResumeChapter07 && checkpoint?.id==='arkonChapter07');
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||info.canStartChapter07||isResume) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
     (scene.registry.get('workshopLocationId')==='shinonomeCanalYard' ||
-     (info.canStartChapter06 && scene.registry.get('workshopLocationId')==='shinonomeWarehouseStrip')) &&
+     ((info.canStartChapter06||info.canStartChapter07||info.canResumeChapter07) &&
+       scene.registry.get('workshopLocationId')==='shinonomeWarehouseStrip')) &&
     !scene.game?.storyDirector?.status?.active &&
     (isResume||!checkpoint));
   if(canBegin){
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    const chapterId=info.canStartChapter06?'arkonChapter06':
+    const chapterId=info.canStartChapter07||info.canResumeChapter07?'arkonChapter07':
+      info.canStartChapter06?'arkonChapter06':
       info.canStartChapter05?'arkonChapter05':'arkonChapter04';
-    const beginLabel=isResume?'CONTINUE CHAPTER 04':
+    const beginLabel=isResume?'CONTINUE '+(info.canResumeChapter07?'CHAPTER 07':'CHAPTER 04'):
+      info.canStartChapter07?'BEGIN CHAPTER 07':
       info.canStartChapter06?'BEGIN CHAPTER 06':
       info.canStartChapter05?'BEGIN CHAPTER 05':'BEGIN CHAPTER 04';
     add(scene.add.text(780,565,beginLabel,{

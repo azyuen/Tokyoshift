@@ -14,7 +14,7 @@ const sessions=new WeakMap();
 const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
   chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
   chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':
-  chapter===6?'arkonChapter06':null;
+  chapter===6?'arkonChapter06':chapter===7?'arkonChapter07':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -34,7 +34,10 @@ export function getArkonPlayableChapters(registry){
   const c6=registry.get('arkonStoryChapter05Done')||
     registry.get('storyDirectorProgress')?.id==='arkonChapter06'||
     registry.get('arkonStoryChapter06Done');
-  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[]),...(c6?[6]:[])];
+  const c7=registry.get('arkonStoryChapter06Done') ||
+    registry.get('storyDirectorProgress')?.id==='arkonChapter07' ||
+    registry.get('arkonStoryChapter07Done');
+  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[]),...(c6?[6]:[]),...(c7?[7]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -53,7 +56,8 @@ export function beginArkonPlayableReplay(scene,chapter) {
   scene.game?.storyDirector?.stop?.();
   registry.set('arkonStoryPhase',chapter===1?'opening':
     chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':
-    chapter===4?'chapter04Arrival':chapter===5?'chapter05Breakthrough':'chapter06Commissions');
+    chapter===4?'chapter04Arrival':chapter===5?'chapter05Breakthrough':
+    chapter===6?'chapter06Commissions':'chapter07Business');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
@@ -61,7 +65,42 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter04Done',chapter>=5);
   registry.set('arkonStoryChapter04Work',null);
   registry.set('arkonStoryChapter05Done',chapter>=6);
-  registry.set('arkonStoryChapter06Done',false);
+  registry.set('arkonStoryChapter06Done',chapter>=7);
+  registry.set('arkonStoryChapter07Done',false);
+  registry.set('arkonStoryChapter07Work',null);
+  registry.set('arkonStoryChapter07Race',null);
+  registry.set('arkonStoryChapter07RaceResult',null);
+  registry.set('arkonStoryChapter07Solo',null);
+  registry.set('arkonStoryChapter07SoloFinished',false);
+  // Rebuild the ORIGINAL 240Z inside the temporary replay if an authentic
+  // Chapter 07 run already converted it. Restore the save verbatim on exit.
+  if((registry.get('ownedCarIds')||[]).includes('arkonLibertyWalk240z')){
+    const owned=(registry.get('ownedCarIds')||[]).map(id=>
+      id==='arkonLibertyWalk240z'?'240z':id);
+    const states={...(registry.get('carStates')||{})};
+    states['240z']={...(states.arkonLibertyWalk240z||{})};
+    delete states.arkonLibertyWalk240z;
+    const sites={...(registry.get('carGarageLocations')||{})};
+    sites['240z']=sites.arkonLibertyWalk240z||'shinonomeWarehouseStrip';
+    delete sites.arkonLibertyWalk240z;
+    registry.set('ownedCarIds',owned);
+    registry.set('carStates',states);
+    registry.set('carGarageLocations',sites);
+    registry.set('selectedCarId','240z');
+    registry.set('preferredCarId','240z');
+  }
+  if(chapter===7){
+    const states={...(registry.get('carStates')||{})};
+    // The chapter's full-play replay performs paid L2/L3 upgrades for real.
+    // Only temporary replay state is reset; persisted ownership is unchanged.
+    const atOne={engine:1,intake:1,ecu:1,turbo:1,intercooler:1,
+      clutch:1,gearbox:1,differential:1,suspension:1,tyres:1,
+      weightReduction:1,headers:1,exhaust:1,muffler:1,nosKit:1,nitrousShot:1};
+    states['240z']={...(states['240z']||{}),tuning:{...atOne},
+      engineTuning:{...atOne},drivetrainTuning:{...atOne},
+      chassisTuning:{...atOne},exhaustNosTuning:{...atOne}};
+    registry.set('carStates',states);
+  }
   registry.set('arkonStoryChapter06Accounts',null);
   registry.set('arkonStoryChapter06Cruise',null);
   registry.set('arkonStoryChapter06CruiseFinished',false);
@@ -108,16 +147,18 @@ export function beginArkonPlayableReplay(scene,chapter) {
   // rather than inheriting a future chapter's HQ or Career unlocks.
   const canal=chapter>=3;
   registry.set('arkonStoryCanalYardUnlocked',canal);
-  registry.set('arkonStoryWarehouseUnlocked',false);
-  registry.set('garageTier',canal?1:0);
-  registry.set('workshopLocationId',canal?'shinonomeCanalYard':'shinonomeWorkshop');
+  registry.set('arkonStoryWarehouseUnlocked',chapter>=7);
+  registry.set('garageTier',chapter>=7?2:canal?1:0);
+  registry.set('workshopLocationId',chapter>=7?'shinonomeWarehouseStrip':
+    canal?'shinonomeCanalYard':'shinonomeWorkshop');
   const owned=registry.get('ownedCarIds')||[];
   const selected=registry.get('selectedCarId');
   const locations={...(registry.get('carGarageLocations')||{})};
   if(selected&&owned.includes(selected) && chapter!==4 && selected!=='rwbStellaPorsche')
-    locations[selected]=canal?'shinonomeCanalYard':'shinonomeWorkshop';
+    locations[selected]=chapter>=7?'shinonomeWarehouseStrip':
+      canal?'shinonomeCanalYard':'shinonomeWorkshop';
   registry.set('carGarageLocations',normaliseCarGarageLocations(
-    owned,locations,canal?1:0));
+    owned,locations,chapter>=7?2:canal?1:0));
   if(chapter===3){
     // Without this reset, any previously completed Chapter 03 skips every
     // ARKON_CUSTOMER_JOB in StoryDirector (done > step.index), showing only
@@ -142,8 +183,8 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('storyDirectorProgress',createStoryCheckpoint(scriptId(chapter),0,slot));
   const target=chapter===2?'MeetScene':'GarageScene';
   const scheduled=queueSafeSceneStart(scene,target,
-    target==='GarageScene'?{workshopLocationId:canal
-      ?'shinonomeCanalYard':'shinonomeWorkshop',crewMode:false}:undefined);
+    target==='GarageScene'?{workshopLocationId:chapter>=7?'shinonomeWarehouseStrip':
+      canal?'shinonomeCanalYard':'shinonomeWorkshop',crewMode:false}:undefined);
   if(!scheduled){
     // Revert immediately if the scene cannot be entered.
     restore(registry,original);

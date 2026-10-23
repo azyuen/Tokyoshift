@@ -1,0 +1,34 @@
+name: R669 Arkon Chapter 07 Never Enough
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter07*.js'
+      - 'src/story/**'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/data/cars.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter07-r669.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter07*.js'
+      - 'tests/arkon-chapter07-r669.mjs'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          for file in src/data/arkonChapter07.js src/data/arkonChapter07Progress.js src/data/cars.js src/data/storyDirectorScripts.js src/story/StoryScript.js src/story/StoryDirector.js src/scenes/RaceScene.js src/scenes/TunerShopScene.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js src/state/GameState.js tests/arkon-chapter07-r669.mjs; do node --check "$file"; done
+      - name: Chapter 07 and prior Arkon story regressions
+        run: |
+          node --test tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs
