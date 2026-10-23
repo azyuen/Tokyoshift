@@ -75,7 +75,9 @@ export const ARKON_CHAPTER_03={
         {speaker:'player',text:'MX-5? Sure. I will have a look.'},
       ]},
     {type:'ARKON_CUSTOMER_JOB',index:4},
-    ...scene('THE OWNER ARRIVES','workshop:shinonomeCanalYard:night',withSayaka),
+    ...scene('THE OWNER ARRIVES','workshop:shinonomeCanalYard:night',
+      withSayaka.map(actor=>actor.id===S?{...actor,fadeInMs:1350}:actor),
+      [{carId:'mx5'}],{castBehindCar:false,characterScale:1}),
     manga('AN UNEXPECTED CUSTOMER',[
       say('Excuse me. I am here to collect my car.','homeNormal'),
       ark('Just give me a— Sayaka?!','storySurprised'),
@@ -160,19 +162,30 @@ export const ARKON_CHAPTER_03={
       say('I will mark my calendar.','homeHappy'),
     ]),
     {type:'LABEL',name:'parking'},
-    manga('SOMEONE REMEMBERS',[
-      unknown('Sayaka? I thought that was you. Been a long time.'),
-      say('It has. Good evening.','homeSerious'),
-      unknown('Did not think I would see you back out here.'),
-      ark('You two know each other?','storyThinking'),
-      say('We have crossed paths.','homeNormal'),
-      unknown('More than a few times. Funny how these roads bring people back.'),
-      say('Some of us were only out for a drive.','homeSerious'),
-      ark('And some of us were offered a race.','storyConfidentSmirk'),
-      unknown('That engine sounds like someone knows what they are doing. Who tuned it?'),
-      say('He did.','homeHappy'),
-      unknown('Canal Yard? I will remember that.'),
-    ]),
+    // A fully staged unknown driver enters the same real Meet composition.
+    // Reika's existing sprite is intentional as a VISUAL stand-in only: the
+    // chapter does not disclose the driver's identity. The player decides
+    // when to open the conversation; the visitor fades away afterwards.
+    ...scene('SOMEONE IS WATCHING','meet:daikokuOpenLot:night',[
+      {id:S,pose:'homeSerious'},
+      {id:'reikaTachibana',pose:'idle',role:'observer',fadeInMs:1300},
+    ],[{carId:'mx5'}],{castBehindCar:false}),
+    {type:'MANGA',title:'SOMEONE REMEMBERS',
+      characters:{left:S,right:'reikaTachibana'},pages:[
+        {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeSerious',text:'Sayaka? I thought that was you. Been a long time.'},
+        {speaker:'left',leftPose:'homeSerious',rightPose:'idle',text:'It has. Good evening.'},
+        {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'Did not think I would see you back out here.'},
+        {speaker:'system',speakerLabel:'ARKON',rightPose:'idle',leftPose:'homeNormal',text:'You two know each other?'},
+        {speaker:'left',leftPose:'homeNormal',rightPose:'idle',text:'We have crossed paths.'},
+        {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'More than a few times. Funny how these roads bring people back.'},
+        {speaker:'left',leftPose:'homeSerious',rightPose:'idle',text:'Some of us were only out for a drive.'},
+        {speaker:'system',speakerLabel:'ARKON',rightPose:'idle',leftPose:'homeNormal',text:'And some of us were offered a race.'},
+        {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'That engine sounds like someone knows what they are doing. Who tuned it?'},
+        {speaker:'left',leftPose:'homeHappy',rightPose:'idle',text:'He did.'},
+        {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'Canal Yard? I will remember that.'},
+      ]},
+    {type:'FADE_STORY_ACTOR',actorId:'reikaTachibana',ms:1250},
+    ...scene('THE ROAD IS QUIET AGAIN','meet:daikokuOpenLot:night',withSayaka),
     manga('AN UNFINISHED STORY',[
       ark('You have a few stories you have not told me.','storyThinking'),
       say('I am sure you have a few of your own.','homeNormal'),
