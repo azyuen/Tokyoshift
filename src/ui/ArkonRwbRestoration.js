@@ -1,7 +1,7 @@
 // R668 — interactive, stage-by-stage RWB structural restoration.
 // Narrative workshop interaction, not a pretend engineering simulation.
-import {CH6_RESTORATION,ch6Progress} from '../data/arkonChapter06Work.js?v=20261023-r671';
-import {showStoryStage} from './StoryStage.js?v=20261023-r671';
+import {CH6_RESTORATION,ch6Progress} from '../data/arkonChapter06Work.js?v=20261024-r675';
+import {showStoryStage} from './StoryStage.js?v=20261024-r675';
 import {CINEMATIC_FRAMES} from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
