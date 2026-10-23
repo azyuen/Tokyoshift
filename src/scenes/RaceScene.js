@@ -12,7 +12,7 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r664';
 import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
+
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -963,18 +963,9 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isArkonCh8Drive) this.setupArkonCh8Passenger();
     if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
     if (this.isArkonCh7Solo) this.setupArkonCh7Solo();
-    if(isArkonPlayableReplay(this.registry)){
-      const replayButton=this.add.rectangle(172,35,282,42,0x2c1922,0.96)
-        .setDepth(2600).setScrollFactor(0).setStrokeStyle(2,0xffba97)
-        .setInteractive({useHandCursor:true});
-      const replayLabel=this.add.text(172,35,'EXIT CHAPTER REPLAY',{
-        fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ffdec6',
-      }).setOrigin(.5).setDepth(2601).setScrollFactor(0);
-      replayButton.on('pointerdown',()=>{
-        if(!endArkonPlayableReplay(this))console.warn('[Arkon] Cannot exit race replay');
-      });
-      this.replayExitButton={replayButton,replayLabel};
-    }
+    // Replay exit is anchored on the MAIN play area for every scene
+    // by StoryDirector, including RaceScene. Do not create a second
+    // unresponsive header button underneath the cutscene overlay.
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
