@@ -44,7 +44,7 @@ export function startArkonCh5TestRace(source,index) {
   const selected=read(source,'selectedCarId');
   const raceCar=job.carId ||
     (owned.includes('240z')?'240z':owned.find(id=>id!=='rwbStellaPorsche'&&
-      !read(source,'carStates')?.[id]?.roadworthy===false && cars[id]));
+      read(source,'carStates')?.[id]?.roadworthy!==false && cars[id]));
   if(!cars[raceCar] || raceCar==='rwbStellaPorsche')return false;
   const states={...(read(source,'carStates')||{})};
   const sites={...(read(source,'carGarageLocations')||{})};
