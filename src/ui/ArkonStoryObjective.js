@@ -2,8 +2,8 @@
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 
-import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
-import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261025-r685';
+import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261025-r686';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261025-r686';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261025-r685';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261024-r678';
 import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261024-r678';

@@ -1,0 +1,30 @@
+name: R686 Chapter 1 Sayaka Oshiage uniform
+on:
+  push:
+    branches: [main, fix/arkon-ch01-sayaka-oshiage-uniform-r686]
+    paths:
+      - 'src/data/arkonChapter01.js'
+      - 'src/data/arkonChapter01Extended.js'
+      - 'src/data/arkonChapter01Revised.js'
+      - 'tests/arkon-ch01-sayaka-uniform-r686.mjs'
+      - 'tests/arkonStoryMode.test.mjs'
+      - 'tests/arkon-chapter01-02-polish-r685.mjs'
+      - '.github/workflows/arkon-ch01-sayaka-r686.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check changed Chapter 1 modules
+        run: |
+          for file in src/data/arkonChapter01.js src/data/arkonChapter01Extended.js src/data/arkonChapter01Revised.js tests/arkon-ch01-sayaka-uniform-r686.mjs; do node --check "$file"; done
+      - name: Test Chapter 1 outfits, Story and Chapter 2 regressions
+        run: |
+          node --test tests/arkon-ch01-sayaka-uniform-r686.mjs tests/arkonStoryMode.test.mjs tests/arkon-chapter01-02-polish-r685.mjs tests/arkon-chapter02-r655.mjs

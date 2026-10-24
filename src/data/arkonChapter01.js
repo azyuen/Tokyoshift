@@ -1,4 +1,4 @@
-import { ARKON_CHAPTER_01_EXTENDED_STEPS } from './arkonChapter01Extended.js?v=20261024-r681';
+import { ARKON_CHAPTER_01_EXTENDED_STEPS } from './arkonChapter01Extended.js?v=20261025-r686';
 // A one-chapter-at-a-time historical campaign, separate from Career.
 export const ARKON_CHAPTER_01 = {
   id:'arkonChapter01', title:'ARUKEN DENZAKI // CHAPTER 01',
@@ -39,22 +39,22 @@ export const ARKON_CHAPTER_01 = {
     {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',
       privateMeet:true,composition:'conversation-balanced',
       characters:[{id:'arkonDen',pose:'devIdle',x:410,ground:.84,height:248},
-        {id:'sayakaFujieda',pose:'homeSerious',x:822,ground:.84,height:256}],
+        {id:'sayakaFujieda',pose:'oshiageSerious',x:822,ground:.84,height:256}],
       cars:[{carId:'$SELECTED_CAR',x:900,ground:.82,width:525,depth:165}]},
     {type:'HOLD_SCENE',label:'SOMEONE APPROACHES',caption:'THE MEET IS QUIETER NOW'},
     {type:'MANGA',title:'AN UNEXPECTED CONVERSATION',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
-        {speaker:'right',rightPose:'homeSerious',text:'You are the one who has been racing that old car?'},
+        {speaker:'right',rightPose:'oshiageSerious',text:'You are the one who has been racing that old car?'},
         {speaker:'left',leftPose:'devTalking',text:'I think I would remember if someone else had borrowed it.'},
-        {speaker:'right',rightPose:'homeNormal',text:'I was helping the organiser with the timing sheets. You have been here more than once.'},
+        {speaker:'right',rightPose:'oshiageNeutral',text:'I was helping the organiser with the timing sheets. You have been here more than once.'},
         {speaker:'left',leftPose:'devTalking',text:'Depends. Is this about the noise, the parking or the car?'},
-        {speaker:'right',rightPose:'homeNormal',text:'That depends on whether you intend to answer any of those questions properly.'},
+        {speaker:'right',rightPose:'oshiageNeutral',text:'That depends on whether you intend to answer any of those questions properly.'},
         {speaker:'left',leftPose:'devLaughing',text:'I was hoping the car would speak for itself.'},
-        {speaker:'right',rightPose:'homeSerious',text:'It did. I have questions.'},
+        {speaker:'right',rightPose:'oshiageSerious',text:'It did. I have questions.'},
         {speaker:'left',leftPose:'devSerious',text:'Are you the organiser?'},
-        {speaker:'right',rightPose:'homeNormal',text:'No. I have my own work. I was doing a friend a favour tonight.'},
+        {speaker:'right',rightPose:'oshiageNeutral',text:'No. I have my own work. I was doing a friend a favour tonight.'},
         {speaker:'left',leftPose:'devLaughing',text:'I was hoping you had come just to tell me I was brilliant.'},
-        {speaker:'right',rightPose:'homeHappy',text:'That would be a very short conversation.'},
+        {speaker:'right',rightPose:'oshiageHappy',text:'That would be a very short conversation.'},
       ]},
     {type:'CHOICE',title:'WHAT DO YOU SAY?',subtitle:'She is not easily impressed.',
       key:'firstReply',choices:[
@@ -66,7 +66,7 @@ export const ARKON_CHAPTER_01 = {
     {type:'MANGA',title:'A STRAIGHT ANSWER',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
         {speaker:'left',leftPose:'devSerious',text:'I barely have money for repairs. But I want to see what I can do with this.'},
-        {speaker:'right',rightPose:'homeHappy',text:'That is the first useful thing you have said.'},
+        {speaker:'right',rightPose:'oshiageHappy',text:'That is the first useful thing you have said.'},
       ]},
     {type:'GOTO',to:'end'},
     {type:'LABEL',name:'tease'},
@@ -74,16 +74,16 @@ export const ARKON_CHAPTER_01 = {
     {type:'MANGA',title:'A BOLD SUGGESTION',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
         {speaker:'left',leftPose:'devLaughing',text:'You could come along. I promise to keep at least three wheels on the ground.'},
-        {speaker:'right',rightPose:'homeSerious',text:'What a spectacularly unconvincing promise.'},
+        {speaker:'right',rightPose:'oshiageSerious',text:'What a spectacularly unconvincing promise.'},
         {speaker:'left',leftPose:'devTalking',text:'So that is a no?'},
-        {speaker:'right',rightPose:'homeNormal',text:'I did not say that.'},
+        {speaker:'right',rightPose:'oshiageNeutral',text:'I did not say that.'},
       ]},
     {type:'LABEL',name:'end'},
     {type:'MANGA',title:'AFTER HOURS',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
-        {speaker:'right',rightPose:'homeNormal',text:'I am Sayaka, by the way.'},
+        {speaker:'right',rightPose:'oshiageNeutral',text:'I am Sayaka, by the way.'},
         {speaker:'left',leftPose:'devTalking',text:'Aruken.'},
-        {speaker:'right',rightPose:'homeSerious',text:'I know.'},
+        {speaker:'right',rightPose:'oshiageSerious',text:'I know.'},
       ]},
     {type:'CLEAR_STAGE'},
     {type:'SET_FLAG',key:'arkonStoryChapter01Done',value:true},
@@ -94,20 +94,20 @@ export const ARKON_CHAPTER_01 = {
     {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',
       privateMeet:true,composition:'conversation-balanced',
       characters:[{id:'arkonDen',pose:'devIdle',x:420,ground:.84,height:252},
-        {id:'sayakaFujieda',pose:'homeNormal',x:822,ground:.84,height:258}],
+        {id:'sayakaFujieda',pose:'oshiageNeutral',x:822,ground:.84,height:258}],
       cars:[{carId:'$SELECTED_CAR',x:900,ground:.83,width:525,depth:165}]},
     {type:'HOLD_SCENE',label:'AFTER THE RUN',caption:'BACK AT THE MEET'},
     {type:'MANGA',title:'THE DRIVE BACK',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
-        {speaker:'right',rightPose:'homeSerious',
+        {speaker:'right',rightPose:'oshiageSerious',
           text:'You are getting faster. You still make the same mistake at the start.'},
         {speaker:'left',leftPose:'devTalking',
           text:'I thought I was showing improvement.'},
-        {speaker:'right',rightPose:'homeNormal',
+        {speaker:'right',rightPose:'oshiageNeutral',
           text:'You were. That is why I was watching.'},
         {speaker:'left',leftPose:'devLaughing',
           text:'Then I suppose the invitation is still open.'},
-        {speaker:'right',rightPose:'homeHappy',
+        {speaker:'right',rightPose:'oshiageHappy',
           text:'Perhaps. If you can learn to be patient.'},
       ]},
     {type:'CLEAR_STAGE'},
@@ -123,3 +123,11 @@ export const ARKON_CHAPTER_01 = {
     {type:'END'},
   ],
 };
+
+// Legacy/archived Chapter 1 pages also need an explicit *listener* pose.
+// Without this, the portrait renderer falls back to Sayaka's default home
+// outfit whenever Aruken speaks, even if all spoken lines use Oshiage art.
+for(const step of ARKON_CHAPTER_01.steps){
+  if(step.type!=='MANGA'||step.characters?.right!=='sayakaFujieda')continue;
+  for(const page of step.pages||[])page.rightPose??='oshiageNeutral';
+}
