@@ -153,6 +153,7 @@ export class StoryDirector {
     const scriptVars=normaliseStoryChoiceVars(vars);
     if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
     if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
+    if(!preview && savedIndex===0 && id==='arkonChapter07')scriptVars.storyR684=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -165,9 +166,28 @@ export class StoryDirector {
   resume() {
     if (this.session) return false;
     const scene = this.activeScene();
-    const checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
+    let checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
+    // R684 removed a four-step post-Level-2 tuner montage and added a new
+    // two-way Yokohama meet. Numeric R683 checkpoints beyond this point
+    // otherwise jump forward to the wrong action (or double-award a job).
+    // Remap only once; do not reset tuning, invoices, race results or visits.
+    if(checkpoint.id==='arkonChapter07' && !checkpoint.vars?.storyR684){
+      const steps=this.scripts.get(checkpoint.id)?.script?.steps||[];
+      const firstWork=steps.findIndex(x=>x.type==='ARKON_CH7_WORK'&&x.stage===1);
+      const firstRace=steps.findIndex(x=>x.type==='ARKON_CH7_RACE'&&x.index===0);
+      const oldIndex=Math.max(0,Number(checkpoint.index)||0);
+      const index=firstWork>=0&&firstRace>=0&&oldIndex>firstWork
+        ? oldIndex>=firstRace+2
+          ? oldIndex-2
+          : firstWork+1
+        :oldIndex;
+      checkpoint={...checkpoint,index:Math.max(0,Math.min(index,steps.length-1)),
+        vars:{...(checkpoint.vars||{}),storyR684:true}};
+      scene.registry.set(STORY_DIRECTOR_SAVE_KEY,checkpoint);
+      saveSessionState(scene.registry);
+    }
     // Old Chapter 03 checkpoints may still point to the Meet even though the
     // workshop story begins at Canal Yard. Finish the safe scene transition
     // first, then resume the SAME checkpoint (do not restart its scenes).
