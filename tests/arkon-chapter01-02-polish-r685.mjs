@@ -19,7 +19,7 @@ test('R685 Ch1 repair tableau keeps Aruken standing with couple and Sayaka upsta
  assert.ok(stage.characters.some(a=>a.id==='arkonDen'&&a.pose==='storyMechanic'));
  assert.ok(!stage.characters.some(a=>a.pose==='storyMechanicCrouch'));
  assert.equal(stage.characters.at(-1).id,'sayakaFujieda');
- assert.equal(stage.characters.at(-1).pose,'homeNormal');
+ assert.equal(stage.characters.at(-1).pose,'oshiageNeutral');
  const sayaka=getNativeCastPlacement(template,3,4,'chapter01RepairSayaka');
  const aruken=getNativeCastPlacement(template,2,4,'chapter01RepairAruken');
  assert.equal(sayaka.height/template.character.height,0.8);
@@ -29,13 +29,13 @@ test('R685 Ch1 repair tableau keeps Aruken standing with couple and Sayaka upsta
  assert.ok(scene(C1,'A DIFFERENT SORT OF RACER').pages.some(p=>p.leftPose==='storyMechanicCrouch'));
 });
 
-test('R685 Ch1 uses varied casual Sayaka sprites, not instructor thumbs-up at meets',()=>{
+test('R686 Ch1 uses varied Oshiage uniform Sayaka sprites, not just thumbs-up',()=>{
  const sayakaScenes=C1.steps.filter(s=>s.type==='MANGA'&&
    s.characters?.right==='sayakaFujieda');
  const poses=new Set(sayakaScenes.flatMap(s=>s.pages.map(p=>p.rightPose)));
- for(const pose of ['homeNormal','homeHappy','homeSerious','homeSad','homeBlushing'])
+ for(const pose of ['oshiageNeutral','oshiageHappy','oshiageReviewing','oshiageConcerned','oshiageRelaxed','oshiageExplaining','oshiageTalking','oshiageSerious'])
    assert.ok(poses.has(pose),pose);
- assert.equal([...poses].some(p=>String(p).startsWith('oshiage')),false);
+ assert.equal([...poses].every(p=>String(p).startsWith('oshiage')),true);
  for(const pose of poses) {
    const art=getCharacterVisualAsset('sayakaFujieda',pose);
    assert.ok(art&&!art.fallback,pose);
