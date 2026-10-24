@@ -2,7 +2,7 @@
 
 Read [CHARACTER_BIBLE.md](CHARACTER_BIBLE.md) before writing character dialogue, cutscenes, character interactions, magazine narrative, phone conversations or story content.
 
-Also read [CAREER_NARRATIVE.md](CAREER_NARRATIVE.md) for the saved synopsis, approved Sayaka/father history, ending direction and proposed emotional-beat backlog. Preserve the distinction between approved facts, conditional ending direction and unimplemented scene suggestions. Update that backlog as scenes are actually implemented.
+**For current Career canon**, begin with [R680 pre-Pro Circuit continuity](CAREER_R680_PRE_PRO_CONTINUITY.md), then read [CAREER_NARRATIVE.md](CAREER_NARRATIVE.md) for the historical synopsis and emotional-beat backlog. The earlier Sayaka/father racing-team history and ex-professional-racing father ending are retired; do not reinstate them from archived planning text. Distinguish implemented scenes from future Pro sponsorship proposals.
 
 **For Arkon Den Story Mode:** read [the approved 23 October Arkon story checkpoint](ARKON_DEN_STORY_ARC_2026-10-23.md) before proposing or implementing Chapters 04 onward, Ginza's origin, the RWB gift or the later Career intersection. The checkpoint is creative direction, not deployed gameplay; reconcile its earlier-time-period Ginza lock with Career's established later Ginza unlock and Sayaka reveal gates.
 
