@@ -209,7 +209,7 @@ export const ARKON_CHAPTER_10={
       say('Exactly. A fair start, not a guaranteed victory.','homeHappy'),
       ark('No special treatment on the track, either.','storySerious'),
       say('I would never hear the end of it if there were.','homeHappy'),
-      ark('We can handle the lease through the office. No introductions needed. Let them make their own names.','storyIdle'),
+      ark('We can handle the lease through the office. Let them make their own names.','storyIdle'),
       say('You have become surprisingly generous.','homeHappy'),
       ark('Do not tell anyone.','storySheepish'),
     ]),
