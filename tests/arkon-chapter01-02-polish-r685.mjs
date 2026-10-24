@@ -71,7 +71,7 @@ test('R685 Oshiage basic and advanced lessons ALWAYS use instructor portraits',(
  assert.match(race,/const tutorialQueued=this.registry.get\('selectedRaceCategory'\)==='TUTORIAL'/);
  assert.match(race,/const oshiageInstructorLesson=tutorialQueued/);
  assert.match(race,/raceDistrict'\)\|\|''\)\.toUpperCase\(\)==='OSHIAGE'/);
- assert.match(race,/if \(this.isCoaching \|\| oshiageInstructorLesson\)/);
+ assert.match(race,/if \(oshiageInstructorLesson\)/);
  assert.match(race,/const atSchool=this.registry.get\('raceReturnScene'\)==='OshiageScene'/);
  assert.match(race,/characterSayakaOshiage/);
  assert.match(race,/setupCoachedLesson\(\)/);
