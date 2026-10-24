@@ -90,10 +90,24 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter09Refused',chapter>=10);
   registry.set('arkonStoryChapter09ExitStatus',chapter>=10
     ?'declined-signoff; advisers-consulted; dispute-unresolved':null);
+  // An R679-completed profile no longer owns the Liberty Walk Z. Recreate
+  // its exact old build only inside this temporary replay, never on live saves.
+  const soldZ=registry.get('arkonStoryChapter10ZSale');
+  if(soldZ?.status==='sold' &&
+     !(registry.get('ownedCarIds')||[]).includes('arkonLibertyWalk240z')){
+    registry.set('ownedCarIds',[...(registry.get('ownedCarIds')||[]),'arkonLibertyWalk240z']);
+    registry.set('carStates',{...(registry.get('carStates')||{}),
+      arkonLibertyWalk240z:structuredClone(soldZ.lastState||{})});
+    registry.set('carGarageLocations',{...(registry.get('carGarageLocations')||{}),
+      arkonLibertyWalk240z:'shinonomeWarehouseStrip'});
+    registry.set('selectedCarId','arkonLibertyWalk240z');
+    registry.set('preferredCarId','arkonLibertyWalk240z');
+  }
   registry.set('arkonStoryChapter10Done',false);
   registry.set('arkonStoryChapter10ProjectsDone',0);
   registry.set('arkonStoryChapter10FeesEarned',0);
   registry.set('arkonStoryChapter10Settlement',null);
+  registry.set('arkonStoryChapter10ZSale',null);
   registry.set('arkonStoryChapter10Race',null);
   registry.set('arkonStoryChapter10RaceResult',null);
   registry.set('arkonStoryChapter10RaceDone',false);

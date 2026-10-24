@@ -34,12 +34,12 @@ export function getArkonStoryObjective(registry) {
     const phase=get('arkonStoryPhase')||'chapter10Recovery';
     const count=Math.max(0,Number(get('arkonStoryChapter10ProjectsDone')||0));
     const stages={
-      chapter10Recovery:['A FAMILIAR SOUND','The contractual dispute has been settled. Return to the work you love.'],
-      chapter10Restorations:['BACK TO THE CRAFT','Complete three genuine customer restorations at Warehouse HQ.'],
+      chapter10Recovery:['A FAMILIAR SOUND','The dispute is partly resolved, but the final liabilities remain. Return to honest work.'],
+      chapter10Restorations:['BACK TO THE CRAFT','Complete the customer restorations and prepare to meet the remaining obligations.'],
       chapter10TestDrive:['JUST FOR FUN','Run the friendly Daikoku test. No stakes, no special advantages.'],
-      chapter10Ginza:['GINZA GALLERY','Open the gallery with Sayaka. Her partnership is more than a curatorial job.'],
+      chapter10Ginza:['GINZA GALLERY','After the Z sale settles the liabilities, build a gallery as equal partners with Sayaka.'],
       chapter10Investment:['A LITTLE OPPORTUNITY','Support Daichi and a promising family friend who loves cars.'],
-      chapter10FinalDrive:['THE ROAD AHEAD','One final evening beneath the Yokohama Ferris wheel.'],
+      chapter10FinalDrive:['THE ROAD AHEAD','Travel together in Sayaka\'s RWB Porsche to Yokohama.'],
     };
     const [heading,message]=stages[phase]||['THE ROAD AHEAD','Continue Chapter 10.'];
     return {heading,message,progress:'RESTORATIONS '+count+'/3  //  CHAPTER 10'};

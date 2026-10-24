@@ -124,6 +124,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter10ProjectsDone: 0,
     arkonStoryChapter10FeesEarned: 0,
     arkonStoryChapter10Settlement: null,
+    arkonStoryChapter10ZSale: null,
     arkonStoryChapter10Race: null,
     arkonStoryChapter10RaceResult: null,
     arkonStoryChapter10RaceDone: false,
@@ -1042,6 +1043,7 @@ export function normaliseState(input = {}) {
   const storyRwbAcquired=storyMode && input.arkonStoryRwbProject?.acquired &&
     !input.arkonStoryRwbProject?.gifted &&
     input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
+  const storyZSold=storyMode && input.arkonStoryChapter10ZSale?.status==='sold';
   const storyRwbGifted=storyMode && input.arkonStoryRwbProject?.gifted &&
     input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
   const owned = (
@@ -1049,12 +1051,14 @@ export function normaliseState(input = {}) {
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)) &&
-      !(storyRwbGifted&&carId==='rwbStellaPorsche'));
+      !(storyRwbGifted&&carId==='rwbStellaPorsche') &&
+      !(storyZSold&&carId==='arkonLibertyWalk240z'));
 
   if(storyRwbAcquired && !owned.includes('rwbStellaPorsche'))owned.push('rwbStellaPorsche');
   if(storyRwbAcquired && !migratedGarageLocations.rwbStellaPorsche)
     migratedGarageLocations.rwbStellaPorsche='shinonomeCanalYard';
   if(storyRwbGifted)delete migratedGarageLocations.rwbStellaPorsche;
+  if(storyZSold)delete migratedGarageLocations.arkonLibertyWalk240z;
 
   // Developer special never enters carOrder, markets, coupons or rival pools.
   // Grant once, preserving existing Magna upgrades and avoiding re-grants after sale.
@@ -1343,6 +1347,8 @@ export function normaliseState(input = {}) {
       ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter10ProjectsDone)||0))):0,
     arkonStoryChapter10FeesEarned: storyMode
       ?Math.max(0,Math.floor(Number(input.arkonStoryChapter10FeesEarned)||0)):0,
+    arkonStoryChapter10ZSale: storyMode && input.arkonStoryChapter10ZSale?.status==='sold'
+      ?clonePlain(input.arkonStoryChapter10ZSale):null,
     arkonStoryChapter10Settlement: storyMode && input.arkonStoryChapter10Settlement &&
       typeof input.arkonStoryChapter10Settlement==='object'
       ?clonePlain(input.arkonStoryChapter10Settlement):null,
@@ -1826,6 +1832,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter10ProjectsDone: Number(registry.get('arkonStoryChapter10ProjectsDone')||0),
     arkonStoryChapter10FeesEarned: Number(registry.get('arkonStoryChapter10FeesEarned')||0),
     arkonStoryChapter10Settlement: registry.get('arkonStoryChapter10Settlement')||null,
+    arkonStoryChapter10ZSale: registry.get('arkonStoryChapter10ZSale')||null,
     arkonStoryChapter10Race: registry.get('arkonStoryChapter10Race')||null,
     arkonStoryChapter10RaceResult: registry.get('arkonStoryChapter10RaceResult')||null,
     arkonStoryChapter10RaceDone: Boolean(registry.get('arkonStoryChapter10RaceDone')),
