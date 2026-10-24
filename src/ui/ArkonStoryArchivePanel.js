@@ -1,8 +1,8 @@
 // R661 — Aruken's Story recount opens FULL GAMEPLAY replay by default.
 // Watching only the dialogue is a separately labelled, optional shortcut.
 // Neither path changes the real profile, and restart remains opt-in.
-import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
-import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261024-r678';
+import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261024-r681';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261024-r681';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261024-r678';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261024-r678';
 import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261024-r678';
@@ -11,7 +11,7 @@ import { ARKON_CHAPTER_06 } from '../data/arkonChapter06.js?v=20261024-r675';
 import { ARKON_CHAPTER_07 } from '../data/arkonChapter07.js?v=20261024-r678';
 import { ARKON_CHAPTER_08 } from '../data/arkonChapter08.js?v=20261023-r672';
 import { ARKON_CHAPTER_09 } from '../data/arkonChapter09.js?v=20261023-r673';
-import { ARKON_CHAPTER_10 } from '../data/arkonChapter10.js?v=20261023-r674';
+import { ARKON_CHAPTER_10 } from '../data/arkonChapter10.js?v=20261024-r681';
 import { getArkonPlayableChapters, beginArkonPlayableReplay } from './ArkonPlayableReplay.js?v=20261023-r669';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r664';
