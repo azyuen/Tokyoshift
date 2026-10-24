@@ -147,7 +147,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('Oh. You saw that?','storySurprised'),
       say('You fixed an awkward fault with almost nothing, then refused their money.','oshiageExplaining'),
       ark('It was just a dirty connection. I was lucky.','storySheepish'),
-      say('You seem remarkably determined to call it luck.','oshiageTalking'),
+      say('You seem remarkably determined to call it luck.','oshiageReviewing'),
     ]),
     manga('NOT OUR FIRST TWENTIES',[
       ark('So what brings you out to watch the kids risk their pay cheques?'),
