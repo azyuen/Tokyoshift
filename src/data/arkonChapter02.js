@@ -2,6 +2,7 @@
 // All ordinary races still use production driving physics. The dockside Forester
 // is a STORY PROP using its stock modular car artwork, not a player reward.
 const A='arkonDen', S='sayakaFujieda', D='storyDaigoKirishima', F='storyDockForeman';
+const R='rinaTachibana'; // Established Shibuya racer: the temporary S15 belongs to a client.
 const manga=(title,lines,cast={left:A,right:S})=>({
   type:'MANGA',title,characters:cast,
   pages:lines.map(([speaker,text,pose])=>({
@@ -88,20 +89,129 @@ export const ARKON_CHAPTER_02 = {
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02MeetRepair',timeOfDay:'night'},
     {type:'WAIT_WIN_DELTA',key:'ch2BeforeRepair',count:2,scene:'MeetScene'},
 
-    // Only here does Sayaka catch Aruken with tools at the Meet: not at home.
+    // Shibuya's better-paying meets bring Aruken here after the dock work.
+    // The S15 is a client vehicle being inspected by Rina, not a new award or a
+    // change to her signature SVX. This is a private cinematic: don't alter
+    // the player's actual region unlocks, inventory, race or current Meet.
+    {type:'CLEAR_STAGE'},
+    ...present('SHIBUYA // TROUBLE BETWEEN RUNS',[
+      {id:A,pose:'storyMechanicCrouch',role:'carMechanic'},
+      {id:R,pose:'idle'},
+      {id:S,pose:'oshiageReviewing',role:'observer'},
+    ],[{carId:'s15'}],'meet:shibuyaDogenzaka:night',{stageMode:'native'}),
+    manga('A MUCH HARDER PROBLEM',[
+      ['right','This S15 belongs to a client. I brought it here for a check, but the boost falls away halfway through a run.','idle'],
+      ark('It holds pressure at idle? Then the fault may only show under load.','storyMechanic'),
+      ['right','Three people have checked the turbo already. Nobody found anything.','idle'],
+      ark('The turbo is doing its job. Look at where that reference line goes. The controller is reading the wrong side of the restriction.','storyMechanicCrouch'),
+      ['right','So the control loop keeps correcting a pressure that never matches the manifold?','idle'],
+      ark('Exactly. Reroute the reference correctly, verify the plumbing and check the calibration before another full-power pull.','storyMechanic'),
+      ['right','I would never have thought to check the system as a whole. Thank you. What do I owe you?','idle'],
+      ark('Nothing. Tell the owner to have the setup checked properly before racing it.','storySheepish'),
+    ],{left:A,right:R}),
+    manga('SOMEONE WAS WATCHING',[
+      say('I was helping with the Shibuya meet schedule when Rina asked for help. Three workshops had already examined that car.','oshiageReviewing'),
+      ark('Three good workshops, probably. They were all looking for a broken part.','storyThinking'),
+      say('You were looking for why good parts did not work together.','oshiageNeutral'),
+      ark('Sometimes that is the difference.','storySheepish'),
+      say('That sort of diagnosis is rare outside serious professional racing.','oshiageSerious'),
+      ark('You know a lot about that world for someone helping at a meet.','storyConfidentSmirk'),
+    ]),
+    {type:'CHOICE',key:'arkonShibuyaDisclosure',title:'HOW MUCH WILL YOU REVEAL?',
+      subtitle:'She has noticed more than you intended.',choices:[
+      {id:'open',label:'ADMIT YOUR PROFESSIONAL PAST',to:'shibuyaOpen',
+        description:'Offer an honest fragment of your history.'},
+      {id:'guarded',label:'KEEP YOUR HISTORY PRIVATE',to:'shibuyaGuarded',
+        description:'Meet her curiosity with a little humour.'},
+    ]},
+    {type:'LABEL',name:'shibuyaOpen'},
+    manga('MORE THAN A LUCKY GUESS',[
+      ark('I worked on serious race cars for a few years. Proper paddock work. I learned to listen to the whole machine.','storySerious'),
+      say('That explains a few things. And yet you are working for nothing at a street meet.','oshiageReviewing'),
+      ark('Your turn. How do you know so much about professional racing?','storyConfidentSmirk'),
+      say('I have been around the scene. You meet interesting people organising these nights.','oshiageNeutral'),
+      ark('So there is more to you than meets the eye.','storyLaughing'),
+      say('I was about to say the same thing.','oshiageHappy'),
+    ]),
+    {type:'GOTO',to:'shibuyaAfterChoice'},
+    {type:'LABEL',name:'shibuyaGuarded'},
+    manga('TWO VERY OBSERVANT PEOPLE',[
+      ark('You are pretty observant. Perhaps you are onto something.','storyConfidentSmirk'),
+      say('Perhaps.','oshiageHappy'),
+      ark('Then how do you know so much about professional racing?','storyTalking'),
+      say('I am pretty observant too. Perhaps you are onto something.','oshiageHappy'),
+      ark('You are enjoying this, are you not?','storyLaughing'),
+      say('A little.','oshiageHappy'),
+    ]),
+    {type:'LABEL',name:'shibuyaAfterChoice'},
+    manga('WHAT GOOD WORK IS WORTH',[
+      say('Aoi and Haru needed a kindness. That was lovely. But clients with expensive cars can afford your time.','oshiageNeutral'),
+      ark('It did not take long.','storySheepish'),
+      say('They are paying for you to know where to look, not for the minutes you spend looking.','oshiageReviewing'),
+      ark('And you are planning to invoice me for this advice?','storyConfidentSmirk'),
+      say('At least buy me a decent coffee one day. Somewhere quiet, with chairs that do not smell of petrol.','oshiageHappy'),
+    ]),
+    // Legacy Chapter 01 completions already attended the school. Do not
+    // repeat the reveal, give duplicate credits, or reset lesson completion.
+    {type:'IF',key:'arkonStorySchoolRevealed',equals:true,then:'shibuyaSchoolKnown',else:'shibuyaSchoolNew'},
+    {type:'LABEL',name:'shibuyaSchoolNew'},
+    manga('SOMEONE AT OSHIAGE',[
+      say('I know somebody at the Oshiage Driving School. You could use a little help with those launches.','oshiageNeutral'),
+      ark('Is this person very strict?','storySheepish'),
+      say('Unbearably. But I can arrange a complimentary lesson.','oshiageHappy'),
+      ark('Then I would be a fool to turn it down.','storyConfidentSmirk'),
+    ]),
+    {type:'SET_FLAG',key:'arkonStoryLessonCredits',value:1},
+    {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02GoSchool',timeOfDay:'day'},
+    {type:'CLEAR_STAGE'},
+    {type:'WAIT_SCENE',scene:'OshiageScene'},
+    {type:'WAIT_FLAG',key:'arkonStoryAtSchool',equals:true},
+    manga('A VERY FAMILIAR INSTRUCTOR',[
+      ark('Hello. Sayaka mentioned someone who could teach me to—','storyTalking'),
+      say('Good to see you, Aruken.','oshiageHappy'),
+      ark('...Of course. Where is the instructor?','storySurprised'),
+      say('You are looking at her. Disappointed?','oshiageHappy'),
+      ark('I am beginning to wonder what else you have not told me.','storySheepish'),
+      say('Funny. I have been wondering the same about you.','oshiageHappy'),
+      ark('Fair enough.','storyLaughing'),
+      say('Now let us see whether you drive as well as you fix cars.','oshiageReviewing'),
+    ]),
+    {type:'SET_FLAG',key:'arkonStorySchoolRevealed',value:true},
+    {type:'SET_FLAG',key:'arkonStoryLessonCompleted',value:false},
+    {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02Lesson'},
+    {type:'WAIT_FLAG',key:'arkonStoryLessonCompleted',equals:true},
+    {type:'WAIT_SCENE',scene:'OshiageScene'},
+    manga('A DIFFERENT KIND OF TALENT',[
+      say('Good. You can hear an engine perfectly. Now you are starting to understand the launch.','oshiageHappy'),
+      ark('I seem to have found an instructor who knows exactly how to humble me.','storySheepish'),
+      say('You are welcome.','oshiageHappy'),
+      ark('And I am very glad I came.','storyCoolShy'),
+    ]),
+    {type:'GOTO',to:'shibuyaSchoolKnown'},
+    {type:'LABEL',name:'shibuyaSchoolKnown'},
+    manga('A POSSIBLE PARTNERSHIP',[
+      say('I visit a few other meets and know the local workshops. I could introduce you to people who need help.','oshiageNeutral'),
+      ark('You have already done more than enough.','storySheepish'),
+      say('And somebody should make sure you actually charge the wealthy ones.','oshiageHappy'),
+      ark('You are volunteering to negotiate my invoices?','storyConfidentSmirk'),
+      say('Occasionally. I have a job of my own, you know.','oshiageReviewing'),
+      ark('Then I had better make the most of the time you spare.','storyCoolShy'),
+      say('A remarkably sensible answer.','oshiageHappy'),
+    ]),
+    {type:'CLEAR_STAGE'},
+    {type:'WAIT_SCENE',scene:'MeetScene'},
+    // Later, she catches him checking his own 240Z. Engineering skill
+    // and his willingness to accept her driving advice now complement one another.
     ...present('THE 240Z // AFTER THE RUNS',[
       {id:A,pose:'storyMechanicCrouch',role:'carMechanic'},
       {id:S,pose:'oshiageReviewing',role:'observer'},
     ]),
-    manga('NOT JUST A LOOSE BOLT',[
-      say('I wondered where you had got to.','oshiageNeutral'),
-      ark('Down here. Trying not to become part of the exhaust.','storySheepish'),
-      say('You are adjusting the clutch linkage? At a meet?','oshiageReviewing'),
-      ark('The engagement was inconsistent. I could feel it on the last two launches.'),
-      say('You can diagnose that from the pedal?','oshiageConcerned'),
-      ark('After enough years, sometimes the car tells you.','storySerious'),
-      say('That sounds suspiciously like experience.','oshiageTalking'),
-      ark('It is a lot cheaper than buying new parts.','storyLaughing'),
+    manga('A PROPER LAUNCH',[
+      say('You are checking the clutch linkage?','oshiageReviewing'),
+      ark('After that lesson, I realised the engagement was inconsistent.','storyMechanic'),
+      say('You really did take the notes seriously.','oshiageHappy'),
+      ark('I can diagnose it. That does not mean I know everything about driving it.','storySerious'),
+      say('Good. I would hate to run out of things to teach you.','oshiageHappy'),
     ]),
     manga('AN INVITATION, SORT OF',[
       say('You have done more to that 240Z than I thought.'),

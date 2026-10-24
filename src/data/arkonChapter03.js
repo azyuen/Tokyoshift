@@ -63,6 +63,39 @@ export const ARKON_CHAPTER_03={
       ]},
     {type:'ARKON_CUSTOMER_JOB',index:1},
     {type:'ARKON_CUSTOMER_JOB',index:2},
+    // Real Career specialists, not invented Story Mode mechanics. Their
+    // connections grow from Sayaka's introductions and Aruken's actual work.
+    ...scene('ODAIBA // ESPRIT','tuner:odaibaEsprit:night',[
+      {id:A,pose:'storyMechanic'},{id:'takumiSerizawa',pose:'idle'}],[{carId:'240z'}]),
+    manga('TAKUMI // FIRST PRINCIPLES',[
+      ['right','Aoi told me you saved her old Z. She said you would not even take a payment.','idle'],
+      ark('I could hardly charge her for cleaning a connection.','storySheepish'),
+      ['right','Then have a look at this aero setup. Less weight is useless if it makes the car unstable.','idle'],
+      ark('The balance matters more than one impressive number. Mind if we compare measurements?','storyMechanic'),
+      ['right','That is the sort of question I like. Come in.','idle'],
+    ],{left:A,right:'takumiSerizawa'}),
+    {type:'CLEAR_STAGE'},
+    ...scene('SHIBUYA // POWER HOUSE AMUSE','tuner:shibuyaAmuse:night',[
+      {id:A,pose:'storyMechanic'},{id:'itsukiKuroda',pose:'idle'}],[{carId:'240z'}]),
+    manga('ITSUKI // FLOW AND RESPONSE',[
+      ['right','Sayaka says you understand how engines behave, not just how they look on a chart.','idle'],
+      ark('She is very generous with her descriptions.','storySheepish'),
+      ['right','Then you will enjoy this. We have been studying the relationship between exhaust flow and high-rpm response.','idle'],
+      ark('Show me the data. I might have an idea about where the restriction moves with load.','storyThinking'),
+      ['right','Good. I would rather work with someone who asks questions.','idle'],
+    ],{left:A,right:'itsukiKuroda'}),
+    {type:'CLEAR_STAGE'},
+    ...scene('CANAL YARD // A FAMILIAR VISITOR','workshop:shinonomeCanalYard:night',withSayaka,[{carId:'240z'}]),
+    manga('A LITTLE CREDIT',[
+      say('Takumi and Itsuki both called. They enjoyed working with you.','homeHappy'),
+      ark('I learned a lot. It was good to be around people who care about getting things right.','storySerious'),
+      say('They said you had rather useful ideas of your own.','homeNormal'),
+      ark('They are polite people.','storySheepish'),
+      say('Are you ever going to accept a compliment?','homeHappy'),
+      ark('I did accept your invitation. That has worked out rather well.','storyCoolShy'),
+      say('Careful, Aruken. That almost sounded sincere.','homeHappy'),
+    ]),
+    {type:'CLEAR_STAGE'},
     manga('WORD OF MOUTH',[
       ark('Three cars in two nights. I might need to stop answering my phone.','storyMechanic'),
       ark('Then again, the bills are starting to look a little friendlier.','storyLaughing'),

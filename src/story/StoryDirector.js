@@ -9,11 +9,12 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261024-r675';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r675';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r678';
+import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r669';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261024-r678';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import {
@@ -25,7 +26,7 @@ import {
   ch7Progress,startArkonCh7Work,finishArkonCh7Work,
   getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,
   convertArkonCh7Car,startArkonCh7SoloDrive,finishArkonCh7SoloDrive
-} from '../data/arkonChapter07Progress.js?v=20261023-r669';
+} from '../data/arkonChapter07Progress.js?v=20261024-r678';
 import {startArkonCh8Race,finishArkonCh8Race,recordArkonCh8Contract}
   from '../data/arkonChapter08Races.js?v=20261023-r672';
 import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
@@ -147,8 +148,10 @@ export class StoryDirector {
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
     if (savedIndex >= compiled.script.steps.length) return false;
+    const scriptVars=normaliseStoryChoiceVars(vars);
+    if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
-      vars: normaliseStoryChoiceVars(vars) };
+      vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
     this.events.clear();
     this.checkpoint();
@@ -248,7 +251,8 @@ export class StoryDirector {
       const steps=this.scripts.get('arkonChapter03')?.script?.steps||[];
       const driveIndex=steps.findIndex(step=>step.type==='ARKON_MX5_RACE');
       if(driveIndex>=0)
-        return this.start(checkpoint.id,{index:driveIndex,vars:checkpoint.vars});
+        return this.start(checkpoint.id,{index:driveIndex,
+          vars:{...(checkpoint.vars||{}),storyR678:true}});
     }
     // Chapter 04's driving/tuning interlude is genuine free gameplay.
     // Never auto-launch the next scene behind an active Meet, replay or
@@ -259,7 +263,11 @@ export class StoryDirector {
     if(checkpoint.id==='arkonChapter07' &&
       this.scripts.get(checkpoint.id)?.script?.steps?.[checkpoint.index]?.type==='ARKON_CH7_WORK')
       return false;
-    return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
+    // R677 checkpoints stored raw numeric positions. The R678 screenplay
+    // inserts real conversations, so resume using a semantic milestone once.
+    // Never reinterpret an old saved index as a new financial/race action.
+    const migrated=migrateArkonR678Checkpoint(this.scripts.get(checkpoint.id),checkpoint,scene.registry);
+    return this.start(checkpoint.id, migrated || { index: checkpoint.index, vars:checkpoint.vars });
   }
   checkpoint() {
     if (!this.session || this.session.preview) return;
