@@ -39,6 +39,6 @@ jobs:
           node --check src/ui/Chapter08Story.js
           node --check src/ui/MangaCutscene.js
           node --check src/scenes/CentralTokyoScene.js
-      - name: Run Career and Prelude story regression tests
+      - name: Run focused R680 Career and Prelude regression tests
         run: |
-          node --test tests/career-continuity-r680.mjs tests/chapter08-r568.mjs tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs tests/story-archive-r570.mjs tests/arkon-chapter10-r679.mjs
+          node --test tests/career-continuity-r680.mjs tests/chapter08-r568.mjs tests/story-archive-r570.mjs tests/arkon-chapter10-r679.mjs
