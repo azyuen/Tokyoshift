@@ -24,7 +24,18 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
  const park=await page.evaluate(async()=>{
   const g=window.TOKYO_SHIFT.scene.getScene('GarageScene');g.selectCar('r34');const get=()=>g.registry.get('carStates').r34;
   const {getBuiltCar}=await import('./src/vehicles/VehiclePerformance.js');const {isPerformanceStockState}=await import('./src/data/crewSystem.js');
-  const before=getBuiltCar('r34',get()).car.powerKW;g.factorySetupButton.emit('pointerdown');const parked=getBuiltCar('r34',get()).car.powerKW,stock=isPerformanceStockState(get());g.factorySetupButton.emit('pointerdown');const restored=getBuiltCar('r34',get()).car.powerKW;return {before,parked,stock,restored,label:g.engineeringLabelText.text};
+  const before=getBuiltCar('r34',get()).car.powerKW;
+  if(g.factorySetupButton.visible)throw Error('Free parking bypass exposed');
+  g.factorySetupButton.emit('pointerdown');
+  if(get().parkedPerformanceParts)throw Error('Hidden button created free parked parts');
+  // Import a legacy parked save, then exercise its real restoration control.
+  const {parkPerformanceParts}=await import('./src/data/factorySetup.js');
+  g.registry.set('carStates',{...g.registry.get('carStates'),r34:parkPerformanceParts(get())});g.selectCar('r34');
+  const parked=getBuiltCar('r34',get()).car.powerKW,stock=isPerformanceStockState(get());
+  if(!g.factorySetupButton.visible)throw Error('Legacy restoration missing');
+  g.factorySetupButton.emit('pointerdown');
+  const restored=getBuiltCar('r34',get()).car.powerKW;
+  return {before,parked,stock,restored,legacyFixture:true,freeParkingBlocked:!g.factorySetupButton.visible,label:g.engineeringLabelText.text};
  });assert.ok(park.before>400);assert.equal(park.parked,206);assert.equal(park.stock,true);assert.equal(park.before,park.restored);
  await page.waitForTimeout(1500);
  await page.screenshot({path:`artifacts/engineering/garage-${viewport.width}.png`,fullPage:true});

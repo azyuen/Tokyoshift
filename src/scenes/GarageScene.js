@@ -1,6 +1,6 @@
 import { boostSupportMessage } from '../data/engineeringFeedback.js';
 import {engineeringLabel,tuningPotentialSummary} from '../data/stockClasses.js';
-import {parkPerformanceParts,restorePerformanceParts} from '../data/factorySetup.js';
+import {restorePerformanceParts} from '../data/factorySetup.js';
 import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
 import {
@@ -1848,7 +1848,8 @@ export default class GarageScene extends Phaser.Scene {
     this.factorySetupButton.on('pointerdown',()=>{
       if(this.isSelectedCarTuningLocked())return;
       const states=this.registry.get('carStates')||{},state=states[this.selectedCarId]||{};
-      states[this.selectedCarId]=state.parkedPerformanceParts?restorePerformanceParts(state):parkPerformanceParts(state);
+      if(!state.parkedPerformanceParts)return;
+      states[this.selectedCarId]=restorePerformanceParts(state);
       this.registry.set('carStates',states);saveSessionState(this.registry);this.selectCar(this.selectedCarId);
     });
     const rows = [
@@ -4664,7 +4665,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.engine.setText(engineLabel);
     this.engineeringLabelText?.setText(engineeringLabel(car));
     if(this.engineeringLabelText)this.engineeringLabelText.setScale(Math.min(1,(SIDE.w-40)/Math.max(1,this.engineeringLabelText.width)));
-    this.factorySetupButton?.setVisible(!this.isSelectedCarTuningLocked()).setText(carState.parkedPerformanceParts?'RESTORE PARKED TUNING':'PARK PARTS / FACTORY SETUP');
+    this.factorySetupButton?.setVisible(!this.isSelectedCarTuningLocked()&&Boolean(carState.parkedPerformanceParts)).setText('RESTORE LEGACY PARKED TUNING');
     this.specValueTexts.power.setText(
       ratingDisplay.powerLabel +
       (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')

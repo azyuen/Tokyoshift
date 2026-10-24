@@ -13,6 +13,8 @@
         "parked": 206,
         "stock": true,
         "restored": 419,
+        "legacyFixture": true,
+        "freeParkingBlocked": true,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
@@ -28,8 +30,8 @@
         "opponentCharacterId": "daigoArakawa",
         "playerKW": 206,
         "opponentKW": 206,
-        "playerDistance": 444.22924895848814,
-        "opponentDistance": 441.11854674987075,
+        "playerDistance": 443.43377689829583,
+        "opponentDistance": 441.228596268072,
         "finished": true,
         "falseStart": false
       },
@@ -48,6 +50,8 @@
         "parked": 206,
         "stock": true,
         "restored": 419,
+        "legacyFixture": true,
+        "freeParkingBlocked": true,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
