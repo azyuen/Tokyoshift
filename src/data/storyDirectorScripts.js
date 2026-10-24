@@ -1,6 +1,6 @@
 import { ARKON_CHAPTER_01 } from './arkonChapter01.js?v=20261024-r681';
-import { ARKON_CHAPTER_01_REVISED } from './arkonChapter01Revised.js?v=20261024-r681';
-import { ARKON_CHAPTER_02 } from './arkonChapter02.js?v=20261024-r678';
+import { ARKON_CHAPTER_01_REVISED } from './arkonChapter01Revised.js?v=20261025-r685';
+import { ARKON_CHAPTER_02 } from './arkonChapter02.js?v=20261025-r685';
 import { ARKON_CHAPTER_03 } from './arkonChapter03.js?v=20261024-r678';
 import { ARKON_CHAPTER_04 } from './arkonChapter04.js?v=20261024-r678';
 import { ARKON_CHAPTER_05 } from './arkonChapter05.js?v=20261024-r679';
