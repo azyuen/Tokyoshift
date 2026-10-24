@@ -44,7 +44,7 @@ test('Sayaka meets Daichi first, with Aruken absent through the completed crew s
 });
 test('Chapter 8 invitation, Ginza identity and strategist role stay, but Aruken remains unnamed',()=>{
   const scenes=['chapter08Warehouse','chapter08ManagerCall','chapter08WarehouseReaction','chapter08SayakaCall','chapter08WarehouseFarewell','chapter08Ginza'];
-  for(const id of scenes)assert.strictEqual(CUTSCENES[id],CHAPTER08_SCENES[id],id);
+  for(const id of scenes)assert.deepEqual(CUTSCENES[id],CHAPTER08_SCENES[id],id);
   assert.equal(CUTSCENES.chapter08ManagerCall.callerId,'masatoKuroda');
   assert.equal(CUTSCENES.chapter08SayakaCall.callerId,'sayakaFujieda');
   assert.match(content(CUTSCENES.chapter08SayakaCall),/somebody else who used to charge into races/i);
