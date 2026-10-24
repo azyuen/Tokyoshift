@@ -2,6 +2,7 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261022-r635';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261022-r635';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
@@ -2028,8 +2029,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCar = cars[selectedCarId];
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+    const storyCarLocked = isArkonStory240zProtected(this.registry,selectedCarId);
     const collectorLocked = Boolean(
-      selectedCar?.tuningLocked ||
+      storyCarLocked || selectedCar?.tuningLocked ||
       selectedState.collector ||
       selectedState.immutable ||
       selectedCar?.crewLoan ||
@@ -2062,7 +2064,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       canSell
         ? 'SELL ' + selectedCar.shortName + ' // ' + money(sellPrice)
         : collectorLocked
-          ? (selectedCar?.crewLoan || selectedState.crewLoan
+          ? (storyCarLocked ? 'STORY 240Z // NOT FOR SALE' :
+            selectedCar?.crewLoan || selectedState.crewLoan
               ? 'CREW LOAN // NOT FOR SALE'
               : 'COLLECTOR CAR NOT TRADED')
           : starterOnly
@@ -2392,6 +2395,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       .activeTournament?.carId === carId) return;
     const proDuel = this.registry.get('competitionState');
     if (proDuel?.active && proDuel?.proEvent && proDuel.playerCarId === carId) return;
+    // Re-check inside the transaction as well as the disabled button: saved
+    // confirmations and direct calls must never bypass the Story car lock.
+    if (isArkonStory240zProtected(this.registry,carId)) return;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const starterCarId = this.registry.get('starterCarId');
     if (!owned.includes(carId)) return;
