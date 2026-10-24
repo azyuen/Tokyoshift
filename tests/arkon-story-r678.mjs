@@ -11,6 +11,7 @@ import {ARKON_CHAPTER_07 as C7} from '../src/data/arkonChapter07.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
 import {TUNER_SHOPS} from '../src/data/tunerShops.js';
 import {getCharacterVisualAsset} from '../src/data/characters.js';
+import {migrateArkonR678Checkpoint} from '../src/story/ArkonR678CheckpointMigration.js';
 const pages=script=>script.steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]);
 const text=script=>pages(script).map(p=>p.text).join(' ');
 const stageWith=(script,id)=>script.steps.find(s=>s.type==='STAGE'&&s.characters?.some(a=>a.id===id));
@@ -85,4 +86,27 @@ test('Chapter 7 retains the emotional distance and Chapter 10 Career origins rem
  const ch7source=readFileSync(new URL('../src/data/arkonChapter07Progress.js',import.meta.url),'utf8');
  assert.match(ch7source,/getInstalledSpecialistTuning/);
  assert.match(ch7source,/treatmentGoal=a.stage<=1\?0:7/);
+});
+
+test('Older numerical checkpoints migrate to semantic Story milestones only once',()=>{
+ const saved=(id,index=120)=>({id,index,ownerSlot:2,version:1,vars:{}});
+ const migrate=(script,cp,state)=>migrateArkonR678Checkpoint({script},cp,state);
+ const c1=migrate(C1,saved(C1.id),{arkonStoryPhase:'goSchool'});
+ assert.equal(C1.steps[c1.index].key,'arkonStoryChapter01RevisedDone');
+ assert.equal(c1.vars.storyR678,true);
+ assert.equal(migrate(C1,{...saved(C1.id),vars:c1.vars},{arkonStoryPhase:'goSchool'}),null);
+ const c2=migrate(C2,saved(C2.id),{arkonStoryPhase:'chapter02MeetRepair'});
+ assert.equal(C2.steps[c2.index].key,'ch2BeforeRepair');
+ const c3=migrate(C3,saved(C3.id),{arkonStoryPhase:'chapter03Jobs',arkonStoryCustomerJobsDone:3});
+ assert.equal(C3.steps[c3.index].type,'ARKON_CUSTOMER_JOB');
+ assert.equal(C3.steps[c3.index].index,3);
+ const c4=migrate(C4,saved(C4.id),{arkonStoryPhase:'chapter04Rebuild'});
+ assert.equal(C4.steps[c4.index].title,'CANAL YARD // AN OLD REPORT');
+ const c5=migrate(C5,saved(C5.id),{arkonStoryPhase:'chapter05Supra',arkonStoryChapter05JobsDone:2});
+ assert.equal(C5.steps[c5.index].type,'ARKON_CH5_RACE');
+ assert.equal(C5.steps[c5.index].index,2);
+ const c7=migrate(C7,saved(C7.id),{arkonStoryPhase:'chapter07FinalBuild',
+    arkonStoryChapter07Work:{stage:3,racesDone:1,converted:false}});
+ assert.equal(C7.steps[c7.index].type,'ARKON_CH7_RACE');
+ assert.equal(C7.steps[c7.index].index,1);
 });
