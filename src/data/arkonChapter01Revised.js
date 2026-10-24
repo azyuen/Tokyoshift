@@ -99,7 +99,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ['left','There! That is my engine. I thought it was finished.','idle'],
       ['right','I told you she was worth keeping.','idle'],
       ['left','You told me to buy something newer.','idle'],
-      ['right','That was before we met the world's most useful stranger.','idle'],
+      ['right','That was before we met this very useful stranger.','idle'],
     ],{left:AOI,right:HARU}),
     manga('NO INVOICE',[
       ['right','At least let us pay you. You got us out of trouble.','idle'],
