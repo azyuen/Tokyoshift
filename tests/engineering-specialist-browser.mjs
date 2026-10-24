@@ -44,7 +44,23 @@ try {
  assert.deepEqual(restored.state.tuning,prepared.state.stockTuneService.tune.tuning);
  assert.deepEqual(restored.state.specialistTuning,prepared.state.stockTuneService.tune.specialistTuning);
  assert.equal(restored.state.stockTuneService,undefined);assert.ok(restored.power>prepared.power);
+ const heroBefore=await page.evaluate(()=>{
+  const s=window.TOKYO_SHIFT.scene.getScene('TunerShopScene'),r=s.registry;
+  // Separate factory-donor fixture: never erase the preceding player's stored tune.
+  r.set('carStates',{gc8:{stock:true,paintColor:0x123456}});
+  const before={cash:r.get('cash'),cost:s.shop.buildCost,heroId:s.shop.heroCarId};
+  s.confirmHeroConversion();return before;
+ });
+ await page.waitForFunction(id=>window.TOKYO_SHIFT.registry.get('selectedCarId')===id,heroBefore.heroId,{timeout:30000});
+ const hero=await page.evaluate(async()=>{
+  const r=window.TOKYO_SHIFT.registry,gs=await import('./src/state/GameState.js');
+  return {cash:r.get('cash'),owned:r.get('ownedCarIds'),state:r.get('carStates')[r.get('selectedCarId')],saved:gs.getProfileState(0).selectedCarId};
+ });
+ assert.equal(hero.cash,heroBefore.cash-heroBefore.cost);assert.deepEqual(hero.owned,[heroBefore.heroId]);
+ assert.equal(hero.state.convertedFrom,'gc8');assert.equal(hero.saved,heroBefore.heroId);assert.equal(hero.state.tuningLocked,true);
+ await page.waitForTimeout(1800);
  assert.deepEqual(errors,[]);
+ fs.writeFileSync('docs/engineering/hero-browser-results.json',JSON.stringify({scope:'Local Chromium, synthetic factory GC8 fixture, actual confirmation animation and production conversion transaction; other six mappings covered by automated transaction tests',heroBefore,hero,errors},null,2)+'\n');
  fs.writeFileSync('docs/engineering/specialist-browser-results.json',JSON.stringify({browser:await browser.version(),scope:'Local Chromium, synthetic profile, actual specialist confirmation handler and full page reload; not deployed or native-device testing',prepared,restored,storedTuneSurvivedPageReload:true,errors},null,2)+'\n');
  console.log('Specialist paid service and full reload passed');
 } finally {await browser.close();}

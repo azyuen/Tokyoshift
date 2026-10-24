@@ -1,0 +1,26 @@
+{
+  "scope": "Local Chromium, synthetic factory GC8 fixture, actual confirmation animation and production conversion transaction; other six mappings covered by automated transaction tests",
+  "heroBefore": {
+    "cash": 29990000,
+    "cost": 7000000,
+    "heroId": "zeroSportsGc8"
+  },
+  "hero": {
+    "cash": 22990000,
+    "owned": [
+      "zeroSportsGc8"
+    ],
+    "state": {
+      "stock": false,
+      "collector": true,
+      "immutable": true,
+      "tuningLocked": true,
+      "acquiredVia": "tuner-shop",
+      "tunerShopId": "shinagawaZeroSports",
+      "convertedFrom": "gc8",
+      "builtAt": 1792874676489
+    },
+    "saved": "zeroSportsGc8"
+  },
+  "errors": []
+}
