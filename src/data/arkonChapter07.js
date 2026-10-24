@@ -75,7 +75,7 @@ export const ARKON_CHAPTER_07={
       ark('I brought the latest logs. You were right about the restriction.','storyThinking'),
       ['right','And your revised map makes the titanium setup more useful. That is why we work together.','idle'],
       ark('I missed this. Two people finding one good answer.','storyMechanic'),
-    ],{left:A,right:'itsukiKuroda'}),
+    ],{left:A,right:'itsukiKuroda'},'storyMechanic'),
     ...road('yokohamaMinatoMirai','YOKOHAMA // TIME TO PROVE IT'),
     manga('ONE MORE TEST',[
       ark('The chassis is tighter. The power delivery is cleaner.','storyConfident'),
