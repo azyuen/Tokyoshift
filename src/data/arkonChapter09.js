@@ -5,14 +5,19 @@ const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='homeNormal')=>['right',text,pose];
 const vip=(text,pose='idle')=>['right',text,pose];
-const manga=(title,lines,right=S,left=A)=>({
-  type:'MANGA',title,characters:{left,right},
-  pages:lines.map(([speaker,text,pose])=>({
-    speaker,text,
-    leftPose:left===A?(speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
-    rightPose:right===S?(speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
-  })),
-});
+const manga=(title,lines,right=S,left=A)=>{
+  const formal=lines.some(([, ,pose])=>pose==='ginzaSuit'||pose==='ginzaDress'||
+    String(pose||'').startsWith('dev'));
+  return {type:'MANGA',title,characters:{left,right},
+    pages:lines.map(([speaker,text,pose])=>({speaker,text,
+      leftPose:left===A?(formal
+        ? (speaker==='left'&&String(pose||'').startsWith('dev')?pose:'ginzaSuit')
+        : speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
+      rightPose:right===S?(formal?'ginzaDress':
+        speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
+    })),
+  };
+};
 const stage=(label,backgroundId,characters,cars=[],privateMeet=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId,stageMode:'native',privateMeet,
@@ -134,11 +139,11 @@ export const ARKON_CHAPTER_09={
     ],[{carId:'arkonLibertyWalk240z'},{carId:'rwbStellaPorsche'}]),
     manga('ONE LAST DOCUMENT',[
       vip('Our purchasers are waiting. The restored car, the valuation, your engineering assurance.'),
-      ark('The documents do not match. I cannot verify its history.','ginzaSuit'),
+      ark('The documents do not match. I cannot verify its history.','devSerious'),
       vip('You signed a contract, Aruken.'),
-      ark('I know. I intend to deal with that. But I will not certify this transaction.','ginzaSuit'),
+      ark('I know. I intend to deal with that. But I will not certify this transaction.','devSerious'),
       vip('It would be unfortunate if your workshop suffered for this.'),
-      ark('My decision is final.','ginzaSuit'),
+      ark('My decision is final.','devSerious'),
     ],V),
     {type:'ARKON_CH9_REFUSE'},
     ...night('SHIBUYA // NOT ALONE',[
@@ -148,12 +153,12 @@ export const ARKON_CHAPTER_09={
     ],[{carId:'rwbStellaPorsche'}]),
     manga('THE INVESTOR',[
       vip('There will be matters to settle.'),
-      ark('Then we can address them properly. Not here.','ginzaSuit'),
+      ark('Then we can address them properly. Not here.','devSerious'),
       vip('We will be in touch.'),
     ],V),
     manga('AN EXIT',[
       say('Aruken. Our advisers are waiting.','ginzaDress'),
-      ark('I am ready.','ginzaSuit'),
+      ark('I am ready.','devSerious'),
       say('Good evening.','ginzaDress'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09RoadHome',timeOfDay:'night'},
