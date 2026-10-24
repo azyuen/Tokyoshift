@@ -31,7 +31,7 @@ import {
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260926-r212';
+} from '../data/tunerShops.js?v=20261025-r684';
 import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
