@@ -1,4 +1,5 @@
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
+import {canArkonCh7BuyStoryParts} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {
   ARKON_STORY_MECHANIC_ASSETS, isArkonStoryWorkshop,
   resolveWorkshopMechanicTexture,
@@ -2012,7 +2013,9 @@ export default class GarageScene extends Phaser.Scene {
       level,
       this.getActiveWorkshop().id,
       Number(this.registry.get('wins') || 0),
-      Boolean(this.registry.get('devMode'))
+      Boolean(this.registry.get('devMode')) ||
+        canArkonCh7BuyStoryParts(this.registry,this.selectedCarId,
+          this.getActiveWorkshop().id,level)
     );
   }
 
@@ -2023,7 +2026,9 @@ export default class GarageScene extends Phaser.Scene {
       level,
       this.getActiveWorkshop().id,
       Number(this.registry.get('wins') || 0),
-      Boolean(this.registry.get('devMode'))
+      Boolean(this.registry.get('devMode')) ||
+        canArkonCh7BuyStoryParts(this.registry,this.selectedCarId,
+          this.getActiveWorkshop().id,level)
     );
   }
 
