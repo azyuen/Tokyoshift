@@ -394,17 +394,22 @@ test('R653 manga never falls back to Sayaka home clothing while dimmed',()=>{
   assert.match(dir,/preloadPagePosesOnly: \['arkonChapter01Revised','arkonChapter02','arkonChapter03'(?:,'arkonChapter04')?\]\.includes\(this\.session\.id\)/);
 });
 
-test('R653 prevents reflection playing before victory result is dismissed',()=>{
+test('R678 repair occurs at the Meet, after race results are dismissed',()=>{
   const steps=ARKON_CHAPTER_01_REVISED.steps;
-  const threshold=steps.find(s=>s.type==='WAIT_FLAG'&&s.key==='wins'&&s.atLeast===6);
-  assert.equal(threshold.scene,'MeetScene');
-  const following=steps[steps.indexOf(threshold)+1];
-  assert.equal(following.type,'STAGE');
-  assert.equal(following.backgroundId,'$CURRENT_MEET');
-  assert.equal(following.privateMeet,true);
-  const scriptDirector=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
-  assert.match(scriptDirector,/wait\.condition\.scene/);
-  assert.match(scriptDirector,/\(!step\.scene \|\| sceneName\(scene\)===step\.scene\)/);
+  const threshold=steps.find(s=>s.type==='WAIT_FLAG'&&s.key==='wins'&&s.atLeast===3);
+  assert.ok(threshold);
+  const next=steps[steps.indexOf(threshold)+1];
+  assert.equal(next.type,'SET_FLAG');
+  assert.equal(next.value,'meetNotice');
+  const wait=steps[steps.indexOf(threshold)+2];
+  assert.equal(wait.type,'WAIT_SCENE');
+  assert.equal(wait.scene,'MeetScene');
+  const repair=steps.find(s=>s.type==='STAGE'&&s.characters?.some(c=>c.id==='aoiShindou'));
+  assert.equal(repair.backgroundId,'$CURRENT_MEET');
+  assert.equal(repair.privateMeet,true);
+  const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
+  assert.match(dir,/wait\.condition\.scene/);
+  assert.match(dir,/\(!step\.scene \|\| sceneName\(scene\)===step\.scene\)/);
 });
 
 test('R653 Story time controls scene phase without touching other profiles',()=>{
