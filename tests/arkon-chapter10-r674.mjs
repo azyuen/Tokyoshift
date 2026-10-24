@@ -30,7 +30,10 @@ const fixture=()=>reg({
 });
 test('Chapter 10 script and register terminate with a completed story',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_10));
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter10,ARKON_CHAPTER_10);
+  // A cache-busted registration import can be an independent module instance.
+  // Compare the actual declarative chapter data instead of its object address.
+  assert.deepEqual(JSON.parse(JSON.stringify(STORY_DIRECTOR_SCRIPTS.arkonChapter10)),
+    JSON.parse(JSON.stringify(ARKON_CHAPTER_10)));
   assert.deepEqual(ARKON_CHAPTER_10.steps.filter(s=>s.type==='ARKON_CH10_RESTORE')
     .map(s=>s.index),[0,1,2]);
   assert.equal(ARKON_CHAPTER_10.steps.filter(s=>s.type==='ARKON_CH10_RACE').length,1);
