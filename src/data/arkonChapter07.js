@@ -78,8 +78,11 @@ export const ARKON_CHAPTER_07={
     ...stage('YOKOHAMA // AN EVENING TOGETHER','meet:yokohamaMinatoMirai:night','240z',
       pair('storyThinking','homeHappy')),
     manga('A VIEW WORTH RETURNING FOR',[
-      say('I was starting to think you had forgotten how to leave the workshop.','homeHappy'),
-      ark('Not when I finally have a chassis this responsive. Feel that idle?','storyConfident'),
+      say('I even changed out of my teaching clothes for tonight.','homeHappy'),
+      ark('And I finally got the idle steady. Listen to that.','storyConfident'),
+      say('You are an incurable romantic.','homeHappy'),
+      ark('What? Oh. You look lovely, by the way.','storySheepish'),
+      say('Thank you. I think.','homeHappy'),
       say('I was thinking more about the harbour. It looks lovely tonight.','homeHappy'),
       ark('Right. And the air temperature is perfect for a clean pull.','storyThinking'),
       say('You brought your data logger on our evening out?','homeSerious'),
