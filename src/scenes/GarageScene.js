@@ -55,7 +55,7 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261024-r675';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261024-r675';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261024-r680';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261025-r683';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
   ETHAN_GIFT_PENDING_KEY, isEthanName,
@@ -146,7 +146,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r682';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r683';
 import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261024-r678';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 

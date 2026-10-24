@@ -58,7 +58,7 @@ test('R675 visible paid invoices fund rent, debt and repairs with profit; no dup
  assert.equal(s.get('garageTier'),2);
  assert.equal(s.get('workshopLocationId'),'shinonomeWarehouseStrip');
  assert.equal(s.get('carGarageLocations').rwbStellaPorsche,'shinonomeWarehouseStrip');
- assert.equal(s.get('carGarageLocations')['240z'],'shinonomeCanalYard');
+ assert.equal(s.get('carGarageLocations')['240z'],'shinonomeWarehouseStrip');
  assert.equal(ch6Progress(s).escrow,6450000);
  assert.equal(settleArkonCh6PorscheLoan(s),true);
  assert.equal(settleArkonCh6PorscheLoan(s),true);

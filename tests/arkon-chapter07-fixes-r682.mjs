@@ -76,7 +76,7 @@ test('R682: Chapter 7 outfit is uniform across every manga page in suited and me
   const suit=getScene('A NEW LOOK');
   assert.ok(suit);
   assert.ok(suit.pages.length>3);
-  assert.ok(suit.pages.every(page=>page.leftPose==='ginzaSuit'));
+  assert.ok(suit.pages.every(page=>['ginzaSuit','devBlushing'].includes(page.leftPose)));
   const mechanic=getScene('THE BUSINESS IS BOOMING');
   assert.ok(mechanic);
   assert.ok(mechanic.pages.every(page=>page.leftPose==='storyMechanic'));

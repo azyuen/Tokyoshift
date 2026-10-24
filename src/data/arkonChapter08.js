@@ -6,16 +6,17 @@ const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='homeNormal')=>['right',text,pose];
 const vip=(text,pose='idle')=>['right',text,pose];
-const manga=(title,lines,right=S,left=A)=>{
+const manga=(title,lines,right=S,left=A,forceFormal=false)=>{
   // Formalwear remains consistent while either person speaks at the gala;
   // no casual-outfit flash between alternating dialogue panels.
-  const formal=lines.some(([, ,pose])=>pose==='ginzaSuit'||pose==='ginzaDress');
+  const formal=forceFormal||lines.some(([, ,pose])=>pose==='ginzaSuit'||pose==='ginzaDress'||String(pose||'').startsWith('dev'));
   return {
     type:'MANGA',title,characters:{left,right},
     pages:lines.map(([speaker,text,pose])=>({
       speaker,text,
-      leftPose:left===A?(speaker==='left'?pose||(formal?'ginzaSuit':'storyTalking')
-        :formal?'ginzaSuit':'storyIdle'):'idle',
+      leftPose:left===A?(formal
+        ? speaker==='left'&&String(pose||'').startsWith('dev')?pose:'ginzaSuit'
+        : speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
       rightPose:right===S?(speaker==='right'?pose||(formal?'ginzaDress':'homeNormal')
         :formal?'ginzaDress':'homeNormal'):'idle',
     })),
@@ -169,11 +170,11 @@ export const ARKON_CHAPTER_08={
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08VipParty',timeOfDay:'night'},
     ...party('SHIBUYA // AN EVENING ABOVE THE CITY'),
     manga('A DIFFERENT SIDE OF TOKYO',[
-      ark('Wow.','ginzaSuit'),
+      ark('Wow.','devBlushing'),
       say('What?','ginzaDress'),
-      ark('You look incredible.','ginzaSuit'),
+      ark('You look incredible.','devBlushing'),
       say('Thank you. You clean up rather well yourself.','ginzaDress'),
-      ark('Perhaps we should go somewhere without an engine for once.','ginzaSuit'),
+      ark('Perhaps we should go somewhere without an engine for once.','devLaughing'),
       say('That would be rather nice.','ginzaDress'),
     ]),
     ...party('SHIBUYA // THE VIP CIRCLE'),
@@ -181,7 +182,7 @@ export const ARKON_CHAPTER_08={
       vip('Aruken Denzaki. The man behind the Liberty Walk. A pleasure at last.'),
       ark('Good evening. I was hoping to meet your team.','ginzaSuit'),
       vip('We have ambitious clients. They dislike hearing that a deadline is impossible.'),
-      ark('A safe result takes as long as the engineering requires.','ginzaSuit'),
+      ark('A safe result takes as long as the engineering requires.','devSerious'),
       vip('Of course. Although our investors pay very well for certainty.'),
     ],V),
     manga('THE CONVERSATIONS',[
@@ -193,11 +194,11 @@ export const ARKON_CHAPTER_08={
     ...party('SHIBUYA // A PRIVATE PROPOSAL'),
     manga('THE OFFER',[
       vip('An exclusive racing engineering programme. Substantial funding. International attention.'),
-      ark('What about validation time and the right to refuse sign-off?','ginzaSuit'),
+      ark('What about validation time and the right to refuse sign-off?','devSerious'),
       vip('We can discuss milestones. Our clients require guarantees.'),
-      ark('And the security?','ginzaSuit'),
+      ark('And the security?','devNervous'),
       vip('Your business assets would back certain delivery obligations. A standard arrangement among serious partners.'),
-      ark('Let me review the full terms.','ginzaSuit'),
+      ark('Let me review the full terms.','devSerious'),
     ],V),
     manga('THE MAN WITH THE PORSCHE',[
       say('Aruken. Can we talk?','ginzaDress'),
@@ -205,20 +206,20 @@ export const ARKON_CHAPTER_08={
       say('That contract. Are you really considering it?','ginzaDress'),
       ark('This could be the biggest opportunity we have ever had.','ginzaSuit'),
       say('And the risks?','ginzaDress'),
-      ark('I have done the calculations. I am in control this time.','ginzaSuit'),
+      ark('I have done the calculations. I am in control this time.','devSerious'),
       say('Where is the man who refused to sign off on that Porsche?','ginzaDress'),
-      ark('That was different.','ginzaSuit'),
+      ark('That was different.','devAngry'),
       say('How?','ginzaDress'),
-      ark('Because I know what I am doing now.','ginzaSuit'),
+      ark('Because I know what I am doing now.','devAngry'),
       say('You knew what you were doing then.','ginzaDress'),
     ]),
     manga('EVERYTHING HAS CHANGED',[
-      ark('You do not understand what is at stake.','ginzaSuit'),
+      ark('You do not understand what is at stake.','devAngry'),
       say('You have built a wonderful business. People respect you. What more do you need?','ginzaDress'),
-      ark('I just want to make something of myself.','ginzaSuit'),
+      ark('I just want to make something of myself.','devNervous'),
       say('You already have.','ginzaDress'),
       say('Please, Aruken. Let us leave. We can talk properly at home.','ginzaDress'),
-      ark('I cannot abandon a deal like this.','ginzaSuit'),
+      ark('I cannot abandon a deal like this.','devAngry'),
       say('Then I am going. I am not asking you to give up your dreams.','ginzaDress'),
       say('I am asking you not to lose yourself chasing them.','ginzaDress'),
     ]),
@@ -227,7 +228,7 @@ export const ARKON_CHAPTER_08={
       ark('Yes. Just a moment.','ginzaSuit'),
     ],V),
     manga('ANOTHER TIME',[
-      ark('Sayaka, can we talk about this later?','ginzaSuit'),
+      ark('Sayaka, can we talk about this later?','devNervous'),
       say('Of course, Aruken.','ginzaDress'),
     ]),
     {type:'HOLD_SCENE',label:'SAYAKA WAITS',
@@ -237,15 +238,15 @@ export const ARKON_CHAPTER_08={
       caption:'SHIBUYA // ONE CONVERSATION TOO MANY',revealMs:450},
     manga('THE GUARANTEES',[
       vip('Our partners will fund the development. You commit to the delivery schedule.'),
-      ark('I need final authority over engineering sign-off.','ginzaSuit'),
+      ark('I need final authority over engineering sign-off.','devSerious'),
       vip('There are provisions for review. The financial security is non-negotiable.'),
-      ark('And the workshop is named in the security documents?','ginzaSuit'),
+      ark('And the workshop is named in the security documents?','devNervous'),
       vip('Only if you fail to meet your contractual obligations.'),
-      ark('...I understand.','ginzaSuit'),
+      ark('...I understand.','devNervous'),
     ],V),
     manga('THE SIGNATURE',[
       vip('So, Aruken. Shall we proceed?'),
-      ark('Yes.','ginzaSuit'),
+      ark('Yes.','devSerious'),
       vip('Excellent. Welcome aboard.'),
     ],V),
     {type:'ARKON_CH8_CONTRACT'},
@@ -254,9 +255,9 @@ export const ARKON_CHAPTER_08={
       {id:V,pose:'idle',role:'observer'},
     ]),
     manga('THE PRICE OF AMBITION',[
-      ark('It is the biggest deal I have ever signed.','storyThinking'),
-      ark('I should be celebrating.','storySerious'),
-    ],V),
+      ark('It is the biggest deal I have ever signed.','devNervous'),
+      ark('I should be celebrating.','devSad'),
+    ],V,A,true),
     {type:'SET_FLAG',key:'arkonStoryChapter08Done',value:true},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08Complete'},
     {type:'CLEAR_STAGE'},

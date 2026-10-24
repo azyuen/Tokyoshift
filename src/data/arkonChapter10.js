@@ -8,7 +8,9 @@ const manga=(title,lines,formal=false)=>({
   type:'MANGA',title,characters:{left:A,right:S},
   pages:lines.map(([speaker,text,pose])=>({
     speaker,text,
-    leftPose:speaker==='left'?(pose||(formal?'ginzaSuit':'storyTalking')):
+    leftPose:speaker==='left'?(formal
+      ? (String(pose||'').startsWith('dev')?pose:'ginzaSuit')
+      : pose||'storyTalking'):
       formal?'ginzaSuit':'storyIdle',
     rightPose:speaker==='right'?(pose||(formal?'ginzaDress':'homeNormal')):
       formal?'ginzaDress':'homeNormal',
@@ -160,7 +162,7 @@ export const ARKON_CHAPTER_10={
     ...staged('GINZA // OPENING EVENING','central:ginzaMotorGallery:night',gala,
       [{carId:'r32'},{carId:'gc8'}]),
     manga('GINZA GALLERY',[
-      ark('You really pulled it off.','ginzaSuit'),
+      ark('You really pulled it off.','devLaughing'),
       say('We did.','ginzaDress'),
       ark('I have never seen so many people interested in an old R32.','ginzaSuit'),
       say('Wait until they see the restoration file.','ginzaDress'),
@@ -168,16 +170,16 @@ export const ARKON_CHAPTER_10={
       say('How observant.','ginzaDress'),
       ark('He wanted to know how much I pay you.','ginzaSuit'),
       say('And what did you tell him?','ginzaDress'),
-      ark('That you are terribly expensive. Especially since you own half the place.','ginzaSuit'),
+      ark('That you are terribly expensive. Especially since you own half the place.','devLaughing'),
       say('Someone has to make the sensible decisions.','ginzaDress'),
       ark('My point exactly.','ginzaSuit'),
     ],true),
     {type:'ARKON_CH10_GINZA'},
     manga('SOMETHING WE BUILT TOGETHER',[
       say('I still cannot quite believe it.','ginzaDress'),
-      ark('Neither can my accountant.','ginzaSuit'),
+      ark('Neither can my accountant.','devLaughing'),
       say('Thank you for trusting me.','ginzaDress'),
-      ark('You earned it. Besides, this place has your fingerprints all over it.','ginzaSuit'),
+      ark('You earned it. Besides, this place has your fingerprints all over it.','devSerious'),
       say('Mostly because somebody kept putting the cars in the wrong order.','ginzaDress'),
       ark('Strict management.','ginzaSuit'),
     ],true),
@@ -185,11 +187,11 @@ export const ARKON_CHAPTER_10={
       say('I was terrified, you know. Before the opening.','ginzaDress'),
       ark('You? I thought you had labelled every car twice.','ginzaSuit'),
       say('I can teach someone to drive. I can plan a race. But building a place like this... I was not sure I could do it.','ginzaDress'),
-      ark('You saw what those cars could mean to people. I only saw another invoice.','ginzaSuit'),
+      ark('You saw what those cars could mean to people. I only saw another invoice.','devSerious'),
       say('And you trusted me with half a business.','ginzaDress'),
-      ark('No. You built half of it. This was your idea, Sayaka.','ginzaSuit'),
+      ark('No. You built half of it. This was your idea, Sayaka.','devSerious'),
       say('Then perhaps we are both allowed to be proud.','ginzaDress'),
-      ark('After we close, may I have the evening with you? No calls, I promise.','ginzaSuit'),
+      ark('After we close, may I have the evening with you? No calls, I promise.','devBlushing'),
       say('That would be lovely.','ginzaDress'),
     ],true),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter10Investment',timeOfDay:'day'},
@@ -218,7 +220,7 @@ export const ARKON_CHAPTER_10={
     ...staged('GINZA // CLOSING TIME','central:ginzaMotorGallery:night',gala,
       [{carId:'r32'}]),
     manga('ONE MORE EVENING',[
-      ark('Fancy a drive?','ginzaSuit'),
+      ark('Fancy a drive?','devBlushing'),
       say('I was starting to think you had moved into the gallery.','ginzaDress'),
       ark('Cars. Roads. You know the concept.','ginzaSuit'),
       say('Where to?','ginzaDress'),
@@ -226,7 +228,7 @@ export const ARKON_CHAPTER_10={
       say('Yokohama?','ginzaDress'),
       ark('If you are not tired of the view.','ginzaSuit'),
       say('I will get the Porsche.','ginzaDress'),
-      ark('I was hoping you would. Do you have room for a passenger?','ginzaSuit'),
+      ark('I was hoping you would. Do you have room for a passenger?','devNervous'),
       say('I suppose I could make an exception.','ginzaDress'),
     ],true),
     // Real rolling road in RaceScene, with Sayaka driving her own Porsche.

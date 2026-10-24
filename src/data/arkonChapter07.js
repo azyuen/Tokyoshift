@@ -7,7 +7,9 @@ const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
 const manga=(title,lines,cast={left:A,right:S},arkOutfit=null)=>({
   type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
     speaker,text,
-    leftPose:cast.left===A?(arkOutfit||(speaker==='left'?pose||'storyTalking':'storyIdle')):'idle',
+    leftPose:cast.left===A?(arkOutfit==='ginzaSuit'
+      ? (speaker==='left'&&String(pose||'').startsWith('dev')?pose:'ginzaSuit')
+      : arkOutfit||(speaker==='left'?pose||'storyTalking':'storyIdle')):'idle',
     rightPose:cast.right===S?(speaker==='right'?pose||'oshiageRelaxed':'oshiageRelaxed'):'idle',
   })),
 });
@@ -43,7 +45,7 @@ export const ARKON_CHAPTER_07={
       say('What happened to the man who lived in oil-stained overalls?','oshiageRelaxed'),
       ark('He discovered that wealthy customers like a good suit.','ginzaSuit'),
       say('I suppose you do look rather handsome.','oshiageHappy'),
-      ark('Was that a compliment?','storySurprised'),
+      ark('Was that a compliment?','devBlushing'),
       say('Do not get used to it.','oshiageHappy'),
     ],{left:A,right:S},'ginzaSuit'),
     ...hq('ANOTHER SIGNED CONTRACT','$SELECTED_CAR',[{id:A,pose:'storyMechanic'}]),

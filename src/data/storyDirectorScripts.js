@@ -5,10 +5,10 @@ import { ARKON_CHAPTER_03 } from './arkonChapter03.js?v=20261024-r678';
 import { ARKON_CHAPTER_04 } from './arkonChapter04.js?v=20261024-r678';
 import { ARKON_CHAPTER_05 } from './arkonChapter05.js?v=20261024-r679';
 import { ARKON_CHAPTER_06 } from './arkonChapter06.js?v=20261024-r679';
-import { ARKON_CHAPTER_07 } from './arkonChapter07.js?v=20261025-r682';
-import { ARKON_CHAPTER_08 } from './arkonChapter08.js?v=20261023-r672';
-import { ARKON_CHAPTER_09 } from './arkonChapter09.js?v=20261023-r673';
-import { ARKON_CHAPTER_10 } from './arkonChapter10.js?v=20261024-r681';
+import { ARKON_CHAPTER_07 } from './arkonChapter07.js?v=20261025-r683';
+import { ARKON_CHAPTER_08 } from './arkonChapter08.js?v=20261025-r683';
+import { ARKON_CHAPTER_09 } from './arkonChapter09.js?v=20261025-r683';
+import { ARKON_CHAPTER_10 } from './arkonChapter10.js?v=20261025-r683';
 // Developer-only smoke scripts. These are NOT career canon and do not
 // automatically trigger for ordinary players. No rewards or narrative flags.
 export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
