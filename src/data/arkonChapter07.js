@@ -1,6 +1,6 @@
 // R669 — CHAPTER 07: NEVER ENOUGH.
 // The same prosperous Warehouse and the player’s REAL 240Z build now carry
-// Arkon’s ambition. Sayaka’s absence is not a punishment or a betrayal.
+// Aruken’s ambition. Sayaka’s absence is not a punishment or a betrayal.
 const A='arkonDen',S='sayakaFujieda';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
@@ -19,7 +19,7 @@ const stage=(label,bg,car,cast=pair())=>[
   {type:'STAGE',backgroundId:bg,stageMode:'native',
     privateMeet:bg.startsWith('meet:'),composition:'car-behind-cast',
     characters:cast,cars:car?[{carId:car}]:[]},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // NEVER ENOUGH'},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // NEVER ENOUGH'},
 ];
 const hq=(label,car='240z',cast=pair())=>stage(label,
   'workshop:shinonomeWarehouseStrip:night',car,cast);
@@ -27,7 +27,7 @@ const road=(venue,label,car='240z')=>stage(label,'meet:'+venue+':night',car);
 
 export const ARKON_CHAPTER_07={
   id:'arkonChapter07',
-  title:'ARKON DEN // CHAPTER 07: NEVER ENOUGH',
+  title:'ARUKEN DENZAKI // CHAPTER 07: NEVER ENOUGH',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:7},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07Business',timeOfDay:'day'},
@@ -109,7 +109,7 @@ export const ARKON_CHAPTER_07={
         {speaker:'player',text:'Tonight? I have a collector flying in tomorrow. A huge contract.'},
         {speaker:'caller',text:'Another one?'},
         {speaker:'player',text:'Just imagine what we could build next. We can make this even bigger!'},
-        {speaker:'caller',text:'It is already rather big, Arkon.'},
+        {speaker:'caller',text:'It is already rather big, Aruken.'},
         {speaker:'player',text:'Rain check? I promise I will make it up to you.'},
         {speaker:'caller',text:'Alright. Good luck tomorrow.'},
       ]},
@@ -161,13 +161,13 @@ export const ARKON_CHAPTER_07={
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07Bodywork',timeOfDay:'night'},
     {type:'ARKON_CH7_CONVERT'},
     ...hq('WAREHOUSE HQ // THE LIBERTY WALK','arkonLibertyWalk240z',[{id:A,pose:'storyConfident'}]),
-    manga('THE NEW FACE OF ARKON DEN',[
+    manga('THE NEW FACE OF ARUKEN DENZAKI',[
       ark('There. Not a panel left untouched.','storySurprised'),
       ark('The Liberty Walk 240Z. Something even the collectors will remember.','storyConfident'),
     ],{left:A}),
     ...hq('SAYAKA DROPS BY','arkonLibertyWalk240z'),
     manga('AN EXTRAORDINARY MACHINE',[
-      say('Arkon... what on earth have you done?','oshiageReviewing'),
+      say('Aruken... what on earth have you done?','oshiageReviewing'),
       ark('What do you think?','storyConfidentSmirk'),
       say('It is extraordinary. I remember when it barely ran.','oshiageHappy'),
       ark('That is the idea.','storyConfident'),
@@ -177,7 +177,7 @@ export const ARKON_CHAPTER_07={
     {type:'PHONE',title:'WAREHOUSE HQ // AN IMPORTANT CALL',
       callerId:'',callerName:'PRIVATE COLLECTOR',presentationMode:'openingSwipe',
       pages:[
-        {speaker:'caller',text:'Arkon, we need your assessment of our next project.'},
+        {speaker:'caller',text:'Aruken, we need your assessment of our next project.'},
         {speaker:'player',text:'Of course. Send through the documentation. I can look at it tonight.'},
         {speaker:'caller',text:'Excellent. My associate will call with the terms.'},
       ]},
@@ -196,9 +196,9 @@ export const ARKON_CHAPTER_07={
       ark('Right. You were saying?','storyTalking'),
       say('It is alright. Another time.','oshiageRelaxed'),
       ark('Hey, stay. We could take the new Z out for a drive!','storyConfidentSmirk'),
-      say('Not tonight, Arkon. I am a little tired.','oshiageSerious'),
+      say('Not tonight, Aruken. I am a little tired.','oshiageSerious'),
       ark('Tomorrow, perhaps?','storySheepish'),
-      say('We will see. Good night, Arkon.','oshiageRelaxed'),
+      say('We will see. Good night, Aruken.','oshiageRelaxed'),
     ]),
     {type:'FADE_STORY_ACTOR',actorId:S,ms:1000},
     manga('THE PHONE DOES NOT STOP',[

@@ -1,4 +1,4 @@
-// R656 — Arkon's independent story, following his FIRST regional title.
+// R656 — Aruken's independent story, following his FIRST regional title.
 // Five real customer power builds. No Daichi, no unearned MX-5 ownership.
 const A='arkonDen',S='sayakaFujieda';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
@@ -22,7 +22,7 @@ const scene=(label,backgroundId,characters,cars=[{carId:'mx5'}],extras={})=>[
     ...(backgroundId.startsWith('workshop:')?
       {castBehindCar:true,characterScale:.84}:{}),
     ...extras},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE NIGHT SHIFT'},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // THE NIGHT SHIFT'},
 ];
 const withSayaka=[
   {id:A,pose:'storySheepish',x:440,ground:.83},
@@ -31,7 +31,7 @@ const withSayaka=[
 
 export const ARKON_CHAPTER_03={
   id:'arkonChapter03',
-  title:'ARKON DEN // CHAPTER 03: THE NIGHT SHIFT',
+  title:'ARUKEN DENZAKI // CHAPTER 03: THE NIGHT SHIFT',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:3},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter03Jobs',timeOfDay:'night'},
@@ -81,7 +81,7 @@ export const ARKON_CHAPTER_03={
     manga('AN UNEXPECTED CUSTOMER',[
       say('Excuse me. I am here to collect my car.','homeNormal'),
       ark('Just give me a— Sayaka?!','storySurprised'),
-      say('Arkon?','homeHappy'),
+      say('Aruken?','homeHappy'),
       ark('This MX-5 is yours?','storySurprised'),
       say('It is. And apparently you are my mechanic.','homeHappy'),
       ark('I had absolutely no idea.','storySheepish'),
@@ -108,7 +108,7 @@ export const ARKON_CHAPTER_03={
       ark('Everything? You are serious?','storySurprised'),
       say('Completely. Unless you have forgotten how to work with me standing here.','homeHappy'),
       ark('Very funny.','storySheepish'),
-      say('I will leave you to it. Oh, Arkon?','homeNormal'),
+      say('I will leave you to it. Oh, Aruken?','homeNormal'),
       ark('Yeah?','storyTalking'),
       say('You look nice too. In a very... hardworking sort of way.','homeHappy'),
       ark('...Thanks. I think.','storyCoolShy'),
@@ -123,7 +123,7 @@ export const ARKON_CHAPTER_03={
       say('As long as you remember I want the car back.','homeHappy'),
     ]),
     // The real RaceScene begins as a gentle hands-free MX-5 test drive with
-    // Arkon at the wheel and Sayaka in the passenger seat. They talk using
+    // Aruken at the wheel and Sayaka in the passenger seat. They talk using
     // compact race HUD portraits. The S15 pulls alongside, the road freezes
     // for the player decision, then an accepted challenge uses REAL physics.
     {type:'CLEAR_STAGE'},
@@ -157,7 +157,7 @@ export const ARKON_CHAPTER_03={
     ...scene('A QUIET STOP','meet:daikokuOpenLot:night',withSayaka),
     manga('SOME RACES CAN WAIT',[
       ark('Let him go. It is a test drive, not a championship.','storySerious'),
-      say('A remarkably sensible answer. Who are you and what have you done with Arkon?','homeHappy'),
+      say('A remarkably sensible answer. Who are you and what have you done with Aruken?','homeHappy'),
       ark('I save my terrible decisions for the weekend.','storyConfidentSmirk'),
       say('I will mark my calendar.','homeHappy'),
     ]),
@@ -175,11 +175,11 @@ export const ARKON_CHAPTER_03={
         {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeSerious',text:'Sayaka? I thought that was you. Been a long time.'},
         {speaker:'left',leftPose:'homeSerious',rightPose:'idle',text:'It has. Good evening.'},
         {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'Did not think I would see you back out here.'},
-        {speaker:'system',speakerLabel:'ARKON',rightPose:'idle',leftPose:'homeNormal',text:'You two know each other?'},
+        {speaker:'system',speakerLabel:'ARUKEN',rightPose:'idle',leftPose:'homeNormal',text:'You two know each other?'},
         {speaker:'left',leftPose:'homeNormal',rightPose:'idle',text:'We have crossed paths.'},
         {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'More than a few times. Funny how these roads bring people back.'},
         {speaker:'left',leftPose:'homeSerious',rightPose:'idle',text:'Some of us were only out for a drive.'},
-        {speaker:'system',speakerLabel:'ARKON',rightPose:'idle',leftPose:'homeNormal',text:'And some of us were offered a race.'},
+        {speaker:'system',speakerLabel:'ARUKEN',rightPose:'idle',leftPose:'homeNormal',text:'And some of us were offered a race.'},
         {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'That engine sounds like someone knows what they are doing. Who tuned it?'},
         {speaker:'left',leftPose:'homeHappy',rightPose:'idle',text:'He did.'},
         {speaker:'right',speakerLabel:'UNKNOWN DRIVER',rightPose:'idle',leftPose:'homeNormal',text:'Canal Yard? I will remember that.'},

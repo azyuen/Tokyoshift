@@ -38,7 +38,7 @@ export function ethanCompensationCutscene() {
     id: 'ethanYuenCompensationR638Scene',
     once: false,
     title: 'A LITTLE SOMETHING OWED',
-    category: 'ARKON DEN // SPECIAL DELIVERY',
+    category: 'ARUKEN DENZAKI // SPECIAL DELIVERY',
     finalActionLabel: 'ACCEPT $2,000,000',
     characters: { left: 'arkonDen' },
     pages: [

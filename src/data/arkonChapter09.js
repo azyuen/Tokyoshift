@@ -1,6 +1,6 @@
-// R673 — Arkon Story Chapter 09, not the separate Career Chapter 09.
+// R673 — Aruken Story Chapter 09, not the separate Career Chapter 09.
 // No named criminal organisation, magical exoneration or invented race victories.
-// Sayaka gives Arkon space to choose principle; practical danger remains for Chapter 10.
+// Sayaka gives Aruken space to choose principle; practical danger remains for Chapter 10.
 const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='homeNormal')=>['right',text,pose];
@@ -17,7 +17,7 @@ const stage=(label,backgroundId,characters,cars=[],privateMeet=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId,stageMode:'native',privateMeet,
     composition:'car-behind-cast',fadeInMs:650,characters,cars},
-  {type:'HOLD_SCENE',label,caption:'ARKON DEN // NO WAY OUT',revealMs:420},
+  {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // NO WAY OUT',revealMs:420},
 ];
 const alone=[{id:A,pose:'storySerious',role:'player'}];
 const together=[{id:A,pose:'storyIdle',role:'player'},
@@ -37,7 +37,7 @@ const race=index=>[
 const night=(label,cast,cars)=>stage(label,'meet:shibuyaScramble:night',cast,cars,true);
 export const ARKON_CHAPTER_09={
   id:'arkonChapter09',
-  title:'ARKON DEN // CHAPTER 09: NO WAY OUT',
+  title:'ARUKEN DENZAKI // CHAPTER 09: NO WAY OUT',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:9},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09Contracts',timeOfDay:'night'},
@@ -52,7 +52,7 @@ export const ARKON_CHAPTER_09={
       callerName:'PRIVATE EVENT ORGANISER',pages:[
         {speaker:'caller',text:'The investors loved your presentation. They require another demonstration in Shibuya tonight.'},
         {speaker:'player',text:'I still need the paperwork for the latest consignments.'},
-        {speaker:'caller',text:'Everything is in order. Show them what the Z can do, Arkon.'},
+        {speaker:'caller',text:'Everything is in order. Show them what the Z can do, Aruken.'},
       ]},
     ...meet('SHIBUYA // A FLAWLESS DEMONSTRATION','shibuyaScramble','renKurosawa','evo5'),
     manga('APPLAUSE',[
@@ -68,7 +68,7 @@ export const ARKON_CHAPTER_09={
     ]),
     manga('AN UNWELCOME QUESTION',[
       ark('I need to verify the ownership chain before I put my name to its condition report.','storySerious'),
-      vip('Arkon, buyers pay you for your engineering, not your opinions about their affairs.'),
+      vip('Aruken, buyers pay you for your engineering, not your opinions about their affairs.'),
       ark('My signature is not a decoration.'),
       vip('The investors are expecting another performance test at Daikoku. Keep your attention there.'),
     ],V),
@@ -97,13 +97,13 @@ export const ARKON_CHAPTER_09={
       [{carId:'arkonLibertyWalk240z'},{carId:'rwbStellaPorsche'}]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09SayakaReturns',timeOfDay:'night'},
     manga('SAYAKA RETURNS',[
-      say('Arkon.','homeNormal'),
+      say('Aruken.','homeNormal'),
       ark('Sayaka? I was going to call you.','storySheepish'),
       say('I have heard a few things about your new clients. Nothing definite. Enough to worry me.','homeSerious'),
       ark('I think some of their transactions are wrong. They want me to sign anyway.','storySerious'),
       say('And when did you start to suspect that?'),
       ark('Before tonight.','storyThinking'),
-      say('Oh, Arkon.','homeSerious'),
+      say('Oh, Aruken.','homeSerious'),
     ]),
     manga('THE QUESTION',[
       ark('If I refuse, I could lose Warehouse HQ. Maybe more.','storySerious'),
@@ -135,7 +135,7 @@ export const ARKON_CHAPTER_09={
     manga('ONE LAST DOCUMENT',[
       vip('Our purchasers are waiting. The restored car, the valuation, your engineering assurance.'),
       ark('The documents do not match. I cannot verify its history.','ginzaSuit'),
-      vip('You signed a contract, Arkon.'),
+      vip('You signed a contract, Aruken.'),
       ark('I know. I intend to deal with that. But I will not certify this transaction.','ginzaSuit'),
       vip('It would be unfortunate if your workshop suffered for this.'),
       ark('My decision is final.','ginzaSuit'),
@@ -152,7 +152,7 @@ export const ARKON_CHAPTER_09={
       vip('We will be in touch.'),
     ],V),
     manga('AN EXIT',[
-      say('Arkon. Our advisers are waiting.','ginzaDress'),
+      say('Aruken. Our advisers are waiting.','ginzaDress'),
       ark('I am ready.','ginzaSuit'),
       say('Good evening.','ginzaDress'),
     ]),

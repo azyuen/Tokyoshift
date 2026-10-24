@@ -1,3 +1,4 @@
+import { getInGamePlayerDisplayName } from '../data/characterDisplayName.js?v=20261024-r677';
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import {
   getCarBodyScaleForWidth,
@@ -1791,10 +1792,7 @@ export default class MeetScene extends Phaser.Scene {
     const signatureCarName = String(
       car.name || car.shortName || interest.baseCarId
     ).toUpperCase();
-    const playerName = [
-      String(this.registry.get('firstName') || '').trim(),
-      String(this.registry.get('lastName') || '').trim(),
-    ].filter(Boolean).join(' ') || 'PLAYER';
+    const playerName = getInGamePlayerDisplayName(this.registry);
     const dialogue = getCrewInviteDialogue(interest.characterId, {
       REGION: currentRegion, RIVAL_NAME: rivalName,
       SIGNATURE_CAR: signatureCarName, PLAYER_NAME: playerName.toUpperCase(),

@@ -1,4 +1,4 @@
-// R652 — Arkon Den origin chapter. Independent of Career / Tokyo Championship.
+// R652 — Aruken Denzaki origin chapter. Independent of Career / Tokyo Championship.
 // Branches are remembered; every playable race uses the production physics.
 const A='arkonDen', S='sayakaFujieda', D='storyDaigoKirishima';
 const manga=(title,pages,cast={left:A,right:S})=>({
@@ -24,7 +24,7 @@ const say=(text,pose='oshiageNeutral')=>['right',text,pose];
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 
 export const ARKON_CHAPTER_01_REVISED={
-  id:'arkonChapter01Revised',title:'ARKON DEN // CHAPTER 01: FIRST IMPRESSIONS',
+  id:'arkonChapter01Revised',title:'ARUKEN DENZAKI // CHAPTER 01: FIRST IMPRESSIONS',
   steps:[
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'opening',timeOfDay:'night'},
     {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
@@ -40,7 +40,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ['I keep hearing about kids racing their cars for cash down by the bay.','storyTalking'],
       ['I have always loved cars. I can change a clutch, drive a manual, and make a poor decision just fine.'],
       ['How difficult can it be to take a little money off a couple of teenagers?','storyConfident'],
-      ['...Famous last words, Arkon.','storyLaughing'],
+      ['...Famous last words, Aruken.','storyLaughing'],
     ]),
     {type:'CHOICE',key:'arkonFirstNight',title:'ONE CAR. ONE IDEA.',
       subtitle:'What gets you out of the garage tonight?',
@@ -84,7 +84,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('Is that your opening line?','oshiageNeutral'),
       ark('I had a better one in the car. It sounded ridiculous when I got out.','storySheepish'),
       say('Well, that is a promising start.','oshiageHappy'),
-      ark('Arkon. And I am only slightly less confused than I look.'),
+      ark('Aruken. And I am only slightly less confused than I look.'),
       say('Sayaka. I will keep that in mind.'),
     ]),
     {type:'GOTO',to:'commonHello'},
@@ -93,7 +93,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('You are going to wear a hole in that tyre if you keep staring at it.','oshiageNeutral'),
       ark('I thought I was giving off an air of deep mechanical expertise.','storyConfident'),
       say('You were giving off something.','oshiageHappy'),
-      ark('Arkon. New here, clearly.'),
+      ark('Aruken. New here, clearly.'),
       say('Sayaka. I noticed. You look relieved someone finally spoke to you.'),
       ark('I would never admit that.','storySheepish'),
     ]),
@@ -214,7 +214,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('A friend?'),
       say('Something like that. I can put your name down for one complimentary lesson.'),
       ark('I was hoping you would offer to take the 240Z for a spin.','storyLaughing'),
-      say('Take care, Arkon. And look after yourself.','oshiageNeutral'),
+      say('Take care, Aruken. And look after yourself.','oshiageNeutral'),
       ark('Good night, Sayaka. I enjoyed being thoroughly unimpressive.','storySheepish'),
       say('You were not entirely unimpressive.','oshiageHappy'),
     ]),
@@ -238,7 +238,7 @@ export const ARKON_CHAPTER_01_REVISED={
     {type:'WAIT_FLAG',key:'arkonStoryAtSchool',equals:true},
     manga('OH, YOU KNOW THE INSTRUCTOR',[
       ark('Hello. I was told I could take a driving less—','storyTalking'),
-      say('Good to see you, Arkon.','oshiageHappy'),
+      say('Good to see you, Aruken.','oshiageHappy'),
       ark('...Of course.','storySurprised'),
       say('You look surprised.','oshiageNeutral'),
       ark('I have spent several evenings making an excellent first impression.','storySheepish'),
@@ -302,7 +302,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('Probably. I do that when I am happy.','storyLaughing'),
       say('The championship money and car coupons will help you far more than my lessons. Do not forget why you started.','oshiageNeutral'),
       ark('Funny. I came out last night looking for money. Somehow I found a reason to come back.','storySerious'),
-      say('Take care, Arkon. And take care of that 240Z.'),
+      say('Take care, Aruken. And take care of that 240Z.'),
       ark('And you, Sayaka. Thank you.','storyConfident'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryChapter01RevisedDone',value:true},

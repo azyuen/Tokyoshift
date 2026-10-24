@@ -136,7 +136,7 @@ test('Arkon customer jobs use the standard Garage three-panel presentation',()=>
   assert.match(ui,/STAGE=CINEMATIC_FRAMES\.workshop/);
   assert.match(ui,/WORKSHOP_PRESENTATION\.heroCar/);
   assert.match(ui,/WORKSHOP_PRESENTATION\.daichi\.engine/);
-  assert.match(ui,/ARKON BANK BALANCE/);
+  assert.match(ui,/ARUKEN BANK BALANCE/);
   assert.match(ui,/CURRENT OUTPUT/);
   assert.match(ui,/TARGET OUTPUT/);
   assert.match(ui,/DELIVER TO CLIENT/);

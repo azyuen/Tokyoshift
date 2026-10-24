@@ -1938,7 +1938,7 @@ regionExclusive: true, teamRole: 'core',
   },
   arkonDen: {
     id: 'arkonDen',
-    name: 'Arkon Den',
+    name: 'Aruken Denzaki',
     archetype: 'Developer',
     roleTags: ['developer'],
     selectable: false,
