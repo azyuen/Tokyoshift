@@ -82,9 +82,9 @@ export function recordArkonCh7TunerVisit(s,region){
   if(!story(s)||![1,2].includes(state(s).stage)||!get(s,'ownedCarIds')?.includes('240z'))return false;
   const name=String(region||'').toUpperCase();
   if(!['ODAIBA','SHIBUYA','SHINJUKU','YOKOHAMA','DAIKOKU','SHINAGAWA','TATSUMI'].includes(name))return false;
+  const a=state(s);
   // Only the two introductions count towards the first upgrade milestone.
   if(a.stage===1&&!['SHIBUYA','YOKOHAMA'].includes(name))return false;
-  const a=state(s);
   if(a.shops.includes(name))return false;
   put(s,'arkonStoryChapter07Work',{...a,shops:[...a.shops,name]});
   return true;
