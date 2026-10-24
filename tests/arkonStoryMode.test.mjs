@@ -318,7 +318,7 @@ test('R652 new Arkon profile starts revised chapter and saves independent scene 
   assert.equal(career.arkonStorySayakaNoticed,false);
 });
 
-test('R685 early Story casts wear casual Sayaka; Oshiage instructor outfit stays available for school',()=>{
+test('R686 early Story casts consistently use Sayaka Oshiage uniform',()=>{
   for(const pose of ['Idle','Talking','Confident','Laughing','Sheepish','Serious','Surprised']){
     const img=getCharacterVisualAsset('arkonDen','story'+pose);
     assert.match(img?.path||'',new RegExp('assets/Characters/Main/arkon_den_'+pose.toLowerCase()+'\\.png$'));
@@ -329,7 +329,7 @@ test('R685 early Story casts wear casual Sayaka; Oshiage instructor outfit stays
   const authored=steps.filter(s=>s.type==='STAGE')
     .flatMap(s=>s.characters||[]).filter(c=>c.id==='sayakaFujieda');
   assert.ok(authored.length>=2);
-  assert.ok(authored.every(c=>c.pose.startsWith('home')));
+  assert.ok(authored.every(c=>c.pose.startsWith('oshiage')));
 });
 
 test('R652 new Story Mode explores regions but Ginza stays locked',()=>{
@@ -379,7 +379,7 @@ test('R653 camera places Story Sayaka above every Meet car layer',()=>{
   assert.match(observer,/if\(scene\.stageMask\)person\.setMask\(scene\.stageMask\)/);
 });
 
-test('R685 Chapter 1 manga keeps home clothing consistent on Sayaka speaking/listener sides',()=>{
+test('R686 Chapter 1 manga keeps Oshiage clothing consistent on Sayaka speaking/listener sides',()=>{
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   const pages=steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]);
   assert.ok(pages.length>=75);
@@ -387,7 +387,7 @@ test('R685 Chapter 1 manga keeps home clothing consistent on Sayaka speaking/lis
     assert.ok(page.leftPose,'left must have explicit pose including inactive sides');
     assert.ok(page.rightPose,'right must have explicit pose including inactive sides');
     const scene=steps.find(st=>st.type==='MANGA'&&st.pages?.includes(page));
-    if(scene?.characters?.right==='sayakaFujieda')assert.match(page.rightPose,/^home/);
+    if(scene?.characters?.right==='sayakaFujieda')assert.match(page.rightPose,/^oshiage/);
     assert.doesNotMatch(page.leftPose,/^dev/);
   }
   const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
