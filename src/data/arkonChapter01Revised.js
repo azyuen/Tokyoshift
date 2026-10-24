@@ -162,7 +162,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('A little. Mostly just try not to trouble the other road users.','oshiageNeutral'),
       ark('Very responsible. One of us has to be.'),
     ]),
-    {type:'CHOICE',key:'arkonMoneyDisclosure',title:'SHE ASKS ABOUT THE CIVIC',
+    {type:'CHOICE',key:'arkonMoneyDisclosure',title:'SHE ASKS ABOUT THE Z',
       subtitle:'How much of your situation do you want to share?',
       choices:[
         {id:'honest',label:'TELL HER THINGS ARE TOUGH',to:'tellTruth',description:'A little honesty goes a long way.'},

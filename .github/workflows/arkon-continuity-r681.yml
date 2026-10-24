@@ -1,0 +1,40 @@
+name: R681 Aruken 240Z and Daichi continuity
+on:
+  push:
+    branches:
+      - main
+      - fix/r681-arkon-240z-daichi-continuity
+    paths:
+      - 'src/data/arkonChapter01*.js'
+      - 'src/data/arkonChapter10.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-continuity-r681.mjs'
+      - 'docs/ARKON_R681_240Z_DAICHI_CONTINUITY.md'
+      - '.github/workflows/arkon-continuity-r681.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  narrative:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check src/data/arkonChapter01.js
+          node --check src/data/arkonChapter01Extended.js
+          node --check src/data/arkonChapter01Revised.js
+          node --check src/data/arkonChapter10.js
+          node --check src/data/storyDirectorScripts.js
+          node --check src/ui/ArkonStoryArchivePanel.js
+          node --check src/story/StoryDirector.js
+      - name: Story and save continuity regressions
+        run: |
+          node --test tests/arkon-continuity-r681.mjs tests/arkon-story-r678.mjs tests/arkon-chapter10-r679.mjs tests/career-continuity-r680.mjs
