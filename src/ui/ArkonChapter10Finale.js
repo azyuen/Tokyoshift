@@ -1,4 +1,4 @@
-// R674 — paired Yokohama finale. Neither car is confiscated or gifted again.
+// R679 — one Porsche, two people. Aruken's own Z was voluntarily sold.
 import {showStoryStage} from './StoryStage.js?v=20261023-r674';
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
 export const ARKON_CH10_PAIR_ASSET={
@@ -15,7 +15,7 @@ export function showArkonChapter10Finale(scene,{onComplete}={}){
   const stage=showStoryStage(scene,{
     backgroundId:'$CURRENT_MEET',stageMode:'native',depth:158,
     characters:[],meetCarLayout:'yokohamaFinale',
-    cars:[{carId:'rwbStellaPorsche'},{carId:'arkonLibertyWalk240z'}],
+    cars:[{carId:'rwbStellaPorsche'}],
   });
   if(!stage)return null;
   const display=()=>{

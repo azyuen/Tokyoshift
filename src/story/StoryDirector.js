@@ -9,7 +9,7 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261024-r675';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r678';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r679';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
@@ -33,8 +33,8 @@ import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
   from '../data/arkonChapter09Races.js?v=20261023-r673';
 import {recordArkonCh10Project,startArkonCh10Race,finishArkonCh10Race,
   openArkonCh10Ginza,recordArkonCh10Investment,prepareArkonCh10Yokohama,
-  settleArkonCh10Dispute} from '../data/arkonChapter10Work.js?v=20261023-r674';
-import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js?v=20261023-r674';
+  settleArkonCh10Dispute,sellArkonCh10LibertyWalk} from '../data/arkonChapter10Work.js?v=20261024-r679';
+import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js?v=20261024-r679';
 import {showArkonCh10Restoration} from '../ui/ArkonChapter10Restoration.js?v=20261023-r674';
 import {showArkonChapter10Finale} from '../ui/ArkonChapter10Finale.js?v=20261023-r674';
 import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261024-r675';
@@ -715,13 +715,14 @@ export class StoryDirector {
             return;
           }
         }
-        if(['ARKON_CH10_SETTLEMENT','ARKON_CH10_GINZA',
+        if(['ARKON_CH10_SETTLEMENT','ARKON_CH10_SELL_Z','ARKON_CH10_GINZA',
             'ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA'].includes(type)){
           if(this.session.id!=='arkonChapter10' ||
              scene.registry.get('gameMode')!=='arkonStory'){
             this.error='CHAPTER 10 ACTION OUTSIDE ARKON STORY';return;
           }
           const action=type==='ARKON_CH10_SETTLEMENT'?settleArkonCh10Dispute:
+             type==='ARKON_CH10_SELL_Z'?sellArkonCh10LibertyWalk:
             type==='ARKON_CH10_GINZA'?openArkonCh10Ginza:
             type==='ARKON_CH10_INVEST'?recordArkonCh10Investment:
             prepareArkonCh10Yokohama;
@@ -734,9 +735,12 @@ export class StoryDirector {
           if(this.session.id!=='arkonChapter10' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
              sceneName(scene)!=='GarageScene' || scene.crewMode ||
-             Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)!==step.index ||
+             Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)<step.index ||
              !ARKON_CH10_PROJECTS[step.index]){
             this.error='CHAPTER 10 RESTORATION NOT READY';return;
+          }
+          if(Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)>step.index){
+            this.advance();continue;
           }
           this.wait={kind:'dialogue',index};
           const control=showArkonCh10Restoration(scene,step.index,{onComplete:()=>{
