@@ -1,5 +1,7 @@
 # Integrated build validation — 24 October 2026
 
+25 October follow-up: hero conversion now rejects donors carrying a paid stock-service snapshot, a stored parts kit or legacy parked performance parts, at the display, roll-in and transaction stages. Previously conversion could delete these purchased builds along with the donor state. UI explains that a different stock donor preserves stored purchases. All seven canonical conversions and duplicate donors still pass; rejection preserves cash, ownership and saved parts. The 17-test hero/service/preview suite passes (hero-service-validation.txt). This follow-up is automated transaction/source validation, not a new browser conversion test. Specialist browser acceptance and the hosted review build remain unfinished.
+
 Branch: engineering/integrated-playable-20261024. Review build R681-VE1 incorporates main 003fa679eb14cd72080f96bf9983d2a3091279f1 / R681 (43 commits after the prior R677 integration). Main and the original engineering branch are unchanged. The import-normalization merge aid resolved all 18 conflicts without choosing either side's substantive changes. New story checkpoint migrations and race settlement changes are retained.
 
 Recruitment intentionally preserves R676/R677's factory-stock ±40 kW rule. Factory classes and tuning potential remain vehicle metadata; the original same-class recruitment requirement is superseded in this integration to preserve current gameplay. Hidden legacy upgrades remain ineligible.

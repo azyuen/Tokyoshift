@@ -525,7 +525,8 @@ export default class TunerShopScene extends Phaser.Scene {
     const donorExists = Boolean(cars[this.shop.donorCarId]);
     const currentIsDonor = getBaseCarId(currentCarId) === this.shop.donorCarId;
     const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
-    const donorStock = currentIsDonor && donorState.stock !== false;
+    const donorStock = currentIsDonor && donorState.stock !== false &&
+      !donorState.stockTuneService && !donorState.storedKit && !donorState.parkedPerformanceParts;
     const heroOwned = owned.includes(this.shop.heroCarId);
     const cost = Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
@@ -613,7 +614,9 @@ export default class TunerShopScene extends Phaser.Scene {
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
       SIDE.y + 536,
-      'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
+      donorState.stockTuneService || donorState.storedKit || donorState.parkedPerformanceParts
+        ? 'This donor has purchased parts in storage.\nUse another stock donor to keep those parts.'
+        : 'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
       {
         fontFamily: BODY_FONT,
         fontSize: '9px',
@@ -1707,7 +1710,8 @@ export default class TunerShopScene extends Phaser.Scene {
     if (
       !donor ||
       getBaseCarId(currentCarId) !== this.shop.donorCarId ||
-      donorState.stock === false
+      donorState.stock === false || donorState.stockTuneService ||
+      donorState.storedKit || donorState.parkedPerformanceParts
     ) return;
 
     this.conversionInProgress = true;
@@ -1912,7 +1916,9 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const donorState = carStates[donorId] || {};
-    if (donorState.stock === false) return false;
+    // Conversion consumes the donor. Never discard its purchased stored builds.
+    if (donorState.stock === false || donorState.stockTuneService ||
+        donorState.storedKit || donorState.parkedPerformanceParts) return false;
 
     const cash = Number(this.registry.get('cash') || 0);
     const cost = Math.max(0, Number(this.shop.buildCost || 0));

@@ -58,12 +58,12 @@ const methodBody = sceneSource
   .replace(/\n  }\s*$/, '');
 
 function simulate(shop, { donorId = shop.donorCarId, cash = shop.buildCost,
-  stock = true, alreadyOwned = false } = {}) {
+  stock = true, alreadyOwned = false, storedState = {} } = {}) {
   if (donorId.includes('__copy')) registerOwnedCarInstance(donorId, shop.donorCarId);
   const registryState = {
     selectedCarId: donorId,
     ownedCarIds: alreadyOwned ? [donorId, shop.heroCarId] : [donorId],
-    carStates: { [donorId]: { stock, paintColor: 0xabcdef } },
+    carStates: { [donorId]: { stock, paintColor: 0xabcdef, ...storedState } },
     carGarageLocations: { [donorId]: 'shinonomeCanalYard' },
     tunerShopProgress: {},
     workshopLocationId: 'shinonomeWorkshop',
@@ -109,12 +109,17 @@ for (const [region] of Object.entries(EXPECTED)) {
       { cash: shop.buildCost - 1 },
       { stock: false },
       { alreadyOwned: true },
+      { storedState: { stockTuneService: { version: 1, tune: { tuning: { engine: 3 } } } } },
+      { storedState: { storedKit: { version: 1, parts: { 'engine:engine': 3 } } } },
+      { storedState: { parkedPerformanceParts: { tuning: { engine: 3 } } } },
     ]) {
       const rejected = simulate(shop, opts);
       assert.equal(rejected.success, false, JSON.stringify(opts));
       assert.equal(rejected.state.ownedCarIds[0], shop.donorCarId);
       assert.equal(rejected.state.cash, opts.cash ?? shop.buildCost);
       assert.equal(rejected.events.length, 0);
+      for (const [key, value] of Object.entries(opts.storedState || {}))
+        assert.deepEqual(rejected.state.carStates[shop.donorCarId][key], value);
     }
   });
 }

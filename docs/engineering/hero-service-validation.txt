@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: every regional tuner converts its correct existing stock model
+ok 1 - every regional tuner converts its correct existing stock model
+  ---
+  duration_ms: 1.048642
+  type: 'test'
+  ...
+# Subtest: ODAIBA conversion consumes the donor and charges exactly the build price
+ok 2 - ODAIBA conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 2.207081
+  type: 'test'
+  ...
+# Subtest: SHINAGAWA conversion consumes the donor and charges exactly the build price
+ok 3 - SHINAGAWA conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.407452
+  type: 'test'
+  ...
+# Subtest: TATSUMI conversion consumes the donor and charges exactly the build price
+ok 4 - TATSUMI conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.406254
+  type: 'test'
+  ...
+# Subtest: SHIBUYA conversion consumes the donor and charges exactly the build price
+ok 5 - SHIBUYA conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.240784
+  type: 'test'
+  ...
+# Subtest: YOKOHAMA conversion consumes the donor and charges exactly the build price
+ok 6 - YOKOHAMA conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.261106
+  type: 'test'
+  ...
+# Subtest: DAIKOKU conversion consumes the donor and charges exactly the build price
+ok 7 - DAIKOKU conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.226697
+  type: 'test'
+  ...
+# Subtest: SHINJUKU conversion consumes the donor and charges exactly the build price
+ok 8 - SHINJUKU conversion consumes the donor and charges exactly the build price
+  ---
+  duration_ms: 0.16958
+  type: 'test'
+  ...
+# Subtest: original specialist and tier fee required
+ok 9 - original specialist and tier fee required
+  ---
+  duration_ms: 1.424302
+  type: 'test'
+  ...
+# Subtest: complete reversible tuning snapshot preserves purchases and cosmetics
+ok 10 - complete reversible tuning snapshot preserves purchases and cosmetics
+  ---
+  duration_ms: 1.879243
+  type: 'test'
+  ...
+# Subtest: Daichi handles ordinary workshop upgrades at Warehouse HQ
+ok 11 - Daichi handles ordinary workshop upgrades at Warehouse HQ
+  ---
+  duration_ms: 1.560824
+  type: 'test'
+  ...
+# Subtest: existing stored kits are never overwritten
+ok 12 - existing stored kits are never overwritten
+  ---
+  duration_ms: 0.178943
+  type: 'test'
+  ...
+# Subtest: recruitment is stock-only and within +/-40kW on Easy
+ok 13 - recruitment is stock-only and within +/-40kW on Easy
+  ---
+  duration_ms: 111.952275
+  type: 'test'
+  ...
+# Subtest: engine purchase previews match complete race builds for all 43 cars
+ok 14 - engine purchase previews match complete race builds for all 43 cars
+  ---
+  duration_ms: 201.168342
+  type: 'test'
+  ...
+# Subtest: regional specialist upgrades remain included exactly once in purchase preview
+ok 15 - regional specialist upgrades remain included exactly once in purchase preview
+  ---
+  duration_ms: 9.175494
+  type: 'test'
+  ...
+# Subtest: unsupported turbo identifies supporting hardware; full support increases available boost
+ok 16 - unsupported turbo identifies supporting hardware; full support increases available boost
+  ---
+  duration_ms: 39.982405
+  type: 'test'
+  ...
+# Subtest: support advice never recommends upgrading an already maximum-level component
+ok 17 - support advice never recommends upgrading an already maximum-level component
+  ---
+  duration_ms: 37.16493
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 489.964594
