@@ -169,9 +169,9 @@ export class StoryDirector {
     let checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
-    // R684 removed a four-step post-Level-2 tuner montage and added a new
-    // two-way Yokohama meet. Numeric R683 checkpoints beyond this point
-    // otherwise jump forward to the wrong action (or double-award a job).
+    // R684 replaced the eight-step after-Level-2 sequence with nine steps
+    // (Yokohama evening + a real R32 introduction). Numeric R683 checkpoints
+    // must not jump forward to the wrong action or double-award a job.
     // Remap only once; do not reset tuning, invoices, race results or visits.
     if(checkpoint.id==='arkonChapter07' && !checkpoint.vars?.storyR684){
       const steps=this.scripts.get(checkpoint.id)?.script?.steps||[];
@@ -179,8 +179,8 @@ export class StoryDirector {
       const firstRace=steps.findIndex(x=>x.type==='ARKON_CH7_RACE'&&x.index===0);
       const oldIndex=Math.max(0,Number(checkpoint.index)||0);
       const index=firstWork>=0&&firstRace>=0&&oldIndex>firstWork
-        ? oldIndex>=firstRace+2
-          ? oldIndex-2
+        ? oldIndex>=firstRace-1
+          ? oldIndex+1
           : firstWork+1
         :oldIndex;
       checkpoint={...checkpoint,index:Math.max(0,Math.min(index,steps.length-1)),
