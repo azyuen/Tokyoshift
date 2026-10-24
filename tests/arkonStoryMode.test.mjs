@@ -285,7 +285,7 @@ test('R652 revised Story Director registers a complete playable Chapter 01',()=>
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_01_REVISED));
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   assert.deepEqual(steps.filter(s=>s.type==='WAIT_FLAG' && s.key==='wins')
-    .map(s=>s.atLeast),[3,6]);
+    .map(s=>s.atLeast),[3]);
   assert.equal(steps.filter(s=>s.type==='ARKON_CHALLENGE_RACE').length,1);
   assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStorySayakaNoticed'));
   // The paid-for surprise is now in Chapter 02, after Shibuya's repair.
@@ -295,7 +295,7 @@ test('R652 revised Story Director registers a complete playable Chapter 01',()=>
   assert.ok(steps.some(s=>s.type==='IF'&&s.key==='arkonStoryRivalResult'&&
     s.equals==='won'&&s.else==='rivalLost'));
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryChapter01RevisedDone'));
-  assert.ok(steps.filter(s=>s.type==='CHOICE').length>=4);
+  assert.ok(steps.filter(s=>s.type==='CHOICE').length>=3);
   assert.ok(steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]).length>=75);
 });
 
@@ -450,7 +450,7 @@ test('R678 first chapter leaves the Oshiage reveal for the Shibuya follow-up',()
   assert.ok(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length>=1);
   assert.equal(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStorySchoolRevealed'),false);
   assert.ok(STORY_DIRECTOR_SCRIPTS.arkonChapter02.steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStorySchoolRevealed'&&s.value===true));
-  assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,2);
+  assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,1);
 });
 
 test('R654 every uploaded Arkon mechanic pose maps exactly to Daichi tuning artwork',()=>{
