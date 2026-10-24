@@ -11,7 +11,7 @@ import {
 } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
-import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r664';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261025-r685';
 import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
 
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
@@ -229,8 +229,14 @@ export default class RaceScene extends Phaser.Scene {
         }
       }
     }
-    if (this.isCoaching || (this.isTutorial &&
-      this.registry.get('raceReturnScene') === 'OshiageScene')) {
+    // Oshiage School uses the uniform even if the return-scene field is
+    // stale after a lesson restart.
+    const oshiageInstructorLesson=this.isTutorial && (
+      this.registry.get('raceReturnScene')==='OshiageScene' ||
+      String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
+      this.registry.get('oshiageLocation')==='oshiageDrivingSchool'
+    );
+    if (this.isCoaching || oshiageInstructorLesson) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
           'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
@@ -316,9 +322,7 @@ export default class RaceScene extends Phaser.Scene {
     }));
     if (this.isStoryCruise || this.isArkonMx5Drive) {
       for(const [id,poses] of [
-        ['sayakaFujieda',this.isArkonMx5Drive
-          ?['homeNormal','homeHappy','homeSerious']
-          :['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
         ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
       ]){
         for(const pose of poses){
@@ -2081,7 +2085,7 @@ export default class RaceScene extends Phaser.Scene {
 
   setupArkonStoryCruise() {
     this.cruiseLineIndex=0;
-    this.cruiseDialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.cruiseDialogue=createGinzaBanterHud(this,{storyCruise:true,homeClothes:true});
     this.events.once('shutdown',()=>this.cruiseDialogue?.destroy?.());
   }
 
@@ -2089,25 +2093,29 @@ export default class RaceScene extends Phaser.Scene {
     if(!this.isStoryCruise || !this.raceStarted ||
        this.greenClock==null || this.cruiseFinishing)return;
     const travelled=Math.max(0,(telemetry?.positionM||0)-this.raceStartPositionM);
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    // A fast 240Z used to fire every dialogue by distance alone. Require
+    // both travel and a minimum number of seconds between story cues.
     const lines=[
-      [0,'sayaka','That shift feels smoother than at the driving school.','oshiageReviewing'],
-      [35,'arkon','I changed the clutch linkage. And a few other things.','storyTalking'],
-      [95,'sayaka','Who built this engine?','oshiageSerious'],
-      [150,'arkon','I did. The transmission, too.','storySerious'],
-      [220,'sayaka','You were a race mechanic, weren\'t you?','oshiageReviewing'],
-      [290,'arkon','Once upon a time. Things got complicated.','storySheepish'],
-      [360,'sayaka','Whatever happened, the Civic drives beautifully.','oshiageRelaxed'],
-      [420,'arkon','Workshop is nearby. Fancy a truly terrible coffee?','storyTalking'],
-      [480,'sayaka','That is not the invitation you think it is.','oshiageHappy'],
+      [0,0,'sayaka','That shift feels smoother than at the driving school.','homeHappy'],
+      [3.4,30,'arkon','I changed the clutch linkage. And a few other things.','storyTalking'],
+      [6.8,80,'sayaka','Who built this engine?','homeNormal'],
+      [10.2,125,'arkon','I did. The transmission, too.','storySerious'],
+      [13.6,180,'sayaka','You were a race mechanic, were you not?','homeSerious'],
+      [17,240,'arkon','Once upon a time. Things got complicated.','storySheepish'],
+      [20.4,310,'sayaka','Whatever happened, the 240Z drives beautifully.','homeHappy'],
+      [23.8,375,'arkon','Workshop is nearby. Fancy a truly terrible coffee?','storyTalking'],
+      [27.2,435,'sayaka','That is not the invitation you think it is.','homeBlushing'],
     ];
-    while(this.cruiseLineIndex<lines.length &&
-          travelled>=lines[this.cruiseLineIndex][0]){
-      const [,speaker,text,pose]=lines[this.cruiseLineIndex++];
-      this.cruiseDialogue?.show(speaker,text,pose);
+    while(this.cruiseLineIndex<lines.length){
+      const [seconds,metres,speaker,words,pose]=lines[this.cruiseLineIndex];
+      if(elapsed<seconds||travelled<metres)break;
+      this.cruiseLineIndex++;
+      this.cruiseDialogue?.show(speaker,words,pose);
     }
-    if(travelled>=550) {
+    if(this.cruiseLineIndex>=lines.length && elapsed>=31 && travelled>=550) {
       this.cruiseFinishing=true;
-      this.cruiseDialogue?.show('sayaka','All right. Show me that workshop.','oshiageRelaxed');
+      this.cruiseDialogue?.show('sayaka','All right. Show me that workshop.','homeHappy');
       this.controls.enabled=false;
       this.engineAudio?.fadeOut();
       this.time.delayedCall(1700,()=>this.endArkonStoryCruise());
@@ -2402,9 +2410,11 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHighlightObjects = [];
     this.tutorialHighlightTweens = [];
 
-    // Use the SAME portrait/speech bubble as the advanced Oshiage race
-    // coaching. Only the speaker and Sayaka's outfit change by location.
-    const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
+    // Keep the instructor uniform in ALL Oshiage lessons, including basic
+    // driving, even when returning from a restart with stale race context.
+    const atSchool=this.registry.get('raceReturnScene')==='OshiageScene' ||
+      String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
+      this.registry.get('oshiageLocation')==='oshiageDrivingSchool';
     const homePoses = {
       neutral: 'characterSayakaHomeNormal',
       explaining: 'characterSayakaHomeNormal',
