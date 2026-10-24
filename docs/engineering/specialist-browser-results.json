@@ -1,0 +1,62 @@
+{
+  "browser": "153.0.8010.0",
+  "scope": "Local Chromium, synthetic profile, actual specialist confirmation handler and full page reload; not deployed or native-device testing",
+  "prepared": {
+    "cash": 29995000,
+    "state": {
+      "stock": true,
+      "tuning": {},
+      "specialistTuning": [],
+      "paintColor": 1193046,
+      "stockTuneService": {
+        "version": 1,
+        "shopId": "shinagawaZeroSports",
+        "tune": {
+          "stock": false,
+          "tuning": {
+            "engine": 2,
+            "ecu": 2
+          },
+          "specialistTuning": [
+            "zeroSportsBoxerResponse"
+          ]
+        }
+      },
+      "tuneLevel": 0,
+      "engineTuning": {},
+      "drivetrainTuning": {},
+      "chassisTuning": {},
+      "exhaustNosTuning": {},
+      "stage3Calibration": {
+        "ecuBias": 0,
+        "boostBias": 0,
+        "gearBias": 0
+      },
+      "nosInstalled": false,
+      "nosPower": 0,
+      "nosShots": 0,
+      "nosCapacitySeconds": 0,
+      "nosShotDurationSeconds": 0,
+      "buildRating": 1,
+      "buildArchetype": "stock"
+    },
+    "power": 206
+  },
+  "restored": {
+    "cash": 29990000,
+    "state": {
+      "stock": false,
+      "tuning": {
+        "engine": 2,
+        "ecu": 2
+      },
+      "specialistTuning": [
+        "zeroSportsBoxerResponse"
+      ],
+      "paintColor": 1193046
+    },
+    "power": 228
+  },
+  "storedTuneSurvivedPageReload": true,
+  "errors": []
+}
