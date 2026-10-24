@@ -1,4 +1,6 @@
-import {recordArkonCh7TunerVisit} from '../data/arkonChapter07Progress.js?v=20261024-r678';
+import {recordArkonCh7TunerVisit,claimArkonCh7FirstVisitScene} from '../data/arkonChapter07Progress.js?v=20261025-r684';
+import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r684';
+import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -176,6 +178,16 @@ export default class TunerShopScene extends Phaser.Scene {
     this.drawSidePanel();
     this.showHeroMode();
     finishSceneLoading('TUNER SHOP');
+    // The first Chapter 7 specialist meeting belongs HERE, with the actual
+    // tuner backdrop, not several steps later back at Warehouse HQ.
+    if(this._ch7FirstVisitManga){
+      const definition=this._ch7FirstVisitManga;
+      this._ch7FirstVisitManga=null;
+      this.time.delayedCall(150,()=>{
+        if(this.sys?.isActive?.() && this.registry.get('gameMode')==='arkonStory')
+          playMangaCutscene(this,definition,{preloadPagePosesOnly:true,preview:true});
+      });
+    }
   }
 
   recordShopVisit() {
@@ -192,6 +204,8 @@ export default class TunerShopScene extends Phaser.Scene {
     this.registry.set('tunerShopProgress', progress);
     // Record actual in-world specialist visits, not authored montage cards.
     recordArkonCh7TunerVisit(this.registry,this.regionId);
+    if(claimArkonCh7FirstVisitScene(this.registry,this.regionId))
+      this._ch7FirstVisitManga=getArkonCh7FirstTunerManga(this.regionId);
     if (this.shop.heroCarId) {
       recordCarMagazineSightings(this.registry, [{
         carId: this.shop.heroCarId,
