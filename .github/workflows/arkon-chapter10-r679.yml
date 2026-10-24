@@ -18,6 +18,9 @@ on:
       - 'src/scenes/RaceScene.js'
       - 'tests/arkon-chapter10-r67*.mjs'
       - '.github/workflows/arkon-chapter10-r679.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 jobs:
   story:
