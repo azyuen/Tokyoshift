@@ -63,8 +63,8 @@ export const ARKON_CHAPTER_02 = {
     // A private tableau at the named lot: never changes the current Meet
     // location, unlocks Daikoku, or silently reidentifies Kazuo Tanaka.
     ...present('EARLY SHIFT // THE LOADING LOT',[
-      {id:F,pose:'idle',x:425,ground:.80},
-      {id:A,pose:'storyMechanicCrouch',role:'carMechanic',x:955,ground:.85},
+      {id:F,pose:'idle',role:'chapter02DockForeman'},
+      {id:A,pose:'storyMechanic',role:'chapter02DockAruken'},
     ],[{carId:'forester'}],
     'meet:daikokuOpenLot:day',{stageMode:'native'}),
     manga('SOMETHING OTHER THAN RACING',[
@@ -74,6 +74,14 @@ export const ARKON_CHAPTER_02 = {
       foreman('You were talking about engines. Can you take a look?'),
       ark('All right. Pop the bonnet.','storyTalking'),
     ],{left:A,right:F}),
+    // Show the crouched inspection at the actual loading lot and require
+    // a button press before resuming the conversation about the repair.
+    {type:'STAGE',backgroundId:'meet:daikokuOpenLot:day',stageMode:'native',
+      privateMeet:true,composition:'conversation-balanced',
+      characters:[{id:F,pose:'idle',role:'chapter02DockForeman'},
+        {id:A,pose:'storyMechanicCrouch',role:'chapter02DockCrouch'}],
+      cars:[{carId:'forester'}]},
+    {type:'HOLD_SCENE',label:'INSPECT THE FORESTER',caption:'THE LONG WAY HOME'},
     manga('ANOTHER LIFE',[
       foreman('You found it already?'),
       ark('Corroded earth strap. Lucky it stopped here instead of on the expressway.','storyMechanic'),
@@ -96,7 +104,7 @@ export const ARKON_CHAPTER_02 = {
     {type:'CLEAR_STAGE'},
     ...present('SHIBUYA // TROUBLE BETWEEN RUNS',[
       {id:A,pose:'storyMechanicCrouch',role:'carMechanic'},
-      {id:R,pose:'idle'},
+      {id:R,pose:'idle',role:'chapter02ShibuyaRina'},
       {id:S,pose:'oshiageReviewing',role:'observer'},
     ],[{carId:'s15'}],'meet:shibuyaDogenzaka:night',{stageMode:'native'}),
     manga('A MUCH HARDER PROBLEM',[
