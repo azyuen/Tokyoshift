@@ -9,7 +9,7 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261024-r675';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r681';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r682';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
@@ -22,7 +22,7 @@ import {
   getArkonCh6Job,recordArkonCh6Job,leaseArkonCh6Warehouse,
   settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
   beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
-} from '../data/arkonChapter06Work.js?v=20261024-r675';
+} from '../data/arkonChapter06Work.js?v=20261025-r682';
 import {
   ch7Progress,startArkonCh7Work,finishArkonCh7Work,
   getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,

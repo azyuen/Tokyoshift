@@ -1,0 +1,29 @@
+name: R682 Chapter 07 garage and outfit fixes
+on:
+  push:
+    branches: [main, fix/arkon-ch07-garage-240z-wardrobe-r682]
+    paths:
+      - 'src/data/arkonStoryCarProtection.js'
+      - 'src/data/arkonChapter06Work.js'
+      - 'src/data/arkonChapter07.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/arkon-chapter07-fixes-r682.mjs'
+      - '.github/workflows/arkon-ch07-fixes-r682.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          for file in src/data/arkonStoryCarProtection.js src/data/arkonChapter06Work.js src/data/arkonChapter07.js src/state/GameState.js src/scenes/CentralTokyoScene.js tests/arkon-chapter07-fixes-r682.mjs; do node --check "$file"; done
+      - name: Story and save regression tests
+        run: |
+          node --test tests/arkon-chapter07-fixes-r682.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-economy-polish-r675.mjs tests/arkon-continuity-r681.mjs tests/arkon-chapter10-r679.mjs
