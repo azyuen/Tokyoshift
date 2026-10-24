@@ -73,7 +73,9 @@ test('R669 two independent build milestones require real parts and genuine shop 
  assert.equal(recordArkonCh7TunerVisit(s,'SHIBUYA'),true);
  assert.equal(recordArkonCh7TunerVisit(s,'SHIBUYA'),false);
  assert.equal(ch7Progress(s).ready,false);
- assert.equal(recordArkonCh7TunerVisit(s,'DAIKOKU'),true);
+ assert.equal(recordArkonCh7TunerVisit(s,'DAIKOKU'),false); // Stage 1 admits only Amuse and Mine's.
+ assert.equal(ch7Progress(s).ready,false);
+ assert.equal(recordArkonCh7TunerVisit(s,'YOKOHAMA'),true);
  assert.equal(ch7Progress(s).ready,true);
  assert.equal(finishArkonCh7Work(s,1),true);
  assert.equal(startArkonCh7Race(s,0),true);
@@ -88,7 +90,7 @@ test('R669 two independent build milestones require real parts and genuine shop 
  assert.equal(startArkonCh7Work(s,2),true);
  assert.equal(finishArkonCh7Work(s,2),false);
  tune(s,3);
- assert.equal(recordArkonCh7TunerVisit(s,'YOKOHAMA'),true);
+ assert.equal(recordArkonCh7TunerVisit(s,'YOKOHAMA'),false); // Already visited during Stage 1.
  assert.equal(recordArkonCh7TunerVisit(s,'SHINJUKU'),true);
  assert.equal(ch7Progress(s).ready,false); // Four visits no longer complete the project.
  for(const region of Object.keys(TUNER_SHOPS)){
