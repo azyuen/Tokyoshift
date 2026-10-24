@@ -117,6 +117,7 @@ export function leaseArkonCh6Warehouse(s){
   const owned=read(s,'ownedCarIds')||[];
   const sites={...(read(s,'carGarageLocations')||{})};
   sites.rwbStellaPorsche='shinonomeWarehouseStrip';
+  if(owned.includes('240z'))sites['240z']='shinonomeWarehouseStrip';
   set(s,'carGarageLocations',normaliseCarGarageLocations(owned,sites,2));
   return true;
 }
@@ -214,7 +215,10 @@ export function giftArkonCh6Porsche(s){
   const states={...(read(s,'carStates')||{})};delete states.rwbStellaPorsche;
   set(s,'carStates',states);
   const sites={...(read(s,'carGarageLocations')||{})};delete sites.rwbStellaPorsche;
+  // The personal Z is now based at the newly established Warehouse HQ.
+  if(owned.includes('240z'))sites['240z']='shinonomeWarehouseStrip';
   set(s,'carGarageLocations',normaliseCarGarageLocations(owned,sites,2));
+  set(s,'arkonStoryCh7GarageSeeded',true);
   if(read(s,'selectedCarId')==='rwbStellaPorsche')set(s,'selectedCarId',
     owned.find(id=>cars[id])||null);
   if(read(s,'preferredCarId')==='rwbStellaPorsche')set(s,'preferredCarId',
