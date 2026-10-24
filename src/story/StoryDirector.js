@@ -11,6 +11,7 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261024-r679';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
+import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
@@ -150,6 +151,7 @@ export class StoryDirector {
     if (savedIndex >= compiled.script.steps.length) return false;
     const scriptVars=normaliseStoryChoiceVars(vars);
     if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
+    if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -266,8 +268,12 @@ export class StoryDirector {
     // R677 checkpoints stored raw numeric positions. The R678 screenplay
     // inserts real conversations, so resume using a semantic milestone once.
     // Never reinterpret an old saved index as a new financial/race action.
-    const migrated=migrateArkonR678Checkpoint(this.scripts.get(checkpoint.id),checkpoint,scene.registry);
-    return this.start(checkpoint.id, migrated || { index: checkpoint.index, vars:checkpoint.vars });
+    const compiled=this.scripts.get(checkpoint.id);
+    const migrated678=migrateArkonR678Checkpoint(compiled,checkpoint,scene.registry);
+    const intermediate=migrated678?{...checkpoint,...migrated678}:checkpoint;
+    const migrated679=migrateArkonR679Checkpoint(compiled,intermediate,scene.registry);
+    return this.start(checkpoint.id, migrated679 || migrated678 ||
+      {index:checkpoint.index,vars:checkpoint.vars});
   }
   checkpoint() {
     if (!this.session || this.session.preview) return;
