@@ -146,6 +146,17 @@ export const ARKON_CHAPTER_06={
 
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter06Restoration'},
     ...workshop('RWB // STRUCTURAL REBUILD','rwbStellaPorsche'),
+    manga('THE PART SHE STILL MISSES',[
+      ark('You always see the whole team, not just the car in front of you.','storyTalking'),
+      say('Old habits. I used to enjoy making race strategy work when everyone else was watching the clock.','homeNormal'),
+      ark('Do you miss managing a team?','storyThinking'),
+      say('Sometimes. The decisions, the people, the responsibility. Not the politics.','homeSerious'),
+      say('But I like teaching at Oshiage. I am not sure I want to go back.','homeNormal'),
+      ark('You do not have to decide. You are good at both.','storySerious'),
+      say('That is unusually reassuring from a man who argues with every dyno chart.','homeHappy'),
+      ark('You reminded me I could still be a mechanic. I will return the favour whenever you need it.','storyCoolShy'),
+      say('Careful. I might take you up on that.','homeHappy'),
+    ]),
     manga('BACK TO THE BARE SHELL',[
       ark('No shortcuts. The old repair hid damage where nobody wanted to look.','storySerious'),
       say('What if the measurements fail?','oshiageReviewing'),

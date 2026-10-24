@@ -1,5 +1,6 @@
 // R674 — Chapter 10 milestones are Arkon Story-only. No Career save mutations.
 import {cars} from './cars.js?v=20261023-r669';
+import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261023-r662';
 
 const read=(s,k)=>s?.get?.(k);
 const write=(s,k,v)=>s.set(k,v);
@@ -84,6 +85,7 @@ export function openArkonCh10Ginza(s){
   if(!eligible(s)||Number(read(s,'arkonStoryChapter10ProjectsDone')||0)!==3 ||
      !read(s,'arkonStoryChapter10RaceDone'))return false;
   if(read(s,'arkonStoryGinzaPartnership'))return true;
+  if(read(s,'arkonStoryChapter10ZSale')?.status!=='sold')return false;
   // A modest, sustainably funded gallery partnership. The RWB remains
   // Sayaka's personal car; neither founder owns every consignment.
   write(s,'arkonStoryGinzaPartnership',{
@@ -110,7 +112,8 @@ export function recordArkonCh10Investment(s){
 }
 export function prepareArkonCh10Yokohama(s){
   if(!eligible(s)||!read(s,'arkonStoryCareerSeed')||
-     !read(s,'arkonStoryGinzaPartnership')||!read(s,'arkonStoryRwbProject')?.gifted)return false;
+     !read(s,'arkonStoryGinzaPartnership')||!read(s,'arkonStoryRwbProject')?.gifted||
+     read(s,'arkonStoryChapter10ZSale')?.status!=='sold')return false;
   write(s,'meetLocation','yokohamaMinatoMirai');
   write(s,'district','YOKOHAMA');
   write(s,'arkonStoryTimeOfDay','night');
@@ -126,9 +129,81 @@ export function settleArkonCh10Dispute(s){
   const paid=Math.min(cash,300000);
   write(s,'cash',cash-paid);
   write(s,'arkonStoryChapter10Settlement',{
-    resolved:true,paid,method:'independent advice and negotiated settlements',
-    reputation:'rebuilding',workshop:'retained',
+    resolved:false,paid,remainingLiability:4800000,
+    method:'independent advice and negotiated settlements',
+    reputation:'rebuilding',workshop:'retained-pending-final-payment',
   });
-  write(s,'arkonStoryChapter09ExitStatus','resolved-with-advisers; costs-paid; workshop-retained');
+  write(s,'arkonStoryChapter09ExitStatus','negotiated; secured-liability-pending; workshop-retained');
+  return true;
+}
+
+
+// Aruken voluntarily sells his own Liberty Walk 240Z after its final
+// friendly Chapter 10 race. This is a story-owned one-time transfer, never
+// a gift/transfer of Sayaka's RWB Porsche or an ordinary Career sale.
+export function sellArkonCh10LibertyWalk(s){
+  if(!eligible(s))return false;
+  if(read(s,'arkonStoryChapter10ZSale')?.status==='sold')return true;
+  const settlement=read(s,'arkonStoryChapter10Settlement');
+  if(!read(s,'arkonStoryChapter10RaceDone')||!settlement||
+    !(read(s,'ownedCarIds')||[]).includes('arkonLibertyWalk240z'))return false;
+  const liability=Math.max(0,Number(settlement.remainingLiability??4800000));
+  const salePrice=5200000;
+  if(liability>salePrice)return false;
+  const owned=(read(s,'ownedCarIds')||[]).filter(id=>id!=='arkonLibertyWalk240z');
+  const formerStates=read(s,'carStates')||{};
+  const lastState=structuredClone(formerStates.arkonLibertyWalk240z||{});
+  const states={...formerStates};
+  delete states.arkonLibertyWalk240z;
+  const sites={...(read(s,'carGarageLocations')||{})};
+  delete sites.arkonLibertyWalk240z;
+  let runaboutCost=0;
+  if(!owned.some(id=>cars[id])){
+    if(!cars.ef)return false;
+    // Keep at least one ordinary usable car for the saved garage; its
+    // purchase is deducted from sale proceeds, with no free hero replacement.
+    owned.push('ef');runaboutCost=300000;
+    states.ef={stock:true,tuneLevel:0,nosInstalled:false,tuning:{},
+      acquiredVia:'arkon-story-used-runabout'};
+    sites.ef='shinonomeWarehouseStrip';
+  }
+  const remainingCash=Math.max(0,Number(read(s,'cash')||0))+
+    salePrice-liability-runaboutCost;
+  const now=Date.now();
+  const history=[...(read(s,'carHistory')||[])];
+  const original=[...history].reverse().find(e=>
+    e?.carId==='arkonLibertyWalk240z'&&e.status==='OWNED');
+  if(original){
+    const idx=history.indexOf(original);
+    history[idx]={...original,status:'SOLD',departedAt:now,
+      departureReason:'chapter10-contract-settlement',salePrice,lastState};
+  }else{
+    history.push({id:'arkonLibertyWalk240z:arkon-r679-sale',
+      carId:'arkonLibertyWalk240z',acquiredAt:0,acquiredVia:'story-built',
+      status:'SOLD',departedAt:now,departureReason:'chapter10-contract-settlement',
+      salePrice,lastState});
+  }
+  if(runaboutCost)history.push({id:'ef:arkon-r679-runabout',carId:'ef',
+    acquiredAt:now,acquiredVia:'arkon-story-used-runabout',status:'OWNED',salePrice:0});
+  write(s,'ownedCarIds',owned);
+  write(s,'carStates',states);
+  write(s,'carGarageLocations',normaliseCarGarageLocations(owned,sites,
+    Math.max(2,Number(read(s,'garageTier')||2))));
+  const choice=owned.find(id=>cars[id])||null;
+  write(s,'selectedCarId',choice);write(s,'preferredCarId',choice);
+  write(s,'carHistory',history);
+  write(s,'cash',Math.min(1e9,remainingCash));
+  write(s,'arkonStoryChapter10ZSale',{
+    status:'sold',carId:'arkonLibertyWalk240z',salePrice,
+    settledLiability:liability,runaboutCost,completedAt:now,lastState,
+    buyer:'independent collector',reason:'honour-negotiated-contract-obligations',
+  });
+  write(s,'arkonStoryChapter10Settlement',{
+    ...settlement,resolved:true,workshop:'retained',remainingLiability:0,
+    finalLiabilityPaid:liability,
+    funding:'voluntary-sale-of-arkon-liberty-walk-240z',
+  });
+  write(s,'arkonStoryChapter09ExitStatus',
+    'resolved-with-advisers; Z-sold; workshop-retained');
   return true;
 }
