@@ -100,6 +100,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryCh5PacingVersion: 1,
     arkonStoryChapter06Done: false,
     arkonStoryChapter07Done: false,
+    arkonStoryCh7GarageSeeded: false,
     arkonStoryChapter07Work: null,
     arkonStoryChapter07Race: null,
     arkonStoryChapter07RaceResult: null,
@@ -1098,14 +1099,18 @@ export function normaliseState(input = {}) {
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
     : WORKSHOP_TIERS[garageTier].id;
-  if(storyMode && input.arkonStoryChapter06Done && garageTier>=2 &&
-     !input.arkonStoryChapter07Done &&
-     ['shinonomeWorkshop','shinonomeCanalYard'].includes(workshopLocationId))
-     workshopLocationId='shinonomeWarehouseStrip';
+  // Warehouse is the initial Chapter 7 location, not a permanent travel lock.
+  // Once unlocked, respect the player's choice of Home or Canal Yard.
   if (storyMode && input.storyDirectorProgress?.id==='arkonChapter03' &&
       Number(input.storyDirectorProgress.index||0)<=3 && garageTier>=1) {
     workshopLocationId='shinonomeCanalYard';
   }
+  // R682 legacy-save repair: older Chapter 6/7 profiles left the personal Z
+  // behind at Home or Canal Yard. Seed its new home exactly once; never
+  // override a later intentional car transfer or disturb Career saves.
+  const shouldSeedCh7Garage = storyMode && Boolean(input.arkonStoryChapter06Done) &&
+    owned.includes('240z') && !input.arkonStoryCh7GarageSeeded;
+  if (shouldSeedCh7Garage) migratedGarageLocations['240z']='shinonomeWarehouseStrip';
   let carGarageLocations = normaliseCarGarageLocations(
     owned,
     migratedGarageLocations,
@@ -1300,6 +1305,8 @@ export function normaliseState(input = {}) {
     arkonStoryCh5PacingVersion:storyMode?1:0,
     arkonStoryChapter06Done: storyMode && Boolean(input.arkonStoryChapter06Done),
     arkonStoryChapter07Done: storyMode && Boolean(input.arkonStoryChapter07Done),
+    arkonStoryCh7GarageSeeded: storyMode &&
+      Boolean(input.arkonStoryCh7GarageSeeded || shouldSeedCh7Garage),
     arkonStoryChapter07Work: storyMode && input.arkonStoryChapter07Work &&
       typeof input.arkonStoryChapter07Work==='object' ? {
         stage:Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter07Work.stage)||0))),
