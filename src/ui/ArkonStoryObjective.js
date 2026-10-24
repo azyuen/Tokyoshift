@@ -3,8 +3,8 @@ const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
-import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261024-r678';
-import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261024-r678';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261025-r685';
+import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261025-r685';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261024-r678';
 import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261024-r678';
 import {getArkonCh4WorkProgress} from '../data/arkonChapter04Work.js?v=20261023-r667';
@@ -234,7 +234,7 @@ export function getArkonStoryObjective(registry) {
       chapter02GoSchool:['OSHIAGE // A FREE LESSON','Visit Oshiage Driving School to meet the instructor Sayaka recommended.'],
       chapter02Lesson:['OSHIAGE // THE INSTRUCTOR','Complete the introductory driving lesson with Sayaka, then return to the School.'],
       chapter02Driving:['THE LONG WAY HOME','Complete the rolling drive with Sayaka. If interrupted, return to a Meet to resume.'],
-      chapter02AfterWorkshop:['ONE MORE TEST','Win two more races. Daigo wants another run.'],
+      chapter02AfterWorkshop:['PAY THE BILLS','Win two more street races. The bills still need paying.'],
       chapter02RivalRace:['FRIENDLY REMATCH','Complete the race with Daigo, then return to the Meet.'],
     };
     const [heading,message]=goals[phase]||['THE LONG WAY HOME','Continue the current story scene.'];

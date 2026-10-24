@@ -6,16 +6,16 @@ import {
 } from './StoryScript.js?v=20261023-r672';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261025-r683';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261024-r675';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261025-r685';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261025-r684';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r684';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r685';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261025-r684';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261025-r685';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import {
@@ -50,7 +50,7 @@ import {
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
-import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r670';
+import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261025-r685';
 import { cars } from '../data/cars.js?v=20261023-r669';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
@@ -154,6 +154,7 @@ export class StoryDirector {
     if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
     if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     if(!preview && savedIndex===0 && id==='arkonChapter07')scriptVars.storyR684=true;
+    if(!preview && savedIndex===0 && id==='arkonChapter02')scriptVars.storyR685=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -169,6 +170,19 @@ export class StoryDirector {
     let checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
+    // Two new Chapter 2 story actions (visible crouch + CONTINUE hold) were
+    // inserted before ANOTHER LIFE. Keep older numeric checkpoints aligned
+    // without replaying fish wages, races or the school introduction.
+    if(checkpoint.id==='arkonChapter02' && !checkpoint.vars?.storyR685){
+      const steps=this.scripts.get(checkpoint.id)?.script?.steps||[];
+      const next=steps.findIndex(x=>x.type==='MANGA'&&x.title==='ANOTHER LIFE');
+      const oldIndex=Math.max(0,Number(checkpoint.index)||0);
+      const index=next>=2&&oldIndex>=next-2?oldIndex+2:oldIndex;
+      checkpoint={...checkpoint,index:Math.min(steps.length-1,index),
+        vars:{...(checkpoint.vars||{}),storyR685:true}};
+      scene.registry.set(STORY_DIRECTOR_SAVE_KEY,checkpoint);
+      saveSessionState(scene.registry);
+    }
     // R684 replaced the eight-step after-Level-2 sequence with nine steps
     // (Yokohama evening + a real R32 introduction). Numeric R683 checkpoints
     // must not jump forward to the wrong action or double-award a job.

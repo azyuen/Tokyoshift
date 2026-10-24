@@ -57,6 +57,24 @@ export function getNativeStoryStageTemplate(profile,scene) {
 export function getNativeCastPlacement(template,index=0,total=1,role='near') {
   if(!template)return null;
   const base=template.character;
+  // Authored Chapter 1 roadside repair and Chapter 2 dockside examination:
+  // foreground people share the native meet stage, while the witness stands
+  // further upstage at 80% size. All other Story/Career casts are unchanged.
+  const special={
+    chapter01RepairAoi:{x:base.x-34,feetY:base.feetY,height:base.height},
+    chapter01RepairHaru:{x:base.x+148,feetY:base.feetY,height:base.height},
+    chapter01RepairAruken:{x:base.x+312,feetY:base.feetY,height:base.height},
+    chapter01RepairSayaka:{x:template.frame.x+template.frame.w-110,
+      feetY:base.feetY-78,height:base.height*.80},
+    chapter02DockForeman:{x:base.x-12,feetY:base.feetY,height:base.height},
+    chapter02DockAruken:{x:template.frame.x+template.frame.w-244,
+      feetY:base.feetY,height:base.height},
+    chapter02DockCrouch:{x:template.frame.x+template.frame.w-244,
+      feetY:base.feetY,height:base.height},
+    chapter02ShibuyaRina:{x:template.frame.x+template.frame.w-164,
+      feetY:base.feetY,height:base.height*1.25},
+  }[role];
+  if(template.kind==='meet' && special) return Object.freeze(special);
   const validIndex=Math.max(0,Math.floor(finite(index,0)));
   const x=role==='observer' ? template.observerX
     :role==='carMechanic' ? template.car.x
