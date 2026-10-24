@@ -56,7 +56,8 @@ test('Sayaka starts as family friend then becomes Ginza curator then pro strateg
   assert.equal(daichi.characters.left, 'daichiSakamoto');
   assert.match(daichi.pages[2].text, /plenty of potential/i);
   assert.doesNotMatch(daichi.pages.map(p=>p.text).join(' '), /ex-pro driver|racing father/i);
-  assert.doesNotMatch(daichi.pages.map(p => p.text).join(' '), /Sayaka|curat|strategist/i);
+  assert.match(daichi.pages.map(p=>p.text).join(' '), /Sayaka said some friends helped get it ready/i);
+  assert.doesNotMatch(daichi.pages.map(p=>p.text).join(' '), /curat|strategist|Aruken|Denzaki/i);
 
   const ginza = CUTSCENES.ginzaInvitation;
   assert.match(ginza.pages.map(p => p.text).join(' '), /curate and manage/i);
