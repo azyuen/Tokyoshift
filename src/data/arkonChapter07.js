@@ -3,17 +3,17 @@
 // Aruken’s ambition. Sayaka’s absence is not a punishment or a betrayal.
 const A='arkonDen',S='sayakaFujieda';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
-const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
+const say=(text,pose='homeNormal')=>['right',text,pose];
 const manga=(title,lines,cast={left:A,right:S},arkOutfit=null)=>({
   type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
     speaker,text,
     leftPose:cast.left===A?(arkOutfit==='ginzaSuit'
       ? (speaker==='left'&&String(pose||'').startsWith('dev')?pose:'ginzaSuit')
       : arkOutfit||(speaker==='left'?pose||'storyTalking':'storyIdle')):'idle',
-    rightPose:cast.right===S?(speaker==='right'?pose||'oshiageRelaxed':'oshiageRelaxed'):'idle',
+    rightPose:cast.right===S?(speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
   })),
 });
-const pair=(ar='storyIdle',sa='oshiageRelaxed')=>[
+const pair=(ar='storyIdle',sa='homeNormal')=>[
   {id:A,pose:ar},{id:S,pose:sa,role:'observer'},
 ];
 const stage=(label,bg,car,cast=pair())=>[
@@ -38,15 +38,15 @@ export const ARKON_CHAPTER_07={
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:7},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07Business',timeOfDay:'day'},
-    ...hq('WAREHOUSE HQ // THE MAN IN THE SUIT','240z',pair('ginzaSuit','oshiageHappy')),
+    ...hq('WAREHOUSE HQ // THE MAN IN THE SUIT','240z',pair('ginzaSuit','homeHappy')),
     manga('A NEW LOOK',[
-      say('Well, well. Should I make an appointment?','oshiageHappy'),
+      say('Well, well. Should I make an appointment?','homeHappy'),
       ark('Very funny. A collector is visiting this afternoon.','ginzaSuit'),
-      say('What happened to the man who lived in oil-stained overalls?','oshiageRelaxed'),
+      say('What happened to the man who lived in oil-stained overalls?','homeNormal'),
       ark('He discovered that wealthy customers like a good suit.','ginzaSuit'),
-      say('I suppose you do look rather handsome.','oshiageHappy'),
+      say('I suppose you do look rather handsome.','homeHappy'),
       ark('Was that a compliment?','devBlushing'),
-      say('Do not get used to it.','oshiageHappy'),
+      say('Do not get used to it.','homeHappy'),
     ],{left:A,right:S},'ginzaSuit'),
     ...hq('ANOTHER SIGNED CONTRACT','$SELECTED_CAR',[{id:A,pose:'storyMechanic'}]),
     manga('THE BUSINESS IS BOOMING',[
@@ -59,52 +59,81 @@ export const ARKON_CHAPTER_07={
       ark('All these collectors recognise the workshop now.','storyThinking'),
       ark('But the Z is still the car they remember from my worst days.','storySerious'),
       ark('Time to show them what a proper build looks like.','storyConfidentSmirk'),
-      say('I have a feeling this is going to be expensive.','oshiageReviewing'),
+      say('I have a feeling this is going to be expensive.','homeSerious'),
       ark('An investment in our reputation.','storyConfident'),
-      say('Our reputation? Interesting phrasing.','oshiageHappy'),
+      say('Our reputation? Interesting phrasing.','homeHappy'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07FirstBuild',timeOfDay:'day'},
     manga('THE FIRST ROUND OF UPGRADES',[
-      ark('I will take the Z to some of the regional specialists.','storyTalking'),
-      say('So long as you remember it is still a car, not a monument.','oshiageHappy'),
-      ark('A fast monument, perhaps.','storyConfidentSmirk'),
+      ark('I need a proper exhaust review at Amuse in Shibuya.','storyThinking'),
+      say('And Mine\'s in Yokohama could check the response calibration.','homeHappy'),
+      ark('Two specialists, a complete Level 2 build, then a test drive.','storyConfident'),
+      say('A test drive somewhere with a nice view, perhaps?','homeHappy'),
+      ark('Yokohama. Good road, good data.','storyTalking'),
+      say('...And a nice view.','homeHappy'),
     ]),
     {type:'ARKON_CH7_WORK',stage:1},
-    ...stage('REGIONAL MECHANICS // NEW FRIENDS','tuner:shibuyaAmuse:night','240z',
-      [{id:A,pose:'storyMechanic'},{id:'itsukiKuroda',pose:'idle',role:'observer'}]),
-    manga('ITSUKI // THE AMUSE WORKSHOP',[
-      ['right','Remember our argument about exhaust flow? The Z needs breathing room at high rpm.','idle'],
-      ark('I brought the latest logs. You were right about the restriction.','storyThinking'),
-      ['right','And your revised map makes the titanium setup more useful. That is why we work together.','idle'],
-      ark('I missed this. Two people finding one good answer.','storyMechanic'),
-    ],{left:A,right:'itsukiKuroda'},'storyMechanic'),
-    ...road('yokohamaMinatoMirai','YOKOHAMA // TIME TO PROVE IT'),
-    manga('ONE MORE TEST',[
-      ark('The chassis is tighter. The power delivery is cleaner.','storyConfident'),
-      ark('Let’s see whether the stopwatch agrees.','storyConfidentSmirk'),
-    ],{left:A}),
+    // Shibuya/Amuse and Yokohama/Mine's introductions run IN each tuner
+    // shop when visited, never as an unrelated Warehouse HQ montage.
+    ...stage('YOKOHAMA // AN EVENING TOGETHER','meet:yokohamaMinatoMirai:night','240z',
+      pair('storyThinking','homeHappy')),
+    manga('A VIEW WORTH RETURNING FOR',[
+      say('I even changed out of my teaching clothes for tonight.','homeHappy'),
+      ark('And I finally got the idle steady. Listen to that.','storyConfident'),
+      say('You are an incurable romantic.','homeHappy'),
+      ark('What? Oh. You look lovely, by the way.','storySheepish'),
+      say('Thank you. I think.','homeHappy'),
+      say('I was thinking more about the harbour. It looks lovely tonight.','homeHappy'),
+      ark('Right. And the air temperature is perfect for a clean pull.','storyThinking'),
+      say('You brought your data logger on our evening out?','homeSerious'),
+      ark('Only a small one. I promised I would test the Z properly.','storySheepish'),
+      say('Well, I am glad we are here together, anyway.','homeHappy'),
+      ark('Me too. Listen to how smoothly it settles now.','storyConfidentSmirk'),
+    ]),
+    manga('A FRIENDLY CHALLENGE',[
+      say('There is a meet just ahead. Want to give the new setup a proper run?','homeHappy'),
+      ark('Perfect. One pass against somebody who knows this road.','storyConfident'),
+      say('One pass. Then we look at the lights, not your graphs.','homeHappy'),
+      ark('Deal. More or less.','storySheepish'),
+    ]),
+    ...road('yokohamaMinatoMirai','YOKOHAMA // THE NIGHT MEET','240z'),
+    manga('MASATO // THE HARBOUR R32',[
+      ['right','Masato Ishikawa. You are the mechanic everyone is talking about?','idle'],
+      ark('Aruken. That is a tidy R32 you have there.','storyConfident'),
+      ['right','Yokohama rewards a clean run, not just a big number. Want to test the Z?','idle'],
+      ark('A friendly quarter mile. No stakes.','storyTalking'),
+      ['right','You are on. Let us see what it can do.','idle'],
+    ],{left:A,right:'masatoIshikawa'}),
     {type:'CLEAR_STAGE'},
     {type:'ARKON_CH7_RACE',index:0},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH7_RETURN'},
-    ...road('yokohamaMinatoMirai','YOKOHAMA // A GROWING REPUTATION'),
-    manga('A NAME AMONG THE SPECIALISTS',[
-      ark('They were asking who prepared the Z before we lined up.','storyConfident'),
-      ark('Perhaps it is time I stopped being surprised.','storyConfidentSmirk'),
-    ],{left:A}),
+    ...stage('YOKOHAMA // AFTER THE RUN','meet:yokohamaMinatoMirai:night',
+      '240z',pair('storyConfident','homeHappy')),
+    manga('MORE THAN A TIME SLIP',[
+      say('Masato seemed impressed. You have given the Z something special.','homeHappy'),
+      ark('The launch still needs refining. I can see two tenths in it.','storyThinking'),
+      say('You have barely put the helmet down. Can the numbers wait?','homeHappy'),
+      ark('Just a note so I do not lose it. This is how the workshop stays ahead.','storyTalking'),
+      say('Yokohama always feels nice at night, does it not?','homeHappy'),
+      ark('It does. The air is cooler, and the cars run beautifully.','storyConfidentSmirk'),
+      say('That is not quite what I meant.','homeNormal'),
+      ark('Sorry. You were saying?','storySheepish'),
+      say('Nothing. Come on, let us take the long way home.','homeHappy'),
+    ]),
     {type:'LOCATION',scene:'GarageScene',
       data:{crewMode:false,workshopLocationId:'shinonomeWarehouseStrip'}},
 
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07MoreBusiness',timeOfDay:'day'},
     ...hq('WAREHOUSE HQ // A FAMILIAR VISITOR'),
     manga('THE LESSON VOUCHERS',[
-      say('You know those free driving lesson vouchers?','oshiageRelaxed'),
+      say('You know those free driving lesson vouchers?','homeNormal'),
       ark('Have they expired?','storySheepish'),
-      say('Not when you know the instructor.','oshiageHappy'),
+      say('Not when you know the instructor.','homeHappy'),
       ark('Perks of knowing Miss Fujieda.','storyConfidentSmirk'),
-      say('You could come to Oshiage. I might even teach you something.','oshiageHappy'),
+      say('You could come to Oshiage. I might even teach you something.','homeHappy'),
       ark('I would love to. Just let me clear the diary first.','storyTalking'),
-      say('You have been saying that rather a lot lately.','oshiageReviewing'),
+      say('You have been saying that rather a lot lately.','homeSerious'),
     ]),
     {type:'ARKON_CH7_JOB',index:1},
     ...hq('WAREHOUSE HQ // THE EVENING PHONE CALL','240z',[{id:A,pose:'storyThinking'}]),
@@ -120,9 +149,15 @@ export const ARKON_CHAPTER_07={
       ]},
     ...hq('THE Z // NEVER QUITE FINISHED'),
     manga('THE SECOND ROUND',[
-      ark('There is still power to find. And the specialists have a few ideas.','storyThinking'),
-      ark('I have come this far. Why stop at almost perfect?','storyConfidentSmirk'),
-    ],{left:A}),
+      say('Did you see the restaurant I sent you after Yokohama?','homeHappy'),
+      ark('I did. And Mine\'s has sent the new calibration notes.','storyThinking'),
+      say('I meant the restaurant, not the ECU.','homeSerious'),
+      ark('Sorry. The next round of parts should make a real difference.','storyTalking'),
+      say('You do know the workshop will still be here tomorrow?','homeNormal'),
+      ark('I know. But the next contract might not.','storySerious'),
+      say('Then promise you will find an evening for us somewhere in that diary.','homeHappy'),
+      ark('I will. Once I finish this build.','storySheepish'),
+    ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07FinalBuild',timeOfDay:'day'},
     {type:'ARKON_CH7_WORK',stage:2},
     // The player has visited all seven real tuner houses and bought one
@@ -167,19 +202,23 @@ export const ARKON_CHAPTER_07={
     ]),
     ...hq('WAREHOUSE HQ // WHAT WE BUILT'),
     manga('SOMETHING MORE THAN A CAR',[
-      say('Everyone seems rather fond of your 240Z. And of you.','oshiageHappy'),
+      say('Everyone seems rather fond of your 240Z. And of you.','homeHappy'),
       ark('I suppose I do know some extraordinary people now.','storyConfidentSmirk'),
-      say('You have given them good reasons to trust you.','oshiageRelaxed'),
+      say('You have given them good reasons to trust you.','homeNormal'),
       ark('We gave each other good reasons.','storyThinking'),
-      say('Then perhaps you can spare one evening for dinner.','oshiageHappy'),
+      say('Then perhaps you can spare one evening for dinner.','homeHappy'),
       ark('I will. I just have a few more things to finish.','storyTalking'),
-      say('You keep saying that.','oshiageReviewing'),
+      say('You keep saying that.','homeSerious'),
     ]),
     ...road('daikokuPA','DAIKOKU // THE FULL BUILD'),
     manga('ALL THAT WORK',[
-      ark('Every part pushed to its proper maximum. Now for the proof.','storyConfident'),
-      ark('The Z has never felt this alive.','storyConfidentSmirk'),
-    ],{left:A}),
+      say('Another test run? You have hardly taken a night off.','homeNormal'),
+      ark('This one matters. Seven specialists, all pulling in the same direction.','storyConfident'),
+      say('And seven more calls waiting when you get back, I suppose.','homeHappy'),
+      ark('People trust me with their builds now. I cannot let that slip.','storySerious'),
+      say('Just remember the people who liked you before the contracts.','homeHappy'),
+      ark('Of course. Now, let us see what the Z can do.','storyConfidentSmirk'),
+    ]),
     {type:'CLEAR_STAGE'},
     {type:'ARKON_CH7_RACE',index:1},
     {type:'WAIT_SCENE',scene:'MeetScene'},
@@ -189,19 +228,25 @@ export const ARKON_CHAPTER_07={
     {type:'ARKON_CH7_JOB',index:2},
     ...hq('WAREHOUSE HQ // LATE AGAIN'),
     manga('OLD HABITS',[
-      say('How many hours have you been here?','oshiageReviewing'),
+      say('How many hours have you been here?','homeSerious'),
       ark('Enough to know the new setup is magnificent.','storyConfidentSmirk'),
-      say('You sound like you did when you worked in professional engineering.','oshiageSerious'),
+      say('You sound like you did when you worked in professional engineering.','homeSerious'),
       ark('Except this time I am the boss.','storyConfident'),
-      say('That is not quite what I meant.','oshiageSerious'),
+      say('That is not quite what I meant.','homeSerious'),
       ark('Everything is going brilliantly, Sayaka. Truly.','storyTalking'),
     ]),
-    ...hq('THE MASTERPIECE // ONE LAST IDEA','240z',[{id:A,pose:'storyMechanicEngine'}]),
+    ...hq('THE MASTERPIECE // ONE LAST IDEA','240z',
+      pair('storyMechanicEngine','homeNormal')),
     manga('SOMETHING IS MISSING',[
-      ark('The drivetrain, brakes, engine, suspension... finished.','storyMechanic'),
-      ark('But it still looks like the battered Z that came here years ago.','storyThinking'),
-      ark('I know exactly what it needs.','storyConfidentSmirk'),
-    ],{left:A},'storyMechanic'),
+      say('You have been staring at that Z for ages. What is wrong?','homeHappy'),
+      ark('The drivetrain, brakes, engine, suspension... finally finished.','storyMechanic'),
+      say('That sounds like everything. Can we celebrate?','homeHappy'),
+      ark('But it still looks like the battered Z that came here years ago.','storyMechanic'),
+      say('That old car helped you get back on your feet. I rather like it.','homeNormal'),
+      ark('And now I want it to look like everything we have built.','storyMechanic'),
+      say('Aruken, are you building a car or a billboard for the workshop?','homeSerious'),
+      ark('Something people will remember. Just one last idea.','storyMechanic'),
+    ],{left:A,right:S},'storyMechanic'),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07Bodywork',timeOfDay:'night'},
     {type:'ARKON_CH7_CONVERT'},
     ...hq('WAREHOUSE HQ // THE LIBERTY WALK','arkonLibertyWalk240z',[{id:A,pose:'storyConfident'}]),
@@ -211,11 +256,11 @@ export const ARKON_CHAPTER_07={
     ],{left:A}),
     ...hq('SAYAKA DROPS BY','arkonLibertyWalk240z'),
     manga('AN EXTRAORDINARY MACHINE',[
-      say('Aruken... what on earth have you done?','oshiageReviewing'),
+      say('Aruken... what on earth have you done?','homeSerious'),
       ark('What do you think?','storyConfidentSmirk'),
-      say('It is extraordinary. I remember when it barely ran.','oshiageHappy'),
+      say('It is extraordinary. I remember when it barely ran.','homeHappy'),
       ark('That is the idea.','storyConfident'),
-      say('There is something I have been meaning to talk to you about.','oshiageSerious'),
+      say('There is something I have been meaning to talk to you about.','homeSerious'),
       ark('Of course. What is it?','storyTalking'),
     ]),
     {type:'PHONE',title:'WAREHOUSE HQ // AN IMPORTANT CALL',
@@ -227,7 +272,7 @@ export const ARKON_CHAPTER_07={
       ]},
     manga('ANOTHER TIME',[
       ark('Sorry! Big opportunity. What were you saying?','storySheepish'),
-      say('I was just wondering whether you have been taking on too much.','oshiageSerious'),
+      say('I was just wondering whether you have been taking on too much.','homeSerious'),
       ark('It is busy, but that is a good problem to have.','storyConfidentSmirk'),
     ]),
     {type:'PHONE',title:'WAREHOUSE HQ // ANOTHER CALL',
@@ -238,11 +283,11 @@ export const ARKON_CHAPTER_07={
       ]},
     manga('SOME OTHER NIGHT',[
       ark('Right. You were saying?','storyTalking'),
-      say('It is alright. Another time.','oshiageRelaxed'),
+      say('It is alright. Another time.','homeNormal'),
       ark('Hey, stay. We could take the new Z out for a drive!','storyConfidentSmirk'),
-      say('Not tonight, Aruken. I am a little tired.','oshiageSerious'),
+      say('Not tonight, Aruken. I am a little tired.','homeSerious'),
       ark('Tomorrow, perhaps?','storySheepish'),
-      say('We will see. Good night, Aruken.','oshiageRelaxed'),
+      say('We will see. Good night, Aruken.','homeNormal'),
     ]),
     {type:'FADE_STORY_ACTOR',actorId:S,ms:1000},
     manga('THE PHONE DOES NOT STOP',[
@@ -272,3 +317,25 @@ export const ARKON_CHAPTER_07={
     {type:'END'},
   ],
 };
+
+// Play these introductions only when the player PHYSICALLY enters a shop.
+// The shop portrait/backdrop remain in its proper venue; never fake a visit
+// with a Warehouse montage after a milestone is completed.
+export function getArkonCh7FirstTunerManga(region){
+  const id=String(region||'').toUpperCase();
+  if(id==='SHIBUYA')return manga('ITSUKI // AMUSE',[
+    ['right','I heard you were rebuilding the old Z. Let us see those logs.','idle'],
+    ark('I am taking it to Level 2. The top end still feels restricted.','storyMechanic'),
+    ['right','The exhaust is holding it back. Your revised map could make a titanium setup worthwhile.','idle'],
+    ark('That is why I brought it here instead of guessing.','storyMechanic'),
+    ['right','Good. Let us measure it before choosing the parts.','idle'],
+  ],{left:A,right:'itsukiKuroda'},'storyMechanic');
+  if(id==='YOKOHAMA')return manga('REINA // MINE\'S',[
+    ['right','The old 240Z? I have been wondering when you would bring it.','idle'],
+    ark('The engine is stronger, but the throttle response could be cleaner.','storyMechanic'),
+    ['right','We will look at the ECU map and how the power reaches the road.','idle'],
+    ark('Exactly. I want it predictable, not just impressive on a dyno.','storyMechanic'),
+    ['right','Then you came to the right place. Let us get started.','idle'],
+  ],{left:A,right:'reinaKuroda'},'storyMechanic');
+  return null;
+}

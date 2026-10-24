@@ -11,8 +11,8 @@ import {getArkonCh4WorkProgress} from '../data/arkonChapter04Work.js?v=20261023-
 import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261024-r678';
 import {ARKON_CHAPTER_06} from '../data/arkonChapter06.js?v=20261024-r675';
 import {ch6Progress} from '../data/arkonChapter06Work.js?v=20261024-r675';
-import {ARKON_CHAPTER_07} from '../data/arkonChapter07.js?v=20261024-r678';
-import {ch7Progress} from '../data/arkonChapter07Progress.js?v=20261024-r678';
+import {ARKON_CHAPTER_07} from '../data/arkonChapter07.js?v=20261025-r684';
+import {ch7Progress} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {ARKON_CHAPTER_08} from '../data/arkonChapter08.js?v=20261023-r672';
 import {ARKON_CHAPTER_09} from '../data/arkonChapter09.js?v=20261023-r673';
 import {ARKON_CHAPTER_10} from '../data/arkonChapter10.js?v=20261023-r674';
@@ -97,10 +97,10 @@ export function getArkonStoryObjective(registry) {
       return {
         heading:first?'THE 240Z // REGIONAL BUILD':'THE 240Z // MAXIMUM BUILD',
         message:first
-          ? 'Upgrade your 240Z to Level 2 throughout. Visit two real regional specialist houses, then return to Warehouse HQ to continue.'
-          : 'Upgrade your own 240Z to Level 3 throughout. Visit ALL SEVEN specialist houses and purchase at least one eligible specialist treatment for this car at each. Then continue at Warehouse HQ.',
+          ? 'Upgrade your 240Z to Level 2. Visit AMUSE (Shibuya) and MINE\'S (Yokohama); meet their specialists on arrival. Then return to Warehouse HQ.'
+          : 'Warehouse HQ now offers paid Level 3 parts for your 240Z without the usual win restriction. Upgrade every part, visit all seven specialists and purchase one eligible treatment at each.',
         progress:'LEVEL '+(first?'2':'3')+' PARTS '+done+'/'+p.partsTotal+
-          ' // SHOPS '+(p.shops?.length||0)+'/'+p.shopGoal+
+          ' // SHOPS '+(first?(p.firstIntroductions?.length||0):(p.shops?.length||0))+'/'+p.shopGoal+
           (first?'':' // SPECIALIST TUNES '+(p.treatments?.length||0)+'/7'),
         canResumeChapter07:p.ready,
       };

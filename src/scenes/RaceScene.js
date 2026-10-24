@@ -188,6 +188,18 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Race')?.active &&
+       this.registry.get('arkonStoryChapter07Race')?.index===0){
+      // A real passenger on the Yokohama run, not the instructor outfit.
+      for(const [id,poses] of [
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
+      ])for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter08Race')?.active){
       for(const [id,poses] of [
         ['sayakaFujieda',['homeNormal','homeHappy','homeSerious']],
@@ -437,6 +449,10 @@ export default class RaceScene extends Phaser.Scene {
     this.isArkonCh7Solo=this.raceMode==='ARKON_CH7_SOLO' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter07Solo')?.active);
+    this.isArkonCh7Drive = this.raceMode==='SINGLE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      this.registry.get('arkonStoryChapter07Race')?.active &&
+      this.registry.get('arkonStoryChapter07Race')?.index===0;
     this.isArkonCh8Drive = this.raceMode==='SINGLE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter08Race')?.active);
@@ -965,6 +981,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isStoryCruise) this.setupArkonStoryCruise();
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
+    if (this.isArkonCh7Drive) this.setupArkonCh7Passenger();
     if (this.isArkonCh8Drive) this.setupArkonCh8Passenger();
     if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
     if (this.isArkonCh10Cruise) this.setupArkonCh10Cruise();
@@ -1843,6 +1860,31 @@ export default class RaceScene extends Phaser.Scene {
       this.engineAudio?.fadeOut();
       this.cameras?.main?.fadeOut?.(850,0,0,0);
       this.time.delayedCall(900,()=>queueSafeSceneStart(this,'MeetScene'));
+    }
+  }
+
+  setupArkonCh7Passenger(){
+    this.arkonCh7Passenger=createGinzaBanterHud(this,{chapter03:true});
+    this.arkonCh7PassengerLineIndex=0;
+    this.events.once('shutdown',()=>this.arkonCh7Passenger?.destroy?.());
+  }
+  updateArkonCh7Passenger(){
+    if(!this.isArkonCh7Drive||!this.arkonCh7Passenger||this.resultsShown)return;
+    if(this.finished){this.arkonCh7Passenger.hide();return;}
+    if(!this.raceStarted||this.greenClock==null)return;
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    const lines=[
+      ['sayaka','You have been so busy lately. It is nice to have you to myself tonight.','homeHappy'],
+      ['arkon','I know. The workshop has a reputation to keep now. I cannot turn down every job.','storyTalking'],
+      ['sayaka','I understand. Still, this is fun. Just the two of us for once.','homeHappy'],
+      ['arkon','And the Z is pulling beautifully. That calibration really worked.','storySerious'],
+      ['sayaka','Yokohama always seems nice to me. Especially at night.','homeHappy'],
+    ];
+    const times=[0,2.25,4.5,6.75,9];
+    while(this.arkonCh7PassengerLineIndex<lines.length &&
+      elapsed>=times[this.arkonCh7PassengerLineIndex]){
+      const [speaker,words,pose]=lines[this.arkonCh7PassengerLineIndex++];
+      this.arkonCh7Passenger.show(speaker,words,pose);
     }
   }
 
@@ -3007,6 +3049,7 @@ export default class RaceScene extends Phaser.Scene {
     this.hud.update(playerT, status);
     if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
     if (this.isArkonCh5Drive) this.updateArkonCh5Passenger();
+    if (this.isArkonCh7Drive) this.updateArkonCh7Passenger();
     if (this.isArkonCh8Drive) this.updateArkonCh8Passenger();
     if (this.isStoryCruise) this.updateArkonStoryCruise(playerT);
     this.debug.update(playerT);

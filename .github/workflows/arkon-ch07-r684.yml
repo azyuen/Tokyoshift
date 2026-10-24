@@ -1,0 +1,34 @@
+name: R684 Chapter 07 real tuner visits, Sayaka banter and HQ parts
+on:
+  push:
+    branches: [main, fix/arkon-ch07-natural-visits-banter-parts-r684]
+    paths:
+      - 'src/data/arkonChapter07.js'
+      - 'src/data/arkonChapter07Progress.js'
+      - 'src/data/tunerShops.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter07-*.mjs'
+      - 'tests/arkon-suited-portraits-r683.mjs'
+      - '.github/workflows/arkon-ch07-r684.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check edited modules
+        run: |
+          for file in src/data/arkonChapter07.js src/data/arkonChapter07Progress.js src/data/tunerShops.js src/scenes/TunerShopScene.js src/scenes/RaceScene.js src/scenes/GarageScene.js src/story/StoryDirector.js src/state/GameState.js tests/arkon-chapter07-visit-banter-parts-r684.mjs; do node --check "$file"; done
+      - name: New story and historical regression tests
+        run: |
+          node --test tests/arkon-chapter07-visit-banter-parts-r684.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter07-fixes-r682.mjs tests/arkon-suited-portraits-r683.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter10-r674.mjs

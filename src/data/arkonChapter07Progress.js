@@ -6,13 +6,13 @@ import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER,
   getDrivetrainTuning,getChassisTuning,getExhaustNosTuning} from './secondaryTuning.js?v=20261008-r428';
 import {getArkonCustomerJob} from './arkonChapter03Jobs.js?v=20261023-r660';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261024-r675';
-import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js?v=20261015-r521';
+import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js?v=20261025-r684';
 
 export const CH7_HERO_ID='arkonLibertyWalk240z';
 export const CH7_JOB_FEES=Object.freeze([1100000,1300000,1500000]);
 export const CH7_RACES=Object.freeze([
   Object.freeze({district:'YOKOHAMA',venue:'yokohamaMinatoMirai',opponentCarId:'r32',
-    opponentId:'reikaTachibana',label:'YOKOHAMA // THE FIRST 240Z TEST'}),
+    opponentId:'masatoIshikawa',label:'YOKOHAMA // MASATO\'S R32'}),
   Object.freeze({district:'DAIKOKU',venue:'daikokuPA',opponentCarId:'evo6',
     opponentId:'tetsuoMori',label:'DAIKOKU // THE FULL BUILD'}),
 ]);
@@ -45,6 +45,7 @@ export function ch7Progress(s){
   const level2=all.filter(x=>x>=2).length,level3=all.filter(x=>x>=3).length;
   const requirement=a.stage<=1?2:3;
   const shopGoal=a.stage<=1?2:7;
+  const firstIntroductions=['SHIBUYA','YOKOHAMA'].filter(id=>a.shops?.includes(id));
   // Real purchases, not story rewards: one installed signature package from
   // every specialist, ON ARUKEN'S OWN 240Z, before the Liberty Walk conversion.
   const installed=new Set(getInstalledSpecialistTuning(get(s,'carStates')?.['240z']||{}));
@@ -52,11 +53,12 @@ export function ch7Progress(s){
     .filter(([,shop])=>(shop.tuningOptions||[]).some(opt=>installed.has(opt.id)))
     .map(([region])=>region);
   const treatmentGoal=a.stage<=1?0:7;
-  return {...a,partsTotal:all.length,level2,level3,
+  return {...a,partsTotal:all.length,level2,level3,firstIntroductions,
     treatments,treatmentGoal,shopGoal,partsGoal:requirement,
     ready:Boolean(a.stage===1||a.stage===2) &&
       (a.stage===1?level2:level3)===all.length &&
-      (a.shops?.length||0)>=shopGoal && treatments.length>=treatmentGoal};
+      (a.stage===1?firstIntroductions.length===2:(a.shops?.length||0)>=shopGoal) &&
+      treatments.length>=treatmentGoal};
 }
 export function startArkonCh7Work(s,stage){
   if(!story(s)||![1,2].includes(stage)||!get(s,'ownedCarIds')?.includes('240z')||
@@ -81,6 +83,8 @@ export function recordArkonCh7TunerVisit(s,region){
   const name=String(region||'').toUpperCase();
   if(!['ODAIBA','SHIBUYA','SHINJUKU','YOKOHAMA','DAIKOKU','SHINAGAWA','TATSUMI'].includes(name))return false;
   const a=state(s);
+  // Only the two introductions count towards the first upgrade milestone.
+  if(a.stage===1&&!['SHIBUYA','YOKOHAMA'].includes(name))return false;
   if(a.shops.includes(name))return false;
   put(s,'arkonStoryChapter07Work',{...a,shops:[...a.shops,name]});
   return true;
@@ -186,5 +190,24 @@ export function finishArkonCh7SoloDrive(s){
   put(s,'selectedCarId',CH7_HERO_ID);put(s,'preferredCarId',CH7_HERO_ID);
   put(s,'arkonStoryChapter07Solo',null);
   put(s,'arkonStoryChapter07SoloFinished',true);
+  return true;
+}
+
+// Workshop tier remains mandatory, but the scripted Level 3 commission has
+// its own access to the existing PAID parts, independent of Career's 40 wins.
+export function canArkonCh7BuyStoryParts(source,carId,workshopId,level){
+  return story(source)&&state(source).stage===2&&carId==='240z'&&
+    workshopId==='shinonomeWarehouseStrip'&&Number(level)===3&&
+    (get(source,'ownedCarIds')||[]).includes('240z')&&
+    Number(get(source,'garageTier')||0)>=2;
+}
+
+export function claimArkonCh7FirstVisitScene(source,region){
+  if(!story(source)||state(source).stage!==1)return false;
+  const id=String(region||'').toUpperCase();
+  if(!['SHIBUYA','YOKOHAMA'].includes(id))return false;
+  const p=state(source),seen=Array.isArray(p.firstVisitScenes)?p.firstVisitScenes:[];
+  if(seen.includes(id)||!p.shops?.includes(id))return false;
+  put(source,'arkonStoryChapter07Work',{...p,firstVisitScenes:[...seen,id]});
   return true;
 }

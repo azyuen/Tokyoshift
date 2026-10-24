@@ -698,11 +698,17 @@ export function getRegionWinCount(source, regionId) {
 export function isTunerShopUnlocked(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return false;
-  if (isTunerDevProfile(source)) return true;
-  // Chapter 07 reputation opens introductions to specialist workshops in
-  // Arkon's earlier Story era. Career still requires the crew challenges.
+  // The first Chapter 07 build deliberately introduces JUST the two real
+  // workshops: Amuse in Shibuya and Mine's in Yokohama. Even Aruken's dev
+  // profile should experience these story gates. All seven open at stage 2.
   if(sourceValue(source,'gameMode')==='arkonStory' &&
-     sourceValue(source,'arkonStoryChapter06Done'))return true;
+     sourceValue(source,'arkonStoryChapter06Done')){
+    const work=sourceValue(source,'arkonStoryChapter07Work')||{};
+    if(!sourceValue(source,'arkonStoryChapter07Done') && work.stage===1)
+      return ['SHIBUYA','YOKOHAMA'].includes(String(regionId||'').toUpperCase());
+    return true;
+  }
+  if (isTunerDevProfile(source)) return true;
 
   // Preserve access for players who already entered a tuner shop before the
   // team-challenge progression was introduced.
@@ -721,6 +727,9 @@ export function getTunerShopUnlockLabel(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return '';
   if (isTunerShopUnlocked(source, regionId)) return 'UNLOCKED';
+  if(sourceValue(source,'gameMode')==='arkonStory' &&
+     sourceValue(source,'arkonStoryChapter07Work')?.stage===1)
+    return 'OPENS AFTER LEVEL 2 BUILD';
   return getTunerTeamChallengeLabel(source, regionId);
 }
 

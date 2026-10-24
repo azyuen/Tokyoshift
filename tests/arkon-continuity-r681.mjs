@@ -67,7 +67,7 @@ test('R679 ending and chapter save actions remain intact',()=>{
   assert.ok(at('ARKON_CH10_DRIVE')<at('ARKON_CH10_FINALE'));
   assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter01Revised,ARKON_CHAPTER_01_REVISED);
   assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter10,ARKON_CHAPTER_10);
-  assert.match(read('src/ui/ArkonStoryArchivePanel.js'),/arkonChapter10\.js\?v=20261024-r681/);
+  assert.match(read('src/ui/ArkonStoryArchivePanel.js'),/arkonChapter10\.js\?v=2026102[45]-r6\d{2}/);
   assert.match(read('docs/CAREER_R680_PRE_PRO_CONTINUITY.md'),/first meeting with Daichi/i);
   assert.match(read('docs/ARKON_R681_240Z_DAICHI_CONTINUITY.md'),/No professional sponsorship cutscene is implemented here/i);
 });

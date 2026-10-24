@@ -1,4 +1,5 @@
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
+import {canArkonCh7BuyStoryParts} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {
   ARKON_STORY_MECHANIC_ASSETS, isArkonStoryWorkshop,
   resolveWorkshopMechanicTexture,
@@ -52,7 +53,7 @@ import {
 import {
   getStockTuneServiceAction, applyStockTuneService, hasStockTuneService,
 } from '../data/stockTuneService.js?v=20261024-r676';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261024-r675';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261025-r684';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261024-r675';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261025-r683';
@@ -67,7 +68,7 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261024-r680';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r662';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261025-r684';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261024-r680';
 import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
@@ -146,8 +147,8 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r683';
-import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261024-r678';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r684';
+import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261025-r684';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -2012,7 +2013,9 @@ export default class GarageScene extends Phaser.Scene {
       level,
       this.getActiveWorkshop().id,
       Number(this.registry.get('wins') || 0),
-      Boolean(this.registry.get('devMode'))
+      Boolean(this.registry.get('devMode')) ||
+        canArkonCh7BuyStoryParts(this.registry,this.selectedCarId,
+          this.getActiveWorkshop().id,level)
     );
   }
 
@@ -2023,7 +2026,9 @@ export default class GarageScene extends Phaser.Scene {
       level,
       this.getActiveWorkshop().id,
       Number(this.registry.get('wins') || 0),
-      Boolean(this.registry.get('devMode'))
+      Boolean(this.registry.get('devMode')) ||
+        canArkonCh7BuyStoryParts(this.registry,this.selectedCarId,
+          this.getActiveWorkshop().id,level)
     );
   }
 
