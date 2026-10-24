@@ -110,7 +110,7 @@ export const ARKON_CHAPTER_02 = {
       ark('Nothing. Tell the owner to have the setup checked properly before racing it.','storySheepish'),
     ],{left:A,right:R}),
     manga('SOMEONE WAS WATCHING',[
-      say('Rina said three workshops had looked at that car.','oshiageReviewing'),
+      say('I was helping with the Shibuya meet schedule when Rina asked for help. Three workshops had already examined that car.','oshiageReviewing'),
       ark('Three good workshops, probably. They were all looking for a broken part.','storyThinking'),
       say('You were looking for why good parts did not work together.','oshiageNeutral'),
       ark('Sometimes that is the difference.','storySheepish'),
@@ -149,7 +149,7 @@ export const ARKON_CHAPTER_02 = {
       ark('It did not take long.','storySheepish'),
       say('They are paying for you to know where to look, not for the minutes you spend looking.','oshiageReviewing'),
       ark('And you are planning to invoice me for this advice?','storyConfidentSmirk'),
-      say('At least buy me a decent coffee one day. I hear your workshop serves terrible coffee.','oshiageHappy'),
+      say('At least buy me a decent coffee one day. Somewhere quiet, with chairs that do not smell of petrol.','oshiageHappy'),
     ]),
     // Legacy Chapter 01 completions already attended the school. Do not
     // repeat the reveal, give duplicate credits, or reset lesson completion.
