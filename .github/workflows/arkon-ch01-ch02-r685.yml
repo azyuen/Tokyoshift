@@ -1,0 +1,35 @@
+name: R685 Chapter 01 and 02 scene, Oshiage, cruise regression
+on:
+  push:
+    branches: [main, fix/arkon-ch01-ch02-scenes-school-cruise-r685]
+    paths:
+      - 'src/data/arkonChapter01Revised.js'
+      - 'src/data/arkonChapter02.js'
+      - 'src/story/StoryNativeStageTemplates.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/ui/StoryContinuePrompt.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/GinzaBanterHud.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/arkon-chapter01-02-polish-r685.mjs'
+      - 'tests/arkon-chapter02-r655.mjs'
+      - '.github/workflows/arkon-ch01-ch02-r685.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          for file in src/data/arkonChapter01Revised.js src/data/arkonChapter02.js src/story/StoryNativeStageTemplates.js src/ui/StoryStage.js src/ui/StoryContinuePrompt.js src/ui/ArkonStoryObjective.js src/ui/GinzaBanterHud.js src/story/StoryDirector.js src/scenes/RaceScene.js tests/arkon-chapter01-02-polish-r685.mjs; do node --check "$file"; done
+      - name: Chapter 1 and 2 regressions plus related tests
+        run: |
+          node --test tests/arkon-chapter01-02-polish-r685.mjs tests/arkon-chapter02-r655.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-school-polish-r512.mjs tests/arkon-story-r678.mjs tests/arkon-chapter07-r669.mjs
