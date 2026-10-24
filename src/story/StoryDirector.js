@@ -154,6 +154,7 @@ export class StoryDirector {
     if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
     if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     if(!preview && savedIndex===0 && id==='arkonChapter07')scriptVars.storyR684=true;
+    if(!preview && savedIndex===0 && id==='arkonChapter02')scriptVars.storyR685=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -169,6 +170,19 @@ export class StoryDirector {
     let checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
+    // Two new Chapter 2 story actions (visible crouch + CONTINUE hold) were
+    // inserted before ANOTHER LIFE. Keep older numeric checkpoints aligned
+    // without replaying fish wages, races or the school introduction.
+    if(checkpoint.id==='arkonChapter02' && !checkpoint.vars?.storyR685){
+      const steps=this.scripts.get(checkpoint.id)?.script?.steps||[];
+      const next=steps.findIndex(x=>x.type==='MANGA'&&x.title==='ANOTHER LIFE');
+      const oldIndex=Math.max(0,Number(checkpoint.index)||0);
+      const index=next>=2&&oldIndex>=next-2?oldIndex+2:oldIndex;
+      checkpoint={...checkpoint,index:Math.min(steps.length-1,index),
+        vars:{...(checkpoint.vars||{}),storyR685:true}};
+      scene.registry.set(STORY_DIRECTOR_SAVE_KEY,checkpoint);
+      saveSessionState(scene.registry);
+    }
     // R684 replaced the eight-step after-Level-2 sequence with nine steps
     // (Yokohama evening + a real R32 introduction). Numeric R683 checkpoints
     // must not jump forward to the wrong action or double-award a job.
