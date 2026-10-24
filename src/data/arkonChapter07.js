@@ -316,7 +316,7 @@ export function getArkonCh7FirstTunerManga(region){
   const id=String(region||'').toUpperCase();
   if(id==='SHIBUYA')return manga('ITSUKI // AMUSE',[
     ['right','I heard you were rebuilding the old Z. Let us see those logs.','idle'],
-    ark('It is at Level 2 now. The top end still feels restricted.','storyMechanic'),
+    ark('I am taking it to Level 2. The top end still feels restricted.','storyMechanic'),
     ['right','The exhaust is holding it back. Your revised map could make a titanium setup worthwhile.','idle'],
     ark('That is why I brought it here instead of guessing.','storyMechanic'),
     ['right','Good. Let us measure it before choosing the parts.','idle'],
