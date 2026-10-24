@@ -72,7 +72,7 @@ export function getNativeCastPlacement(template,index=0,total=1,role='near') {
     chapter02DockCrouch:{x:template.frame.x+template.frame.w-244,
       feetY:base.feetY,height:base.height},
     chapter02ShibuyaRina:{x:template.frame.x+template.frame.w-164,
-      feetY:base.feetY,height:base.height*1.15},
+      feetY:base.feetY,height:base.height*1.25},
   }[role];
   if(template.kind==='meet' && special) return Object.freeze(special);
   const validIndex=Math.max(0,Math.floor(finite(index,0)));
