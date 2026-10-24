@@ -231,17 +231,20 @@ export default class RaceScene extends Phaser.Scene {
     }
     // Oshiage School uses the uniform even if the return-scene field is
     // stale after a lesson restart.
-    const oshiageInstructorLesson=this.isTutorial && (
+    // preload() runs BEFORE create() sets this.isTutorial/this.isCoaching.
+    // Derive the lesson type from persisted race setup, not those fields.
+    const tutorialQueued=this.registry.get('selectedRaceCategory')==='TUTORIAL';
+    const oshiageInstructorLesson=tutorialQueued && (
       this.registry.get('raceReturnScene')==='OshiageScene' ||
       String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
       this.registry.get('oshiageLocation')==='oshiageDrivingSchool'
     );
-    if (this.isCoaching || oshiageInstructorLesson) {
+    if (oshiageInstructorLesson) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
           'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
       }
-    } else if (this.isTutorial) {
+    } else if (tutorialQueued) {
       // First workshop lesson: Sayaka wears her home clothes, not her
       // Oshiage instructor disguise or her eventual Ginza racing outfit.
       for (const pose of ['homeNormal', 'homeHappy', 'homeSad']) {
@@ -320,7 +323,9 @@ export default class RaceScene extends Phaser.Scene {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
     }));
-    if (this.isStoryCruise || this.isArkonMx5Drive) {
+    if (this.isStoryCruise || this.isArkonMx5Drive ||
+        (this.registry.get('gameMode')==='arkonStory' &&
+        ['STORY_CRUISE','ARKON_MX5_DRIVE'].includes(this.registry.get('selectedRaceCategory')))) {
       for(const [id,poses] of [
         ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
         ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
