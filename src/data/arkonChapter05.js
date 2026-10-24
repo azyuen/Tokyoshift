@@ -81,6 +81,15 @@ export const ARKON_CHAPTER_05={
       ark('Parts are sound. The mounting and setup are not. Fix the cause, not the symptom.','storySerious'),
       ark('I want the owner to sign off before we drive it hard.','storyTalking'),
     ],{left:A}),
+    ...bay('MINE\'S // REINA\'S RESPONSE CHECK','minesR34',[
+      {id:A,pose:'storyMechanic'},{id:'reinaKuroda',pose:'idle'}]),
+    manga('REINA // A CAR IS ONE SYSTEM',[
+      ['right','Everyone chased the ECU. You looked at what the engine and driveline did together.','idle'],
+      ark('The calibration was fine. The mounting moved as torque came in.','storyMechanic'),
+      ['right','Let me verify the response once you have repaired the mount. My data may save you a second road test.','idle'],
+      ark('I would appreciate that. Your response work is exceptionally precise.','storySerious'),
+      ['right','Then we both have something to contribute.','idle'],
+    ],{left:A,right:'reinaKuroda'}),
     {type:'CHOICE',key:'ch5R34Approach',title:'THE FIRST PRESTIGE JOB',
       subtitle:'Two careful inspections, one very expensive customer car.',
       choices:[
@@ -157,6 +166,14 @@ export const ARKON_CHAPTER_05={
       ark('Old heat damage, a troublesome boost response, and a remarkable amount of money in parts.','storyMechanic'),
       ark('Well. I did ask for more interesting work.','storySheepish'),
     ],{left:A}),
+    ...bay('RE AMEMIYA // COOLING AND FLOW','reAmemiyaRx7',[
+      {id:A,pose:'storyMechanic'},{id:'naoFujita',pose:'idle'}]),
+    manga('NAO // THINKING BEYOND THE TURBO',[
+      ['right','The rotary is healthy. Heat is moving through the wrong part of the package.','idle'],
+      ark('I found the same thing in the logs. The response issue follows temperature, not boost demand.','storyThinking'),
+      ['right','I can refine the cooling path. You look after the system calibration and the owner.','idle'],
+      ark('Agreed. There is no sense in making power that will not last a full run.','storyMechanic'),
+    ],{left:A,right:'naoFujita'}),
     ...bay('LATE NIGHT // SAYAKA DROPS BY','reAmemiyaRx7'),
     manga('A FAMILIAR ROUTINE',[
       say('You have not eaten, have you?','oshiageReviewing'),
@@ -202,6 +219,15 @@ export const ARKON_CHAPTER_05={
       ark('Top Secret Supra. And a client who wants it absolutely perfect.','storyMechanic'),
       ark('He is trusting me with an extraordinary car. I cannot let him down.','storySerious'),
     ],{left:A}),
+    ...bay('TOP SECRET // BOOST CONSULTATION','topSecretSupra',[
+      {id:A,pose:'storyMechanic'},{id:'daigoArakawa',pose:'idle'}]),
+    manga('ARAKAWA // THE QUESTION OF BOOST',[
+      ['right','You have a careful hand. Most people bring us a horsepower target, not questions about stability.','idle'],
+      ark('A big number is useless if the boost cannot be delivered cleanly.','storySerious'),
+      ['right','Let me show you the turbo maps. You can tell me what the car does outside the dyno room.','idle'],
+      ark('And we will sign off only what we can demonstrate.','storyMechanic'),
+      ['right','Good. That is how a proper collaboration works.','idle'],
+    ],{left:A,right:'daigoArakawa'}),
     ...bay('A VERY BUSY EVENING','topSecretSupra'),
     manga('MORE THAN A MECHANIC',[
       say('I passed on your number. He was looking for somebody thorough.','oshiageNeutral'),
