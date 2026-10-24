@@ -199,7 +199,7 @@ export const ARKON_CHAPTER_07={
       ark('The drivetrain, brakes, engine, suspension... finished.','storyMechanic'),
       ark('But it still looks like the battered Z that came here years ago.','storyThinking'),
       ark('I know exactly what it needs.','storyConfidentSmirk'),
-    ],{left:A}),
+    ],{left:A},'storyMechanic'),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07Bodywork',timeOfDay:'night'},
     {type:'ARKON_CH7_CONVERT'},
     ...hq('WAREHOUSE HQ // THE LIBERTY WALK','arkonLibertyWalk240z',[{id:A,pose:'storyConfident'}]),
