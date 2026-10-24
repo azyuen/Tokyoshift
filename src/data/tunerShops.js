@@ -727,6 +727,9 @@ export function getTunerShopUnlockLabel(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return '';
   if (isTunerShopUnlocked(source, regionId)) return 'UNLOCKED';
+  if(sourceValue(source,'gameMode')==='arkonStory' &&
+     sourceValue(source,'arkonStoryChapter07Work')?.stage===1)
+    return 'OPENS AFTER LEVEL 2 BUILD';
   return getTunerTeamChallengeLabel(source, regionId);
 }
 
