@@ -2,7 +2,7 @@ export const garageAssets = [
   { key: 'garageWorkshopBg', path: 'assets/Garage/shinonome_workshop_day.png' },
   { key: 'garageWorkshopTunerBg', path: 'assets/Garage/Workshop_tuner.PNG?v=20260921-r15' },
   { key: 'garageWorkshopCanalYard', path: 'assets/Garage/shinonome_canal_yard_garage.png?v=20260922-r86' },
-  { key: 'garageWorkshopWarehouseHQ', path: 'assets/Garage/shinonome_warehouse_hq.png?v=20260922-r86' },
+  { key: 'garageWorkshopWarehouseHQ', path: 'assets/Garage/shinonome_warehouse_night.png?v=20260922-r86' },
   { key: 'garageCharacterLeft', path: 'assets/Garage/character_left.svg' },
   { key: 'garageCharacterRight', path: 'assets/Garage/character_right.svg' },
   { key: 'stockEngine4AGE', path: 'assets/Engines/4age.png?v=20260921-r68' },

@@ -3044,7 +3044,7 @@ export default class GarageScene extends Phaser.Scene {
     add(this.add.text(
       440,
       248,
-      'Jump between owned garages or unlock the next workshop here.',
+      'Visit your workshops or pay to fit out the next space here.',
       {
         fontFamily: BODY_FONT,
         fontSize: '11px',

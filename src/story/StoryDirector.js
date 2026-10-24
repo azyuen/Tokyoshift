@@ -10,6 +10,8 @@ import { showStoryStage } from '../ui/StoryStage.js';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js';
+import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js';
+import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js';
@@ -32,7 +34,8 @@ import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
   from '../data/arkonChapter09Races.js';
 import {recordArkonCh10Project,startArkonCh10Race,finishArkonCh10Race,
   openArkonCh10Ginza,recordArkonCh10Investment,prepareArkonCh10Yokohama,
-  settleArkonCh10Dispute} from '../data/arkonChapter10Work.js';
+  settleArkonCh10Dispute,sellArkonCh10LibertyWalk,
+  startArkonCh10PorscheCruise,finishArkonCh10PorscheCruise} from '../data/arkonChapter10Work.js';
 import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js';
 import {showArkonCh10Restoration} from '../ui/ArkonChapter10Restoration.js';
 import {showArkonChapter10Finale} from '../ui/ArkonChapter10Finale.js';
@@ -147,8 +150,11 @@ export class StoryDirector {
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
     if (savedIndex >= compiled.script.steps.length) return false;
+    const scriptVars=normaliseStoryChoiceVars(vars);
+    if(!preview && savedIndex===0 && isR678StoryScript(id))scriptVars.storyR678=true;
+    if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
-      vars: normaliseStoryChoiceVars(vars) };
+      vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
     this.events.clear();
     this.checkpoint();
@@ -202,6 +208,17 @@ export class StoryDirector {
       return false;
     }
     if(checkpoint.id==='arkonChapter10' &&
+       scene.registry?.get?.('arkonStoryChapter10Cruise')?.active &&
+       !scene.registry.get('arkonStoryChapter10Cruise')?.completed &&
+       sceneName(scene)!=='RaceScene' && !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
+    }
+    if(checkpoint.id==='arkonChapter10' &&
+       scene.registry?.get?.('arkonStoryChapter10Cruise')?.completed &&
+       sceneName(scene)!=='MeetScene' && !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'MeetScene');return false;
+    }
+    if(checkpoint.id==='arkonChapter10' &&
        scene.registry?.get?.('arkonStoryChapter10Race')?.active &&
        !scene.registry.get('arkonStoryChapter10RaceResult') &&
        sceneName(scene)!=='RaceScene' && !scene._pendingSafeSceneStart){
@@ -248,7 +265,8 @@ export class StoryDirector {
       const steps=this.scripts.get('arkonChapter03')?.script?.steps||[];
       const driveIndex=steps.findIndex(step=>step.type==='ARKON_MX5_RACE');
       if(driveIndex>=0)
-        return this.start(checkpoint.id,{index:driveIndex,vars:checkpoint.vars});
+        return this.start(checkpoint.id,{index:driveIndex,
+          vars:{...(checkpoint.vars||{}),storyR678:true}});
     }
     // Chapter 04's driving/tuning interlude is genuine free gameplay.
     // Never auto-launch the next scene behind an active Meet, replay or
@@ -259,7 +277,15 @@ export class StoryDirector {
     if(checkpoint.id==='arkonChapter07' &&
       this.scripts.get(checkpoint.id)?.script?.steps?.[checkpoint.index]?.type==='ARKON_CH7_WORK')
       return false;
-    return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
+    // R677 checkpoints stored raw numeric positions. The R678 screenplay
+    // inserts real conversations, so resume using a semantic milestone once.
+    // Never reinterpret an old saved index as a new financial/race action.
+    const compiled=this.scripts.get(checkpoint.id);
+    const migrated678=migrateArkonR678Checkpoint(compiled,checkpoint,scene.registry);
+    const intermediate=migrated678?{...checkpoint,...migrated678}:checkpoint;
+    const migrated679=migrateArkonR679Checkpoint(compiled,intermediate,scene.registry);
+    return this.start(checkpoint.id, migrated679 || migrated678 ||
+      {index:checkpoint.index,vars:checkpoint.vars});
   }
   checkpoint() {
     if (!this.session || this.session.preview) return;
@@ -707,13 +733,14 @@ export class StoryDirector {
             return;
           }
         }
-        if(['ARKON_CH10_SETTLEMENT','ARKON_CH10_GINZA',
+        if(['ARKON_CH10_SETTLEMENT','ARKON_CH10_SELL_Z','ARKON_CH10_GINZA',
             'ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA'].includes(type)){
           if(this.session.id!=='arkonChapter10' ||
              scene.registry.get('gameMode')!=='arkonStory'){
             this.error='CHAPTER 10 ACTION OUTSIDE ARKON STORY';return;
           }
           const action=type==='ARKON_CH10_SETTLEMENT'?settleArkonCh10Dispute:
+             type==='ARKON_CH10_SELL_Z'?sellArkonCh10LibertyWalk:
             type==='ARKON_CH10_GINZA'?openArkonCh10Ginza:
             type==='ARKON_CH10_INVEST'?recordArkonCh10Investment:
             prepareArkonCh10Yokohama;
@@ -726,9 +753,12 @@ export class StoryDirector {
           if(this.session.id!=='arkonChapter10' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
              sceneName(scene)!=='GarageScene' || scene.crewMode ||
-             Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)!==step.index ||
+             Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)<step.index ||
              !ARKON_CH10_PROJECTS[step.index]){
             this.error='CHAPTER 10 RESTORATION NOT READY';return;
+          }
+          if(Number(scene.registry.get('arkonStoryChapter10ProjectsDone')||0)>step.index){
+            this.advance();continue;
           }
           this.wait={kind:'dialogue',index};
           const control=showArkonCh10Restoration(scene,step.index,{onComplete:()=>{
@@ -762,6 +792,25 @@ export class StoryDirector {
              sceneName(scene)!=='MeetScene' ||
              !finishArkonCh10Race(scene.registry)){
             this.error='CHAPTER 10 FRIENDLY RACE RESULT NOT RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH10_DRIVE'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !startArkonCh10PorscheCruise(scene.registry)){
+            this.error='CHAPTER 10 PORSCHE NIGHT DRIVE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='CHAPTER 10 PORSCHE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH10_DRIVE_RETURN'){
+          if(sceneName(scene)!=='MeetScene'||
+             !finishArkonCh10PorscheCruise(scene.registry)){
+            this.error='CHAPTER 10 PORSCHE NIGHT DRIVE NOT FINISHED';return;
           }
           saveSessionState(scene.registry);this.advance();continue;
         }

@@ -6,6 +6,7 @@ import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER,
   getDrivetrainTuning,getChassisTuning,getExhaustNosTuning} from './secondaryTuning.js';
 import {getArkonCustomerJob} from './arkonChapter03Jobs.js';
 import {normaliseCarGarageLocations} from './workshopProgression.js';
+import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js';
 
 export const CH7_HERO_ID='arkonLibertyWalk240z';
 export const CH7_JOB_FEES=Object.freeze([1100000,1300000,1500000]);
@@ -43,11 +44,19 @@ export function ch7Progress(s){
   const all=groups(s).flatMap(([parts,levels])=>parts.map(id=>Number(levels[id])||0));
   const level2=all.filter(x=>x>=2).length,level3=all.filter(x=>x>=3).length;
   const requirement=a.stage<=1?2:3;
-  const shopGoal=a.stage<=1?2:4;
+  const shopGoal=a.stage<=1?2:7;
+  // Real purchases, not story rewards: one installed signature package from
+  // every specialist, ON ARUKEN'S OWN 240Z, before the Liberty Walk conversion.
+  const installed=new Set(getInstalledSpecialistTuning(get(s,'carStates')?.['240z']||{}));
+  const treatments=Object.entries(TUNER_SHOPS)
+    .filter(([,shop])=>(shop.tuningOptions||[]).some(opt=>installed.has(opt.id)))
+    .map(([region])=>region);
+  const treatmentGoal=a.stage<=1?0:7;
   return {...a,partsTotal:all.length,level2,level3,
-    shopGoal,partsGoal:requirement,ready:Boolean(a.stage===1||a.stage===2) &&
+    treatments,treatmentGoal,shopGoal,partsGoal:requirement,
+    ready:Boolean(a.stage===1||a.stage===2) &&
       (a.stage===1?level2:level3)===all.length &&
-      (a.shops?.length||0)>=shopGoal};
+      (a.shops?.length||0)>=shopGoal && treatments.length>=treatmentGoal};
 }
 export function startArkonCh7Work(s,stage){
   if(!story(s)||![1,2].includes(stage)||!get(s,'ownedCarIds')?.includes('240z')||

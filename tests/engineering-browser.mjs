@@ -14,6 +14,7 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
  const fixture=await page.evaluate(async()=>{
   const gs=await import('./src/state/GameState.js');const s=gs.createDefaultGameState();Object.assign(s,{firstName:'Engineering',lastName:'Fixture',cash:30000000,wins:90,selectedCarId:'r34',preferredCarId:'r34',ownedCarIds:['ae86','r34'],openingChapter:null});
   // Isolate workshop controls from unrelated career invitation overlays.
+  Object.assign(s,{garageTier:2,workshopLocationId:'shinonomeWarehouseStrip',carGarageLocations:{r34:'shinonomeWarehouseStrip',ae86:'shinonomeWorkshop'}});
   s.cutscenesSeen=Object.keys((await import('./src/data/cutscenes.js')).CUTSCENES);
   s.carStates.r34={tuning:{engine:3,intake:3,ecu:3,turbo:3,intercooler:3},drivetrainTuning:{clutch:3,gearbox:3,differential:3,suspension:3},chassisTuning:{tyres:3,weightReduction:3},exhaustNosTuning:{headers:3,exhaust:3,muffler:3},paintColor:0xffffff};
   gs.importProfileBackup(0,{format:'TOKYO_SHIFT_PROFILE_BACKUP',formatVersion:1,state:s});gs.setActiveProfileIndex(0);return gs.getProfileState(0).firstName;
@@ -37,6 +38,36 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
   const restored=getBuiltCar('r34',get()).car.powerKW;
   return {before,parked,stock,restored,legacyFixture:true,freeParkingBlocked:!g.factorySetupButton.visible,label:g.engineeringLabelText.text};
  });assert.ok(park.before>400);assert.equal(park.parked,206);assert.equal(park.stock,true);assert.equal(park.before,park.restored);
+ const paidService=await page.evaluate(async()=>{
+  const g=window.TOKYO_SHIFT.scene.getScene('GarageScene');
+  const {getBuiltCar}=await import('./src/vehicles/VehiclePerformance.js');
+  const {isPerformanceStockState}=await import('./src/data/crewSystem.js');
+  const {getProfileState}=await import('./src/state/GameState.js');
+  const state=()=>g.registry.get('carStates').r34;
+  const original=JSON.stringify(state().tuning),cash=g.registry.get('cash');
+  const confirm=()=>{
+   if(!g.moveCarButton.input?.enabled)throw Error('Parts service entry disabled');
+   g.moveCarButton.emit('pointerdown');
+   if(!state().stockTuneService){
+    const prepare=g.children.list.find(o=>o.type==='Rectangle'&&o.depth===163&&o.x===1130&&o.y===708);
+    if(!prepare)throw Error('Prepare stock choice missing');
+    prepare.emit('pointerdown');
+   }
+   const button=g.children.list.find(o=>o.type==='Rectangle'&&o.depth===177&&o.x===925&&o.y===526);
+   if(!button)throw Error('Paid service confirmation unavailable');
+   button.emit('pointerdown');button.emit('pointerdown');
+  };
+  confirm();
+  const prepared={cash:g.registry.get('cash'),power:getBuiltCar('r34',state()).car.powerKW,stock:isPerformanceStockState(state()),saved:!!getProfileState(0).carStates.r34.stockTuneService};
+  if(JSON.stringify(state().stockTuneService?.tune.tuning)!==original)throw Error('Purchased tuning lost');
+  // Reload the saved state through the same profile loader used by the game.
+  const saved=getProfileState(0);g.registry.set('carStates',saved.carStates);g.registry.set('cash',saved.cash);g.selectCar('r34');
+  confirm();
+  if(JSON.stringify(state().tuning)!==original)throw Error('Restoration changed purchased tuning');
+  return {cash,prepared,restoredCash:g.registry.get('cash'),restoredPower:getBuiltCar('r34',state()).car.powerKW,savedRestored:!getProfileState(0).carStates.r34.stockTuneService};
+ });
+ assert.equal(paidService.prepared.cash,paidService.cash-10000);assert.equal(paidService.prepared.power,206);assert.equal(paidService.prepared.stock,true);assert.equal(paidService.prepared.saved,true);
+ assert.equal(paidService.restoredCash,paidService.cash-20000);assert.equal(paidService.restoredPower,park.before);assert.equal(paidService.savedRestored,true);
  await page.waitForTimeout(1500);
  await page.screenshot({path:`artifacts/engineering/garage-${viewport.width}.png`,fullPage:true});
  await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('GarageScene').engineeringLabelText.emit('pointerdown'));
@@ -67,5 +98,5 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
   await page.screenshot({path:'artifacts/engineering/race-1024.png'});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
- results.push({viewport,profileLoaded:true,park,potentialHelp,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
+ results.push({viewport,profileLoaded:true,park,paidService,potentialHelp,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
 }}finally{await browser.close();fs.writeFileSync(process.env.ENGINEERING_GARAGE_ONLY?'docs/engineering/potential-browser-results.json':'docs/engineering/browser-results.json',JSON.stringify({browser:'Chromium',phaserLocalOverride:Boolean(process.env.PHASER_LOCAL),results},null,2));}

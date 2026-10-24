@@ -98,7 +98,11 @@ export function getArkonRecountScenes(registry) {
       const step=source.steps[index];
       if(step.type==='END')break;
       if(step.type==='CHOICE'){
-        const chosen=step.choices.find(x=>x.id===getValue(step.key||'choice'));
+        // Earlier completed chapters may not have a choice introduced in R678.
+        // Recount their new scenes with the neutral/default conversational
+        // branch without altering stored choices or the actual profile.
+        const chosen=step.choices.find(x=>x.id===getValue(step.key||'choice')) ||
+          (completed?step.choices[0]:null);
         if(!chosen)break;
         index=(compiled.labels.get(chosen.to)??-1)+1;continue;
       }

@@ -17,12 +17,24 @@
         "freeParkingBlocked": true,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
+      "paidService": {
+        "cash": 30000000,
+        "prepared": {
+          "cash": 29990000,
+          "power": 206,
+          "stock": true,
+          "saved": true
+        },
+        "restoredCash": 29980000,
+        "restoredPower": 419,
+        "savedRestored": true
+      },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
       "dyno": {
         "state": "COMPLETE",
         "error": null,
         "displayKW": 419,
-        "runKW": 418.9,
+        "runKW": 418.8,
         "points": 22
       },
       "race": {
@@ -30,8 +42,8 @@
         "opponentCharacterId": "daigoArakawa",
         "playerKW": 206,
         "opponentKW": 206,
-        "playerDistance": 443.43377689829583,
-        "opponentDistance": 441.228596268072,
+        "playerDistance": 444.2537304756318,
+        "opponentDistance": 441.31118567712855,
         "finished": true,
         "falseStart": false
       },
@@ -53,6 +65,18 @@
         "legacyFixture": true,
         "freeParkingBlocked": true,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
+      },
+      "paidService": {
+        "cash": 30000000,
+        "prepared": {
+          "cash": 29990000,
+          "power": 206,
+          "stock": true,
+          "saved": true
+        },
+        "restoredCash": 29980000,
+        "restoredPower": 419,
+        "savedRestored": true
       },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
       "dyno": null,

@@ -30,7 +30,7 @@ export const ARKON_CHAPTER_01 = {
     {type:'LABEL',name:'race'},
     {type:'CLEAR_STAGE'},
     {type:'MANGA',title:'YOUR FIRST RUNS',characters:{left:'arkonDen'},pages:[
-      {speaker:'left',leftPose:'devTalking',text:'Time to race. Two victories, then head to a meet. I can tune the Civic if I need to.'},
+      {speaker:'left',leftPose:'devTalking',text:'Time to race. Two victories, then head to a meet. I can tune the old car if I need to.'},
     ]},
     {type:'WAIT_FLAG',key:'wins',atLeast:2},
     {type:'WAIT_SCENE',scene:'MeetScene'},
@@ -44,7 +44,7 @@ export const ARKON_CHAPTER_01 = {
     {type:'HOLD_SCENE',label:'SOMEONE APPROACHES',caption:'THE MEET IS QUIETER NOW'},
     {type:'MANGA',title:'AN UNEXPECTED CONVERSATION',
       characters:{left:'arkonDen',right:'sayakaFujieda'},pages:[
-        {speaker:'right',rightPose:'homeSerious',text:'You are the one who has been racing that Civic?'},
+        {speaker:'right',rightPose:'homeSerious',text:'You are the one who has been racing that old car?'},
         {speaker:'left',leftPose:'devTalking',text:'I think I would remember if someone else had borrowed it.'},
         {speaker:'right',rightPose:'homeNormal',text:'I was helping the organiser with the timing sheets. You have been here more than once.'},
         {speaker:'left',leftPose:'devTalking',text:'Depends. Is this about the noise, the parking or the car?'},

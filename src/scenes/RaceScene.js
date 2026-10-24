@@ -165,7 +165,8 @@ export default class RaceScene extends Phaser.Scene {
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     if(this.registry.get('gameMode')==='arkonStory' &&
-      this.registry.get('arkonStoryChapter06Cruise')?.active){
+      (this.registry.get('arkonStoryChapter06Cruise')?.active ||
+       this.registry.get('arkonStoryChapter10Cruise')?.active)){
       // The restored-Porsche night drive follows hours of workshop work;
       // Sayaka has changed out of her Oshiage instructor outfit.
       queueImage('arkonSayakaWatchingStory',
@@ -432,6 +433,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isArkonCh6Cruise=this.raceMode==='ARKON_RWB_CRUISE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter06Cruise')?.active);
+    this.isArkonCh10Cruise=this.raceMode==='ARKON_CH10_RWB_CRUISE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter10Cruise')?.active);
     this.isArkonCh7Solo=this.raceMode==='ARKON_CH7_SOLO' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter07Solo')?.active);
@@ -970,6 +974,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
     if (this.isArkonCh8Drive) this.setupArkonCh8Passenger();
     if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
+    if (this.isArkonCh10Cruise) this.setupArkonCh10Cruise();
     if (this.isArkonCh7Solo) this.setupArkonCh7Solo();
     // Replay exit is anchored on the MAIN play area for every scene
     // by StoryDirector, including RaceScene. Do not create a second
@@ -1000,7 +1005,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
-    if(this.isArkonCh6Cruise||this.isArkonCh7Solo)return; // No-input cinematics.
+    if(this.isArkonCh6Cruise||this.isArkonCh10Cruise||this.isArkonCh7Solo)return; // No-input cinematics.
     if(this.isStoryCruise){
       this.endArkonStoryCruise();return;
     }
@@ -1712,6 +1717,66 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
+  setupArkonCh10Cruise(){
+    // Sayaka drives her own RWB, with Aruken alongside her.
+    this.arkonCh10Seconds=0;
+    this.arkonCh10LineIndex=0;
+    this.arkonCh10Leaving=false;
+    this.controls.enabled=false;
+    this.startButton?.setVisible(false)?.disableInteractive();
+    this.startButtonText?.setVisible(false);
+    this.cancelButton?.setVisible(false)?.disableInteractive();
+    this.cancelButtonText?.setVisible(false);
+    this.treeSprite?.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('ARUKEN // PASSENGER');
+    this.stakeText?.setText('SAYAKA DRIVING // TOGETHER // NO RACE');
+    this.prepareRollingVehicle(this.player);
+    this.setArkonMx5OpponentVisible(false);
+    this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>this.arkonCh10Dialogue?.destroy?.());
+  }
+  updateArkonCh10Cruise(dt){
+    if(this.arkonCh10Leaving)return;
+    this.arkonCh10Seconds+=dt;
+    const pt=this.advanceRollingVehicle(this.player,dt);
+    this.drawScene(pt,null,dt);
+    this.hud.update(pt,'YOKOHAMA // SAYAKA DRIVING // NO RACE');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    const lines=[
+      [1,'sayaka','You have gone awfully quiet.','homeHappy'],
+      [4,'arkon','I am getting used to not holding the steering wheel.','storySheepish'],
+      [7.5,'sayaka','I think the passenger seat suits you.','homeHappy'],
+      [11,'arkon','It is different when somebody else drives.','storyThinking'],
+      [14,'sayaka','Something wrong with my technique?','homeHappy'],
+      [17.5,'arkon','No. For once, I am not chasing a result.','storyCoolShy'],
+      [21,'sayaka','I could take the long way, you know.','homeHappy'],
+      [24,'arkon','In this company? Please do.','storyConfidentSmirk'],
+      [27,'sayaka','Excellent engineering, this Porsche.','homeHappy'],
+      [30,'arkon','Remarkably good driver too.','storyCoolShy'],
+      [33,'sayaka','Careful. Compliments are becoming a habit.','homeHappy'],
+    ];
+    while(this.arkonCh10LineIndex<lines.length &&
+          this.arkonCh10Seconds>=lines[this.arkonCh10LineIndex][0]){
+      const [,speaker,words,pose]=lines[this.arkonCh10LineIndex++];
+      this.arkonCh10Dialogue?.show(speaker,words,pose);
+    }
+    if(this.arkonCh10Seconds>=37){
+      this.arkonCh10Leaving=true;
+      const cruise=this.registry.get('arkonStoryChapter10Cruise');
+      if(cruise?.active){
+        this.registry.set('arkonStoryChapter10Cruise',{...cruise,completed:true});
+        this.registry.set('meetLocation','yokohamaMinatoMirai');
+        this.registry.set('district','YOKOHAMA');
+        this.registry.set('arkonStoryTimeOfDay','night');
+        saveSessionState(this.registry);
+      }
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.cameras.main.fadeOut(1100,0,0,0);
+      this.time.delayedCall(1130,()=>queueSafeSceneStart(this,'MeetScene'));
+    }
+  }
   setupArkonCh7Solo(){
     this.arkonCh7Seconds=0;
     this.arkonCh7LineIndex=0;
@@ -2786,6 +2851,11 @@ export default class RaceScene extends Phaser.Scene {
     if (sceneCutsceneActive(this)) return;
 
     const dt = Math.min(deltaMs / 1000, 1 / 30);
+    if(this.isArkonCh10Cruise){
+      this.raceClock+=dt;
+      this.updateArkonCh10Cruise(dt);
+      return;
+    }
     if(this.isArkonCh7Solo){
       this.raceClock+=dt;
       this.updateArkonCh7Solo(dt);

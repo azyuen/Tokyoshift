@@ -1,0 +1,53 @@
+{
+  "mainCommit": "003fa679eb14cd72080f96bf9983d2a3091279f1",
+  "scope": "Six changed-main historical suites, same sparse assets on both checkouts; not a full repository pass",
+  "integrated": {
+    "failures": [
+      "Objective/replay, renderer and final art are all wired",
+      "new character and scene order resolves the station and first-car choice only at the magazine",
+      "station cutscene addresses selected name without spoiling car or Sayaka",
+      "the opening and later visits use one magazine page-flip renderer",
+      "opening and farewell dialogue use Sayaka normal-happy-normal beat",
+      "Sayaka leaves the player at a resumable workshop checkpoint before a separate tap",
+      "the very next workshop tap uses Daichi exactly as drivetrain tuning does",
+      "the in-office Sayaka call uses the shared blue race dialogue with phone corner badge",
+      "Sayaka expression assets are loaded in the manga portrait pose map",
+      "Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures",
+      "Sayaka farewell fades both manga portrait and garage companion before Daichi can appear",
+      "phone UI uses the compact shared, face-centred bubble and phone corner icon",
+      "every phone scene uses blue call accents including player responses and mixed calls",
+      "Reika replaces Sayaka in all Shinagawa racing and recruitment pools",
+      "Reika and Sayaka use the already uploaded, distinct sprite sets"
+    ],
+    "counts": [
+      "# tests 87",
+      "# pass 72",
+      "# fail 15"
+    ]
+  },
+  "main": {
+    "failures": [
+      "Objective/replay, renderer and final art are all wired",
+      "new character and scene order resolves the station and first-car choice only at the magazine",
+      "station cutscene addresses selected name without spoiling car or Sayaka",
+      "the opening and later visits use one magazine page-flip renderer",
+      "opening and farewell dialogue use Sayaka normal-happy-normal beat",
+      "Sayaka leaves the player at a resumable workshop checkpoint before a separate tap",
+      "the very next workshop tap uses Daichi exactly as drivetrain tuning does",
+      "the in-office Sayaka call uses the shared blue race dialogue with phone corner badge",
+      "Sayaka expression assets are loaded in the manga portrait pose map",
+      "Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures",
+      "Sayaka farewell fades both manga portrait and garage companion before Daichi can appear",
+      "phone UI uses the compact shared, face-centred bubble and phone corner icon",
+      "every phone scene uses blue call accents including player responses and mixed calls",
+      "Reika replaces Sayaka in all Shinagawa racing and recruitment pools",
+      "Reika and Sayaka use the already uploaded, distinct sprite sets"
+    ],
+    "counts": [
+      "# tests 87",
+      "# pass 72",
+      "# fail 15"
+    ]
+  },
+  "newFailures": []
+}

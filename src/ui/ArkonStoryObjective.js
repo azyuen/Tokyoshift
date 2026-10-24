@@ -34,12 +34,12 @@ export function getArkonStoryObjective(registry) {
     const phase=get('arkonStoryPhase')||'chapter10Recovery';
     const count=Math.max(0,Number(get('arkonStoryChapter10ProjectsDone')||0));
     const stages={
-      chapter10Recovery:['A FAMILIAR SOUND','The contractual dispute has been settled. Return to the work you love.'],
-      chapter10Restorations:['BACK TO THE CRAFT','Complete three genuine customer restorations at Warehouse HQ.'],
+      chapter10Recovery:['A FAMILIAR SOUND','The dispute is partly resolved, but the final liabilities remain. Return to honest work.'],
+      chapter10Restorations:['BACK TO THE CRAFT','Complete the customer restorations and prepare to meet the remaining obligations.'],
       chapter10TestDrive:['JUST FOR FUN','Run the friendly Daikoku test. No stakes, no special advantages.'],
-      chapter10Ginza:['GINZA GALLERY','Open the gallery with Sayaka. Her partnership is more than a curatorial job.'],
+      chapter10Ginza:['GINZA GALLERY','After the Z sale settles the liabilities, build a gallery as equal partners with Sayaka.'],
       chapter10Investment:['A LITTLE OPPORTUNITY','Support Daichi and a promising family friend who loves cars.'],
-      chapter10FinalDrive:['THE ROAD AHEAD','One final evening beneath the Yokohama Ferris wheel.'],
+      chapter10FinalDrive:['THE ROAD AHEAD','Travel together in Sayaka\'s RWB Porsche to Yokohama.'],
     };
     const [heading,message]=stages[phase]||['THE ROAD AHEAD','Continue Chapter 10.'];
     return {heading,message,progress:'RESTORATIONS '+count+'/3  //  CHAPTER 10'};
@@ -96,10 +96,12 @@ export function getArkonStoryObjective(registry) {
       const done=first?p.level2:p.level3;
       return {
         heading:first?'THE 240Z // REGIONAL BUILD':'THE 240Z // MAXIMUM BUILD',
-        message:'Use real Warehouse HQ upgrades on your own 240Z. Visit '+(first?2:4)+
-          ' distinct regional tuner houses for mechanical introductions. Then return to Warehouse HQ and press CONTINUE CHAPTER 07.',
+        message:first
+          ? 'Upgrade your 240Z to Level 2 throughout. Visit two real regional specialist houses, then return to Warehouse HQ to continue.'
+          : 'Upgrade your own 240Z to Level 3 throughout. Visit ALL SEVEN specialist houses and purchase at least one eligible specialist treatment for this car at each. Then continue at Warehouse HQ.',
         progress:'LEVEL '+(first?'2':'3')+' PARTS '+done+'/'+p.partsTotal+
-          '   //   TUNER HOUSES '+(p.shops?.length||0)+'/'+p.shopGoal,
+          ' // SHOPS '+(p.shops?.length||0)+'/'+p.shopGoal+
+          (first?'':' // SPECIALIST TUNES '+(p.treatments?.length||0)+'/7'),
         canResumeChapter07:p.ready,
       };
     }
@@ -228,7 +230,9 @@ export function getArkonStoryObjective(registry) {
     const goals={
       chapter02Opening:['UNWELCOME COMPANY','Continue Chapter 02 at the Meet.'],
       chapter02Earn:['KEEP YOUR FOOT IN','Win two street races. Aruken needs another way to earn money.'],
-      chapter02MeetRepair:['THE 240Z NEEDS WORK','Win two more races, then return to a Meet.'],
+      chapter02MeetRepair:['SHIBUYA // A DIFFICULT REPAIR','Win two more races, then return to a Meet for an unexpected commission.'],
+      chapter02GoSchool:['OSHIAGE // A FREE LESSON','Visit Oshiage Driving School to meet the instructor Sayaka recommended.'],
+      chapter02Lesson:['OSHIAGE // THE INSTRUCTOR','Complete the introductory driving lesson with Sayaka, then return to the School.'],
       chapter02Driving:['THE LONG WAY HOME','Complete the rolling drive with Sayaka. If interrupted, return to a Meet to resume.'],
       chapter02AfterWorkshop:['ONE MORE TEST','Win two more races. Daigo wants another run.'],
       chapter02RivalRace:['FRIENDLY REMATCH','Complete the race with Daigo, then return to the Meet.'],
@@ -246,8 +250,8 @@ export function getArkonStoryObjective(registry) {
     const current=get('wins')||0;
     const goals={
       opening:['FIRST IMPRESSIONS','Continue the opening scene to begin your first night.','CHAPTER 01'],
-      firstThree:['FIRST RUNS','Win three street races. Sayaka may be somewhere in the crowd.','RACE WINS '+Math.min(3,current)+' / 3'],
-      meetNotice:['SOMEONE AT THE MEET','Look towards the edge of the main Meet stage. Tap YOU NOTICE HER.','MEET ENCOUNTER'],
+      firstThree:['FIRST RUNS','Win three street races. Aoi and Haru may need help with their 240Z.','RACE WINS '+Math.min(3,current)+' / 3'],
+      meetNotice:['SOMEONE AT THE MEET','At the Meet, tap YOU NOTICE HER to begin an encounter that changes Aruken\'s life.','MEET ENCOUNTER'],
       rivalRace:['A PERSONAL CHALLENGE','Complete the race and return to the Meet. The result is yours.','NO SCRIPTED OUTCOME'],
       practice:['A FEW MORE RUNS','Keep racing until you have six wins in total.','RACE WINS '+Math.min(6,current)+' / 6'],
       goSchool:['YOUR COMPLIMENTARY LESSON','Travel to Oshiage Driving School, then complete your introductory lesson.','OSHIAGE // DRIVING SCHOOL'],

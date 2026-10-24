@@ -1,6 +1,7 @@
 // R652 — Aruken Denzaki origin chapter. Independent of Career / Tokyo Championship.
 // Branches are remembered; every playable race uses the production physics.
 const A='arkonDen', S='sayakaFujieda', D='storyDaigoKirishima';
+const AOI='aoiShindou', HARU='haruSakurai';
 const manga=(title,pages,cast={left:A,right:S})=>({
   type:'MANGA',title,characters:cast,
   pages:pages.map(([speaker,text,pose])=>({
@@ -9,7 +10,9 @@ const manga=(title,pages,cast={left:A,right:S})=>({
     // non-speaking portrait. Otherwise MangaCutscene defaults it to home idle.
     leftPose:speaker==='left' ? (pose||(cast.left===D?'idle':'storyTalking'))
       : (cast.left===D?'idle':'storyIdle'),
-    rightPose:speaker==='right' ? (pose||'oshiageNeutral') : 'oshiageNeutral',
+    rightPose:cast.right===S
+      ? (speaker==='right' ? (pose||'oshiageNeutral') : 'oshiageNeutral')
+      : 'idle',
     text,
   })),
 });
@@ -68,6 +71,43 @@ export const ARKON_CHAPTER_01_REVISED={
     // Meet shows Sayaka at the edge and activates a glowing YOU NOTICE HER
     // marker. The player, not an auto-cutscene, initiates this encounter.
     {type:'WAIT_FLAG',key:'arkonStorySayakaNoticed',equals:true},
+    // The opening repair is the first demonstration of Aruken's character:
+    // a 240Z belonging to Aoi, with her boyfriend Haru visiting from Shibuya.
+    // Both are existing Career racers with their own registered portrait assets.
+    {type:'CLEAR_STAGE'},
+    {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',privateMeet:true,
+      composition:'car-behind-cast',
+      characters:[{id:AOI,pose:'idle'},{id:HARU,pose:'idle'},
+        {id:A,pose:'storyMechanicCrouch',role:'carMechanic'}],
+      cars:[{carId:'240z'}]},
+    {type:'HOLD_SCENE',label:'ODAIBA // A 240Z THAT WILL NOT START',
+      caption:'AOI AND HARU // AFTER THE RACES'},
+    manga('A LOVERS\' QUARREL, ALMOST',[
+      ['left','I am NOT selling the Z.','idle'],
+      ['right','I said we might consider something newer. Just until it starts.','idle'],
+      ['left','You consider something newer. This car is staying.','idle'],
+      ['right','I am fond of the car, Aoi. I am even fonder of getting you home.','idle'],
+    ],{left:AOI,right:HARU}),
+    manga('A DIFFERENT SORT OF RACER',[
+      ark('Mind if I take a look? I have a 240Z myself.','storyMechanic'),
+      ['right','Please. She has been trying to coax it into starting for an hour.','idle'],
+      ark('Fuel is there. Let us check whether the ignition is getting a clean feed.','storyMechanicCrouch'),
+      ['right','Haru checked the plugs already. Do not tell him I said that.','idle'],
+      ark('The plugs are fine. This connector is not. It loses contact when the loom moves.','storyMechanic'),
+    ],{left:A,right:AOI}),
+    manga('THE OLD Z RETURNS',[
+      ['left','There! That is my engine. I thought it was finished.','idle'],
+      ['right','I told you she was worth keeping.','idle'],
+      ['left','You told me to buy something newer.','idle'],
+      ['right','That was before we met this very useful stranger.','idle'],
+    ],{left:AOI,right:HARU}),
+    manga('NO INVOICE',[
+      ['right','At least let us pay you. You got us out of trouble.','idle'],
+      ark('Buy each other dinner. This took a few minutes and the connector needed cleaning.','storySheepish'),
+      ['right','Then dinner it is. Thank you, Aruken.','idle'],
+      ark('Enjoy the car. They are worth keeping.','storyTalking'),
+    ],{left:A,right:AOI}),
+    {type:'CLEAR_STAGE'},
     ...beat('SOMEONE BY THE FENCE',[
       {id:A,pose:'storyConfident'},
       {id:S,pose:'oshiageNeutral',role:'observer'},
@@ -98,6 +138,15 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('I would never admit that.','storySheepish'),
     ]),
     {type:'LABEL',name:'commonHello'},
+    manga('A QUIET WITNESS',[
+      say('Aoi and Haru looked much happier when they left.','oshiageNeutral'),
+      ark('Their Z started. That usually helps.','storySheepish'),
+      say('I was not only talking about the car.','oshiageHappy'),
+      ark('Oh. You saw that?','storySurprised'),
+      say('You fixed an awkward fault with almost nothing, then refused their money.','oshiageReviewing'),
+      ark('It was just a dirty connection. I was lucky.','storySheepish'),
+      say('You seem remarkably determined to call it luck.','oshiageHappy'),
+    ]),
     manga('NOT OUR FIRST TWENTIES',[
       ark('So what brings you out to watch the kids risk their pay cheques?'),
       say('Same thing as you, perhaps. Curiosity.','oshiageNeutral'),
@@ -113,7 +162,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('A little. Mostly just try not to trouble the other road users.','oshiageNeutral'),
       ark('Very responsible. One of us has to be.'),
     ]),
-    {type:'CHOICE',key:'arkonMoneyDisclosure',title:'SHE ASKS ABOUT THE CIVIC',
+    {type:'CHOICE',key:'arkonMoneyDisclosure',title:'SHE ASKS ABOUT THE Z',
       subtitle:'How much of your situation do you want to share?',
       choices:[
         {id:'honest',label:'TELL HER THINGS ARE TOUGH',to:'tellTruth',description:'A little honesty goes a long way.'},
@@ -205,106 +254,17 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('That was my brave face.','storyLaughing'),
     ]),
     {type:'LABEL',name:'rivalAfter'},
-    manga('A CURIOUS OFFER',[
-      say('You know, you might get more out of that car than you think.','oshiageNeutral'),
-      ark('You say that like you know something.','storyConfident'),
-      say('Oh, only a little. There is a driving school in Oshiage. You should try a lesson.'),
-      ark('Are they any good?'),
-      say('I know someone who teaches there.','oshiageHappy'),
-      ark('A friend?'),
-      say('Something like that. I can put your name down for one complimentary lesson.'),
-      ark('I was hoping you would offer to take the 240Z for a spin.','storyLaughing'),
-      say('Take care, Aruken. And look after yourself.','oshiageNeutral'),
-      ark('Good night, Sayaka. I enjoyed being thoroughly unimpressive.','storySheepish'),
-      say('You were not entirely unimpressive.','oshiageHappy'),
+    manga('A REASON TO MEET AGAIN',[
+      say('You could earn more helping the people in those workshops than risking the Z every night.','oshiageNeutral'),
+      ark('One repaired connector hardly makes me a specialist.','storySheepish'),
+      say('Then perhaps you should stop being so surprised when people ask for your help.','oshiageHappy'),
+      ark('And if I get into trouble?','storyConfidentSmirk'),
+      say('I know a few people around the meets. We will see what comes of it.','oshiageNeutral'),
+      ark('That sounds suspiciously like an invitation to see you again.','storyLaughing'),
+      say('That depends. Will you bring the terrible jokes?','oshiageHappy'),
+      ark('I am afraid they come with the 240Z.','storySheepish'),
     ]),
     {type:'CLEAR_STAGE'},
-    {type:'SET_FLAG',key:'arkonStoryLessonCredits',value:1},
-    {type:'SET_FLAG',key:'arkonStoryPhase',value:'practice',timeOfDay:'day'},
-    // Do not trigger during RaceScene's victory page. Wait for the real Meet.
-    {type:'WAIT_FLAG',key:'wins',atLeast:6,scene:'MeetScene'},
-    {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',privateMeet:true,
-      characters:[{id:A,pose:'storyIdle'}],cars:[{carId:'$SELECTED_CAR'}]},
-    {type:'HOLD_SCENE',label:'THAT FREE LESSON',caption:'A FEW RACES LATER'},
-    alone('A REASON TO GO',[
-      ['The 240Z is starting to feel a little more familiar. The bills are still waiting.','storySerious'],
-      ['And there is that driving lesson. A free one. Probably worth more than my last three bets.','storyLaughing'],
-      ['It was nice talking to someone who did not ask what I do for a living.','storySheepish'],
-      ['Oshiage, then. Might as well find out what she meant.','storyConfident'],
-    ]),
-    {type:'CLEAR_STAGE'},
-    {type:'SET_FLAG',key:'arkonStoryPhase',value:'goSchool'},
-    {type:'WAIT_SCENE',scene:'OshiageScene'},
-    {type:'WAIT_FLAG',key:'arkonStoryAtSchool',equals:true},
-    manga('OH, YOU KNOW THE INSTRUCTOR',[
-      ark('Hello. I was told I could take a driving less—','storyTalking'),
-      say('Good to see you, Aruken.','oshiageHappy'),
-      ark('...Of course.','storySurprised'),
-      say('You look surprised.','oshiageNeutral'),
-      ark('I have spent several evenings making an excellent first impression.','storySheepish'),
-      say('And now you know why I was so interested in the 240Z.','oshiageHappy'),
-      ark('You said you only drove a little.'),
-      say('I do try to be modest. Occasionally.'),
-      ark('I feel as though you have been enjoying this.','storyConfident'),
-      say('A little. Shall we start before you think of something clever to say?','oshiageHappy'),
-    ]),
-    {type:'SET_FLAG',key:'arkonStorySchoolRevealed',value:true},
-    {type:'SET_FLAG',key:'arkonStoryLessonCompleted',value:false},
-    {type:'SET_FLAG',key:'arkonStoryPhase',value:'lesson'},
-    {type:'WAIT_FLAG',key:'arkonStoryLessonCompleted',equals:true},
-    {type:'WAIT_SCENE',scene:'OshiageScene'},
-    manga('BACK FROM THE LESSON',[
-      say('Well? How did your 240Z feel?','oshiageNeutral'),
-      ark('As though I should have met you years ago.','storyConfident'),
-      say('A suspiciously flattering answer.','oshiageHappy'),
-      ark('Do I at least get a passing grade?','storySheepish'),
-      say('You made progress. I think we can leave it at that.'),
-    ]),
-    {type:'CHOICE',key:'arkonAfterLessonOffer',title:'AFTER THE LESSON',
-      subtitle:'Sayaka put in the time. How do you respond?',
-      choices:[
-        {id:'coffee',to:'offerCoffee',label:'BUY HER A COFFEE',description:'A modest thank-you.'},
-        {id:'dinner',to:'offerDinner',label:'ASK HER TO DINNER',description:'A slightly bolder thank-you.'},
-        {id:'none',to:'offerThanks',label:'SIMPLY THANK HER',description:'Some moments are better left alone.'},
-      ]},
-    {type:'LABEL',name:'offerCoffee'},
-    manga('A SMALL INVITATION',[
-      ark('Let me buy you a coffee. Somewhere that does not smell of hot brakes.','storyConfident'),
-      say('A tempting offer. I might hold you to it.','oshiageHappy'),
-      ark('I will work out how to afford a good one.','storyLaughing'),
-    ]),
-    {type:'GOTO',to:'lastChallenge'},
-    {type:'LABEL',name:'offerDinner'},
-    manga('A BOLD INVITATION',[
-      ark('Can I take you to dinner, perhaps? In appreciation of your teaching.','storyConfident'),
-      say('Dinner? You are getting confident.','oshiageHappy'),
-      ark('Only until you look at me like that.','storySheepish'),
-      say('We shall see. One challenge at a time.'),
-    ]),
-    {type:'GOTO',to:'lastChallenge'},
-    {type:'LABEL',name:'offerThanks'},
-    manga('A GENUINE THANK-YOU',[
-      ark('Thank you, Sayaka. I mean it.','storySerious'),
-      say('You are very welcome.','oshiageHappy'),
-      ark('I have a feeling I will need more practice.','storyLaughing'),
-    ]),
-    {type:'LABEL',name:'lastChallenge'},
-    manga('A WAGER FOR ANOTHER DAY',[
-      say('Then here is a challenge. See if you can win a regional championship one day.','oshiageNeutral'),
-      ark('One of those? That is a lot to ask of an elderly 240Z.','storySurprised'),
-      say('You said you were looking for something worth working towards.'),
-      ark('Deal. But if I manage it, you owe me five more free lessons.','storyConfident'),
-      say('Five? That is rather specific.','oshiageHappy'),
-      ark('I am a businessman when it suits me.','storyLaughing'),
-      say('...All right. Five. If you actually do it.','oshiageHappy'),
-      ark('You are blushing.','storyConfident'),
-      say('You are imagining things.','oshiageConcerned'),
-      ark('Probably. I do that when I am happy.','storyLaughing'),
-      say('The championship money and car coupons will help you far more than my lessons. Do not forget why you started.','oshiageNeutral'),
-      ark('Funny. I came out last night looking for money. Somehow I found a reason to come back.','storySerious'),
-      say('Take care, Aruken. And take care of that 240Z.'),
-      ark('And you, Sayaka. Thank you.','storyConfident'),
-    ]),
     {type:'SET_FLAG',key:'arkonStoryChapter01RevisedDone',value:true},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'complete'},
     {type:'END'},

@@ -1,0 +1,44 @@
+name: R680 Career continuity before Pro Circuit
+on:
+  push:
+    branches:
+      - main
+      - feature/career-r680-prepro-continuity
+    paths:
+      - 'src/data/cutscenes.js'
+      - 'src/data/chapter08.js'
+      - 'src/data/characters.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/ui/Chapter08Story.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/main.js'
+      - 'tests/career-continuity-r680.mjs'
+      - 'tests/opening-chapter-r467.mjs'
+      - 'tests/sayaka-reika-continuity.mjs'
+      - 'docs/CAREER_R680_PRE_PRO_CONTINUITY.md'
+      - '.github/workflows/career-continuity-r680.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  continuity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax-check changed scene and story modules
+        run: |
+          node --check src/data/cutscenes.js
+          node --check src/data/chapter08.js
+          node --check src/data/characters.js
+          node --check src/scenes/GarageScene.js
+          node --check src/ui/Chapter08Story.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Run focused R680 Career and Prelude regression tests
+        run: |
+          node --test tests/career-continuity-r680.mjs tests/chapter08-r568.mjs tests/story-archive-r570.mjs tests/arkon-chapter10-r679.mjs

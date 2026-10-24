@@ -26,7 +26,9 @@ test('R659 Chapter 04 is a registered, valid script with correct story gates',()
 test('R659 complete chapter uses the established stage geometry, not bespoke offsets',()=>{
   const stages=ARKON_CHAPTER_04.steps.filter(s=>s.type==='STAGE');
   assert.ok(stages.length>=8);
-  assert.ok(stages.every(s=>s.backgroundId==='$CURRENT_WORKSHOP'));
+  assert.ok(stages.every(s=>s.backgroundId==='$CURRENT_WORKSHOP' ||
+     ['tuner:shinagawaZeroSports:night','tuner:tatsumiJun:night'].includes(s.backgroundId)));
+   assert.equal(stages.filter(s=>s.backgroundId==='$CURRENT_WORKSHOP').length>=8,true);
   assert.ok(stages.every(s=>s.stageMode==='native'));
   assert.ok(stages.every(s=>s.characters.every(c=>!('x' in c)&&!('y' in c)&&!('ground' in c)&&!('height' in c))));
   assert.ok(stages.every(s=>s.cars.every(c=>!('x' in c)&&!('width' in c)&&!('ground' in c))));

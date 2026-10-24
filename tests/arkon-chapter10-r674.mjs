@@ -7,7 +7,7 @@ import {validateStoryScript} from '../src/story/StoryScript.js';
 import {
   ARKON_CH10_PROJECTS,settleArkonCh10Dispute,recordArkonCh10Project,
   startArkonCh10Race,finishArkonCh10Race,openArkonCh10Ginza,
-  recordArkonCh10Investment,prepareArkonCh10Yokohama,
+  recordArkonCh10Investment,prepareArkonCh10Yokohama,sellArkonCh10LibertyWalk,
 } from '../src/data/arkonChapter10Work.js';
 import {createDefaultGameState,normaliseState} from '../src/state/GameState.js';
 import {getArkonStoryObjective} from '../src/ui/ArkonStoryObjective.js';
@@ -30,7 +30,10 @@ const fixture=()=>reg({
 });
 test('Chapter 10 script and register terminate with a completed story',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_10));
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter10,ARKON_CHAPTER_10);
+  // A cache-busted registration import can be an independent module instance.
+  // Compare the actual declarative chapter data instead of its object address.
+  assert.deepEqual(JSON.parse(JSON.stringify(STORY_DIRECTOR_SCRIPTS.arkonChapter10)),
+    JSON.parse(JSON.stringify(ARKON_CHAPTER_10)));
   assert.deepEqual(ARKON_CHAPTER_10.steps.filter(s=>s.type==='ARKON_CH10_RESTORE')
     .map(s=>s.index),[0,1,2]);
   assert.equal(ARKON_CHAPTER_10.steps.filter(s=>s.type==='ARKON_CH10_RACE').length,1);
@@ -49,7 +52,8 @@ test('The disputed contract is settled once, with paid costs and Warehouse HQ re
   assert.equal(after,500000);
   assert.equal(settleArkonCh10Dispute(s),true);
   assert.equal(s.get('cash'),after);
-  assert.equal(s.get('arkonStoryChapter10Settlement').workshop,'retained');
+  assert.equal(s.get('arkonStoryChapter10Settlement').resolved,false);
+  assert.equal(s.get('arkonStoryChapter10Settlement').workshop,'retained-pending-final-payment');
   s.set('gameMode','career');
   assert.equal(settleArkonCh10Dispute(s),false);
 });
@@ -92,6 +96,9 @@ test('Ginza partnership, quiet investment, and Yokohama story closure are ordere
   s.set('arkonStoryChapter10RaceResult','won');
   assert.equal(finishArkonCh10Race(s),true);
   recordArkonCh10Project(s,2);
+  assert.equal(openArkonCh10Ginza(s),false);
+  assert.equal(settleArkonCh10Dispute(s),true);
+  assert.equal(sellArkonCh10LibertyWalk(s),true);
   assert.equal(openArkonCh10Ginza(s),true);
   const business=s.get('arkonStoryGinzaPartnership');
   assert.deepEqual(business.shares,{arkonDen:50,sayakaFujieda:50});

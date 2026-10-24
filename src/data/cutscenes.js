@@ -802,7 +802,7 @@ export const CUTSCENES = {
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
       { speaker: 'left', pose: 'win',
-        text: "Would you look at this place! Proper lifts, separate bays, room for serious builds. We've finally got ourselves a real headquarters!" },
+        text: "Would you look at this place! Proper lifts, separate bays, room for serious builds. Even after paying to fit it out, this lease is a bargain!" },
       { speaker: 'right', pose: 'idle',
         text: "You're already planning where every car goes, aren't you?" },
       { speaker: 'left', pose: 'win',
@@ -1062,7 +1062,7 @@ export const CUTSCENES = {
     pages: [
       { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "Seven drivers. You've built a team people across Tokyo respect. Well done." },
       { speaker: 'right', pose: 'idle', text: "Sayaka? I thought you were managing the Ginza collection." },
-      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. And I've spent years at the meets helping drivers and engineers with strategy. Aruken will tell you how opinionated I can be." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. And I've spent years at the meets helping drivers and engineers with strategy. Some of them were remarkably stubborn." },
       { speaker: 'right', pose: 'idle', text: "You never mentioned that." },
       { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "It wasn't the right time. Now you're entering the professional circuit. If you'll have me, I'll join as your team strategist." },
       { speaker: 'right', pose: 'idle', text: "Welcome to the team." },

@@ -285,14 +285,17 @@ test('R652 revised Story Director registers a complete playable Chapter 01',()=>
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_01_REVISED));
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   assert.deepEqual(steps.filter(s=>s.type==='WAIT_FLAG' && s.key==='wins')
-    .map(s=>s.atLeast),[3,6]);
+    .map(s=>s.atLeast),[3]);
   assert.equal(steps.filter(s=>s.type==='ARKON_CHALLENGE_RACE').length,1);
   assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStorySayakaNoticed'));
-  assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStoryLessonCompleted'));
+  // The paid-for surprise is now in Chapter 02, after Shibuya's repair.
+  assert.equal(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStoryLessonCompleted'),false);
+  assert.ok(STORY_DIRECTOR_SCRIPTS.arkonChapter02.steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStoryLessonCompleted'));
+  assert.ok(steps.some(s=>s.type==='STAGE'&&s.characters?.some(c=>c.id==='aoiShindou')&&s.characters?.some(c=>c.id==='haruSakurai')));
   assert.ok(steps.some(s=>s.type==='IF'&&s.key==='arkonStoryRivalResult'&&
     s.equals==='won'&&s.else==='rivalLost'));
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryChapter01RevisedDone'));
-  assert.ok(steps.filter(s=>s.type==='CHOICE').length>=4);
+  assert.ok(steps.filter(s=>s.type==='CHOICE').length>=3);
   assert.ok(steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]).length>=75);
 });
 
@@ -383,24 +386,30 @@ test('R653 manga never falls back to Sayaka home clothing while dimmed',()=>{
   for(const page of pages){
     assert.ok(page.leftPose,'left must have explicit pose including inactive sides');
     assert.ok(page.rightPose,'right must have explicit pose including inactive sides');
-    assert.match(page.rightPose,/^oshiage/);
+    const scene=steps.find(st=>st.type==='MANGA'&&st.pages?.includes(page));
+    if(scene?.characters?.right==='sayakaFujieda')assert.match(page.rightPose,/^oshiage/);
     assert.doesNotMatch(page.leftPose,/^dev/);
   }
   const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
   assert.match(dir,/preloadPagePosesOnly: \['arkonChapter01Revised','arkonChapter02','arkonChapter03'(?:,'arkonChapter04')?\]\.includes\(this\.session\.id\)/);
 });
 
-test('R653 prevents reflection playing before victory result is dismissed',()=>{
+test('R678 repair occurs at the Meet, after race results are dismissed',()=>{
   const steps=ARKON_CHAPTER_01_REVISED.steps;
-  const threshold=steps.find(s=>s.type==='WAIT_FLAG'&&s.key==='wins'&&s.atLeast===6);
-  assert.equal(threshold.scene,'MeetScene');
-  const following=steps[steps.indexOf(threshold)+1];
-  assert.equal(following.type,'STAGE');
-  assert.equal(following.backgroundId,'$CURRENT_MEET');
-  assert.equal(following.privateMeet,true);
-  const scriptDirector=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
-  assert.match(scriptDirector,/wait\.condition\.scene/);
-  assert.match(scriptDirector,/\(!step\.scene \|\| sceneName\(scene\)===step\.scene\)/);
+  const threshold=steps.find(s=>s.type==='WAIT_FLAG'&&s.key==='wins'&&s.atLeast===3);
+  assert.ok(threshold);
+  const next=steps[steps.indexOf(threshold)+1];
+  assert.equal(next.type,'SET_FLAG');
+  assert.equal(next.value,'meetNotice');
+  const wait=steps[steps.indexOf(threshold)+2];
+  assert.equal(wait.type,'WAIT_SCENE');
+  assert.equal(wait.scene,'MeetScene');
+  const repair=steps.find(s=>s.type==='STAGE'&&s.characters?.some(c=>c.id==='aoiShindou'));
+  assert.equal(repair.backgroundId,'$CURRENT_MEET');
+  assert.equal(repair.privateMeet,true);
+  const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
+  assert.match(dir,/wait\.condition\.scene/);
+  assert.match(dir,/\(!step\.scene \|\| sceneName\(scene\)===step\.scene\)/);
 });
 
 test('R653 Story time controls scene phase without touching other profiles',()=>{
@@ -416,7 +425,7 @@ test('R653 Story time controls scene phase without touching other profiles',()=>
   assert.equal(normaliseState({...earlier,arkonStoryPhase:'practice'}).arkonStoryTimeOfDay,'day');
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='night'));
-  assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='day'));
+  assert.ok(STORY_DIRECTOR_SCRIPTS.arkonChapter02.steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='day'));
   const sceneFiles=['GarageScene','MeetScene','OshiageScene','RaceScene'];
   for(const file of sceneFiles){
     const code=readFileSync(new URL('../src/scenes/'+file+'.js',import.meta.url),'utf8');
@@ -439,12 +448,14 @@ test('R653 rival uses the existing adult Daigo Moriyama artwork',()=>{
   assert.equal(script.some(s=>s.type==='ARKON_CHALLENGE_RACE'),true);
 });
 
-test('R653 no time checkpoint index shift for live R652 saves',()=>{
+test('R678 first chapter leaves the Oshiage reveal for the Shibuya follow-up',()=>{
   const steps=ARKON_CHAPTER_01_REVISED.steps;
-  // Day/night is metadata on existing SET_FLAG actions, not new steps.
+  // The early revision intentionally moves the driving lesson into Chapter 02.
   assert.equal(steps.filter(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryTimeOfDay').length,0);
-  assert.equal(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length,2);
-  assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,2);
+  assert.ok(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length>=1);
+  assert.equal(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStorySchoolRevealed'),false);
+  assert.ok(STORY_DIRECTOR_SCRIPTS.arkonChapter02.steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStorySchoolRevealed'&&s.value===true));
+  assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,1);
 });
 
 test('R654 every uploaded Arkon mechanic pose maps exactly to Daichi tuning artwork',()=>{

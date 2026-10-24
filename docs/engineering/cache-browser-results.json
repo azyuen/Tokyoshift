@@ -1,10 +1,10 @@
 {
   "browser": "153.0.8010.0",
-  "oldWorker": "R532",
-  "newWorker": "current sw.js",
+  "oldWorker": "R681",
+  "newWorker": "R681-VE1",
   "cacheNames": [
     "unrelated-cache-fixture",
-    "tokyoshift-runtime-r548"
+    "tokyoshift-runtime-r681-ve1"
   ],
   "oldCachedContentRemoved": true,
   "oldCacheNote": "An in-flight old-worker request can recreate the old cache after activation; navigation binds the page to the replacement worker.",

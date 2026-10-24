@@ -198,6 +198,30 @@ export const ARKON_CHAPTER_04={
     ],{left:A}),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Rebuild'},
     {type:'ARKON_CH4_WORK'},
+    // The two mid-build consultations prove he can learn from peer specialists
+    // while rebuilding his reputation; they do not alter the Porsche ledger.
+    {type:'CLEAR_STAGE'},
+    {type:'STAGE',backgroundId:'tuner:shinagawaZeroSports:night',stageMode:'native',
+      characters:[{id:A,pose:'storyMechanic'},{id:'natsumiKagawa',pose:'idle'}],
+      cars:[{carId:'240z'}],composition:'car-behind-cast'},
+    {type:'HOLD_SCENE',label:'SHINAGAWA // ZERO/SPORTS',caption:'TWO ENGINEERS // ONE QUESTION'},
+    manga('NATSUMI // HOW THE POWER REACHES THE ROAD',[
+      ['right','The engine is making power. The problem is how you are trying to put it down.','idle'],
+      ark('You are right. I was treating the launch as an engine problem.','storyThinking'),
+      ['right','And you spotted a load path I missed. This works better with two sets of eyes.','idle'],
+      ark('I had forgotten what it feels like to work with somebody who challenges the answer.','storySerious'),
+    ],{left:A,right:'natsumiKagawa'}),
+    {type:'CLEAR_STAGE'},
+    {type:'STAGE',backgroundId:'tuner:tatsumiJun:night',stageMode:'native',
+      characters:[{id:A,pose:'storyMechanic'},{id:'tetsuNakahara',pose:'idle'}],
+      cars:[{carId:'240z'}],composition:'car-behind-cast'},
+    {type:'HOLD_SCENE',label:'TATSUMI // JUN',caption:'A SECOND PROFESSIONAL OPINION'},
+    manga('TETSU // INSIDE THE ENGINE',[
+      ['right','Your tolerances are careful. But this engine will not forgive a lazy bottom-end build.','idle'],
+      ark('Then we blueprint it properly. I would value your judgement on the internals.','storyMechanic'),
+      ['right','And I will value yours when we put the whole thing back together.','idle'],
+      ark('It has been a long time since I enjoyed arguing over measurements.','storyConfidentSmirk'),
+    ],{left:A,right:'tetsuNakahara'}),
     ...workshop('THE PHONE RINGS AGAIN',[{id:A,pose:'storySurprised'}],null),
     manga('THE WORK IS PAYING OFF',[
       ark('Every component is at least Level 1. The 240Z is finally becoming a car I can trust.','storyConfident'),

@@ -7,7 +7,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
  def do_GET(self):
   relative=urllib.parse.unquote(urllib.parse.urlsplit(self.path).path).lstrip('/')
   if relative in ('engineering-cache-test.html','engineering-old-sw.js'):
-   data=(b'<!doctype html><title>Engineering cache lifecycle fixture</title>' if relative.endswith('.html') else subprocess.check_output(['git','show','ccc9ebb21bf0fe2c8b38f8ac4c36204121b82cac:sw.js']))
+   data=(b'<!doctype html><title>Engineering cache lifecycle fixture</title>' if relative.endswith('.html') else subprocess.check_output(['git','show',os.environ.get('ENGINEERING_OLD_SW_REF','ccc9ebb21bf0fe2c8b38f8ac4c36204121b82cac')+':sw.js']))
    self.send_response(200);self.send_header('Content-Type','text/html' if relative.endswith('.html') else 'application/javascript');self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(data);return
   path=pathlib.Path(relative)
   if relative.startswith('assets/') and '..' not in path.parts and not path.exists():

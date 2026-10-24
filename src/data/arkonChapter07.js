@@ -24,6 +24,11 @@ const stage=(label,bg,car,cast=pair())=>[
 const hq=(label,car='240z',cast=pair())=>stage(label,
   'workshop:shinonomeWarehouseStrip:night',car,cast);
 const road=(venue,label,car='240z')=>stage(label,'meet:'+venue+':night',car);
+const specialist=(shop,id,caption,title,exchange)=>[
+  ...stage(caption,'tuner:'+shop+':night','240z',
+    [{id:A,pose:'storyMechanic'},{id,pose:'idle',role:'observer'}]),
+  manga(title,exchange,{left:A,right:id}),
+];
 
 export const ARKON_CHAPTER_07={
   id:'arkonChapter07',
@@ -66,12 +71,10 @@ export const ARKON_CHAPTER_07={
     ...stage('REGIONAL MECHANICS // NEW FRIENDS','tuner:shibuyaAmuse:night','240z',
       [{id:A,pose:'storyMechanic'},{id:'itsukiKuroda',pose:'idle',role:'observer'}]),
     manga('ITSUKI // THE AMUSE WORKSHOP',[
-      ['right','The Z is impressive, but I would rethink the suspension geometry.','idle'],
-      ark('That is why I came. Where would you start?','storyThinking'),
-      ['right','More balance. You are getting too eager to chase the dyno chart.','idle'],
-      ark('I thought I could do both.','storyConfidentSmirk'),
-      ['right','You can, if you let someone else argue with your numbers first.','idle'],
-      ark('Fair point. Put it on the alignment bench.','storyMechanic'),
+      ['right','Remember our argument about exhaust flow? The Z needs breathing room at high rpm.','idle'],
+      ark('I brought the latest logs. You were right about the restriction.','storyThinking'),
+      ['right','And your revised map makes the titanium setup more useful. That is why we work together.','idle'],
+      ark('I missed this. Two people finding one good answer.','storyMechanic'),
     ],{left:A,right:'itsukiKuroda'}),
     ...road('yokohamaMinatoMirai','YOKOHAMA // TIME TO PROVE IT'),
     manga('ONE MORE TEST',[
@@ -120,17 +123,56 @@ export const ARKON_CHAPTER_07={
     ],{left:A}),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter07FinalBuild',timeOfDay:'day'},
     {type:'ARKON_CH7_WORK',stage:2},
-    ...stage('TUNER CONNECTIONS // DAIKOKU','tuner:daikokuReAmemiya:night','240z',
-      [{id:A,pose:'storyMechanic'},{id:'naoFujita',pose:'idle',role:'observer'}]),
-    manga('AKANE // THE DAIKOKU DIAGNOSIS',[
-      ['right','Your thermal data is unusually tidy. I expected worse from that much power.','idle'],
-      ark('Is that your way of saying you like it?','storyConfidentSmirk'),
-      ['right','Do not get carried away. There is still room to refine it.','idle'],
-      ark('I have every intention of doing exactly that.','storyConfident'),
-      ['right','I have a collector who will appreciate this level of work. I will introduce you.','idle'],
-      ark('Another client? I owe you one.','storySurprised'),
-      ['right','Remember that next time you need an honest assessment.','idle'],
-    ],{left:A,right:'naoFujita'}),
+    // The player has visited all seven real tuner houses and bought one
+    // eligible, paid specialist package for the SAME 240Z at each. The
+    // resulting scene is a character payoff, never a tuning reward.
+    ...specialist('odaibaEsprit','takumiSerizawa','ESPRIT // OLD FRIENDS','TAKUMI // LIGHTNESS WITH PURPOSE',[
+      ['right','Aoi still tells everybody about the mechanic who saved her old Z.','idle'],
+      ark('Her car reminded me why I keep mine. What do you think of this aero balance?','storySheepish'),
+      ['right','We can save weight without ruining stability. Let us put it on the scales.','idle'],
+    ]),
+    ...specialist('shinagawaZeroSports','natsumiKagawa','ZERO/SPORTS // A CLEANER LAUNCH','NATSUMI // POWER TO THE GROUND',[
+      ['right','You listened. The differential and tyre loads finally agree.','idle'],
+      ark('Your launch measurements were the missing piece.','storyMechanic'),
+      ['right','Then we both deserve credit when it leaves the line cleanly.','idle'],
+    ]),
+    ...specialist('tatsumiJun','tetsuNakahara','JUN // THE INSIDE STORY','TETSU // SOMETHING TO TRUST',[
+      ['right','The engine internals are properly blueprinted. No shortcuts.','idle'],
+      ark('You taught me to distrust a flattering number without a tolerance sheet.','storyThinking'),
+      ['right','And you made the rest of the machine worthy of the engine.','idle'],
+    ]),
+    ...specialist('shibuyaAmuse','itsukiKuroda','AMUSE // THE FINAL FLOW','ITSUKI // THE SOUND OF AN ENGINE',[
+      ['right','I knew you would be back. You never liked leaving power trapped in the exhaust.','idle'],
+      ark('I like it even less when the cure causes a new problem.','storyConfidentSmirk'),
+      ['right','The flow and response are balanced now. The numbers finally agree with your ears.','idle'],
+    ]),
+    ...specialist('yokohamaMines','reinaKuroda','MINE\'S // EVERY RESPONSE COUNTS','REINA // PRECISION',[
+      ['right','Remember the R34? This time the ECU and drivetrain are speaking the same language.','idle'],
+      ark('Your response calibration makes everything else feel more precise.','storyMechanic'),
+      ['right','And you knew exactly what the calibration had to achieve.','idle'],
+    ]),
+    ...specialist('daikokuReAmemiya','naoFujita','RE AMEMIYA // THE DAIKOKU DIAGNOSIS','NAO // UNDER PRESSURE',[
+      ['right','Your thermal data is remarkably consistent for a car making this much power.','idle'],
+      ark('Your cooling and flow changes held up under repeated runs.','storyConfident'),
+      ['right','Good. I would rather see a car finish five runs than impress people for one.','idle'],
+      ark('I have a collector who would appreciate that philosophy too.','storyThinking'),
+    ]),
+    ...specialist('shinjukuTopSecret','daigoArakawa','TOP SECRET // THE LAST BOOST CHECK','ARAKAWA // NOTHING LEFT TO GUESS',[
+      ['right','The boost control is stable. That is a serious piece of engineering, Aruken.','idle'],
+      ark('And the final charge-flow setup was your idea.','storyMechanic'),
+      ['right','You brought together seven very different approaches. Not many people could do that.','idle'],
+      ark('I did not build it alone. That is the part I am proudest of.','storySerious'),
+    ]),
+    ...hq('WAREHOUSE HQ // WHAT WE BUILT'),
+    manga('SOMETHING MORE THAN A CAR',[
+      say('Everyone seems rather fond of your 240Z. And of you.','oshiageHappy'),
+      ark('I suppose I do know some extraordinary people now.','storyConfidentSmirk'),
+      say('You have given them good reasons to trust you.','oshiageRelaxed'),
+      ark('We gave each other good reasons.','storyThinking'),
+      say('Then perhaps you can spare one evening for dinner.','oshiageHappy'),
+      ark('I will. I just have a few more things to finish.','storyTalking'),
+      say('You keep saying that.','oshiageReviewing'),
+    ]),
     ...road('daikokuPA','DAIKOKU // THE FULL BUILD'),
     manga('ALL THAT WORK',[
       ark('Every part pushed to its proper maximum. Now for the proof.','storyConfident'),

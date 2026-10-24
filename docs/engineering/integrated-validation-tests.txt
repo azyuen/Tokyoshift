@@ -1,90 +1,629 @@
-✔ multi-digit owned copies resolve to buildable cars, including 10–19 and 100 (27.088275ms)
-✔ profile normalization preserves selected copy10 and its purchased tuning (16.046184ms)
-✔ canonical migration preserves distinct mixed-version copies and merges coupons (0.559633ms)
-✔ retired Evo IX and EJ1 also recognize multi-digit copies (0.561526ms)
-{"models":43,"coldMs":186.12655699999993,"warmMs":4.70502799999997}
-✔ PI cache distinguishes all transmission difficulty parameters (127.731579ms)
-✔ parking parts never removes their resale contribution or counts duplicates twice (9.252194ms)
-✔ saved core simulations are complete and standard stages never regress (18.14755ms)
-✔ PI cold/warm timing is recorded without imposing a machine-specific gate (214.324234ms)
-✔ Warehouse stored kits coexist with factory parking and retain resale value (61.240661ms)
-✔ reconciled source keeps one module identity and upstream recruitment safeguards (13.329552ms)
-✔ recruitment identity follows all 42 canonical character/car/region assignments (1.092897ms)
-✔ 1999 AP1 factory ratios include the primary reduction exactly once (1.968075ms)
-✔ all other stock and exclusive transmissions retain their existing ratios (0.999956ms)
-✔ saved AP1 tuning survives park/restore and keeps reduction through every build (34.464001ms)
-✔ speed-aware selection and scene gearing share AP1 overall reduction (2.626096ms)
-✔ PI cache distinguishes primary reduction (79.446855ms)
-✔ factory classes reproduce from quarter/half-mile composite and standard stages remain usable (12.300802ms)
-✔ stock XT completes a competitive launch with unchanged factory output (146.546918ms)
-✔ stock XT completes low-grip and imperfect-driver scenarios without changing hardware (51.140435ms)
-✔ original specialist and tier fee required (1.726351ms)
-✔ complete reversible tuning snapshot preserves purchases and cosmetics (1.997369ms)
-✔ Daichi handles ordinary workshop upgrades at Warehouse HQ (2.520146ms)
-✔ existing stored kits are never overwritten (0.289586ms)
-✔ recruitment is stock-only and within +/-40kW on Easy (145.915178ms)
-✔ 43 canonical engines have valid stock power, torque, gearing and classes (79.979062ms)
-✔ gdb progression, display, dyno and immutable input (13.536884ms)
-✔ gf8 progression, display, dyno and immutable input (8.823744ms)
-✔ s15 progression, display, dyno and immutable input (4.903627ms)
-✔ starion progression, display, dyno and immutable input (5.321827ms)
-✔ fto progression, display, dyno and immutable input (7.395041ms)
-✔ mx5 progression, display, dyno and immutable input (10.233707ms)
-✔ sa22c progression, display, dyno and immutable input (4.177433ms)
-✔ mx6 progression, display, dyno and immutable input (4.54687ms)
-✔ prelude progression, display, dyno and immutable input (8.6089ms)
-✔ sw20 progression, display, dyno and immutable input (5.106994ms)
-✔ soarer progression, display, dyno and immutable input (4.512768ms)
-✔ forester progression, display, dyno and immutable input (4.772921ms)
-✔ svx progression, display, dyno and immutable input (4.028779ms)
-✔ xt progression, display, dyno and immutable input (3.445331ms)
-✔ ae86 progression, display, dyno and immutable input (5.470542ms)
-✔ ef progression, display, dyno and immutable input (6.056334ms)
-✔ ek9 progression, display, dyno and immutable input (4.014638ms)
-✔ s2000 progression, display, dyno and immutable input (4.425688ms)
-✔ fc3s progression, display, dyno and immutable input (5.864997ms)
-✔ rx7fd progression, display, dyno and immutable input (3.815328ms)
-✔ rx8 progression, display, dyno and immutable input (4.36148ms)
-✔ galant progression, display, dyno and immutable input (3.468325ms)
-✔ evo5 progression, display, dyno and immutable input (5.646216ms)
-✔ evo6 progression, display, dyno and immutable input (3.587995ms)
-✔ gc8 progression, display, dyno and immutable input (3.478441ms)
-✔ r32 progression, display, dyno and immutable input (5.033223ms)
-✔ r34 progression, display, dyno and immutable input (4.019035ms)
-✔ 3000gt progression, display, dyno and immutable input (3.418219ms)
-✔ a60 progression, display, dyno and immutable input (3.244768ms)
-✔ jza80 progression, display, dyno and immutable input (6.158006ms)
-✔ nsx progression, display, dyno and immutable input (4.149952ms)
-✔ z32 progression, display, dyno and immutable input (3.877051ms)
-✔ z33 progression, display, dyno and immutable input (3.434824ms)
-✔ 240z progression, display, dyno and immutable input (4.489984ms)
-✔ crx progression, display, dyno and immutable input (4.200178ms)
-✔ dc2 progression, display, dyno and immutable input (3.990992ms)
-✔ eclipse progression, display, dyno and immutable input (3.759243ms)
-✔ familia progression, display, dyno and immutable input (3.683239ms)
-✔ 180sx progression, display, dyno and immutable input (3.913556ms)
-✔ st205 progression, display, dyno and immutable input (3.753725ms)
-✔ jzx100 progression, display, dyno and immutable input (4.070222ms)
-✔ b4rsk progression, display, dyno and immutable input (3.997682ms)
-✔ magna progression, display, dyno and immutable input (3.905684ms)
-✔ all individual workshop upgrade paths produce valid builds (509.131357ms)
-✔ supporting hardware controls boost; small NA conversions retain lower absolute power than RB26/2JZ builds (31.62241ms)
-✔ stock eligibility rejects active/legacy performance and permits inactive presets/cosmetics (0.676249ms)
-✔ all 42 models preserve current main stock recruitment tolerance on all difficulties (4932.156056ms)
-✔ duplicate instances retain classes but cannot bypass NOS restrictions (2.594139ms)
-✔ parking/restoring preserves purchases, calibration and saved presets through JSON (1.030142ms)
-✔ PI matches independent 120Hz runs within 3 percent (230.869078ms)
-✔ catalogue data remain immutable after builds (2.278462ms)
-✔ actual profile migration preserves parked hardware, copies, presets and career state (6.15267ms)
-✔ engine purchase previews match complete race builds for all 43 cars (240.161689ms)
-✔ regional specialist upgrades remain included exactly once in purchase preview (7.976687ms)
-✔ unsupported turbo identifies supporting hardware; full support increases available boost (52.041322ms)
-✔ support advice never recommends upgrading an already maximum-level component (51.557994ms)
-ℹ tests 81
-ℹ suites 0
-ℹ pass 81
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 6314.149752
+TAP version 13
+# Subtest: Reciprocity grows out of R678 without replacing Chapters 7–9
+ok 1 - Reciprocity grows out of R678 without replacing Chapters 7–9
+  ---
+  duration_ms: 4.158134
+  type: 'test'
+  ...
+# Subtest: Chapter 10 hero sale occurs after real final Z race and before Ginza
+ok 2 - Chapter 10 hero sale occurs after real final Z race and before Ginza
+  ---
+  duration_ms: 1.65593
+  type: 'test'
+  ...
+# Subtest: Voluntary Z sale is a real once-only financial and ownership consequence
+ok 3 - Voluntary Z sale is a real once-only financial and ownership consequence
+  ---
+  duration_ms: 14.040857
+  type: 'test'
+  ...
+# Subtest: Chapter 10 final moving road uses Sayaka driving her RWB as a temporary loan
+ok 4 - Chapter 10 final moving road uses Sayaka driving her RWB as a temporary loan
+  ---
+  duration_ms: 6.183947
+  type: 'test'
+  ...
+# Subtest: Contract sale and Porsche cinematic never mutate an ordinary Career profile
+ok 5 - Contract sale and Porsche cinematic never mutate an ordinary Career profile
+  ---
+  duration_ms: 4.891361
+  type: 'test'
+  ...
+# Subtest: R678 mid-chapter checkpoint numbers migrate without replaying past races
+ok 6 - R678 mid-chapter checkpoint numbers migrate without replaying past races
+  ---
+  duration_ms: 0.521638
+  type: 'test'
+  ...
+# Subtest: the real fresh Aruken Story car is his own Datsun 240Z, not a Civic
+ok 7 - the real fresh Aruken Story car is his own Datsun 240Z, not a Civic
+  ---
+  duration_ms: 14.989203
+  type: 'test'
+  ...
+# Subtest: old chapter scripts preserve progression and do not misname a retained Civic or current Z
+ok 8 - old chapter scripts preserve progression and do not misname a retained Civic or current Z
+  ---
+  duration_ms: 4.530889
+  type: 'test'
+  ...
+# Subtest: Sayaka first tells Aruken about Daichi; nothing claims they already met
+ok 9 - Sayaka first tells Aruken about Daichi; nothing claims they already met
+  ---
+  duration_ms: 1.422997
+  type: 'test'
+  ...
+# Subtest: R679 ending and chapter save actions remain intact
+ok 10 - R679 ending and chapter save actions remain intact
+  ---
+  duration_ms: 1.335992
+  type: 'test'
+  ...
+# Subtest: R678 all modified story scripts validate and respect stable chapter identities
+ok 11 - R678 all modified story scripts validate and respect stable chapter identities
+  ---
+  duration_ms: 3.34076
+  type: 'test'
+  ...
+# Subtest: Aoi and boyfriend Haru use Career character IDs and the real 240Z
+ok 12 - Aoi and boyfriend Haru use Career character IDs and the real 240Z
+  ---
+  duration_ms: 4.768047
+  type: 'test'
+  ...
+# Subtest: Sayaka sees engineering kindness before learning Aruken has professional experience
+ok 13 - Sayaka sees engineering kindness before learning Aruken has professional experience
+  ---
+  duration_ms: 0.703001
+  type: 'test'
+  ...
+# Subtest: Actual regional mechanics and exact shops recur in the story and 240Z payoff
+ok 14 - Actual regional mechanics and exact shops recur in the story and 240Z payoff
+  ---
+  duration_ms: 7.351748
+  type: 'test'
+  ...
+# Subtest: Chapter 7 retains the emotional distance and Chapter 10 Career origins remain distinct
+ok 15 - Chapter 7 retains the emotional distance and Chapter 10 Career origins remain distinct
+  ---
+  duration_ms: 2.875698
+  type: 'test'
+  ...
+# Subtest: Older numerical checkpoints migrate to semantic Story milestones only once
+ok 16 - Older numerical checkpoints migrate to semantic Story milestones only once
+  ---
+  duration_ms: 1.05271
+  type: 'test'
+  ...
+# Subtest: family friend is friend of both ordinary non-racing parents; secret restoration stays unnamed
+ok 17 - family friend is friend of both ordinary non-racing parents; secret restoration stays unnamed
+  ---
+  duration_ms: 1.124681
+  type: 'test'
+  ...
+# Subtest: Warehouse rental clue is subtle, and old specialist Porsche arrival stays on page four
+ok 18 - Warehouse rental clue is subtle, and old specialist Porsche arrival stays on page four
+  ---
+  duration_ms: 1.231596
+  type: 'test'
+  ...
+# Subtest: Sayaka meets Daichi first, with Aruken absent through the completed crew scene
+ok 19 - Sayaka meets Daichi first, with Aruken absent through the completed crew scene
+  ---
+  duration_ms: 0.27249
+  type: 'test'
+  ...
+# Subtest: Chapter 8 invitation, Ginza identity and strategist role stay, but Aruken remains unnamed
+ok 20 - Chapter 8 invitation, Ginza identity and strategist role stay, but Aruken remains unnamed
+  ---
+  duration_ms: 1.457244
+  type: 'test'
+  ...
+# Subtest: Standalone pre-Pro strategist disclosure also conceals Aruken
+ok 21 - Standalone pre-Pro strategist disclosure also conceals Aruken
+  ---
+  duration_ms: 0.849744
+  type: 'test'
+  ...
+# Subtest: Pro sponsorship is canon only: no newly introduced payment or save-state side effects
+ok 22 - Pro sponsorship is canon only: no newly introduced payment or save-state side effects
+  ---
+  duration_ms: 6.356511
+  type: 'test'
+  ...
+# Subtest: multi-digit owned copies resolve to buildable cars, including 10–19 and 100
+ok 23 - multi-digit owned copies resolve to buildable cars, including 10–19 and 100
+  ---
+  duration_ms: 24.366286
+  type: 'test'
+  ...
+# Subtest: profile normalization preserves selected copy10 and its purchased tuning
+ok 24 - profile normalization preserves selected copy10 and its purchased tuning
+  ---
+  duration_ms: 21.420324
+  type: 'test'
+  ...
+# Subtest: canonical migration preserves distinct mixed-version copies and merges coupons
+ok 25 - canonical migration preserves distinct mixed-version copies and merges coupons
+  ---
+  duration_ms: 0.508331
+  type: 'test'
+  ...
+# Subtest: retired Evo IX and EJ1 also recognize multi-digit copies
+ok 26 - retired Evo IX and EJ1 also recognize multi-digit copies
+  ---
+  duration_ms: 3.519836
+  type: 'test'
+  ...
+# {"models":43,"coldMs":323.357549,"warmMs":5.414286999999945}
+# Subtest: PI cache distinguishes all transmission difficulty parameters
+ok 27 - PI cache distinguishes all transmission difficulty parameters
+  ---
+  duration_ms: 172.222783
+  type: 'test'
+  ...
+# Subtest: parking parts never removes their resale contribution or counts duplicates twice
+ok 28 - parking parts never removes their resale contribution or counts duplicates twice
+  ---
+  duration_ms: 12.999591
+  type: 'test'
+  ...
+# Subtest: saved core simulations are complete and standard stages never regress
+ok 29 - saved core simulations are complete and standard stages never regress
+  ---
+  duration_ms: 23.839814
+  type: 'test'
+  ...
+# Subtest: PI cold/warm timing is recorded without imposing a machine-specific gate
+ok 30 - PI cold/warm timing is recorded without imposing a machine-specific gate
+  ---
+  duration_ms: 375.110923
+  type: 'test'
+  ...
+# Subtest: Warehouse stored kits coexist with factory parking and retain resale value
+ok 31 - Warehouse stored kits coexist with factory parking and retain resale value
+  ---
+  duration_ms: 87.894245
+  type: 'test'
+  ...
+# Subtest: reconciled source keeps one module identity and upstream recruitment safeguards
+ok 32 - reconciled source keeps one module identity and upstream recruitment safeguards
+  ---
+  duration_ms: 14.345376
+  type: 'test'
+  ...
+# Subtest: recruitment identity follows all 42 canonical character/car/region assignments
+ok 33 - recruitment identity follows all 42 canonical character/car/region assignments
+  ---
+  duration_ms: 1.220915
+  type: 'test'
+  ...
+# Subtest: 1999 AP1 factory ratios include the primary reduction exactly once
+ok 34 - 1999 AP1 factory ratios include the primary reduction exactly once
+  ---
+  duration_ms: 7.228609
+  type: 'test'
+  ...
+# Subtest: all other stock and exclusive transmissions retain their existing ratios
+ok 35 - all other stock and exclusive transmissions retain their existing ratios
+  ---
+  duration_ms: 1.041116
+  type: 'test'
+  ...
+# Subtest: saved AP1 tuning survives park/restore and keeps reduction through every build
+ok 36 - saved AP1 tuning survives park/restore and keeps reduction through every build
+  ---
+  duration_ms: 35.098158
+  type: 'test'
+  ...
+# Subtest: speed-aware selection and scene gearing share AP1 overall reduction
+ok 37 - speed-aware selection and scene gearing share AP1 overall reduction
+  ---
+  duration_ms: 3.68061
+  type: 'test'
+  ...
+# Subtest: PI cache distinguishes primary reduction
+ok 38 - PI cache distinguishes primary reduction
+  ---
+  duration_ms: 96.087338
+  type: 'test'
+  ...
+# Subtest: factory classes reproduce from quarter/half-mile composite and standard stages remain usable
+ok 39 - factory classes reproduce from quarter/half-mile composite and standard stages remain usable
+  ---
+  duration_ms: 18.405905
+  type: 'test'
+  ...
+# Subtest: stock XT completes a competitive launch with unchanged factory output
+ok 40 - stock XT completes a competitive launch with unchanged factory output
+  ---
+  duration_ms: 92.119931
+  type: 'test'
+  ...
+# Subtest: stock XT completes low-grip and imperfect-driver scenarios without changing hardware
+ok 41 - stock XT completes low-grip and imperfect-driver scenarios without changing hardware
+  ---
+  duration_ms: 50.198374
+  type: 'test'
+  ...
+# Subtest: original specialist and tier fee required
+ok 42 - original specialist and tier fee required
+  ---
+  duration_ms: 2.28336
+  type: 'test'
+  ...
+# Subtest: complete reversible tuning snapshot preserves purchases and cosmetics
+ok 43 - complete reversible tuning snapshot preserves purchases and cosmetics
+  ---
+  duration_ms: 3.882714
+  type: 'test'
+  ...
+# Subtest: Daichi handles ordinary workshop upgrades at Warehouse HQ
+ok 44 - Daichi handles ordinary workshop upgrades at Warehouse HQ
+  ---
+  duration_ms: 0.739764
+  type: 'test'
+  ...
+# Subtest: existing stored kits are never overwritten
+ok 45 - existing stored kits are never overwritten
+  ---
+  duration_ms: 0.142656
+  type: 'test'
+  ...
+# Subtest: recruitment is stock-only and within +/-40kW on Easy
+ok 46 - recruitment is stock-only and within +/-40kW on Easy
+  ---
+  duration_ms: 172.204641
+  type: 'test'
+  ...
+# Subtest: 43 canonical engines have valid stock power, torque, gearing and classes
+ok 47 - 43 canonical engines have valid stock power, torque, gearing and classes
+  ---
+  duration_ms: 102.262401
+  type: 'test'
+  ...
+# Subtest: gdb progression, display, dyno and immutable input
+ok 48 - gdb progression, display, dyno and immutable input
+  ---
+  duration_ms: 12.845407
+  type: 'test'
+  ...
+# Subtest: gf8 progression, display, dyno and immutable input
+ok 49 - gf8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 7.364955
+  type: 'test'
+  ...
+# Subtest: s15 progression, display, dyno and immutable input
+ok 50 - s15 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.930792
+  type: 'test'
+  ...
+# Subtest: starion progression, display, dyno and immutable input
+ok 51 - starion progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.978152
+  type: 'test'
+  ...
+# Subtest: fto progression, display, dyno and immutable input
+ok 52 - fto progression, display, dyno and immutable input
+  ---
+  duration_ms: 6.909714
+  type: 'test'
+  ...
+# Subtest: mx5 progression, display, dyno and immutable input
+ok 53 - mx5 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.036182
+  type: 'test'
+  ...
+# Subtest: sa22c progression, display, dyno and immutable input
+ok 54 - sa22c progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.25173
+  type: 'test'
+  ...
+# Subtest: mx6 progression, display, dyno and immutable input
+ok 55 - mx6 progression, display, dyno and immutable input
+  ---
+  duration_ms: 7.163611
+  type: 'test'
+  ...
+# Subtest: prelude progression, display, dyno and immutable input
+ok 56 - prelude progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.086039
+  type: 'test'
+  ...
+# Subtest: sw20 progression, display, dyno and immutable input
+ok 57 - sw20 progression, display, dyno and immutable input
+  ---
+  duration_ms: 11.700402
+  type: 'test'
+  ...
+# Subtest: soarer progression, display, dyno and immutable input
+ok 58 - soarer progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.266127
+  type: 'test'
+  ...
+# Subtest: forester progression, display, dyno and immutable input
+ok 59 - forester progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.452812
+  type: 'test'
+  ...
+# Subtest: svx progression, display, dyno and immutable input
+ok 60 - svx progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.875668
+  type: 'test'
+  ...
+# Subtest: xt progression, display, dyno and immutable input
+ok 61 - xt progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.776872
+  type: 'test'
+  ...
+# Subtest: ae86 progression, display, dyno and immutable input
+ok 62 - ae86 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.943563
+  type: 'test'
+  ...
+# Subtest: ef progression, display, dyno and immutable input
+ok 63 - ef progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.675679
+  type: 'test'
+  ...
+# Subtest: ek9 progression, display, dyno and immutable input
+ok 64 - ek9 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.329624
+  type: 'test'
+  ...
+# Subtest: s2000 progression, display, dyno and immutable input
+ok 65 - s2000 progression, display, dyno and immutable input
+  ---
+  duration_ms: 6.741701
+  type: 'test'
+  ...
+# Subtest: fc3s progression, display, dyno and immutable input
+ok 66 - fc3s progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.334017
+  type: 'test'
+  ...
+# Subtest: rx7fd progression, display, dyno and immutable input
+ok 67 - rx7fd progression, display, dyno and immutable input
+  ---
+  duration_ms: 65.030709
+  type: 'test'
+  ...
+# Subtest: rx8 progression, display, dyno and immutable input
+ok 68 - rx8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.979825
+  type: 'test'
+  ...
+# Subtest: galant progression, display, dyno and immutable input
+ok 69 - galant progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.821524
+  type: 'test'
+  ...
+# Subtest: evo5 progression, display, dyno and immutable input
+ok 70 - evo5 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.852961
+  type: 'test'
+  ...
+# Subtest: evo6 progression, display, dyno and immutable input
+ok 71 - evo6 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.503812
+  type: 'test'
+  ...
+# Subtest: gc8 progression, display, dyno and immutable input
+ok 72 - gc8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.769902
+  type: 'test'
+  ...
+# Subtest: r32 progression, display, dyno and immutable input
+ok 73 - r32 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.751684
+  type: 'test'
+  ...
+# Subtest: r34 progression, display, dyno and immutable input
+ok 74 - r34 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.657117
+  type: 'test'
+  ...
+# Subtest: 3000gt progression, display, dyno and immutable input
+ok 75 - 3000gt progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.952176
+  type: 'test'
+  ...
+# Subtest: a60 progression, display, dyno and immutable input
+ok 76 - a60 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.366862
+  type: 'test'
+  ...
+# Subtest: jza80 progression, display, dyno and immutable input
+ok 77 - jza80 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.61893
+  type: 'test'
+  ...
+# Subtest: nsx progression, display, dyno and immutable input
+ok 78 - nsx progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.154227
+  type: 'test'
+  ...
+# Subtest: z32 progression, display, dyno and immutable input
+ok 79 - z32 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.41961
+  type: 'test'
+  ...
+# Subtest: z33 progression, display, dyno and immutable input
+ok 80 - z33 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.56914
+  type: 'test'
+  ...
+# Subtest: 240z progression, display, dyno and immutable input
+ok 81 - 240z progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.337613
+  type: 'test'
+  ...
+# Subtest: crx progression, display, dyno and immutable input
+ok 82 - crx progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.39863
+  type: 'test'
+  ...
+# Subtest: dc2 progression, display, dyno and immutable input
+ok 83 - dc2 progression, display, dyno and immutable input
+  ---
+  duration_ms: 6.291621
+  type: 'test'
+  ...
+# Subtest: eclipse progression, display, dyno and immutable input
+ok 84 - eclipse progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.712796
+  type: 'test'
+  ...
+# Subtest: familia progression, display, dyno and immutable input
+ok 85 - familia progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.989961
+  type: 'test'
+  ...
+# Subtest: 180sx progression, display, dyno and immutable input
+ok 86 - 180sx progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.933609
+  type: 'test'
+  ...
+# Subtest: st205 progression, display, dyno and immutable input
+ok 87 - st205 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.111594
+  type: 'test'
+  ...
+# Subtest: jzx100 progression, display, dyno and immutable input
+ok 88 - jzx100 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.462898
+  type: 'test'
+  ...
+# Subtest: b4rsk progression, display, dyno and immutable input
+ok 89 - b4rsk progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.868009
+  type: 'test'
+  ...
+# Subtest: magna progression, display, dyno and immutable input
+ok 90 - magna progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.219328
+  type: 'test'
+  ...
+# Subtest: all individual workshop upgrade paths produce valid builds
+ok 91 - all individual workshop upgrade paths produce valid builds
+  ---
+  duration_ms: 541.96903
+  type: 'test'
+  ...
+# Subtest: supporting hardware controls boost; small NA conversions retain lower absolute power than RB26/2JZ builds
+ok 92 - supporting hardware controls boost; small NA conversions retain lower absolute power than RB26/2JZ builds
+  ---
+  duration_ms: 30.236807
+  type: 'test'
+  ...
+# Subtest: stock eligibility rejects active/legacy performance and permits inactive presets/cosmetics
+ok 93 - stock eligibility rejects active/legacy performance and permits inactive presets/cosmetics
+  ---
+  duration_ms: 0.73756
+  type: 'test'
+  ...
+# Subtest: all 42 models preserve current main stock recruitment tolerance on all difficulties
+ok 94 - all 42 models preserve current main stock recruitment tolerance on all difficulties
+  ---
+  duration_ms: 5520.750892
+  type: 'test'
+  ...
+# Subtest: duplicate instances retain classes but cannot bypass NOS restrictions
+ok 95 - duplicate instances retain classes but cannot bypass NOS restrictions
+  ---
+  duration_ms: 2.878576
+  type: 'test'
+  ...
+# Subtest: parking/restoring preserves purchases, calibration and saved presets through JSON
+ok 96 - parking/restoring preserves purchases, calibration and saved presets through JSON
+  ---
+  duration_ms: 1.116414
+  type: 'test'
+  ...
+# Subtest: PI matches independent 120Hz runs within 3 percent
+ok 97 - PI matches independent 120Hz runs within 3 percent
+  ---
+  duration_ms: 250.77121
+  type: 'test'
+  ...
+# Subtest: catalogue data remain immutable after builds
+ok 98 - catalogue data remain immutable after builds
+  ---
+  duration_ms: 2.331832
+  type: 'test'
+  ...
+# Subtest: actual profile migration preserves parked hardware, copies, presets and career state
+ok 99 - actual profile migration preserves parked hardware, copies, presets and career state
+  ---
+  duration_ms: 8.553653
+  type: 'test'
+  ...
+# Subtest: engine purchase previews match complete race builds for all 43 cars
+ok 100 - engine purchase previews match complete race builds for all 43 cars
+  ---
+  duration_ms: 340.934855
+  type: 'test'
+  ...
+# Subtest: regional specialist upgrades remain included exactly once in purchase preview
+ok 101 - regional specialist upgrades remain included exactly once in purchase preview
+  ---
+  duration_ms: 10.945786
+  type: 'test'
+  ...
+# Subtest: unsupported turbo identifies supporting hardware; full support increases available boost
+ok 102 - unsupported turbo identifies supporting hardware; full support increases available boost
+  ---
+  duration_ms: 43.728989
+  type: 'test'
+  ...
+# Subtest: support advice never recommends upgrading an already maximum-level component
+ok 103 - support advice never recommends upgrading an already maximum-level component
+  ---
+  duration_ms: 46.215646
+  type: 'test'
+  ...
+1..103
+# tests 103
+# suites 0
+# pass 103
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7321.333002
