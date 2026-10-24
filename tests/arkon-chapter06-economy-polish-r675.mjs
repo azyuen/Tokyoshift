@@ -83,7 +83,11 @@ test('R675 all completed Chapter 06 Story saves unlock Warehouse, even if legacy
   let out=normaliseState(start);
   assert.equal(out.garageTier,2);
   assert.equal(out.arkonStoryWarehouseUnlocked,true);
-  assert.equal(out.workshopLocationId,'shinonomeWarehouseStrip');
+  // Chapter 7 defaults to HQ during the story handoff, but a player may
+  // subsequently visit either earlier workshop without being teleported back.
+  assert.equal(out.workshopLocationId,'shinonomeCanalYard');
+  assert.equal(out.carGarageLocations['240z'],'shinonomeWarehouseStrip');
+  assert.equal(out.arkonStoryCh7GarageSeeded,true);
   let career=normaliseState({...start,gameMode:'career',firstName:'Alex'});
   assert.equal(career.arkonStoryWarehouseUnlocked,false);
 });
