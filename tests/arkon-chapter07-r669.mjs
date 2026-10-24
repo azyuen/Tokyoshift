@@ -6,6 +6,7 @@ import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
 import {createDefaultGameState,normaliseState} from '../src/state/GameState.js';
 import {ENGINE_PART_ORDER} from '../src/data/tuning.js';
+import {TUNER_SHOPS} from '../src/data/tunerShops.js';
 import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER}
   from '../src/data/secondaryTuning.js';
 import {
@@ -89,6 +90,18 @@ test('R669 two independent build milestones require real parts and genuine shop 
  tune(s,3);
  assert.equal(recordArkonCh7TunerVisit(s,'YOKOHAMA'),true);
  assert.equal(recordArkonCh7TunerVisit(s,'SHINJUKU'),true);
+ assert.equal(ch7Progress(s).ready,false); // Four visits no longer complete the project.
+ for(const region of Object.keys(TUNER_SHOPS)){
+   recordArkonCh7TunerVisit(s,region);
+ }
+ assert.equal(ch7Progress(s).shops.length,7);
+ assert.equal(ch7Progress(s).ready,false); // A visit isn't a purchased treatment.
+ const carStates=s.get('carStates');
+ const installed=Object.values(TUNER_SHOPS).map(shop=>shop.tuningOptions[0].id);
+ s.set('carStates',{...carStates,'240z':{
+   ...carStates['240z'],specialistTuning:installed,
+ }});
+ assert.equal(ch7Progress(s).treatments.length,7);
  assert.equal(ch7Progress(s).ready,true);
  assert.equal(finishArkonCh7Work(s,2),true);
  assert.equal(startArkonCh7Race(s,1),true);
@@ -100,6 +113,7 @@ test('R669 two independent build milestones require real parts and genuine shop 
  assert.ok(s.get('ownedCarIds').includes(CH7_HERO_ID));
  assert.ok(!s.get('ownedCarIds').includes('240z'));
  assert.equal(s.get('carStates')[CH7_HERO_ID].tuning.engine,3);
+ assert.equal(s.get('carStates')[CH7_HERO_ID].specialistTuning.length,7);
  assert.equal(s.get('carGarageLocations')[CH7_HERO_ID],'shinonomeWarehouseStrip');
  assert.equal(s.get('selectedCarId'),CH7_HERO_ID);
  assert.equal(s.get('arkonStoryRwbProject').owner,'sayakaFujieda');
