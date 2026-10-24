@@ -3,7 +3,7 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261024-r680';
+} from '../data/characters.js?v=20261025-r683';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -14,7 +14,7 @@ import {
   getCharacterProfileTexture,
   resolveCharacterProfile,
   getCharacterProfilePlacement,
-} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
+} from '../characters/CharacterProfileRenderer.js?v=20261025-r683';
 import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261023-r664';
 import { applyStoryDialogueTypography } from './StoryDialogueTypography.js?v=20261023-r658';
