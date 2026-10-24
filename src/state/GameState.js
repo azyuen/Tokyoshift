@@ -1076,12 +1076,19 @@ export function normaliseState(input = {}) {
 
   const starterCarId = base.starterCarId;
 
-  const selectedCarId = owned.includes(remapLoanCarId(input.selectedCarId))
+  // Chapter 10's real road cinematic temporarily borrows Sayaka's gifted
+  // Porsche. It is not owned by Aruken, but must survive a mid-drive reload.
+  const borrowedRwb=storyMode && input.arkonStoryChapter10Cruise?.active &&
+    input.arkonStoryRwbProject?.gifted &&
+    input.selectedCarId==='rwbStellaPorsche';
+  const selectedCarId = borrowedRwb?'rwbStellaPorsche':
+    owned.includes(remapLoanCarId(input.selectedCarId))
     ? remapLoanCarId(input.selectedCarId)
     : owned[0] || null;
-  const preferredCarId = [input.preferredCarId, selectedCarId, ...owned]
-    .map(remapLoanCarId)
-    .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
+  const preferredCarId = borrowedRwb?'rwbStellaPorsche':
+    [input.preferredCarId, selectedCarId, ...owned]
+      .map(remapLoanCarId)
+      .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
   let garageTier = inferWorkshopTier(owned.filter(id => !String(id).startsWith('ginzaDemo_')).length, input.garageTier);
   // Story property access is chapter-authored, never purchased or inferred
