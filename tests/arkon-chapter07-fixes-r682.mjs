@@ -82,6 +82,8 @@ test('R682: Chapter 7 outfit is uniform across every manga page in suited and me
   assert.ok(mechanic.pages.every(page=>page.leftPose==='storyMechanic'));
   const bodywork=getScene('SOMETHING IS MISSING');
   assert.ok(bodywork.pages.every(page=>page.leftPose==='storyMechanic'));
+  const firstSpecialist=getScene('ITSUKI // THE AMUSE WORKSHOP');
+  assert.ok(firstSpecialist.pages.every(page=>page.leftPose==='storyMechanic'));
   const tuner=getScene('TAKUMI // LIGHTNESS WITH PURPOSE');
   assert.ok(tuner.pages.every(page=>page.leftPose==='storyMechanic'));
   assert.ok(ARKON_CHAPTER_07.steps.some(step=>step.type==='STAGE'&&
