@@ -1,3 +1,5 @@
+> **R679 UPDATE (24 October 2026) — supersedes the earlier two-car Chapter 10 finale.** Aruken voluntarily sells his actual modified Liberty Walk 240Z to fund the negotiated liabilities after one last friendly race. Sale is recorded once in the save and Car History, never confiscates Sayaka's gifted RWB. The last scenic drive is now a real moving road sequence: **Sayaka drives her own RWB Porsche with Aruken alongside as passenger**, warm in-car banter, then the single Porsche at Yokohama and the existing hand-holding artwork. Earlier R674 statements describing both cars arriving together or all liabilities already paid at Chapter 10's opening are superseded. See [ARKON_R679_RECIPROCITY_AND_FINALE.md](./ARKON_R679_RECIPROCITY_AND_FINALE.md).
+
 # R674 — Arkon Story Chapter 10: THE ROAD AHEAD
 
 **Owner-approved ending (23 October 2026).** This is the ending of Arkon's ten-chapter prequel, NOT an additional Career chapter. No post-credit cliffhanger.

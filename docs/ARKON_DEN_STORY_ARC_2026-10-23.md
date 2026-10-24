@@ -1,3 +1,5 @@
+> **Canonical R679 continuation, 24 October 2026.** Builds on (and does not revert) R678's revised Aruken backstory and organic Sayaka bond. Chapter 5 now gives Sayaka a moment of vulnerability when Aruken listens; Chapter 6 seeds Sayaka's own desire and uncertainty about motorsport strategy; Chapters 7–9 remain intact; Chapter 10 shows her uncertainty and Aruken's reciprocal confidence in Ginza, his voluntary sale of the real Liberty Walk 240Z to cover liabilities, and their **shared final drive in Sayaka's single RWB Porsche**. For the newest implementation details and distinctions between canon and earlier draft proposals, consult [ARKON_R679_RECIPROCITY_AND_FINALE.md](./ARKON_R679_RECIPROCITY_AND_FINALE.md). Earlier chapter descriptions below are historic working treatments, not overrides of R678/R679 scripts.
+
 ## R673 implementation note — Chapter 09: NO WAY OUT
 
 ## R675 Chapter 06 corrections — balance, relationship and UI (24 October 2026)

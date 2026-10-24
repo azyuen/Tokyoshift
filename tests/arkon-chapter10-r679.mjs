@@ -54,7 +54,8 @@ test('Chapter 10 hero sale occurs after real final Z race and before Ginza',()=>
   assert.equal(steps.find(s=>s.title==='ONE LAST LOOK')?.type,'MANGA');
   assert.equal(steps.filter(s=>s.type==='ARKON_CH10_DRIVE').length,1);
   assert.equal(steps.filter(s=>s.type==='ARKON_CH10_DRIVE_RETURN').length,1);
-  assert.equal(steps.find(s=>s.label==='YOKOHAMA // BACK WHERE WE BEGAN'),undefined);
+  assert.ok(steps.some(s=>s.type==='HOLD_SCENE' &&
+    s.label==='YOKOHAMA // BACK WHERE WE BEGAN'));
   const finalStage=steps.find(s=>s.type==='STAGE' &&
     s.meetCarLayout==='yokohamaFinale');
   assert.deepEqual(finalStage?.cars,[{carId:'rwbStellaPorsche'}]);
