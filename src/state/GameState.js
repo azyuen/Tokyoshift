@@ -1315,6 +1315,9 @@ export function normaliseState(input = {}) {
         shops:[...new Set((Array.isArray(input.arkonStoryChapter07Work.shops)
           ?input.arkonStoryChapter07Work.shops:[]).filter(x=>
             ['ODAIBA','SHIBUYA','SHINJUKU','YOKOHAMA','DAIKOKU','SHINAGAWA','TATSUMI'].includes(x)))],
+        firstVisitScenes:[...new Set((Array.isArray(input.arkonStoryChapter07Work.firstVisitScenes)
+          ?input.arkonStoryChapter07Work.firstVisitScenes:[]).filter(x=>
+            ['SHIBUYA','YOKOHAMA'].includes(x)))],
         converted:Boolean(input.arkonStoryChapter07Work.converted),
       }:null,
     arkonStoryChapter07Race: storyMode && input.arkonStoryChapter07Race?.active
