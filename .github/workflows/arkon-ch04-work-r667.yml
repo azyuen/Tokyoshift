@@ -1,0 +1,44 @@
+name: R667 Arkon Chapter 04 gameplay and phone
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter04.js'
+      - 'src/data/arkonChapter04Work.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonRwbContract.js'
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'tests/arkon-ch04-work-r667.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter04.js'
+      - 'src/data/arkonChapter04Work.js'
+      - 'tests/arkon-ch04-work-r667.mjs'
+jobs:
+  story-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JS syntax
+        run: |
+          node --check src/data/arkonChapter04.js
+          node --check src/data/arkonChapter04Work.js
+          node --check src/story/StoryDirector.js
+          node --check src/story/StoryScript.js
+          node --check src/ui/ArkonStoryObjective.js
+          node --check src/ui/ArkonRwbContract.js
+          node --check src/ui/RaceCoachHud.js
+          node --check src/state/GameState.js
+          node --check src/scenes/RaceScene.js
+      - name: Story and gameplay regression tests
+        run: |
+          node --test tests/arkon-ch04-work-r667.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs

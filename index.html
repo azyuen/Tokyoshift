@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="./styles.css?v=20261009-r449" />
   <style>
     #boot-diagnostic[hidden] { display: none !important; }
+    #arkon-pin-row[hidden] { display: none !important; }
+    #driver-name-overlay.is-visible.needs-owner-pin { top: 43.5%; }
     #boot-diagnostic {
       position: absolute;
       z-index: 3;
@@ -108,9 +110,23 @@
           placeholder="Last name"
           aria-label="Last name"
         />
+        <div id="arkon-pin-row" hidden>
+          <label for="arkonCreationPin" style="display:block;color:#86cce6;font:700 12px 'Rajdhani',sans-serif;letter-spacing:1px;margin-bottom:5px;">ARKON DEN // OWNER PIN</label>
+          <input
+            id="arkonCreationPin"
+            class="driver-name-input"
+            type="password"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]{4}"
+            autocomplete="off"
+            placeholder="4-digit PIN"
+            aria-label="Arkon Den owner PIN"
+          />
+        </div>
       </div>
     </div>
-    <div id="build-stamp">R548</div>
+    <div id="build-stamp">R675</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -246,7 +262,7 @@
     // Previously these ran in parallel, allowing a stale iPad PWA worker to
     // supply mixed-build modules while the version check removed its caches.
     window.TOKYO_SHIFT_BOOT_READY = (async () => {
-      let resolvedBuild = 'R527';
+      let resolvedBuild = 'R665';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -328,7 +344,7 @@
     // worker is being retired. Device saves are never altered by this guard.
     window.TOKYO_SHIFT_BOOT_READY.then(ready => {
       if (ready === false) return;
-      import('./src/main.js?v=20261016-r548').catch(error => {
+      import('./src/main.js?v=20261024-r677').catch(error => {
         console.error('[Tokyo SHIFT] main module failed to load', error);
         window.TOKYO_SHIFT_SHOW_BOOT_ERROR?.(error, 'MAIN MODULE ERROR');
       });

@@ -1,0 +1,36 @@
+name: R574 replay scene lifecycle regression
+on:
+  pull_request:
+    paths:
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'src/ui/StoryArchivePlayback.js'
+      - 'tests/replay-lifecycle-r574.mjs'
+      - 'tests/story-archive-r570.mjs'
+      - '.github/workflows/replay-lifecycle-r574.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'tests/replay-lifecycle-r574.mjs'
+  workflow_dispatch:
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate scene code
+        run: |
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/CrewSpaceScene.js
+          node --check src/ui/StoryArchivePlayback.js
+          node --check src/ui/StoryReplaySession.js
+          node --check src/ui/Chapter08DevReplay.js
+          node --check src/main.js
+      - name: Verify replay, phone calls and career save isolation
+        run: node --test tests/replay-lifecycle-r574.mjs tests/replay-travel-r573.mjs tests/story-archive-r570.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/chapter08-phone-r571.mjs

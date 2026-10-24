@@ -1,0 +1,38 @@
+name: R668 Arkon Chapter 06 certification and finale
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter06.js'
+      - 'src/data/arkonChapter06Work.js'
+      - 'src/ui/ArkonRwbRestoration.js'
+      - 'src/ui/ArkonChapter06Finale.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'tests/arkon-chapter06-r668.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter06.js'
+      - 'src/data/arkonChapter06Work.js'
+      - 'tests/arkon-chapter06-r668.mjs'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chapter 06 syntax
+        run: |
+          for file in src/data/arkonChapter06.js src/data/arkonChapter06Work.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonRwbRestoration.js src/ui/ArkonChapter06Finale.js src/ui/ArkonStoryObjective.js src/ui/ArkonStoryArchivePanel.js src/ui/ArkonPlayableReplay.js src/scenes/RaceScene.js src/state/GameState.js tests/arkon-chapter06-r668.mjs; do node --check "$file"; done
+      - name: Story save, finance and Chapter 06 regressions
+        run: |
+          node --test tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs

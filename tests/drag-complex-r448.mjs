@@ -8,20 +8,21 @@ import { getProfessionalDuelRound } from '../src/data/proDragDuel.js';
 const central=fs.readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
 const pro=fs.readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');
 
-test('three season event cards retain driver, playable crew and four-wide slots',()=>{
+test('three Drag Strip cards support open circuit, official season and independent trophy choices',()=>{
   const block=central.match(/getProDragEvents\(\) \{([\s\S]*?)\n  \}/)?.[1]||'';
-  assert.match(block,/PRO_DRAG_EVENTS\[0\]/);
-  assert.match(block,/PRO_DRAG_EVENTS\[pro\.calendar\.round % 2\]/);
-  assert.match(block,/CREW_SERIES/);
-  assert.match(block,/pro\.activeCrewEvent/);
+  assert.match(block,/isOpenCircuitAvailable\(pro\)/);
+  assert.match(block,/openCircuitTick/);
+  assert.match(block,/getOpenCircuitTrophy\(pro\)/);
+  assert.match(block,/PRO_CIRCUIT_TROPHIES/);
+  assert.match(block,/const choices=\[driver,crew,special\]/);
+  assert.match(block,/const choices = \[driver, \{ \.\.\.CREW_SERIES/);
   assert.match(block,/seasonEnd: true/);
   assert.match(block,/id: FOUR_WIDE_CUP\.id/);
-  assert.doesNotMatch(block,/PRO_DRAG_EVENTS\[2\]/);
   assert.match(block,/fourWide: true/);
-  assert.match(central,/event\.fourWide \? 'TROPHY COMP \/\/ 4-WIDE'/);
-  assert.match(central,/'PRO COMP \/\/ DRIVER'/);
+  assert.match(central,/TROPHY COMP \/\/ FOUR-WIDE/);
+  assert.match(central,/NO SEASON POINTS/);
   assert.match(central,/event\.entryFee/);
-  assert.equal(PRO_DRAG_EVENTS.length,3); // historical event definitions retained for saved brackets
+  assert.equal(PRO_DRAG_EVENTS.length,3);
   assert.equal(FOUR_WIDE_CUP.entryFee,90000);
 });
 
@@ -41,7 +42,7 @@ test('single right panel action routes paid events and resumed heats, without ot
   assert.match(central,/this\.startProBracket\(event, build\)/);
   assert.match(central,/RESUME FOUR-WIDE OPEN/);
   assert.match(central,/RESUME PRO CUP/);
-  assert.match(central,/SIDE\.y \+ 590/);
+  assert.match(central,/SIDE\.y \+ 574/);
   assert.match(central,/SIDE\.y \+ 674/); // existing map button remains
   assert.match(central,/FINISH YOUR ACTIVE EVENT FIRST/);
   assert.match(central,/eventId: event\.id/);
@@ -65,7 +66,7 @@ test('manga ending uses smaller angled portrait, red/charcoal/white motif, next 
   assert.match(section,/new Phaser\.Geom\.Point\(88, 114\)/);
   assert.match(section,/frameWidth: 455, frameHeight: 460/);
   assert.match(section,/const accent = 0xd44953/);
-  assert.match(section,/STAGE ' \+ stageNumber \+ '\/3 COMPLETE/);
+  assert.match(section,/STAGE ' \+ stageNumber \+ '\/' \+ stageCount \+ ' COMPLETE/);
   assert.match(section,/NEXT: ' \+ nextStage/);
   assert.match(section,/const y = 384 \+ 40 \* index/);
   assert.doesNotMatch(section,/PRO RANKING/);

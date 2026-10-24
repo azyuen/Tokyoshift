@@ -313,11 +313,40 @@ export function getWorkshopRegionalWinRequirement(tier = 0) {
   return Number(WORKSHOP_REGIONAL_WIN_REQUIREMENTS[safeTier] || 0);
 }
 
+// Arkon Story has authored workshop milestones. Regional championships still
+// govern Career workshop purchases, but NEVER grant Story property access.
+export function getArkonStoryWorkshopTier(source) {
+  if (progressionSourceValue(source,'gameMode') !== 'arkonStory') return null;
+  const chapter = Number(progressionSourceValue(source,'arkonStoryChapter',0)) || 0;
+  const checkpoint = progressionSourceValue(source,'storyDirectorProgress')?.id;
+  const canal = Boolean(progressionSourceValue(source,'arkonStoryCanalYardUnlocked')) ||
+    chapter >= 3 ||
+    Boolean(progressionSourceValue(source,'arkonStoryChapter03Done')) ||
+    Boolean(progressionSourceValue(source,'arkonStoryChapter04Done')) ||
+    ['arkonChapter03','arkonChapter04'].includes(checkpoint);
+  // A future authored chapter explicitly sets this flag. Never infer HQ
+  // ownership from wins, money, old career tiers, or the chapter number.
+  // A completed Chapter 06 irrevocably owns Warehouse HQ. Repair legacy
+  // profiles where the earlier chapter flagged completion but missed the
+  // workshop unlock; also allow Chapters 07–10 from their checkpoints.
+  const warehouse = Boolean(progressionSourceValue(source,'arkonStoryWarehouseUnlocked')) ||
+    Boolean(progressionSourceValue(source,'arkonStoryChapter06Done')) ||
+    ['arkonChapter07','arkonChapter08','arkonChapter09','arkonChapter10']
+      .includes(checkpoint) ||
+    chapter>=7;
+  return warehouse ? 2 : canal ? 1 : 0;
+}
+
 export function isWorkshopProgressionReady(source, tier = 0) {
+  if (getArkonStoryWorkshopTier(source) !== null) return clampWorkshopTier(tier) === 0;
   return getTotalRegionalWins(source) >= getWorkshopRegionalWinRequirement(tier);
 }
 
 export function getWorkshopProgressionLabel(source, tier = 0) {
+  if (getArkonStoryWorkshopTier(source) !== null) {
+    return clampWorkshopTier(tier) === 0 ? 'HOME WORKSHOP'
+      : 'UNLOCKED THROUGH STORY';
+  }
   const required = getWorkshopRegionalWinRequirement(tier);
   const current = getTotalRegionalWins(source);
   if (required <= 0 || current >= required) return 'REGIONAL WIN REQUIREMENT MET';

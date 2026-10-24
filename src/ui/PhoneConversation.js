@@ -1,13 +1,14 @@
 // Canonical caller dialogue. Phone conversations now share the same floating
-// face and outward-tail manga speech layout as in-race coaching; their blue
-// border, pale-blue fill and corner phone icon distinguish remote calls.
+// face and outward-tail manga speech layout as in-race coaching. Calls use
+// one standard dimming veil and floating phone icon, unlike race coaching.
 import {
   characters,
   getCharacterAssetUrl,
   getCharacterVisualAsset,
 } from '../data/characters.js';
 import {
-  createRaceDialogueHud, RACE_COACH_LAYOUT,
+  createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
+  ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
 } from './RaceCoachHud.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -165,7 +166,14 @@ export function playPhoneConversation(scene, {
 
   const caller = characters[callerId];
   const name = String(callerName || caller?.name || 'UNKNOWN CALLER').toUpperCase();
-  const portraitAsset = getPhoneCallerPortrait(callerId, callerPose);
+  // The compact phone bubble is narrower than the old full-width panel:
+  // preserve the caller's name, while the ringing screen carries the long label.
+  const callerHeading = name.split(' // ')[0].trim() || name;
+  const portraitAsset = callerId ? getPhoneCallerPortrait(callerId,callerPose)
+    : {key:ANONYMOUS_CALLER_TEXTURE,path:ANONYMOUS_CALLER_PATH};
+  const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
+  const playerPortraitAsset = getPhoneCallerPortrait(playerCharacterId, 'idle');
+  const playerActor = characters[playerCharacterId];
   const localVariables = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'there').trim() || 'there',
     ...variables,
@@ -206,37 +214,23 @@ export function playPhoneConversation(scene, {
 
   const begin = () => {
     if (!state.active) return;
-    const b = RACE_COACH_LAYOUT.bubble;
-    // Input shield prevents clicking through an active call without obscuring
-    // the garage. The blue-tinted bubble alone denotes the remote speaker.
-    add(scene.add.rectangle(780, 420, 1560, 840, 0x070f19, 0.001)
-      .setScrollFactor(0).setDepth(DEPTH).setInteractive());
-    panel = createRaceDialogueHud(scene, {
-      theme: 'phone',
-      depth: DEPTH + 1,
-      speaker: String(label || 'CALLER').toUpperCase() + ': ' + name,
-      initialPose: callerPose,
-      spriteKeyForPose: () => portraitAsset?.key || '',
-      characterVisual: caller?.visual || {},
-      phoneIconKey: PHONE_ICON_KEY,
-    });
-    if (!portraitAsset?.key || !scene.textures.exists(portraitAsset.key)) {
-      add(scene.add.text(RACE_COACH_LAYOUT.face.targetX,
-        RACE_COACH_LAYOUT.face.targetY, '?', {
-        fontFamily: PIXEL_FONT, fontSize: '24px', color: '#145b8d',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 5));
-    }
-
-    nextButton = add(scene.add.rectangle(b.right - 92, b.bottom + 34, 176, 43,
-      PHONE_ACCENTS.incoming, 1)
-      .setStrokeStyle(2, 0xd5ecfb, 1)
+    const screenW = Number(scene.scale?.width || 1560);
+    const screenH = Number(scene.scale?.height || 840);
+    const buttonX = screenW - 248, buttonY = screenH - 49;
+    // Both speakers share the oversized phone panel, but the caller stays
+    // on the left and the player's actual portrait stays on the right.
+    // Reuse the global translucent veil so sprites separate from the venue,
+    // even when a call falls back from the vibrating-pickup presentation.
+    add(createPhoneCallBackdrop(scene, {depth:DEPTH}));
+    nextButton = add(scene.add.rectangle(buttonX, buttonY, 252, 48,
+      0x111111, 1).setStrokeStyle(2, 0xffffff, 1)
       .setScrollFactor(0).setDepth(DEPTH + 8)
       .setInteractive({ useHandCursor: true }));
-    nextText = add(scene.add.text(b.right - 92, b.bottom + 34, 'NEXT >', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+    nextText = add(scene.add.text(buttonX, buttonY, 'NEXT >', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
     }).setScrollFactor(0).setOrigin(0.5).setDepth(DEPTH + 9));
-    pageCounter = add(scene.add.text(b.left + 10, b.bottom + 34, '', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#155987',
+    pageCounter = add(scene.add.text(78, buttonY, '', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b0d5e9',
     }).setScrollFactor(0).setOrigin(0, 0.5).setDepth(DEPTH + 8));
 
     const showPage = () => {
@@ -244,16 +238,29 @@ export function playPhoneConversation(scene, {
       const vars = { ...localVariables, ...(page.variables || {}) };
       const pageStyle = page.speakerStyle ||
         (page.speaker === 'player' ? 'player' : speakerStyle);
-      const color = getPhoneAccent(pageStyle, page.accent ?? accent);
-      panel.setAccent(color);
-      nextButton.setFillStyle(color, 1);
       const isPlayer = pageStyle === 'player';
-      panel.heading.setText(isPlayer
-        ? 'YOU: ' + String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
-        : String(label || 'CALLER').toUpperCase() + ': ' + name);
+      const color = getPhoneAccent(pageStyle, page.accent ?? accent);
+      panel?.destroy?.();
+      panel = createRaceDialogueHud(scene, {
+        theme: 'phone', depth: DEPTH + 1,
+        layout: PHONE_DIALOGUE_LAYOUTS[isPlayer ? 'right' : 'left'],
+        side: isPlayer ? 'right' : 'left',
+        speaker: isPlayer
+          ? 'YOU: ' + String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
+          : 'CALL: ' + callerHeading,
+        initialPose: isPlayer ? 'idle' : callerPose,
+        spriteKeyForPose: () => (isPlayer ? playerPortraitAsset : portraitAsset)?.key || '',
+        characterVisual: !isPlayer&&!callerId
+          ? ANONYMOUS_CALLER_VISUAL
+          : (isPlayer ? playerActor : caller)?.visual || {},
+        phoneIconKey: PHONE_ICON_KEY,
+      });
+      panel.setAccent(color);
+      // Typography comes from the shared dialogue HUD template. Both call
+      // paths now inherit any future adjustment to the global font sizes.
       panel.dialogue.setText(formatPhoneMessage(page.text, vars));
       nextText.setText(state.pageIndex < normalisedPages.length - 1
-        ? 'NEXT >' : 'CONTINUE >');
+        ? 'NEXT >' : 'END CALL >');
       pageCounter.setText(normalisedPages.length > 1
         ? String(state.pageIndex + 1).padStart(2, '0') + ' / ' +
           String(normalisedPages.length).padStart(2, '0')
@@ -277,9 +284,11 @@ export function playPhoneConversation(scene, {
   };
 
   const queued = [];
-  if (portraitAsset?.key && portraitAsset?.path &&
-      !scene.textures.exists(portraitAsset.key)) {
-    queued.push([portraitAsset.key, getCharacterAssetUrl(portraitAsset.path)]);
+  for (const asset of [portraitAsset, playerPortraitAsset]) {
+    if (asset?.key && asset?.path && !scene.textures.exists(asset.key) &&
+        !queued.some(entry => entry[0] === asset.key)) {
+      queued.push([asset.key, getCharacterAssetUrl(asset.path)]);
+    }
   }
   if (!scene.textures.exists(PHONE_ICON_KEY)) {
     queued.push([PHONE_ICON_KEY, PHONE_ICON_PATH]);

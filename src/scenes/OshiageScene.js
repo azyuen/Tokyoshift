@@ -1,27 +1,35 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js';
 import {
   OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
   isOshiageVoucherAvailable,
 } from '../data/oshiageSchool.js';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js';
 import {
   getOshiageShowdownLineup, getOshiageShowdownAccess,
   beginOshiageShowdown, prepareNextOshiageShowdownHeat,
 } from '../data/oshiageShowdown.js';
 import { getBaseCarId } from '../data/carOwnership.js';
+import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js';
+import { getStreetPaintPalette } from '../data/streetPaintPalettes.js';
+import { isActiveCrewLoanCar } from '../data/crewSystem.js';
 import { getWorldPhase } from '../environment/WorldClock.js';
 import { showTravelMap } from '../ui/TravelMap.js';
+import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js';
 import { getTravelLocation } from '../data/travelRegions.js';
 import { saveSessionState } from '../state/GameState.js';
+import { getPowerTorqueDisplay } from '../data/carRatings.js';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
 import { restorePreferredCar } from '../state/CarSelection.js';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
 import { addSettingsButton } from '../ui/SettingsPanel.js';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
 import { playMusic } from '../audio/MusicManager.js';
 import {
-  PAINT_PRESETS, hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
+  hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
   getCarBodyTextureKey, getCarBodyScaleForWidth, createCarBodyLayers, setCarBodyPaint,
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js';
@@ -30,15 +38,18 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
 import { preloadWheelOption } from '../data/wheels.js';
 import {
+  SHOWDOWN_STAGE, SHOWDOWN_SIDE, SHOWDOWN_STRIP,
+} from '../ui/ShowdownLayout.js';
+import {
   getOshiageRimListings, getOshiageRimQuote, buyOrInstallOshiageRim,
   restoreStockOshiageRims, RIMS_REFRESH_MS, OSHIAGE_RIM_SLOTS,
 } from '../data/oshiageRims.js';
 
 const PIXEL = '"Silkscreen", monospace';
-const BODY = '"Rajdhani", sans-serif';
-const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
-const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
-const STRIP = { x: 24, y: 636, w: 1138, h: 180 };
+const BODY = '"Rajdhani", monospace';
+const STAGE = SHOWDOWN_STAGE;
+const SIDE = SHOWDOWN_SIDE;
+const STRIP = SHOWDOWN_STRIP;
 const ROOT = 'assets/Oshiage/';
 const SAYAKA = 'assets/Characters/Main/oshiage_sayaka_fujieda_';
 const schoolSayakaKey = pose => 'characterSayakaOshiage' +
@@ -104,6 +115,8 @@ export default class OshiageScene extends Phaser.Scene {
     }
     this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId :
       (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
+    if (this.registry.get('gameMode')==='arkonStory')
+      this.registry.set('arkonStoryAtSchool',this.activeLocationId==='oshiageDrivingSchool');
     this.room = ['paint', 'rims'].includes(data.room) ? data.room : 'outside';
     if (this.activeLocationId !== 'oshiageCustomWorks') this.room = 'outside';
     this.lessonIndex = Math.max(0, Math.min(3, Number(this.registry.get('oshiageLessonTab') || 0)));
@@ -116,7 +129,10 @@ export default class OshiageScene extends Phaser.Scene {
     this.showdownPreviewIndex = activeShowdown?.active ? Number(activeShowdown.roundIndex || 0) : 0;
     this.showdownSwitching = false;
     this.showdownLaunching = false;
-    this.paintMode = 'preset';
+    this.paintMode = 'stock';
+    this.paintPage = 0;
+    this.stockPaintColor = null;
+    this.streetPaintColor = null;
     this.customPaintColor = null;
     this.paintPickerHue = null;
     this.selectedRimIndex = -1;
@@ -128,7 +144,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.paintBusy = false;
     this.paintObjects = [];
     this.content = [];
-    this.phase = getWorldPhase();
+    this.phase = getStoryWorldPhase(this.registry);
   }
 
   backgroundAsset(locationId = this.activeLocationId, phase = this.phase) {
@@ -152,6 +168,15 @@ export default class OshiageScene extends Phaser.Scene {
     if (!key || !path || this.textures.exists(key)) return 0;
     this.load.image(key, path);
     return 1;
+  }
+
+  isCrewCarSelected() {
+    return isActiveCrewLoanCar(this.registry, this.registry.get('selectedCarId'));
+  }
+
+  isSchoolCarEligible(car, id) {
+    return Boolean(car && (!car.crewLoan || isActiveCrewLoanCar(this.registry, id)) &&
+      !car.ginzaDemo);
   }
 
   selectedCar() {
@@ -203,10 +228,13 @@ export default class OshiageScene extends Phaser.Scene {
       // Preload all three opponents, as in a normal Meet. Tapping a rival
       // then requires only a stage fade, never another loading screen.
       this.getEliteLineup(venueId).forEach(opponent => {
-        const rival = characters[opponent?.characterId];
-        if (rival?.visual?.spriteKey && rival.visual?.path) {
-          queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
-            getCharacterAssetUrl(rival.visual.path));
+        const visual = getCharacterVisualForContext(opponent?.characterId, {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }) || characters[opponent?.characterId]?.visual || {};
+        if (visual.spriteKey && visual.path) {
+          // Use the exact portrait texture key expected by normal Meet profiles.
+          queued += this.queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
         }
         if (opponent && cars[opponent.carId]) {
           queued += preloadCarAppearanceAssets(this,
@@ -260,7 +288,8 @@ export default class OshiageScene extends Phaser.Scene {
         car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey))
     ));
     this.renderView();
-    if (this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
+    if (this.registry.get('gameMode')!=='arkonStory' &&
+        this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
       this.time.delayedCall(420, () => this.showInstructorCutscene());
     }
     this.time.addEvent({ delay: 5000, loop: true, callback: () => {
@@ -270,7 +299,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
       // Never tear down a moving car midway through a showroom entrance.
       if (this.paintBusy) return;
-      const phase = getWorldPhase();
+      const phase = getStoryWorldPhase(this.registry);
       const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
       if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
       this.phase = phase;
@@ -366,6 +395,8 @@ export default class OshiageScene extends Phaser.Scene {
   showLocation(locationId) {
     if (!LOCATIONS[locationId]) return;
     this.activeLocationId = locationId;
+    if (this.registry.get('gameMode')==='arkonStory')
+      this.registry.set('arkonStoryAtSchool',locationId==='oshiageDrivingSchool');
     this.room = 'outside';
     this.registry.set('oshiageLocation', locationId);
     saveSessionState(this.registry);
@@ -381,8 +412,14 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.textures.exists(background.key)) {
       const src = this.textures.get(background.key).getSourceImage();
       const rimWall = this.room === 'rims';
+      // Lower only the PAINT ROOM backdrop so its upper wall sign is fully
+      // visible inside the stage mask. The car, specialist, spray and hit
+      // targets remain in their existing world positions.
+      const paintBackdropYOffset = this.room === 'paint' ? 28 : 0;
       const img = this.own(this.add.image(
-        STAGE.x + STAGE.w / 2, rimWall ? STAGE.y : STAGE.y + STAGE.h / 2, background.key)
+        STAGE.x + STAGE.w / 2,
+        rimWall ? STAGE.y : STAGE.y + STAGE.h / 2 + paintBackdropYOffset,
+        background.key)
         .setOrigin(0.5, rimWall ? 0 : 0.5)
         .setScale(rimWall ? STAGE.w / src.width :
           Math.max(STAGE.w / src.width, STAGE.h / src.height))
@@ -450,7 +487,10 @@ export default class OshiageScene extends Phaser.Scene {
         img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
       }
     }
-    this.sideHeader('DRIVING SCHOOL', 'Lady Instructor // Oshiage');
+    this.sideHeader('DRIVING SCHOOL',
+      this.registry.get('gameMode')==='arkonStory'
+        ? (this.registry.get('arkonStorySchoolRevealed')?'SAYAKA // OSHIAGE':'OSHIAGE // DRIVING LESSONS')
+        : 'Lady Instructor // Oshiage');
     this.addText(SIDE.x + 20, SIDE.y + 150, lesson.title, {
       pixel: true, size: '10px', color: '#ffe394', wrap: SIDE.w - 40
     });
@@ -464,7 +504,9 @@ export default class OshiageScene extends Phaser.Scene {
       : Boolean(this.registry.get('oshiageCoachingProgress')?.[id]?.[lesson.id]?.completed);
     this.addText(SIDE.x + 20, SIDE.y + 394, lesson.id === 'basic'
       ? 'INTRODUCTORY COURSE // FREE'
-      : freeVoucher ? 'SAYAKA VOUCHER // FIRST BOOKING FREE'
+      : freeVoucher ? this.registry.get('gameMode')==='arkonStory'
+        ? 'SAYAKA // ' + Number(this.registry.get('arkonStoryLessonCredits')||0) + ' LESSON CREDITS'
+        : 'SAYAKA VOUCHER // FIRST BOOKING FREE'
         : 'LESSON FEE // ' + MONEY(fee), {
       pixel: true, size: '9px', color: '#96e9d4', wrap: SIDE.w - 40
     });
@@ -481,7 +523,7 @@ export default class OshiageScene extends Phaser.Scene {
       lesson.id === 'basic' ? 'FREE // ENTER LESSON' :
         freeVoucher ? 'START // USE FREE VOUCHER' : 'START LESSON // ' + MONEY(fee),
       () => this.showLessonBookingDialogue(lesson.id),
-      { disabled: !car || Boolean(car.crewLoan), accent: true, size: '8px' });
+      { disabled: !this.isSchoolCarEligible(car, id), accent: true, size: '8px' });
 
     this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL  //  CHOOSE A LESSON',
       { pixel: true, size: '10px', color: '#8feaff' });
@@ -500,8 +542,8 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.schoolPromptOpen || this.instructorCutsceneOpen ||
         this.paintBusy || sceneCutsceneActive(this)) return;
     const { id, car } = this.selectedCar();
-    if (!car || car.crewLoan) {
-      this.showOshiageNotice('PLEASE SELECT YOUR OWN CAR FIRST');
+    if (!this.isSchoolCarEligible(car, id)) {
+      this.showOshiageNotice('SELECT YOUR CAR OR AN ACTIVE CREW CAR');
       return;
     }
     const freeVoucher = isOshiageVoucherAvailable(this.registry, lessonId);
@@ -515,7 +557,9 @@ export default class OshiageScene extends Phaser.Scene {
     }
     const lesson = OSHIAGE_SCHOOL_LESSONS[lessonId];
     const text = lessonId === 'basic'
-      ? 'The basics are free. Shall we practise together?'
+      ? this.registry.get('gameMode')==='arkonStory'
+        ? 'Ready to see what your Civic can really do? The first lesson is on me.'
+        : 'The basics are free. Shall we practise together?'
       : freeVoucher
         ? 'Sayaka’s voucher covers all three attempts! If you leave, any unused tries expire. Ready?'
         : 'The fee is ' + MONEY(lesson.fee) +
@@ -524,16 +568,18 @@ export default class OshiageScene extends Phaser.Scene {
     // animated transitions and two final dialogue buttons as the Dev tester.
     const definition = {
       id: 'oshiageSchoolBooking_' + lessonId,
-      title: 'OSHIAGE // LADY INSTRUCTOR',
+      title: this.registry.get('gameMode')==='arkonStory' ? 'OSHIAGE // SAYAKA' : 'OSHIAGE // LADY INSTRUCTOR',
       once: false,
       characters: { left: 'sayakaFujieda' },
       pages: [
         { speaker: 'left', pose: 'oshiageExplaining',
-          nameOverride: 'LADY INSTRUCTOR',
-          text: lesson.speech + (lessonId === 'basic' ? '' :
+          nameOverride: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR',
+          text: (this.registry.get('gameMode')==='arkonStory'
+            ? 'Let us see how much you have learned in your own car.'
+            : lesson.speech) + (lessonId === 'basic' ? '' :
             ' I’ll show recommended RPM ranges for your unique car and current tune.') },
         { speaker: 'left', pose: 'oshiageHappy',
-          nameOverride: 'LADY INSTRUCTOR', text },
+          nameOverride: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR', text },
       ],
       finalActionLabel: 'YES, LET\'S DRIVE',
       secondaryFinalActionLabel: 'NOT NOW',
@@ -551,14 +597,20 @@ export default class OshiageScene extends Phaser.Scene {
           carId: current.id, lessonId, cash: this.registry.get('cash'),
           freeFirstLesson: isOshiageVoucherAvailable(this.registry, lessonId),
         });
-        if (!purchase.ok || current.id !== id || !current.car || current.car.crewLoan) return;
+        if (!purchase.ok || current.id !== id ||
+            !this.isSchoolCarEligible(current.car, current.id)) return;
         if (lessonId !== 'basic') {
           const attempt = consumeOshiageAttempt(purchase.booking);
           if (!attempt) return;
           if (purchase.usedVoucher) {
-            this.registry.set('oshiageFreeLessonUsed', {
-              ...(this.registry.get('oshiageFreeLessonUsed') || {}), [lessonId]: true,
-            });
+            if(this.registry.get('gameMode')==='arkonStory'){
+              this.registry.set('arkonStoryLessonCredits',Math.max(0,
+                Number(this.registry.get('arkonStoryLessonCredits')||0)-1));
+            }else{
+              this.registry.set('oshiageFreeLessonUsed', {
+                ...(this.registry.get('oshiageFreeLessonUsed') || {}), [lessonId]: true,
+              });
+            }
           }
           this.registry.set('cash', purchase.cash);
           this.registry.set('oshiageSchoolBooking', attempt);
@@ -570,7 +622,8 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   showInstructorCutscene() {
-    if (this.activeLocationId !== 'oshiageDrivingSchool' ||
+    if (this.registry.get('gameMode')==='arkonStory' ||
+        this.activeLocationId !== 'oshiageDrivingSchool' ||
         this.registry.get('oshiageInstructorMet') ||
         this.instructorCutsceneOpen || sceneCutsceneActive(this)) return;
 
@@ -594,8 +647,8 @@ export default class OshiageScene extends Phaser.Scene {
 
   startBasicTutorial(lessonId = null) {
     const { id, car } = this.selectedCar();
-    if (!car || car.crewLoan) {
-      this.showOshiageNotice('SELECT YOUR OWN CAR AT YOUR WORKSHOP BEFORE A LESSON');
+    if (!this.isSchoolCarEligible(car, id)) {
+      this.showOshiageNotice('SELECT YOUR CAR OR AN ACTIVE CREW CAR FOR THIS LESSON');
       return;
     }
     this.registry.set('selectedCarId', id);
@@ -615,9 +668,9 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'OshiageScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', 'OSHIAGE');
-    this.registry.set('raceLocationLabel', 'LADY INSTRUCTOR // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
+    this.registry.set('raceLocationLabel', (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR') + ' // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
@@ -640,7 +693,13 @@ export default class OshiageScene extends Phaser.Scene {
     const opponent = lineup[previewIndex] || lineup[activeHeat] || null;
     const rival = opponent ? characters[opponent.characterId] : null;
     const car = opponent ? cars[opponent.carId] : null;
-    const { id: playerCarId, car: playerCar } = this.selectedCar();
+    const { id: playerCarId, car: playerCar, state: playerState } = this.selectedCar();
+    const playerPerformance = playerCar
+      ? getVehiclePerformance(playerCarId, playerState)
+      : null;
+    const playerRating = playerCar
+      ? getPowerTorqueDisplay(playerCar, playerState, playerPerformance?.car || playerCar)
+      : null;
     const cooldown = getOshiageEliteRemainingMs(this.registry, venueId);
     const access = getOshiageShowdownAccess(this.registry, venueId);
     const canRace = progress.complete && lineup.length === 3 &&
@@ -650,27 +709,28 @@ export default class OshiageScene extends Phaser.Scene {
       );
     const prize = continuing && series.prize || getOshiageElitePrize(this.registry,
       venueId, Number(this.registry.get('wins') || 0) + 3);
-    const extraPrize = prize?.wheelId
-      ? 'BONUS  //  ' + String(prize.wheelLabel || 'SPECIAL RIMS').toUpperCase()
-      : 'BONUS  //  ' + Number(prize?.coupons || venue.couponCount) + ' CAR COUPONS';
+    const extraPrize = 'BONUS  //  ' +
+      Number(prize?.coupons ?? venue.couponCount) + ' CAR COUPONS' +
+      (prize?.wheelId ? '\n+ SPECIAL WHEELS' : '');
 
     // Match normal Meet's car-and-character presentation, but show just the
     // currently selected rival. The car is 30% larger than the old 510px one.
     if (opponent && car &&
         this.textures.exists(getCarBodyTextureKey(this, car))) {
       const carWidth = 663;
-      const carX = car.visual?.referenceStandard
-        ? STAGE.x + (STAGE.w - carWidth) / 2
-        : STAGE.x + STAGE.w * 0.60;
+      const carX = STAGE.x + STAGE.w / 2;
       this.drawOwnedCar(car, opponent.buildState,
         carX, 455, carWidth, opponent.paintColor, 12);
     }
 
-    const spriteKey = opponent && 'oshiageEliteRival_' + opponent.characterId;
+    const spriteKey = opponent && getCharacterVisualForContext(opponent.characterId, {
+      rivalContext: true,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    })?.spriteKey;
     if (spriteKey && this.textures.exists(spriteKey)) {
       const source = this.textures.get(spriteKey).getSourceImage();
-      const avatarX = STAGE.x + 163;
-      const feetY = STAGE.y + STAGE.h - 12;
+      const avatarX = STAGE.x + 255;
+      const feetY = STAGE.y + STAGE.h - 4;
       const scale = 315 / Math.max(1, source.height);
       const characterWidth = source.width * scale;
       this.own(this.add.ellipse(avatarX, feetY - 12,
@@ -693,7 +753,7 @@ export default class OshiageScene extends Phaser.Scene {
         String(rival.name).toUpperCase(), {
           pixel: true, size: '9px', color: '#f5ffff', depth: 26,
         }).setMask(this.stageMask);
-      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 53,
+      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 47,
         (rival.regionId || 'TOKYO') + ' // ELITE DRIVER', {
           pixel: true, size: '8px', color: '#8ddff1', depth: 26,
         }).setMask(this.stageMask);
@@ -723,14 +783,21 @@ export default class OshiageScene extends Phaser.Scene {
         const portraitX = x - 111;
         this.own(this.add.rectangle(portraitX, y, 105, 105, 0x101b27)
           .setStrokeStyle(1, 0x365775).setDepth(35));
-        const key = 'oshiageEliteRival_' + offer.characterId;
-        if (this.textures.exists(key)) {
-          const image = this.textures.get(key).getSourceImage();
-          this.own(this.add.image(portraitX, y + 53, key)
-            .setOrigin(0.5, 1)
-            .setScale(102 / Math.max(1, image.height))
-            .setDepth(36));
-        }
+        // Exactly the same face-anchor, zoom, and square crop as MeetScene.drawCards.
+        const portraitProfile = createCharacterProfile(this, {
+          characterId: offer.characterId,
+          pose: 'idle',
+          x: portraitX,
+          y,
+          frameWidth: 104,
+          frameHeight: 104,
+          side: 'left',
+          depth: 36,
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        });
+        if (portraitProfile?.image) this.own(portraitProfile.image);
+        if (portraitProfile?.maskShape) this.own(portraitProfile.maskShape);
         this.addText(x - 42, y - 52,
           String(character.name || 'RIVAL').toUpperCase(), {
             pixel: true, size: '8px', color: '#f6ffff',
@@ -742,7 +809,7 @@ export default class OshiageScene extends Phaser.Scene {
           size: '10px', color: '#a6c3d0',
           wrap: 208, depth: 37,
         });
-        this.addText(x - 42, y + 41,
+        this.addText(x - 42, y + 31,
           finished ? 'HEAT ' + (i + 1) + ' // WON'
             : 'HEAT ' + (i + 1) + ' // ' +
               String(character.regionId || 'TOKYO'), {
@@ -763,60 +830,64 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 18, SIDE.y + 18, 'SKYTREE ELITE MEET', {
       pixel: true, size: '12px', color: '#8feaff', wrap: SIDE.w - 36,
     });
-    this.addText(SIDE.x + 20, SIDE.y + 84, 'SHOWDOWN LOCATION', {
+    this.addText(SIDE.x + 20, SIDE.y + 67, 'SHOWDOWN LOCATION', {
       pixel: true, size: '9px', color: '#b5d2e5',
     });
-    this.button(SIDE.x + 94, SIDE.y + 144, 158, 49,
+    this.button(SIDE.x + 94, SIDE.y + 119, 158, 49,
       'SKYTREE\nUNDERPASS', () => this.selectEliteVenue('underpass'), {
         accent: venueId === 'underpass', size: '7px',
       });
-    this.button(SIDE.x + 265, SIDE.y + 144, 158, 49,
+    this.button(SIDE.x + 265, SIDE.y + 119, 158, 49,
       'SKYTREE\nPLAZA', () => this.selectEliteVenue('plaza'), {
         accent: venueId === 'plaza', size: '7px',
       });
 
-    this.addText(SIDE.x + 20, SIDE.y + 196, 'YOUR CAR', {
+    this.addText(SIDE.x + 20, SIDE.y + 169, 'YOUR CAR', {
       pixel: true, size: '9px', color: '#8feaff',
     });
-    this.addText(SIDE.x + 20, SIDE.y + 228,
-      playerCar ? String(playerCar.name || playerCar.shortName).toUpperCase()
-        : 'NO CAR SELECTED', {
-        pixel: true, size: '8px', color: '#f4faff', wrap: SIDE.w - 40,
+    // Share the normal Meet summary styling and estimated/dyno readings.
+    this.addText(SIDE.x + 20, SIDE.y + 197,
+      playerCar
+        ? playerCar.shortName + '\n' +
+          playerRating.powerLabel + '  •  ' + playerRating.torqueLabel
+        : 'NO CAR', {
+        size: '11px',
+        color: playerCar ? '#d8e7ef' : '#72838f',
+        spacing: -2,
+        wrap: SIDE.w - 40,
       });
     this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
-      SIDE.y + 279, SIDE.w - 34, 1, 0x31516a).setDepth(32));
+      SIDE.y + 246, SIDE.w - 34, 1, 0x31516a).setDepth(32));
 
-    this.addText(SIDE.x + 20, SIDE.y + 291,
-      '3-ELITE DRIVER SHOWDOWN', {
+    this.addText(SIDE.x + 20, SIDE.y + 258,
+      'THREE ELITE RIVALS', {
         pixel: true, size: '9px', color: '#8feaff', wrap: SIDE.w - 40,
       });
-    this.addText(SIDE.x + 20, SIDE.y + 330,
+    this.addText(SIDE.x + 20, SIDE.y + 292,
       'HEAT ' + (previewIndex + 1) + ' OF 3' +
       (continuing && previewIndex === activeHeat ? ' // UP NEXT' : ''), {
         pixel: true, size: '9px', color: '#ffe09a',
       });
-    this.addText(SIDE.x + 20, SIDE.y + 358,
+    this.addText(SIDE.x + 20, SIDE.y + 321,
       'CAR: ' + (car?.shortName || 'ELITE BUILD') +
       '\nRACE: ' + (opponent?.raceType || venue.raceType).toUpperCase() +
       '\nDISTANCE: ' + (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'), {
         size: '12px', color: '#e7f2fb', wrap: SIDE.w - 40, spacing: 3,
       });
 
-    this.addText(SIDE.x + 20, SIDE.y + 448, 'PRIZE', {
+    this.addText(SIDE.x + 20, SIDE.y + 405, 'PRIZE', {
       pixel: true, size: '10px', color: '#a4d7eb',
     });
-    this.addText(SIDE.x + 20, SIDE.y + 478,
+    this.addText(SIDE.x + 20, SIDE.y + 434,
       MONEY(venue.prizeCash), {
         pixel: true, size: '13px', color: '#ffdf70', wrap: SIDE.w - 40,
       });
-    this.addText(SIDE.x + 20, SIDE.y + 514, extraPrize, {
+    this.addText(SIDE.x + 20, SIDE.y + 471, extraPrize, {
       pixel: true, size: '7px', color: '#fbe7a4', wrap: SIDE.w - 40,
     });
-    this.addText(SIDE.x + 20, SIDE.y + 557,
-      'ENTRY FEE  //  ' + MONEY(venue.entryFee) +
-      (continuing ? '  (PAID)' : ''), {
-        pixel: true, size: '8px', color: '#c3d2df', wrap: SIDE.w - 40,
-      });
+    this.addText(SIDE.x + 20, SIDE.y + 510, 'WIN ALL 3 HEATS', {
+      pixel: true, size: '9px', color: '#a8efce', wrap: SIDE.w - 40,
+    });
 
     let status = '';
     if (!progress.complete) {
@@ -833,18 +904,21 @@ export default class OshiageScene extends Phaser.Scene {
         String(Math.floor((cooldown % 60000) / 1000)).padStart(2, '0');
     } else if (!access.allowed) {
       status = access.reason || 'UNAVAILABLE';
-    } else {
-      status = 'WIN ALL THREE HEATS FOR THE FULL PRIZE';
     }
-    this.addText(SIDE.x + 20, SIDE.y + 587, status, {
-      pixel: true, size: '7px',
-      color: canRace ? '#a8efce' : '#e6b7a2',
-      wrap: SIDE.w - 40,
-    });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 632,
-      SIDE.w - 38, 50,
+    // Show useful lockout/active-streak information only. The enabled
+    // action button already conveys that the player can start racing.
+    if (status) {
+      this.addText(SIDE.x + 20, SIDE.y + 535, status, {
+        pixel: true, size: '7px',
+        color: canRace ? '#a8efce' : '#e6b7a2',
+        wrap: SIDE.w - 40,
+      });
+    }
+    // Bottom of race button is 15px above the Go to Map button.
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 614,
+      SIDE.w - 38, 48,
       continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
-        : 'RACE FOR ' + MONEY(venue.prizeCash) + '  >',
+        : 'ENTER  //  ' + MONEY(venue.entryFee) + '  >',
       () => this.startEliteRace(venueId), {
         disabled: !canRace, accent: true, size: '8px',
       });
@@ -909,7 +983,7 @@ export default class OshiageScene extends Phaser.Scene {
       this.renderView();
       return;
     }
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
@@ -941,7 +1015,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 155, 'EXTERIOR CUSTOMISATION',
       { pixel: true, size: '10px', color: '#ffe5b0', wrap: SIDE.w - 40 });
     this.addText(SIDE.x + 20, SIDE.y + 220,
-      'PAINT: Preset finishes cost ¥8,000, and custom paint selection for ¥16,000.\n\n' +
+      'PAINT: Factory stock ¥8,000, named street finishes ¥12,000, or custom colour ¥16,000.\n\n' +
       'RIMS: Try and buy new and rare wheel designs, or install designs already in your collection.',
       { size: '10px', bold: true, wrap: SIDE.w - 40, color: '#9ab0bd', spacing: 5 });
     this.addText(48, 660, 'OSHIAGE CUSTOM WORKS // SELECT A SERVICE',
@@ -967,7 +1041,8 @@ export default class OshiageScene extends Phaser.Scene {
     this.room = room;
     this.pendingPaint = null;
     if (room === 'paint') {
-      this.paintMode = 'preset';
+      this.paintMode = 'stock';
+      this.paintPage = 0;
       this.paintPickerHue = null;
     }
     if (room === 'rims') {
@@ -1284,8 +1359,9 @@ export default class OshiageScene extends Phaser.Scene {
 
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
-    const mode = this.paintMode === 'custom' ? 'custom' : 'preset';
-    const fee = mode === 'custom' ? 16000 : 8000;
+    const mode = this.paintMode === 'custom' ? 'custom' :
+      this.paintMode === 'street' ? 'street' : 'stock';
+    const fee = mode === 'custom' ? 16000 : mode === 'street' ? 12000 : 8000;
     this.sideHeader('SPRAY PAINT STUDIO',
       car ? String(car.shortName || car.name || id).toUpperCase() : 'NO CAR SELECTED');
 
@@ -1297,32 +1373,74 @@ export default class OshiageScene extends Phaser.Scene {
       const current = getCarPaintColor(state);
       if (this.pendingPaint == null) {
         this.pendingPaint = mode === 'custom' && this.customPaintColor != null
-          ? this.customPaintColor : current;
+          ? this.customPaintColor : mode === 'street' && this.streetPaintColor != null
+            ? this.streetPaintColor : mode === 'stock' && this.stockPaintColor != null
+              ? this.stockPaintColor : current;
       }
-      const paintable = hasLayeredPaintAssets(this, car);
+      // Allow properly recruited crew loans, never Ginza demos or sealed
+      // collector cars, even though those also have an ownedCarIds entry.
+      const paintable = Boolean(hasLayeredPaintAssets(this, car) &&
+        !car.tuningLocked && !state.tuningLocked && !state.collector &&
+        !state.immutable && (!car.crewLoan || this.isCrewCarSelected()) &&
+        (!state.crewLoan || this.isCrewCarSelected()));
       const canBuy = Number(this.registry.get('garageTier') || 0) >= 1;
-      // Lower the side-profile car roughly one wheel width inside the bay.
+      // Fine-tune the side-profile placement without shifting the paint
+      // booth artwork, character, controls or other workshop cars.
       this.paintObjects = this.drawOwnedCar(
-        car, state, 609, 410, 483, this.pendingPaint
+        car, state, 609, 419, 483, this.pendingPaint
       );
       this.addText(SIDE.x + 20, SIDE.y + 145,
-        mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM COLOUR PICKER',
+        mode === 'stock' ? 'FACTORY STOCK PALETTE' :
+          mode === 'street' ? 'STREET TUNER FINISHES' : 'CUSTOM COLOUR PICKER',
         { pixel: true, size: '9px', color: '#ffe394' });
-      if (mode === 'preset') {
+      if (mode !== 'custom') {
         this.addText(SIDE.x + 20, SIDE.y + 182, 'CHOOSE A FINISH',
           { pixel: true, size: '8px', color: '#96b6c7' });
-        PAINT_PRESETS.forEach((preset, i) => {
-          const x = SIDE.x + 48 + (i % 5) * 62;
-          const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
-          const active = preset.color === this.pendingPaint;
-          const swatch = this.own(this.add.rectangle(x, y, 44, 42, preset.color)
-            .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
-          if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            if (this.paintBusy) return;
-            this.pendingPaint = preset.color;
+        const palette = mode === 'stock'
+          ? getFactoryPaintPalette(getBaseCarId(id)) : getStreetPaintPalette();
+        const pageCount = Math.max(1, Math.ceil(palette.length / 10));
+        this.paintPage = Math.min(Math.max(0, this.paintPage || 0), pageCount - 1);
+        if (!palette.length) {
+          this.addText(SIDE.x + 20, SIDE.y + 245, 'COLLECTOR FINISH // NO FACTORY PALETTE',
+            { pixel: true, size: '7px', color: '#96b6c7', wrap: SIDE.w - 40 });
+        }
+        // Keep the existing swatch size and show ten at a time.
+        // Extra street finishes live on page two, never under the name label.
+        if (pageCount > 1) {
+          this.button(SIDE.x + 214, SIDE.y + 191, 32, 28, '<', () => {
+            this.paintPage -= 1;
             this.renderView();
+          }, { disabled: this.paintPage === 0, size: '9px' });
+          this.addText(SIDE.x + 236, SIDE.y + 183,
+            (this.paintPage + 1) + '/' + pageCount,
+            { pixel: true, size: '8px', color: '#9dc4d9' });
+          this.button(SIDE.x + 318, SIDE.y + 191, 32, 28, '>', () => {
+            this.paintPage += 1;
+            this.renderView();
+          }, { disabled: this.paintPage >= pageCount - 1, size: '9px' });
+        }
+        palette.slice(this.paintPage * 10, this.paintPage * 10 + 10)
+          .forEach((preset, i) => {
+            const x = SIDE.x + 48 + (i % 5) * 62;
+            const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
+            const active = preset.color === this.pendingPaint;
+            const swatch = this.own(this.add.rectangle(x, y, 44, 42, preset.color)
+              .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
+            if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+              if (this.paintBusy) return;
+              this.pendingPaint = preset.color;
+              if (mode === 'street') this.streetPaintColor = preset.color;
+              else this.stockPaintColor = preset.color;
+              this.renderView();
+            });
           });
-        });
+        const selectedFinish = palette.find(p => p.color === this.pendingPaint);
+        this.addText(SIDE.x + 20, SIDE.y + 400,
+          selectedFinish
+            ? 'SELECTED // ' + selectedFinish.name.toUpperCase() +
+              (selectedFinish.code ? ' // ' + selectedFinish.code : '')
+            : 'SELECTED // CUSTOM / OTHER FINISH',
+          { pixel: true, size: '8px', color: '#dceaf2', wrap: SIDE.w - 40 });
       } else {
         this.addText(SIDE.x + 20, SIDE.y + 183,
           'TAP OR DRAG TO SELECT A COLOUR',
@@ -1346,9 +1464,11 @@ export default class OshiageScene extends Phaser.Scene {
     this.drawCustomWorksSpecialist({ x: 1066, feetY: STAGE.y + STAGE.h - 35 });
     this.addText(48, 654, 'CUSTOM WORKS // SPRAY BOOTH // SIDE PROFILE',
       { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(316, 744, 545, 66, 'PRESET // ¥8,000', () => this.setPaintMode('preset'),
-      { accent: mode === 'preset', size: '8px' });
-    this.button(860, 744, 545, 66, 'CUSTOM COLOUR // ¥16,000', () => this.setPaintMode('custom'),
+    this.button(217, 744, 350, 66, 'STOCK // ¥8,000', () => this.setPaintMode('stock'),
+      { accent: mode === 'stock', size: '8px' });
+    this.button(593, 744, 350, 66, 'STREET // ¥12,000', () => this.setPaintMode('street'),
+      { accent: mode === 'street', size: '8px' });
+    this.button(969, 744, 350, 66, 'CUSTOM // ¥16,000', () => this.setPaintMode('custom'),
       { accent: mode === 'custom', size: '8px' });
     this.addText(48, 794, this.paintBusy ? 'CAR ENTERING / SPRAYING...' :
       'Side-entry spray bay // real car paint layers // colour preview before purchase.',
@@ -1356,13 +1476,20 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   setPaintMode(mode) {
-    if (!['preset', 'custom'].includes(mode) || this.paintBusy) return;
+    if (!['stock', 'street', 'custom'].includes(mode) || this.paintBusy) return;
     if (this.paintMode === 'custom') this.customPaintColor = this.pendingPaint;
+    if (this.paintMode === 'street' && getStreetPaintPalette().some(p => p.color === this.pendingPaint))
+      this.streetPaintColor = this.pendingPaint;
+    if (this.paintMode === 'stock' &&
+        getFactoryPaintPalette(getBaseCarId(this.selectedCar().id)).some(p => p.color === this.pendingPaint))
+      this.stockPaintColor = this.pendingPaint;
     this.paintMode = mode;
+    this.paintPage = 0;
     this.paintPickerHue = null;
     const current = getCarPaintColor(this.selectedCar().state);
-    this.pendingPaint = mode === 'custom'
-      ? (this.customPaintColor ?? current) : current;
+    this.pendingPaint = mode === 'custom' ? (this.customPaintColor ?? current)
+      : mode === 'street' ? (this.streetPaintColor ?? current)
+        : (this.stockPaintColor ?? current);
     this.renderView();
   }
 
@@ -1479,13 +1606,23 @@ export default class OshiageScene extends Phaser.Scene {
   }
   applyPaint(carId, color, cost) {
     if (this.paintBusy || this.room !== 'paint') return;
+    const { id: selectedId, car } = this.selectedCar();
+    if (selectedId !== carId || !car || !this.isSchoolCarEligible(car, carId) ||
+        car.tuningLocked) return;
     const owned = this.registry.get('ownedCarIds') || [];
     if (!owned.includes(carId)) return;
     const current = (this.registry.get('carStates') || {})[carId] || {};
+    if (current.collector || current.tuningLocked || current.immutable ||
+        (current.crewLoan && !this.isCrewCarSelected()) ||
+        !hasLayeredPaintAssets(this, car)) return;
     const paintColor = normalisePaintColor(color);
+    if (this.paintMode === 'stock' &&
+        !getFactoryPaintPalette(getBaseCarId(carId)).some(p => p.color === paintColor)) return;
+    if (this.paintMode === 'street' &&
+        !getStreetPaintPalette().some(p => p.color === paintColor)) return;
     if (getCarPaintColor(current) === paintColor) return;
     if (Number(this.registry.get('garageTier') || 0) < 1) return;
-    if (cost !== (this.paintMode === 'custom' ? 16000 : 8000)) return;
+    if (cost !== (this.paintMode === 'custom' ? 16000 : this.paintMode === 'street' ? 12000 : 8000)) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < cost) return;
     this.paintBusy = true;
@@ -1498,23 +1635,37 @@ export default class OshiageScene extends Phaser.Scene {
     saveSessionState(this.registry);
     this.cashText.setText(MONEY(cash - cost));
     setCarBodyPaint(this.paintObjects, paintColor);
-    const sparkObjects = [];
-    for (let i = 0; i < 34; i++) {
-      const x = 310 + Phaser.Math.Between(0, 630);
-      const y = 263 + Phaser.Math.Between(0, 155);
-      const mist = this.add.circle(x, y, Phaser.Math.Between(9, 26), paintColor, 0.25)
+    // Darken and densify the paint-coloured spray without obscuring the
+    // car. Pure pastel/white particles previously disappeared into the bright
+    // booth, particularly at 0.25 opacity.
+    const sprayRgb = paintColorToRgb(paintColor);
+    const sprayShade = rgbToPaintColor(
+      40 + sprayRgb.r * 0.48,
+      40 + sprayRgb.g * 0.48,
+      40 + sprayRgb.b * 0.48
+    );
+    for (let i = 0; i < 46; i++) {
+      // Aim the darker spray slightly left and lower across the body.
+      const x = 230 + Phaser.Math.Between(0, 630);
+      const y = 298 + Phaser.Math.Between(0, 155);
+      const mist = this.add.circle(x, y, Phaser.Math.Between(11, 28), sprayShade, 0.49)
         .setMask(this.stageMask).setDepth(24);
-      sparkObjects.push(mist);
-      this.tweens.add({ targets: mist, alpha: 0, x: x + 55,
-        duration: 480 + i * 18, delay: i * 23, onComplete: () => mist.destroy() });
+      this.tweens.add({ targets: mist, alpha: 0, x: x + 64,
+        duration: 510 + i * 15, delay: i * 18, onComplete: () => mist.destroy() });
     }
     this.time.delayedCall(1250, () => {
       this.paintBusy = false;
       this.pendingPaint = paintColor;
       this.renderView();
-      this.addText(405, 652, 'PAINT COMPLETE // ' + MONEY(cost), {
-        pixel: true, size: '12px', color: '#8cffe4', depth: 34,
-      });
+      // Keep the success label entirely inside the picture window. The
+      // lower status strip begins beneath the stage and must stay clear.
+      const noticeX = STAGE.x + 236;
+      const noticeY = STAGE.y + STAGE.h - 38;
+      this.own(this.add.rectangle(noticeX, noticeY, 414, 44, 0x061a21, 0.87)
+        .setStrokeStyle(2, 0x65dbc8).setMask(this.stageMask).setDepth(33));
+      this.addText(noticeX, noticeY, 'PAINT COMPLETE // ' + MONEY(cost), {
+        pixel: true, size: '11px', color: '#8cffe4', depth: 34,
+      }).setOrigin(0.5);
     });
   }
   openMap() {
@@ -1522,14 +1673,19 @@ export default class OshiageScene extends Phaser.Scene {
     showTravelMap(this, {
       currentLocationId: this.activeLocationId,
       title: 'TOKYO REGION MAP', actionVerb: 'DRIVE', allowCurrentAction: false,
+      travelMode: this.isCrewCarSelected() ? 'crew' : 'default',
       onHome: (workshopLocationId, cost) => this.returnHome(workshopLocationId, cost),
       onTravel: (locationId, cost) => this.travelTo(locationId, cost),
     });
   }
   travelTo(locationId, cost = 0) {
-    if (this.paintBusy) return;
+    if (this.paintBusy || !canVisitDuringGinzaLoan(this.registry, locationId)) return;
     const target = getTravelLocation(locationId);
     if (!target) return;
+    // Crew travel is limited to street regions, Driving School and Custom
+    // Works. Keep the pro/elite Skytree racing event and Ginza restricted.
+    if (this.isCrewCarSelected() && (target.regionId === 'CENTRAL_TOKYO' ||
+        locationId === 'oshiageSkytreeMeet')) return;
     const amount = Math.max(0, Number(cost || 0));
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < amount) return;
@@ -1553,6 +1709,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.scene.start('MeetScene');
   }
   returnHome(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    if (isGinzaLoanActive(this.registry)) return;
     const cash = Number(this.registry.get('cash') || 0);
     const price = Math.max(0, Number(cost || 0));
     if (cash < price || this.paintBusy) return;

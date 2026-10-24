@@ -1,0 +1,44 @@
+name: R645 Normalize Verified Background Canvas Outliers
+on:
+  push:
+    branches: [feature/background-standards-r645]
+    paths:
+      - 'scripts/normalize_backgrounds.py'
+      - 'scripts/render_background_review_sheets.py'
+      - 'scripts/audit_backgrounds.py'
+      - '.github/workflows/normalize-backgrounds-r645.yml'
+permissions:
+  contents: write
+jobs:
+  resample-only-known-outliers:
+    if: github.ref_name == 'feature/background-standards-r645'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/background-standards-r645
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image dependency
+        run: python3 -m pip install --disable-pip-version-check 'Pillow>=10,<12'
+      - name: Normalize the eight known 1536x864 assets, no crop or color transform
+        run: python3 scripts/normalize_backgrounds.py --apply
+      - name: Assert all affected raw image dimensions
+        run: python3 scripts/normalize_backgrounds.py --check
+      - name: Build inspectable background inventory after normalization
+        run: python3 scripts/audit_backgrounds.py --json docs/background-audit/inventory.json --markdown docs/background-audit/INVENTORY.md
+      - name: Render real-art background review sheets
+        run: python3 scripts/render_background_review_sheets.py
+      - name: Commit normalized assets, inventory, and review sheets to isolated R645 branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- docs/background-audit/inventory.json docs/background-audit/INVENTORY.md docs/background-audit/sheets/*.webp
+          git add -- assets/Garage/shinonome_warehouse_day.png assets/Locations/TunerShops/shinagawa_zerosports_day.png assets/Meet/Day/shibuya_center_gai_day.png assets/Meet/Day/shibuya_scramble_day.png assets/Meet/Day/shinagawa_konan_day.png assets/Meet/Day/shinagawa_oi_wharf_day.png assets/Meet/Day/yokohama_bay_bridge_day.png assets/Meet/Day/yokohama_minato_mirai_day.png
+          if ! git diff --staged --quiet; then
+            git commit -m "R645 standardize background canvases and record actual source image geometry"
+            git push origin HEAD:feature/background-standards-r645
+          fi

@@ -15,6 +15,7 @@ import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../dat
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js';
 import { playMusic } from '../audio/MusicManager.js';
+import { isArkonName, validArkonCreationPin } from '../data/specialProfileRewards.js';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -168,16 +169,28 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const form = document.getElementById('driver-name-overlay');
     const firstInput = document.getElementById('driverFirstName');
     const lastInput = document.getElementById('driverLastName');
+    const pinInput = document.getElementById('arkonCreationPin');
+    const pinRow = document.getElementById('arkon-pin-row');
 
     if (firstInput) firstInput.value = '';
     if (lastInput) lastInput.value = '';
+    if (pinInput) pinInput.value = '';
+    const updatePinVisibility = () => {
+      const needed = isArkonName(firstInput?.value, lastInput?.value);
+      if (pinRow) pinRow.hidden = !needed;
+      form?.classList.toggle('needs-owner-pin', needed);
+      if (!needed && pinInput) pinInput.value = '';
+    };
+    if (firstInput) firstInput.oninput = updatePinVisibility;
+    if (lastInput) lastInput.oninput = updatePinVisibility;
+    updatePinVisibility();
 
     form?.classList.add('is-visible');
     form?.setAttribute('aria-hidden', 'false');
 
     this.input.keyboard?.clearCaptures?.();
 
-    [firstInput, lastInput].filter(Boolean).forEach(input => {
+    [firstInput, lastInput, pinInput].filter(Boolean).forEach(input => {
       input.onkeydown = event => event.stopPropagation();
       input.onkeyup = event => event.stopPropagation();
       input.onkeypress = event => event.stopPropagation();
@@ -264,6 +277,12 @@ export default class CharacterSelectScene extends Phaser.Scene {
       this.nameError.setText('ENTER A FIRST AND LAST NAME');
       return;
     }
+    if (!validArkonCreationPin(firstName, lastName,
+        document.getElementById('arkonCreationPin')?.value || '')) {
+      this.nameError.setText('ARKON DEN // ENTER THE CORRECT 4-DIGIT PIN');
+      document.getElementById('arkonCreationPin')?.focus();
+      return;
+    }
 
     // The new intro begins on foot. No starter vehicle exists until Sayaka delivers it.
     const state = createDefaultGameState({ starterCarId: 'ae86' });
@@ -276,9 +295,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     state.firstName = firstName;
     state.lastName = lastName;
 
-    const isDevProfile = (
-      firstName.toLowerCase() + lastName.toLowerCase()
-    ).replace(/[^a-z0-9]/g, '') === 'arkonden';
+    const isDevProfile = isArkonName(firstName, lastName);
     if (isDevProfile) {
       state.devMode = true;
       state.cash = 1000000000;

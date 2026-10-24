@@ -56,7 +56,8 @@ test('reconciled source keeps one module identity and upstream recruitment safeg
  }
  const meet=fs.readFileSync('src/scenes/MeetScene.js','utf8');
  assert.match(meet,/retryDeferredUntilExit/);assert.match(meet,/createCrewRecruitVsLabel/);
- assert.match(meet,/recruitRules\.playerDifficulty !== 'HARD'/);
+ assert.match(meet,/recruitRules\.playerDifficulty === 'EASY'[\s\S]*?getEncounterAi\(2\)/);
+ assert.match(meet,/recruitRules\.playerDifficulty === 'STANDARD'[\s\S]*?getEncounterAi\(4\)/);
  const race=fs.readFileSync('src/scenes/RaceScene.js','utf8');
  assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
 });

@@ -11,9 +11,9 @@ Upload each finished transparent PNG sprite into this folder using the exact fil
 | Aya Kurose | `aya_kurose.png` | `characterAyaKurose` |
 | Kaito Fujimori | `kaito_fujimori.png` | `characterKaitoFujimori` |
 | Haru Tachibana | `haru_tachibana.png` | `characterHaruTachibana` |
-| Reina Shibata | `reina_shibata.png` | `characterReinaShibata` |
+| Reina Shibata | `reina_shibata_idle.png` | `characterReinaShibata` |
 | Riku Akamine | `riku_akamine.png` | `characterRikuAkamine` |
-| Emi Kanzaki | `emi_kanzaki.png` | `characterEmiKanzaki` |
+| Emi Kanzaki | `emi_kanzaki_idle.png` | `characterEmiKanzaki` |
 
 The seven playable lead racers have selectable appearances; Daichi is the non-selectable workshop companion.
 

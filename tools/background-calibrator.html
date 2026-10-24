@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tokyo SHIFT — Background Geometry Review</title>
+<style>
+:root{color-scheme:dark;background:#08111d;color:#e6f4fa;font:15px/1.45 system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;padding:25px;max-width:1460px;margin-inline:auto}
+h1{font-size:25px;margin:0 0 5px;letter-spacing:.04em}p{margin:.3em 0 16px;color:#b4c6d6}
+button,select,input{accent-color:#58d3d4;font:inherit}button,select{border:1px solid #4a778b;background:#162b3a;color:#e7f9ff;padding:9px 12px;border-radius:5px}
+button{cursor:pointer}button:hover{background:#234157}select{width:100%;max-width:100%}
+small{color:#a7baca}fieldset{border:1px solid #325168;border-radius:8px;padding:12px;margin:10px 0 16px}
+legend{font-weight:700;padding:0 7px;color:#ccebf2}label{display:grid;gap:5px;font-weight:550;font-size:13px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:10px}
+.main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.panel{background:#102031;border:1px solid #345166;padding:9px;border-radius:8px;min-width:0}
+.panel canvas{width:100%;height:auto;border-radius:4px;display:block;image-rendering:auto;background:#060c13}
+.panel h2{font-size:15px;margin:0 0 6px}.note{margin-top:5px;word-break:break-all;font-size:12px}
+.linecontrol{display:grid;grid-template-columns:120px 1fr 52px;align-items:center;gap:10px;margin:8px 0}
+.linecontrol input{width:100%}.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+#export{width:100%;height:100px;background:#08121f;color:#def3fc;border:1px solid #33546d;border-radius:6px;padding:9px;font:12px ui-monospace,monospace}
+h3{margin:8px 0}.caveat{border-left:3px solid #e8ae68;padding:8px 12px;background:#28251e;color:#f3d9b3}
+@media(max-width:800px){body{padding:12px}.main,.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>TOKYO SHIFT // BACKGROUND GEOMETRY REVIEW</h1>
+<p>R645 · Source artworks. Compare real images at identical perspective reference lines. This tool doesn't edit production assets or player saves.</p>
+<div class="caveat"><strong>Canvas consistency is not perspective consistency.</strong> Colored lines are the proposed family standard, not measurements of the painted horizon. Compare the road/garage floor markings and architecture visually before approving any location.</div>
+<fieldset><legend>Choose the scene family and two artwork variants</legend>
+<div class="controls">
+<label>Environment group<select id="group"></select></label>
+<label>Background A<select id="a"></select></label>
+<label>Background B (day/night or another location)<select id="b"></select></label>
+</div></fieldset>
+<div class="main">
+<section class="panel"><h2 id="labelA">BACKGROUND A</h2><canvas id="cA" width="800" height="450"></canvas><div class="note" id="pathA"></div></section>
+<section class="panel"><h2 id="labelB">BACKGROUND B</h2><canvas id="cB" width="800" height="450"></canvas><div class="note" id="pathB"></div></section>
+</div>
+<fieldset><legend>Master guide lines (normalised 0–1 of ORIGINAL source image)</legend>
+<div class="linecontrol"><label for="h">Horizon</label><input type="range" id="h" min="0.05" max="0.80" step="0.005"><output id="hValue"></output></div>
+<div class="linecontrol"><label for="back">Farthest floor / back limit</label><input type="range" id="back" min="0.06" max="0.94" step="0.005"><output id="backValue"></output></div>
+<div class="linecontrol"><label for="ref">Reference ground line</label><input type="range" id="ref" min="0.10" max="0.98" step="0.005"><output id="refValue"></output></div>
+<div class="linecontrol"><label for="near">Near / foreground limit</label><input type="range" id="near" min="0.15" max="1" step="0.005"><output id="nearValue"></output></div>
+<div class="actions">
+<button id="reset">Reset to proposed family standard</button>
+<label><input type="checkbox" id="grid" checked> Show 10% grid</label>
+<label><input type="checkbox" id="sample" checked> Show sample character and car</label>
+<button id="copy">Copy calibration JSON</button>
+</div>
+</fieldset>
+<h3>Calibration values (preview only)</h3>
+<textarea id="export" readonly spellcheck="false"></textarea>
+<p><small>Artwork is fitted uniformly (no distortion). The coordinates refer to original image height, so the same lines apply to a cropped gameplay panel or to a full-screen Story Director scene. Road-side scrolling renders require a different adapter. Master image canvas for active meet and vehicle-workshop scenery: 1672 × 941 px. Offices and Auto Market have deliberately separate camera/aspect profiles.</small></p>
+<script type="module">
+const family={
+  'WORKSHOPS / GARAGES':['workshop_core','workshop_tuner','workshop_crew','workshop_dyno'],
+  'OUTDOORS / MEETS':['outdoor_meet','outdoor_oshiage','outdoor_central'],
+  'OTHER STORY INTERIORS':['interior_ginza','interior_market','interior_office','interior_oshiage','interior_registration'],
+  'DYNAMIC RACING (REFERENCE ONLY)':['race_skyline','race_multilayer'],
+};
+const defaults={
+  workshop_core:{h:.34,back:.54,ref:.78,near:.95},workshop_tuner:{h:.34,back:.54,ref:.78,near:.95},
+  workshop_crew:{h:.34,back:.54,ref:.78,near:.95},workshop_dyno:{h:.34,back:.54,ref:.78,near:.95},
+  outdoor_meet:{h:.40,back:.52,ref:.76,near:.94},outdoor_oshiage:{h:.40,back:.52,ref:.76,near:.94},
+  outdoor_central:{h:.40,back:.52,ref:.76,near:.94},
+  interior_ginza:{h:.34,back:.54,ref:.78,near:.95},interior_market:{h:.34,back:.54,ref:.78,near:.95},
+  interior_office:{h:.34,back:.54,ref:.78,near:.95},interior_oshiage:{h:.34,back:.54,ref:.78,near:.95},
+  interior_registration:{h:.34,back:.54,ref:.78,near:.95},
+  race_skyline:{h:.40,back:.54,ref:.78,near:.95},race_multilayer:{h:.40,back:.54,ref:.78,near:.95},
+};
+const $=id=>document.getElementById(id);
+let entries=[],images=new Map(),cfg={...defaults.outdoor_meet},selectedA=null,selectedB=null;
+const source=url=>'../'+url;
+const spriteSources=['../assets/Characters/arkon_den_idle.png','../assets/Cars/stock/ae86_stock_body.png'];
+const spriteImages=spriteSources.map(src=>{const img=new Image();img.src=src;img.onload=()=>draw();return img;});
+function option(select,label,value){const el=document.createElement('option');el.value=value;el.textContent=label;select.appendChild(el);}
+function short(path){return path.split('/').pop().replace(/\.(png|webp)$/i,'').replaceAll('_',' ');}
+const matchPartner = entry=>{
+ if(!entry)return null;
+ const v=entry.path;
+ const target= v.includes('_day.')?v.replace('_day.','_night.').replace('/Day/','/Night/'):
+   v.includes('_night.')?v.replace('_night.','_day.').replace('/Night/','/Day/'):null;
+ return entries.find(x=>x.path===target)||null;
+};
+function selectGroup(){
+ const g=$('group').value;
+ const groups=family[g]||[];
+ const matches=entries.filter(x=>groups.includes(x.group)&&x.width);
+ for(const id of ['a','b']){$(id).replaceChildren();for(const v of matches)option($(id),short(v.path),v.path)}
+ $('a').value=matches[0]?.path||'';
+ selectedA=matches[0]||null;
+ selectedB=matchPartner(selectedA)||matches[1]||selectedA;
+ $('b').value=selectedB?.path||'';
+ setDefaults();draw();
+}
+function setDefaults(){cfg={...(defaults[selectedA?.group]||defaults.outdoor_meet)};draw();}
+function selectAsset(which){
+ const value=$(which).value;
+ const curr=entries.find(x=>x.path===value);
+ if(which==='a'){
+   selectedA=curr;selectedB=matchPartner(curr)||curr;
+   $('b').value=selectedB?.path||'';
+   setDefaults();
+ }else selectedB=curr;
+ draw();
+}
+function fitImage(entry,canvas){
+ const ctx=canvas.getContext('2d');
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#05090f';ctx.fillRect(0,0,w,h);
+ if(!entry)return null;
+ let img=images.get(entry.path);
+ if(!img){img=new Image();img.src=source(entry.path);img.onload=draw;images.set(entry.path,img)}
+ const iw=img.naturalWidth||entry.width,ih=img.naturalHeight||entry.height;
+ const scale=Math.min(w/iw,h/ih);
+ const W=iw*scale,H=ih*scale,x=(w-W)/2,y=(h-H)/2;
+ if(img.complete&&img.naturalWidth){ctx.imageSmoothingEnabled=true;ctx.drawImage(img,x,y,W,H)}
+ else {ctx.fillStyle='#8391a1';ctx.fillText('Loading artwork...',20,30)}
+ return {ctx,x,y,W,H};
+}
+function horizontal(view,v,color,label){
+ const {ctx,x,y,W,H}=view;
+ const py=y+H*v;ctx.lineWidth=2;ctx.setLineDash([7,5]);
+ ctx.strokeStyle=color;ctx.beginPath();ctx.moveTo(x,py);ctx.lineTo(x+W,py);ctx.stroke();
+ ctx.setLineDash([]);ctx.fillStyle=color;
+ ctx.fillRect(x+3,py-17,96,16);ctx.fillStyle='#08111d';ctx.font='bold 11px system-ui';
+ ctx.fillText(label+' '+v.toFixed(3),x+7,py-5);
+}
+function sampleSilhouette(view,kind,u,ground){
+ const {ctx,x,y,W,H}=view;
+ const h=cfg.h,ref=cfg.ref;
+ const f=Math.max(.14,Math.min(1.6,Math.pow(Math.max(0,(ground-h)/Math.max(.02,ref-h)),kind==='car'?1:.9)));
+ const sprite=spriteImages[kind==='car'?1:0];
+ const target=kind==='car'?W*.42*f:H*.40*f;
+ if(!sprite.complete||!sprite.naturalWidth)return;
+ const sw=kind==='car'?target:target*sprite.naturalWidth/sprite.naturalHeight;
+ const sh=kind==='car'?sw*sprite.naturalHeight/sprite.naturalWidth:target;
+ // Car body PNG isn't the complete modular car renderer; this is solely a depth reference.
+ ctx.globalAlpha=.88;ctx.drawImage(sprite,x+W*u-sw/2,y+H*ground-sh,sw,sh);ctx.globalAlpha=1;
+}
+function drawOne(canvas,entry){
+ const v=fitImage(entry,canvas);if(!v)return;
+ const {ctx,x,y,W,H}=v;
+ if($('grid').checked){ctx.strokeStyle='#ffffff44';ctx.setLineDash([2,6]);ctx.lineWidth=1;
+ for(let n=1;n<10;n++){ctx.beginPath();ctx.moveTo(x,y+H*n/10);ctx.lineTo(x+W,y+H*n/10);ctx.stroke()}
+ ctx.setLineDash([])}
+ horizontal(v,cfg.h,'#f1df8a','H');
+ horizontal(v,cfg.back,'#f4a86c','BACK');
+ horizontal(v,cfg.ref,'#60dcd4','REF');
+ horizontal(v,cfg.near,'#f38eb0','NEAR');
+ if($('sample').checked){sampleSilhouette(v,'car',.66,cfg.ref);
+   sampleSilhouette(v,'character',.23,cfg.ref);}
+}
+function draw(){
+ for(const k of ['h','back','ref','near']){$(k).value=cfg[k];$(k+'Value').value=cfg[k].toFixed(3)}
+ drawOne($('cA'),selectedA);drawOne($('cB'),selectedB);
+ $('labelA').textContent=selectedA?.group||'BACKGROUND A';
+ $('labelB').textContent=selectedB?.group||'BACKGROUND B';
+ for(const [key,entry] of [['pathA',selectedA],['pathB',selectedB]]){
+   $(key).textContent=entry?entry.path+' — '+entry.width+' × '+entry.height:'Not selected';
+ }
+ const out={status:'PROVISIONAL / REVIEW REQUIRED',family:selectedA?.group||null,
+   masterCanvas:[1672,941],lineReference:'normalized original image height',
+   proposedLines:cfg,backgrounds:[selectedA?.path,selectedB?.path].filter(Boolean)};
+ $('export').value=JSON.stringify(out,null,2);
+}
+for(const k of ['h','back','ref','near'])$(k).addEventListener('input',()=>{
+ cfg[k]=Number($(k).value);
+ cfg.h=Math.min(cfg.h,cfg.back-.01);
+ cfg.back=Math.max(cfg.back,cfg.h+.01);
+ cfg.ref=Math.max(cfg.ref,cfg.back+.01);
+ cfg.near=Math.max(cfg.near,cfg.ref+.01);
+ draw();
+});
+for(const k of ['grid','sample'])$(k).addEventListener('change',draw);
+$('group').addEventListener('change',selectGroup);
+$('a').addEventListener('change',()=>selectAsset('a'));
+$('b').addEventListener('change',()=>selectAsset('b'));
+$('reset').addEventListener('click',setDefaults);
+$('copy').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText($('export').value);$('copy').textContent='Copied!'}
+ catch{ $('export').select();document.execCommand('copy');$('copy').textContent='Selected for copy'}
+});
+try{
+ const r=await fetch('../docs/background-audit/inventory.json',{cache:'no-store'});
+ if(!r.ok)throw new Error('Inventory not found ('+r.status+')');
+ const data=await r.json();entries=data.images;
+ for(const f of Object.keys(family))option($('group'),f,f);
+ selectGroup();
+}catch(e){$('export').value='Unable to open inventory: '+e.message+'\nGitHub Pages must publish the R645 asset manifest first.'}
+</script>
+</body>
+</html>

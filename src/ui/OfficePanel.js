@@ -4,6 +4,8 @@ import { getCrewBattleProgress } from '../data/crewSystem.js';
 import { showMagazinePanel } from './CarHistoryPanel.js';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js';
+import { showStoryArchivePanel } from './StoryArchivePanel.js';
+import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -250,6 +252,20 @@ export function showOfficePanel(scene) {
     color: '#eefaff',
   }).setOrigin(0.5).setDepth(215));
   back.on('pointerdown', closeOffice);
+
+  if(scene.registry.get('openingChapter') !== 'magazine'){
+    // Shared Office location for completed-chapter replays. No micro scenes
+    // are ever shown here; Arkon Den keeps those in D) SCENES.
+    const archiveP=point(frame,.848,.055);
+    const archiveButton=add(scene.add.rectangle(archiveP.x,archiveP.y,266,48,0x172d40,.97)
+      .setStrokeStyle(2,0xf7b0d4,.94).setInteractive({useHandCursor:true}).setDepth(214));
+    add(scene.add.text(archiveP.x,archiveP.y,
+      scene.registry.get('gameMode')==='arkonStory'?'RECOUNT STORY  >':'STORY ARCHIVE  >',{
+      fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(215));
+    archiveButton.on('pointerdown',()=>scene.registry.get('gameMode')==='arkonStory'
+      ? showArkonStoryArchivePanel(scene) : showStoryArchivePanel(scene));
+  }
 
   const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
   // One canonical Issue 01 viewer for the first read and every later visit.

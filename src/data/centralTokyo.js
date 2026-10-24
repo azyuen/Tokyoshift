@@ -415,6 +415,7 @@ function value(source, key, fallback = null) {
 }
 
 export function isArkonDen(source) {
+  if (value(source, 'gameMode', 'career') === 'arkonStory') return false;
   const devMode = Boolean(value(source, 'devMode', false));
   const first = String(value(source, 'firstName', '')).trim().toLowerCase();
   const last = String(value(source, 'lastName', '')).trim().toLowerCase();
@@ -423,10 +424,11 @@ export function isArkonDen(source) {
 
   // Accept the canonical split name, combined display-name variants, and old
   // dev saves that were created before the explicit devMode flag was stored.
-  return devMode || joined.includes('arkonden') || legacyDevCash;
+  return devMode || joined === 'arkonden' || legacyDevCash;
 }
 
 export function getCentralTokyoEligibility(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
   if (isArkonDen(source)) {
     return { autoMarket: true, ginza: true, drag: true };
   }
@@ -446,6 +448,7 @@ export function getCentralTokyoEligibility(source) {
 }
 
 export function getCentralTokyoAccess(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
   if (isArkonDen(source)) {
     return { autoMarket: true, ginza: true, drag: true };
   }

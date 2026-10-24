@@ -1,0 +1,36 @@
+name: R675 Arkon chapter 06 economy and user interface
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter06Work.js'
+      - 'src/data/arkonChapter06.js'
+      - 'src/ui/ArkonCustomerTuning.js'
+      - 'src/ui/ArkonRwbRestoration.js'
+      - 'src/ui/ArkonReplayExit.js'
+      - 'src/ui/SettingsPanel.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/data/workshopProgression.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter06-economy-polish-r675.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter06Work.js'
+      - 'tests/arkon-chapter06-economy-polish-r675.mjs'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax all modified modules
+        run: |
+          for file in src/data/arkonChapter06Work.js src/data/arkonChapter06.js src/ui/ArkonCustomerTuning.js src/ui/ArkonRwbRestoration.js src/ui/ArkonReplayExit.js src/ui/SettingsPanel.js src/scenes/GarageScene.js src/story/StoryDirector.js src/ui/StoryStage.js src/data/workshopProgression.js src/state/GameState.js tests/arkon-chapter06-economy-polish-r675.mjs; do node --check "$file"; done
+      - name: Chapter 06 accounting and all Arkon story regression tests
+        run: |
+          node --test tests/arkon-chapter06-economy-polish-r675.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter06-polish-r671.mjs tests/arkon-chapter05-meets-r670.mjs tests/arkon-chapter05-r666.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs

@@ -41,6 +41,29 @@ const CASH_DRIVER_RATINGS = Object.freeze({
 });
 const COUPON_DRIVER_RATINGS = Object.freeze([3, 4, 4]);
 
+// Entry fees rise gently for cash events, but jump in value bands for coupons.
+// Coupon fees use the retail value of ONE coupon (car price / coupons needed),
+// because winning three races earns one coupon, not the entire car.
+export const STREET_SHOWDOWN_CASH_ENTRY_FEES = Object.freeze({
+  EASY: 10000,
+  MED: 18000,
+  HARD: 30000,
+  ELITE: 40000,
+});
+
+export function getStreetShowdownCouponEntryFee(carPrice, couponsRequired) {
+  const price = Number(carPrice);
+  // Do not inadvertently issue cheap coupons for an unpriced car.
+  if (!Number.isFinite(price) || price <= 0) return 60000;
+  const required = Math.max(1, Math.floor(Number(couponsRequired) || 5));
+  const couponValue = price / required;
+  if (couponValue <= 300000) return 20000;
+  if (couponValue <= 600000) return 35000;
+  if (couponValue <= 900000) return 55000;
+  if (couponValue <= 1200000) return 75000;
+  return 95000;
+}
+
 export function getStreetShowdownDriverRatings(options = {}) {
   const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
   const coupon = options.prizeType === 'COUPON' || options.prizeType === 'CAR';

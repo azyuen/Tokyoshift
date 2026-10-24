@@ -1,0 +1,43 @@
+name: Dev tools, decals and collector asset regression
+on:
+  pull_request:
+    paths:
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'src/scenes/WheelCalibrationScene.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/vehicles/TunerDecals.js'
+      - 'src/vehicles/WheelFit.js'
+      - 'src/data/cars.js'
+      - 'src/data/cutscenes.js'
+      - 'src/data/heroCarAssets.js'
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/tunerShops.js'
+      - 'assets/Cars/**'
+      - 'tests/dev-tools-assets-20261017.mjs'
+      - '.github/workflows/dev-tools-assets-20261017.yml'
+  push:
+    branches: [main]
+    paths: ['src/**', 'assets/Cars/**', 'tests/dev-tools-assets-20261017.mjs']
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate revised module syntax
+        run: |
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/WheelCalibrationScene.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/vehicles/WheelFit.js
+          node --check src/vehicles/TunerDecals.js
+          node --check src/data/cars.js
+          node --check src/data/cutscenes.js
+      - name: Verify decals, dev controls, wheel calibration and asset cleanup
+        run: node --test tests/dev-tools-assets-20261017.mjs tests/shinagawa-zero-sports-r526.mjs

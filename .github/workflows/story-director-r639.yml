@@ -1,0 +1,37 @@
+name: R639 Story Director and universal dialogue
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feature/story-director-r639]
+    paths:
+      - 'src/story/**'
+      - 'src/ui/CompactStoryDialogue.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/state/GameState.js'
+      - 'src/main.js'
+      - 'tests/story-director-r639.mjs'
+      - '.github/workflows/story-director-r639.yml'
+jobs:
+  story-director:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check director and integration files
+        run: |
+          node --check src/story/StoryDirector.js
+          node --check src/story/StoryScript.js
+          node --check src/ui/CompactStoryDialogue.js
+          node --check src/ui/StoryStage.js
+          node --check src/data/storyDirectorScripts.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/state/GameState.js
+          node --check src/main.js
+      - name: Story and compatibility smoke tests
+        run: |
+          node --test tests/story-director-r639.mjs tests/ginza-banter-r633.mjs tests/story-archive-r570.mjs tests/startup-import-integrity-r508.mjs

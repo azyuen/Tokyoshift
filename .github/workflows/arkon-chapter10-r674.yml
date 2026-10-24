@@ -1,0 +1,36 @@
+name: R674 Arkon Chapter 10 The Road Ahead
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter10*.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/ui/ArkonChapter10*.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/arkon-chapter10-r674.mjs'
+      - '.github/workflows/arkon-chapter10-r674.yml'
+  workflow_dispatch:
+jobs:
+  chapter10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          for file in src/data/arkonChapter10.js src/data/arkonChapter10Work.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonChapter10Finale.js src/ui/ArkonChapter10Restoration.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js src/ui/StoryStage.js src/scenes/RaceScene.js src/state/GameState.js tests/arkon-chapter10-r674.mjs; do
+            node --check "$file"
+          done
+      - name: Chapter 10 and previous story regressions
+        run: |
+          node --test tests/arkon-chapter10-r674.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter-replay-r657.mjs tests/startup-import-integrity-r508.mjs

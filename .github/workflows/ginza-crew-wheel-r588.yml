@@ -1,0 +1,36 @@
+name: R588 Ginza crew and wheel regression
+on:
+  push:
+    branches:
+      - fix/ginza-crew-wheel-polish-20261018
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/ginza-crew-wheel-r588.mjs'
+      - 'tests/ginza-gallery-r56*.mjs'
+      - '.github/workflows/ginza-crew-wheel-r588.yml'
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check modified modules
+        run: |
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/WheelCalibrationScene.js
+          node --check src/state/GameState.js
+          node --check src/state/CarSelection.js
+          node --check src/data/crewSystem.js
+          node --check src/data/crewDialogue.js
+          node --check src/data/cutscenes.js
+          node --check src/ui/MangaCutscene.js
+      - name: Regression tests
+        run: |
+          node --test tests/ginza-crew-wheel-r588.mjs tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs tests/crew-global-recruit-pity-r551.mjs

@@ -1,3 +1,5 @@
+import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js';
+
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js';
 import {
   getControlSettings,
@@ -81,7 +83,10 @@ export function addSettingsButton(scene, x = 995, y = 35) {
   button.on('pointerdown', () => showSettingsPanel(scene));
 
   const devCutscenes = addDevCutsceneButton(scene, x - 115, y);
-  return { button, cog, devCutscenes };
+  const storyHelp = addArkonStoryObjectiveButton(scene, x - 56, y);
+  // R675: replay exit is rendered across Garage, Meet, Race and story
+  // cutscenes by StoryDirector, at the upper-left of the main stage.
+  return { button, cog, devCutscenes, storyHelp, replayExit:null };
 }
 
 function showRenameDriverPanel(scene, onSaved = null) {

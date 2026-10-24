@@ -6,6 +6,7 @@ import {
   OPENING_PHONE_LAYOUT, getOpeningPhoneAssets, playOpeningPhonePrototype,
 } from '../src/ui/OpeningPhonePrototype.js';
 import { formatPhoneMessage } from '../src/ui/PhoneConversation.js';
+import { PHONE_CARD_SWIPE_DISTANCE } from '../src/ui/CompactDialogueLayout.js';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 
@@ -13,7 +14,9 @@ function fakeScene() {
   const objects=[];
   const methods=['setOrigin','setDepth','setScrollFactor','setScale','setStrokeStyle',
     'setInteractive','disableInteractive','setAlpha','setY','setCrop','setPosition',
-    'setVisible','setFillStyle','setText'];
+    'setVisible','setFillStyle','setText','setTexture','setMask','setFontSize',
+    'setLineSpacing','clear','fillStyle','lineStyle','beginPath','moveTo','lineTo',
+    'closePath','fillPath','strokePath','fillRect','createGeometryMask','setFilter'];
   const mk=(kind,...args)=>{
     const o={kind,args,active:true,buttons:{},children:args[2]||[],
       alpha:1,y:args[1]||0,calls:[],destroyed:false};
@@ -24,10 +27,12 @@ function fakeScene() {
     objects.push(o);return o;
   };
   const events={once(){},off(){}};
-  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}},Loader:{Events:{COMPLETE:'complete'}}};
+  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}},Loader:{Events:{COMPLETE:'complete'}},Scenes:{Events:{SHUTDOWN:'shutdown'}}};
   const tweens=[];
   const scene={
-    add:Object.fromEntries(['rectangle','circle','text','image','container'].map(k=>[k,(...args)=>mk(k,...args)])),
+    add:Object.fromEntries(['rectangle','circle','text','image','container','graphics']
+      .map(k=>[k,(...args)=>mk(k,...args)])),
+    make:{graphics:()=>mk('mask')},
     textures:{exists:()=>true,get:()=>({getSourceImage:()=>({width:540,height:1180}),setFilter(){}})},
     tweens:{add:config=>{tweens.push(config);if(config.onComplete)config.onComplete();return {remove(){}};},killTweensOf(){}},
     events,
@@ -53,7 +58,7 @@ test('selected player uses their actual character portrait', () => {
   const assets=getOpeningPhoneAssets('sayakaFujieda','idle','ayaKurose');
   assert.match(assets.caller.path,/home_sayaka_fujieda_normal\.png/);
   assert.match(assets.player.path,/aya_kurose/);
-  assert.equal(OPENING_PHONE_LAYOUT.transitionMs,420);
+  assert.equal(OPENING_PHONE_LAYOUT.transitionMs,280);
 });
 
 test('first screen displays vibrating centred phone and a single green answer control', () => {
@@ -90,14 +95,14 @@ test('pickup shows left Sayaka, continue swipes up and reveals mirrored player, 
   assert.equal(state.pageIndex,0);
   const first=objects.find(x=>x.kind==='container');
   assert.ok(first);
-  assert.ok(first.children.some(c=>c.kind==='text'&&String(c.args[2]).includes("Hey Ethan")));
+  assert.ok(first.children.some(c=>c.kind==='text'&&String(c.text || c.args[2]).includes("Hey Ethan")));
   let next=objects.find(x=>x.kind==='rectangle'&&x.buttons.pointerdown&&!x.destroyed);
   next.buttons.pointerdown();
   assert.equal(state.phase,'player');
   assert.equal(state.pageIndex,1);
-  assert.ok(tweens.some(t=>t.y===-460&&t.duration===OPENING_PHONE_LAYOUT.transitionMs));
+  assert.ok(tweens.some(t=>t.y===-PHONE_CARD_SWIPE_DISTANCE&&t.duration===OPENING_PHONE_LAYOUT.transitionMs));
   const second=objects.filter(x=>x.kind==='container').at(-1);
-  assert.ok(second.children.some(c=>c.kind==='text'&&c.args[2]==='Great, see you in the garage!'));
+  assert.ok(second.children.some(c=>c.kind==='text'&&(c.text || c.args[2])==='Great, see you in the garage!'));
   assert.ok(second.children.some(c=>c.kind==='image'&&c.args[2]==='characterAyaKurose'));
   next=objects.filter(x=>x.kind==='rectangle'&&x.buttons.pointerdown&&!x.destroyed).at(-1);
   next.buttons.pointerdown();

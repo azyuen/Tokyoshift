@@ -1,0 +1,45 @@
+name: R583 Prestige Trophy Tournaments
+on:
+  push:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proDragDuel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'tests/prestige-trophies-r583.mjs'
+      - '.github/workflows/prestige-trophies-r583.yml'
+  pull_request:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proDragDuel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'tests/prestige-trophies-r583.mjs'
+  workflow_dispatch:
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check module syntax
+        run: |
+          node --check src/data/proCircuit.js
+          node --check src/data/proSeason.js
+          node --check src/data/proDragDuel.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/CrewRegistrationPanel.js
+      - name: Test prestige tournaments and Open Circuit regression
+        run: |
+          node --test tests/prestige-trophies-r583.mjs tests/drag-open-circuit-r575.mjs tests/drag-complex-r448.mjs tests/chapter09-drag-r577.mjs tests/pro-season-forfeit-r576.mjs

@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261013-r494';
+export const CHARACTER_ASSET_VERSION = '20261022-pro-racing';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -715,6 +715,11 @@ export const characters = {
       winPath: 'assets/Characters/Shinjuku/emi_saionji_win.png',
       lossSpriteKey: 'characterEmiSaionjiLoss',
       lossPath: 'assets/Characters/Shinjuku/emi_saionji_loss.png',
+      poseAssets: {
+        ginzaIdle: { key: 'ginzaEmiIdle', path: 'assets/Characters/Ginza/emi_saionji_idle.png' },
+        ginzaHappy: { key: 'ginzaEmiHappy', path: 'assets/Characters/Ginza/emi_saionji_happy.png' },
+        ginzaSad: { key: 'ginzaEmiSad', path: 'assets/Characters/Ginza/emi_saionji_sad.png' },
+      },
     },
   },
 
@@ -744,6 +749,11 @@ export const characters = {
       winPath: 'assets/Characters/Shinjuku/kaede_tachibana_win.png',
       lossSpriteKey: 'characterKaedeTachibanaLoss',
       lossPath: 'assets/Characters/Shinjuku/kaede_tachibana_loss.png',
+      poseAssets: {
+        ginzaIdle: { key: 'ginzaKaedeIdle', path: 'assets/Characters/Ginza/kaede_tachibana_idle.png' },
+        ginzaHappy: { key: 'ginzaKaedeHappy', path: 'assets/Characters/Ginza/kaede_tachibana_happy.png' },
+        ginzaSad: { key: 'ginzaKaedeSad', path: 'assets/Characters/Ginza/kaede_tachibana_sad.png' },
+      },
     },
   },
 
@@ -848,6 +858,26 @@ export const characters = {
     preferredCars: ['r32'], signatureRace: 'Half Mile',
     introQuote: 'Yokohama rewards cars that keep pulling.', resultQuotes: { win: 'That is harbor pace.', loss: 'Clean run. You earned it.' },
     visual: { spriteKey: 'characterMasatoIshikawa', path: 'assets/Characters/Yokohama/masato_ishikawa_idle.png', winSpriteKey: 'characterMasatoIshikawaWin', winPath: 'assets/Characters/Yokohama/masato_ishikawa_win.png', lossSpriteKey: 'characterMasatoIshikawaLoss', lossPath: 'assets/Characters/Yokohama/masato_ishikawa_loss.png' },
+  },
+  // The Tokyo Champion from Magazine Issue 01 has her own Central assets.
+  // Keep this separate from legacy Yokohama rival 'mikaHayase', which is
+  // actually Nao Fujita. Do not reuse Nao's portrait for this cameo.
+  mikaHayaseChampion: {
+    id: 'mikaHayaseChampion',
+    name: 'Mika Hayase',
+    archetype: 'Former Tokyo Champion',
+    selectable: false, rivalEligible: false,
+    roleTags: ['pro-circuit','champion','story'],
+    personality: 'Confident, perceptive, and quietly competitive.',
+    bio: 'The previous Tokyo Champion featured in Tokyo SHIFT Magazine Issue 01.',
+    visual: {
+      spriteKey: 'characterMikaHayaseChampion',
+      path: 'assets/Characters/Central/mika_hayase_idle.png',
+      winSpriteKey: 'characterMikaHayaseChampionWin',
+      winPath: 'assets/Characters/Central/mika_hayase_win.png',
+      lossSpriteKey: 'characterMikaHayaseChampionLoss',
+      lossPath: 'assets/Characters/Central/mika_hayase_loss.png',
+    },
   },
   mikaHayase: {
     id: 'mikaHayase',
@@ -1424,6 +1454,17 @@ regionExclusive: true, teamRole: 'core',
         homeBlushing: { key: 'characterSayakaHomeBlushing', path: 'assets/Characters/Main/home_sayaka_fujieda_blushing.png' },
         homeSad: { key: 'characterSayakaHomeSad', path: 'assets/Characters/Main/home_sayaka_fujieda_sad.png' },
         homeSerious: { key: 'characterSayakaHomeSerious', path: 'assets/Characters/Main/home_sayaka_fujieda_serious.png' },
+        ginzaNormal: { key: 'ginzaSayakaNormal', path: 'assets/Characters/Ginza/sayaka_fujieda_normal.png' },
+        ginzaHappy: { key: 'ginzaSayakaHappy', path: 'assets/Characters/Ginza/sayaka_fujieda_happy.png' },
+        ginzaSad: { key: 'ginzaSayakaSad', path: 'assets/Characters/Ginza/sayaka_fujieda_sad.png' },
+        ginzaSerious: { key: 'ginzaSayakaSerious', path: 'assets/Characters/Ginza/sayaka_fujieda_serious.png' },
+        ginzaDress: { key: 'ginzaSayakaDress', path: 'assets/Characters/Main/ginza_sayaka_fujieda_dress.png' },
+        devIdle: { key: 'devSayakaIdle', path: 'assets/Characters/Dev/sayaka_fujieda_idle.png' },
+        devDisappointed: { key: 'devSayakaDisappointed', path: 'assets/Characters/Dev/sayaka_fujieda_disappointed.png' },
+        devLaughing: { key: 'devSayakaLaughing', path: 'assets/Characters/Dev/sayaka_fujieda_laughing.png' },
+        devSad: { key: 'devSayakaSad', path: 'assets/Characters/Dev/sayaka_fujieda_sad.png' },
+        devScowl: { key: 'devSayakaScowl', path: 'assets/Characters/Dev/sayaka_fujieda_scowl.png' },
+        devUnsure: { key: 'devSayakaUnsure', path: 'assets/Characters/Dev/sayaka_fujieda_unsure.png' },
         normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Main/ginza_sayaka_fujieda_normal.png' },
         happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Main/ginza_sayaka_fujieda_happy.png' },
         sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Main/ginza_sayaka_fujieda_sad.png' },
@@ -1432,6 +1473,10 @@ regionExclusive: true, teamRole: 'core',
         oshiageExplaining: { key: 'characterSayakaOshiageExplaining', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_explaining.png' },
         oshiageHappy: { key: 'characterSayakaOshiageHappy', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_happy.png' },
         oshiageConcerned: { key: 'characterSayakaOshiageConcerned', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_concerned.png' },
+        oshiageRelaxed: { key: 'characterSayakaOshiageRelaxed', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_relaxed.png' },
+        oshiageReviewing: { key: 'characterSayakaOshiageReviewing', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_reviewing.png' },
+        oshiageSerious: { key: 'characterSayakaOshiageSerious', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_serious.png' },
+        oshiageTalking: { key: 'characterSayakaOshiageTalking', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_talking.png' },
         track: { key: 'characterSayakaProTrack', path: 'assets/Characters/Main/race_sayaka_fujieda_idle.png' },
         trackHappy: { key: 'characterSayakaProTrackHappy', path: 'assets/Characters/Main/race_sayaka_fujieda_win.png' },
         trackSerious: { key: 'characterSayakaProTrackSerious', path: 'assets/Characters/Main/race_sayaka_fujieda_loss.png' },
@@ -1846,9 +1891,54 @@ regionExclusive: true, teamRole: 'core',
     },
   },
 
+  // Reuse Kazuo's supplied idle art as a separate dock supervisor character.
+  // A borrowed sprite must not change Kazuo's Career identity or biography.
+  storyDockForeman: {
+    id:'storyDockForeman',name:'Dock Supervisor',selectable:false,rivalEligible:false,
+    archetype:'The Early-Shift Foreman',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryDockForeman',
+      path:'assets/Characters/Daikoku/kazuo_tanaka_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryDockForemanIdle',
+          path:'assets/Characters/Daikoku/kazuo_tanaka_idle.png'},
+      },
+    },
+  },
+
+  // Story-era visitor: non-recruitable; existing placeholder artwork until his
+  // commissioned portrait arrives. Does not enter regular Meet rosters.
+  storyDaigoKirishima: {
+    id:'storyDaigoKirishima',
+    name:'Daigo Kirishima',
+    selectable:false,rivalEligible:false,
+    archetype:'The Show-Off',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryDaigoKirishima',
+      path:'assets/Characters/Tatsumi/daigo_moriyama_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryDaigoIdle',path:'assets/Characters/Tatsumi/daigo_moriyama_idle.png'},
+      },
+    },
+  },
+  // Story-only Shibuya VIP event promoter. Intentionally unnamed until later
+  // chapters establish his identity; the generic portrait is not a Career rival.
+  storyVipPromoter: {
+    id:'storyVipPromoter',name:'Private Event Promoter',
+    selectable:false,rivalEligible:false,
+    archetype:'The Polished Deal-Maker',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryVipPromoter',
+      path:'assets/Characters/male_sub_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryVipPromoterIdle',
+          path:'assets/Characters/male_sub_idle.png'},
+      },
+    },
+  },
   arkonDen: {
     id: 'arkonDen',
-    name: 'Arkon Den',
+    name: 'Aruken Denzaki',
     archetype: 'Developer',
     roleTags: ['developer'],
     selectable: false,
@@ -1861,6 +1951,28 @@ regionExclusive: true, teamRole: 'core',
     visual: {
       spriteKey: 'characterArkonDen',
       path: 'assets/Characters/arkon_den_idle.png',
+      poseAssets: {
+        ginzaSuit: { key: 'ginzaArkonDenSuit', path: 'assets/Characters/Main/arkon_den_suit.png' },
+        storyIdle: { key: 'arkonStoryIdle', path: 'assets/Characters/Main/arkon_den_idle.png' },
+        storyTalking: { key: 'arkonStoryTalking', path: 'assets/Characters/Main/arkon_den_talking.png' },
+        storyConfident: { key: 'arkonStoryConfident', path: 'assets/Characters/Main/arkon_den_confident.png' },
+        storyLaughing: { key: 'arkonStoryLaughing', path: 'assets/Characters/Main/arkon_den_laughing.png' },
+        storySheepish: { key: 'arkonStorySheepish', path: 'assets/Characters/Main/arkon_den_sheepish.png' },
+        storyBlushing: { key: 'arkonStoryBlushing', path: 'assets/Characters/Main/arkon_den_blushing.png' },
+        storyCoolShy: { key: 'arkonStoryCoolShy', path: 'assets/Characters/Main/arkon_den_cool_shy.png' },
+        storyConfidentSmirk: { key: 'arkonStoryConfidentSmirk', path: 'assets/Characters/Main/arkon_den_confident_smirk.png' },
+        storyShrugging: { key: 'arkonStoryShrugging', path: 'assets/Characters/Main/arkon_den_shrugging.png' },
+        storyThinking: { key: 'arkonStoryThinking', path: 'assets/Characters/Main/arkon_den_thinking.png' },
+        storySerious: { key: 'arkonStorySerious', path: 'assets/Characters/Main/arkon_den_serious.png' },
+        storySurprised: { key: 'arkonStorySurprised', path: 'assets/Characters/Main/arkon_den_surprised.png' },
+        storyMechanic: { key: 'arkonStoryMechanicPortrait', path: 'assets/Characters/Main/arkon_den_mechanic.png' },
+        storyMechanicEngine: { key: 'arkonStoryEngineInspect', path: 'assets/Characters/Main/arkon_den_engine_insepct.png' },
+        storyMechanicCrouch: { key: 'arkonStoryCrouch', path: 'assets/Characters/Main/arkon_den_exhaust_crouch.png' },
+        devIdle: { key: 'devArkonIdle', path: 'assets/Characters/Dev/arkon_den_idle.png' },
+        devLaughing: { key: 'devArkonLaughing', path: 'assets/Characters/Dev/arkon_den_laughing.png' },
+        devSerious: { key: 'devArkonSerious', path: 'assets/Characters/Dev/arkon_den_serious.png' },
+        devTalking: { key: 'devArkonTalking', path: 'assets/Characters/Dev/arkon_den_talking.png' },
+      },
       winSpriteKey: 'characterArkonDenWin',
       winPath: 'assets/Characters/arkon_den_win.png',
       lossSpriteKey: 'characterArkonDenLoss',
@@ -2177,6 +2289,7 @@ export const CENTRAL_TOKYO_CHARACTER_IDS = Object.freeze({
   }),
   ginza: Object.freeze({
     proprietor: 'sayakaFujieda',
+    sales: ['emiSaionji', 'kaedeTachibana'],
   }),
   dragComplex: Object.freeze({
     owner: 'ryujiTakahashi',
@@ -2229,7 +2342,55 @@ export function getCharacterVisualForContext(
   })?.visual || null;
 }
 
+// Drag Strip Complex only. Street meets, story and workshop scenes retain the
+// canonical street character visuals and texture keys.
+export const PRO_RACING_CHARACTER_STEMS = Object.freeze({
+  renMizuno: 'ren_mizuno',
+  ayaKurose: 'aya_kurose',
+  kaitoFujimori: 'kaito_fujimori',
+  haruTachibana: 'haru_tachibana',
+  reinaShibata: 'reina_shibata',
+  rikuAkamine: 'riku_akamine',
+  emiKanzaki: 'emi_kanzaki',
+  keiNomura: 'male_sub',
+  amiOkada: 'female_sub',
+  arkonDen: 'arkon_den',
+});
+
+export function getProCircuitGenericDriverAsset(index) {
+  const number = Number(index);
+  if (!Number.isInteger(number) || number < 1 || number > 4) return null;
+  const filename = 'driver_0' + number + '.png';
+  return {
+    key: 'proCircuitGenericDriver0' + number,
+    path: 'assets/Characters/Pro/' + filename,
+    pose: 'idle',
+    fallback: false,
+  };
+}
+
+export function getProCircuitCharacterAsset(characterId, pose = 'idle', options = {}) {
+  // Rival replacement is resolved first: the player's chosen protagonist
+  // never becomes their own rival, even at the professional circuit.
+  const character = getCharacterForContext(characterId, options);
+  const stem = PRO_RACING_CHARACTER_STEMS[character?.id];
+  if (!stem) return null;
+
+  const requested = String(pose || 'idle').trim().toLowerCase() || 'idle';
+  const resolved = requested === 'win' || requested === 'loss' ? requested : 'idle';
+  return {
+    key: 'proCircuitCharacter_' + stem + '_' + resolved,
+    path: 'assets/Characters/Pro/' + stem + '_' + resolved + '.png',
+    pose: resolved,
+    fallback: requested !== resolved,
+  };
+}
+
 export function getCharacterVisualAsset(characterId, pose = 'idle', options = {}) {
+  if (options?.proCircuit) {
+    const proAsset = getProCircuitCharacterAsset(characterId, pose, options);
+    if (proAsset) return proAsset;
+  }
   const visual = getCharacterVisualForContext(characterId, options);
   if (!visual) return null;
 

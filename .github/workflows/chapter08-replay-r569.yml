@@ -1,0 +1,40 @@
+name: R569 full interactive Chapter 08 dev replay
+on:
+  pull_request:
+    paths:
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'src/ui/Chapter08Story.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/chapter08-dev-replay-r569.mjs'
+      - '.github/workflows/chapter08-replay-r569.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'tests/chapter08-dev-replay-r569.mjs'
+  workflow_dispatch:
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: |
+          node --check src/ui/Chapter08DevReplay.js
+          node --check src/ui/Chapter08Story.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/TravelMap.js
+          node --check src/state/GameState.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Chapter 08 interaction and save isolation tests
+        run: node --test tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs

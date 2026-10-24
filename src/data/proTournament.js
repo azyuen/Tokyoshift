@@ -2,7 +2,7 @@ import { completeSeasonRound } from './proSeason.js';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
-  normaliseProCircuitState, getProCircuitDriverSeeds,
+  normaliseProCircuitState, getProCircuitDriverSeeds, getProPrizeWithBonus,
 } from './proCircuit.js';
 import { characters } from './characters.js';
 
@@ -212,8 +212,10 @@ function settleCompletedEvent(circuit, t) {
   const payout = place <= 4 ? FOUR_WIDE_CUP.prizeCash[place-1] :
     place <= 8 ? 12000 : 0;
   // Repeats remain worthwhile but deliberately avoid easy limitless farming.
-  const cashPrize = Math.floor(payout *
+  const baseCashPrize = Math.floor(payout *
     (next.eventTick > 0 ? .70 : 1));
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankingBefore);
+  const cashPrize=sponsor.totalPrize;
   next.qualified = true;
   next.eventTick += 1;
   next.completedEventIds = [...new Set([...next.completedEventIds, t.id])].slice(-250);
@@ -222,6 +224,7 @@ function settleCompletedEvent(circuit, t) {
     .find(row => row.id === PLAYER)?.seed || 32;
   next.lastTournament = {
     id: t.id, label: FOUR_WIDE_CUP.label, placing: place, cashPrize,
+    sponsorBonus:sponsor.bonusCash,sponsorPercent:sponsor.bonusPercent,
     ratingBefore: circuit.playerDriver.rating, ratingAfter: next.playerDriver.rating,
     rankBefore: rankingBefore, rankAfter: rankingAfter,
     stagesCompleted: finalPlayerStage(t).stage+1,

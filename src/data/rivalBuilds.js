@@ -178,10 +178,10 @@ export function createRivalBuildState(config = {}, rating = 3, options = {}) {
   allocateDevelopment(state, archetype, points, config);
 
   // NOS is a deliberate late-build choice rather than an automatic rating bonus.
-  if (r >= 4 && archetypeId === 'launchDrag') {
+  if (!options.noNos && r >= 4 && archetypeId === 'launchDrag') {
     state.exhaustNosTuning.nosKit = r >= 5 ? 2 : 1;
     state.exhaustNosTuning.nitrousShot = r >= 5 ? 2 : 1;
-  } else if (r >= 5 && archetypeId === 'turboRoll') {
+  } else if (!options.noNos && r >= 5 && archetypeId === 'turboRoll') {
     state.exhaustNosTuning.nosKit = 1;
     state.exhaustNosTuning.nitrousShot = 1;
   }

@@ -1,0 +1,29 @@
+name: Regional Crew Battle Invitations
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/crewBattleIntroductions.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/crew-battle-introduction-r545.mjs'
+      - '.github/workflows/crew-battle-intro-r545.yml'
+  workflow_dispatch:
+jobs:
+  crew-invitation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check new invitation and state modules
+        run: |
+          node --check src/data/crewBattleIntroductions.js
+          node --check src/scenes/MeetScene.js
+          node --check src/state/GameState.js
+          node --check tests/crew-battle-introduction-r545.mjs
+      - name: Crew cutscene, save, roster and startup regressions
+        run: |
+          node --test tests/crew-battle-introduction-r545.mjs tests/startup-import-integrity-r508.mjs

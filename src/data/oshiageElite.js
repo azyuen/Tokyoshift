@@ -6,16 +6,17 @@ import { CREW_REGIONS } from './crewRoster.js';
 import { WHEEL_CATALOG } from './wheels.js';
 import { getEncounterAi } from './encounterProfiles.js';
 import { createRivalBuildState } from './rivalBuilds.js';
+import { selectMixedCarPaint } from './streetPaintPalettes.js';
 
 export const OSHIAGE_ELITE_COOLDOWN_MS = 15 * 60 * 1000;
 export const OSHIAGE_ELITE_VENUES = Object.freeze({
   underpass: Object.freeze({
     id: 'underpass', label: 'SKYTREE UNDERPASS', backgroundStem: 'oshiage_skytree01',
-    entryFee: 50000, prizeCash: 500000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
+    entryFee: 50000, prizeCash: 150000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
   }),
   plaza: Object.freeze({
     id: 'plaza', label: 'SKYTREE PLAZA', backgroundStem: 'oshiage_skytree02',
-    entryFee: 75000, prizeCash: 750000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
+    entryFee: 75000, prizeCash: 250000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
   }),
 });
 export const OSHIAGE_ELITE_VENUE_IDS = Object.freeze(Object.keys(OSHIAGE_ELITE_VENUES));
@@ -25,6 +26,33 @@ const value = (source, key, fallback = null) => {
   const found = source?.get ? source.get(key) : source?.[key];
   return found == null ? fallback : found;
 };
+
+// The Skytree series is an endgame challenge: rating-5 rival builds do not
+// automatically guarantee Level 3 in every mechanical category. Upgrade the
+// relevant mechanical parts explicitly without giving a factory-NA car an
+// unrequested turbo conversion, or changing the shared rival physics model.
+export function makeOshiageEliteStageThreeBuild(config = {}, buildState = {}) {
+  const state = {
+    ...buildState,
+    tuning: { ...(buildState.tuning || {}) },
+    drivetrainTuning: { ...(buildState.drivetrainTuning || {}) },
+    chassisTuning: { ...(buildState.chassisTuning || {}) },
+    exhaustNosTuning: { ...(buildState.exhaustNosTuning || {}) },
+  };
+  const raise = (category, names) => names.forEach(name => {
+    state[category][name] = 3;
+  });
+  raise('tuning', ['engine', 'intake', 'ecu']);
+  if (Number(config.maximumBoost || 0) > 0.01 ||
+      Number(state.tuning.turbo || 0) > 0) {
+    raise('tuning', ['turbo', 'intercooler']);
+  }
+  raise('drivetrainTuning', ['clutch', 'gearbox', 'differential', 'suspension']);
+  raise('chassisTuning', ['tyres', 'weightReduction']);
+  raise('exhaustNosTuning', ['headers', 'exhaust', 'muffler']);
+  // NOS is still archetype-dependent, just as for other Expert/Elite rivals.
+  return state;
+}
 
 export function getOshiageEliteProgress(source) {
   const state = value(source, 'tunerTeamChallenges', {}) || {};
@@ -76,11 +104,15 @@ export function getOshiageEliteOpponent(source, venueId, now = Date.now(), round
   const pool = preferred.length ? preferred : fallback;
   if (!pool.length) return null;
   const carId = pool[(index + wins + Math.max(0, Number(roundIndex) || 0)) % pool.length];
-  const paintColor = [0xd83f56, 0x4d83e5, 0xc3d1dc, 0xf7c459][index % 4];
-  const buildState = createRivalBuildState(cars[carId], 5, {
-    seed: 'oshiage:' + venueId + ':' + characterId + ':' + period + ':' + roundIndex,
-    raceType: venue.raceType, paintColor,
-  });
+  const paintColor = selectMixedCarPaint(carId, {
+    region: 'OSHIAGE', characterId, isMainRival: Boolean(character.mainRival),
+    seed: venueId + ':' + period + ':' + wins + ':' + roundIndex,
+  })?.color ?? [0xd83f56, 0x4d83e5, 0xc3d1dc, 0xf7c459][index % 4];
+  const buildState = makeOshiageEliteStageThreeBuild(cars[carId],
+    createRivalBuildState(cars[carId], 5, {
+      seed: 'oshiage:' + venueId + ':' + characterId + ':' + period + ':' + roundIndex,
+      raceType: venue.raceType, paintColor,
+    }));
   return {
     venueId, characterId, carId, paintColor, buildState,
     encounterRating: 5, encounterAi: getEncounterAi(5),
@@ -114,15 +146,15 @@ export function getOshiageElitePrize(source, venueId, index = 0) {
   const ownedWheels = value(source, 'ownedWheelIds', []) || [];
   const heroWheels = WHEEL_CATALOG.filter(item => item.tier === 'HERO' || item.tier === 'TUNER');
   const availableWheels = heroWheels.filter(item => !ownedWheels.includes(item.id));
-  // Underpass favours coupon packs. Plaza favours new limited wheels, then
-  // falls back to coupons so every win continues to have a meaningful prize.
+  const availableCars = COUPON_CARS.filter(id => Boolean(cars[id]));
+  const carId = availableCars[index % availableCars.length] || 'r32';
+  // Every successful three-heat run grants car coupons. Plaza can also award
+  // rare wheels, but the wheels must never replace the minimum coupon payout.
   if (venueId === 'plaza' && availableWheels.length) {
     const wheel = availableWheels[index % availableWheels.length];
     return { cash: venue.prizeCash, wheelId: wheel.id, wheelLabel: wheel.label,
-      couponCarId: null, coupons: 0 };
+      couponCarId: carId, coupons: 2 };
   }
-  const availableCars = COUPON_CARS.filter(id => Boolean(cars[id]));
-  const carId = availableCars[index % availableCars.length] || 'r32';
   return { cash: venue.prizeCash, couponCarId: carId, coupons: venue.couponCount,
     wheelId: null, wheelLabel: null };
 }

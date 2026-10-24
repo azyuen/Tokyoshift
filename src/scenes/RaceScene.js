@@ -1,9 +1,21 @@
 import {effectiveFinalDrive} from '../vehicles/Transmission.js';
 import {getCrewRecruitmentChallengeRules,createStockOpponentState,isValidCrewRecruitChallenge} from '../data/crewSystem.js';
+import { getInGamePlayerDisplayName } from '../data/characterDisplayName.js';
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js';
 import DragRacingAI from '../ai/DragRacingAI.js';
 import { DrivingCoach } from '../ai/DrivingCoach.js';
+import { isNamedArkonDen } from '../data/ginzaGallery.js';
+import {
+  DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY,
+  isArkonVaultStoryLoan, shouldLaunchDevVaultStory, claimDevVaultStoryLoan,
+} from '../data/devVaultStory.js';
+import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js';
+import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js';
+import {recordArkonCh4Race} from '../data/arkonChapter04Work.js';
+
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -86,9 +98,12 @@ import {
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js';
+import { showStoryChoices } from '../ui/StoryChoicePanel.js';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
+import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js';
 import { recordCarMagazineSightings } from '../data/carMagazine.js';
 import {
@@ -101,12 +116,20 @@ import {
   CREW_BATTLE_COUPONS,
   createCrewInviteFromMeetWin,
   completeCrewRecruitChallenge,
+  setCrewRecruitChallenge,
+  resetCrewRecruitmentAfterLoss,
+  clearCrewRecruitChallenge,
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
   getCrewMembers,
+  getCrewBattleCaptainId,
   removeCrewMember,
 } from '../data/crewSystem.js';
+import { getCrewEventCarSetup, validateCrewBattleBuiltCar } from '../data/crewBattleRules.js';
+import {
+  createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
+} from '../data/crewBattleIntroductions.js';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -129,6 +152,10 @@ export default class RaceScene extends Phaser.Scene {
   constructor(sceneKey = 'RaceScene') { super(sceneKey); }
 
   preload() {
+    // Final fallback: a pending scripted arrival must NEVER turn into an
+    // ordinary race, even if a stale Meet card or link bypasses the map.
+    if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
+        shouldLaunchDevVaultStory(this.registry)) return;
     let queued = 0;
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
@@ -137,6 +164,60 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    if(this.registry.get('gameMode')==='arkonStory' &&
+      this.registry.get('arkonStoryChapter06Cruise')?.active){
+      // The restored-Porsche night drive follows hours of workshop work;
+      // Sayaka has changed out of her Oshiage instructor outfit.
+      queueImage('arkonSayakaWatchingStory',
+        'assets/Characters/Main/arkon_sayaka_watching.png');
+      for(const [id,poses] of [
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy']],
+      ])for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      for(const [id,poses] of [
+        ['sayakaFujieda',['oshiageRelaxed','oshiageReviewing','oshiageHappy','oshiageSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySheepish','storyConfidentSmirk']],
+      ]) for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      for(const [id,poses] of [
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySheepish','storyConfidentSmirk']],
+      ])for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Solo')?.active){
+      for(const pose of ['storyIdle','storyTalking','storyThinking','storySheepish']){
+        const asset=characters.arkonDen?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if (this.hasGinzaBanter) {
+      // Arkon's optional passenger chat uses the same formal outfits as
+      // the private-gallery after-hours scene, not the old shift coach.
+      for (const [id, poses] of [
+        ['sayakaFujieda', ['devIdle', 'devDisappointed', 'devLaughing', 'devSad', 'devScowl', 'devUnsure']],
+        ['arkonDen', ['devIdle', 'devLaughing', 'devSerious', 'devTalking']],
+      ]) {
+        for (const pose of poses) {
+          const asset = characters[id].visual.poseAssets[pose];
+          queueImage(asset.key, getCharacterAssetUrl(asset.path));
+        }
+      }
+    }
     if (this.isCoaching || (this.isTutorial &&
       this.registry.get('raceReturnScene') === 'OshiageScene')) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
@@ -168,12 +249,19 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
     queueImage('regionalChallengeBadge', 'assets/Garage/badge_crown.png');
     queueImage('regionalPerfectStarBadge', 'assets/Garage/badge_star.png');
+    // Regional crew victories use their own permanent badge artwork, not the
+    // individual championship's crown.
+    if (this.raceMode === 'CREW_BATTLE') {
+      queueImage('regionalCrewVictoryBadge', 'assets/Garage/badge_crew.png');
+    }
 
     // All street-race regions now use authored day/night panoramas.
     // Assets follow skyline_<region>_<phase>.webp and share one renderer.
     const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
-    if (skylineRegions.has(this.raceDistrict)) {
-      const regionSlug = this.raceDistrict.toLowerCase();
+    if (skylineRegions.has(this.raceDistrict) || this.raceMode === 'CHAPTER08') {
+      // Chapter 08's Ginza RWB drive borrows Oshiage's authored skyline;
+      // keep the actual race district and its road/physics unchanged.
+      const regionSlug = this.raceMode === 'CHAPTER08' ? 'oshiage' : this.raceDistrict.toLowerCase();
       const skylineKey = 'raceSkyline_' + regionSlug + '_' + this.raceTimeOfDay;
       const skylineFile = 'skyline_' + regionSlug + '_' + this.raceTimeOfDay + '.webp';
       queueImage(
@@ -199,10 +287,42 @@ export default class RaceScene extends Phaser.Scene {
     // The temporary race driver can be a recruited crew member, but the avatar
     // that must never appear as an opponent is the active profile's character.
     queueCharacterVisual(characters[playerId]?.visual || null);
+    if (this.showArkonResultPair) {
+      // Preload paired result reactions only for the active Ginza gallery loan.
+      for (const [id, pose] of [
+        ['arkonDen', 'devLaughing'],
+        ['arkonDen', 'devSerious'],
+        ['sayakaFujieda', 'devScowl'],
+        ['sayakaFujieda', 'devLaughing'],
+      ]) {
+        const asset = characters[id].visual.poseAssets[pose];
+        queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      }
+    }
     queueCharacterVisual(getCharacterVisualForContext(opponentId, {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
     }));
+    if (this.isStoryCruise || this.isArkonMx5Drive) {
+      for(const [id,poses] of [
+        ['sayakaFujieda',this.isArkonMx5Drive
+          ?['homeNormal','homeHappy','homeSerious']
+          :['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
+      ]){
+        for(const pose of poses){
+          const asset=characters[id]?.visual?.poseAssets?.[pose];
+          if(asset && !this.textures.exists(asset.key))
+            queueImage(asset.key,getCharacterAssetUrl(asset.path));
+        }
+      }
+    }
+    if (this.registry.get('selectedRaceCategory') === 'CHAPTER08') {
+      const ginzaPose = characters.sayakaFujieda?.visual?.poseAssets?.ginzaNormal;
+      if (ginzaPose && !this.textures.exists(ginzaPose.key)) {
+        queueImage(ginzaPose.key, getCharacterAssetUrl(ginzaPose.path));
+      }
+    }
 
     if (this.raceMode === 'TUNER_TEAM') {
       const regionId = String(
@@ -265,6 +385,15 @@ export default class RaceScene extends Phaser.Scene {
         : playableCharacterOrder.includes(storedPlayerCharacterId)
           ? storedPlayerCharacterId
           : playableCharacterOrder[0];
+    // The owner cameo follows the actual profile driver, not a recruited
+    // teammate who happens to be running a crew heat for the same account.
+    // The paired Sayaka/Arkon result is exclusive to an ACTIVE Ginza
+    // gallery loan. Owned cars, ordinary meets, showdowns and pro events
+    // retain Arkon's normal win/loss portrait assets.
+    this.showArkonResultPair = isNamedArkonDen(this.registry) &&
+      this.playerCharacterId === storedPlayerCharacterId &&
+      Boolean(cars[this.selectedCarId]?.ginzaDemo &&
+        this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
@@ -281,7 +410,11 @@ export default class RaceScene extends Phaser.Scene {
       characters[storedOpponentCharacterId]?.rivalEligible !== false &&
       Boolean(characters[storedOpponentCharacterId]);
     this.opponentCharacterId =
-      oshiageEliteOpponent || regionRivals.includes(storedOpponentCharacterId)
+      (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
+        storedOpponentCharacterId === 'sayakaFujieda') ||
+      oshiageEliteOpponent || (this.registry.get('gameMode')==='arkonStory' &&
+        storedOpponentCharacterId==='storyDaigoKirishima') ||
+        regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
@@ -293,6 +426,24 @@ export default class RaceScene extends Phaser.Scene {
       || characters[this.opponentCharacterId]?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    this.isStoryCruise = this.raceMode==='STORY_CRUISE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      this.registry.get('arkonStoryPhase')==='chapter02Driving';
+    this.isArkonCh6Cruise=this.raceMode==='ARKON_RWB_CRUISE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter06Cruise')?.active);
+    this.isArkonCh7Solo=this.raceMode==='ARKON_CH7_SOLO' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter07Solo')?.active);
+    this.isArkonCh8Drive = this.raceMode==='SINGLE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter08Race')?.active);
+    this.isArkonCh5Drive = this.raceMode==='SINGLE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter05Loan')?.active);
+    this.isArkonMx5Drive = this.raceMode==='ARKON_MX5_DRIVE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryMx5Loan')?.active);
     // Older in-progress Street Showdowns may carry a pre-rebalance Expert AI.
     // Resolve driver talent from the actual award for this stage at race entry,
     // preserving saved cars, prize, paid entry fee and remaining rounds.
@@ -360,6 +511,22 @@ export default class RaceScene extends Phaser.Scene {
         : Math.round(this.raceDistanceM) + ' M';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
+    this.isGinzaDemoRace = Boolean(cars[this.selectedCarId]?.ginzaDemo &&
+      this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
+    // Regular Tokyo Champions get a completely unobstructed loan drive;
+    // only the named Arkon profile sees the cosmetic passenger banter.
+    this.hasGinzaBanter = this.isGinzaDemoRace && isNamedArkonDen(this.registry);
+    if (this.isGinzaDemoRace) {
+      // Street Showdowns and Skytree Elite are valid with a Ginza loan.
+      // Preserve their COMPETITION / OSHIAGE_ELITE modes, entry fees, prize
+      // settlement and multi-heat continuity; never permit pink-slip wagering
+      // or unrelated team/professional championships with a collector loan.
+      if (!['COMPETITION', 'OSHIAGE_ELITE'].includes(this.raceMode)) {
+        this.raceMode = 'SINGLE';
+        this.raceDeal = 'BET';
+        this.raceStake = Math.max(0, Number(this.registry.get('selectedRaceStake') || 0));
+      }
+    }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
     const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
     const storedOfferCarId = storedMeetOffer?.displayCarId || storedMeetOffer?.carId;
@@ -401,7 +568,7 @@ export default class RaceScene extends Phaser.Scene {
           null
         )
       : null;
-    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getWorldPhase();
+    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getStoryWorldPhase(this.registry);
     this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
     this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
   }
@@ -411,6 +578,15 @@ export default class RaceScene extends Phaser.Scene {
       const challenge=this.registry.get('crewRecruitChallenge');
       if(!isValidCrewRecruitChallenge(challenge)||challenge.characterId!==this.opponentCharacterId||String(challenge.regionId).toUpperCase()!==String(this.raceDistrict).toUpperCase()||challenge.baseCarId!==this.opponentCarId||!getCrewRecruitmentChallengeRules(this.registry,challenge).eligibleCarIds.includes(this.selectedCarId)){this.scene.start('MeetScene');return;}
       this.explicitOpponentBuildState=createStockOpponentState(this.opponentCarId);
+    }
+    if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
+        shouldLaunchDevVaultStory(this.registry)) {
+      if (queueSafeSceneStart(this,'DevVaultStoryScene')) {
+        claimDevVaultStoryLoan(this.registry);
+        saveSessionState(this.registry);
+        finishSceneLoading('READY');
+        return;
+      }
     }
     ensureDerivedModularCarTextures(this, Object.fromEntries(
       [...new Set([this.selectedCarId, this.opponentCarId])]
@@ -423,15 +599,20 @@ export default class RaceScene extends Phaser.Scene {
     playRaceMusic();
 
     const carStates = this.registry.get('carStates') || {};
-    this.playerCarState = carStates[this.selectedCarId] || {
+    const savedPlayerState = carStates[this.selectedCarId] || {
       stock: true,
       nosInstalled: false,
       tuneLevel: 0,
       acquiredVia: 'starter',
     };
+    // The immutable event copy is the exact setup previewed at registration.
+    // Other races and permanent crew tuning always use the owner's saved car.
+    this.playerCarState = this.raceMode === 'CREW_BATTLE'
+      ? (this.registry.get('crewBattleEventPlayerSetup') || savedPlayerState)
+      : savedPlayerState;
     this.playerPaintColor = getCarPaintColor(this.playerCarState);
 
-    if (!this.isTutorial && this.opponentCarId) {
+    if (!this.isTutorial && !this.isStoryCruise && this.opponentCarId) {
       recordCarMagazineSightings(this.registry, [{
         carId: this.opponentCarId,
         source: this.raceMode === 'TUNER_TEAM'
@@ -472,6 +653,37 @@ export default class RaceScene extends Phaser.Scene {
       rivalCharacter
     );
     const opponentConfig = opponentBuild.car;
+
+    // Final race-physics gate, shared by player and AI. Never run a crew heat
+    // with an over-limit engine or live NOS system hidden behind legal labels.
+    // This uses the actual Vehicle configs after all build application.
+    if (this.raceMode === 'CREW_BATTLE') {
+      const battle = this.registry.get('crewBattleState');
+      const round = battle?.rounds?.[Number(battle?.roundIndex || 0)];
+      const rule = round?.rule;
+      const playerCheck = rule && validateCrewBattleBuiltCar(
+        playerConfig, this.playerCarState, rule
+      );
+      const rivalCheck = rule && validateCrewBattleBuiltCar(
+        opponentConfig, this.opponentBuildState, rule
+      );
+      if (!rule || !playerCheck?.eligible || !rivalCheck?.eligible) {
+        const reason = !rule ? 'MISSING CREW REGULATIONS'
+          : !playerCheck?.eligible ? 'YOUR CREW: ' + playerCheck.reason
+            : 'RIVAL CREW: ' + rivalCheck.reason;
+        console.error('CREW RACE REGULATION BLOCK', reason);
+        this.registry.set('crewBattleValidationError', reason);
+        this.registry.set('crewBattleState', null);
+        this.registry.set('crewBattleEventPlayerSetup', null);
+        this.registry.set('selectedRacePlayerCharacterId', null);
+        if (battle?.originalSelectedCarId) {
+          this.registry.set('selectedCarId', battle.originalSelectedCarId);
+        }
+        saveSessionState(this.registry);
+        this.scene.start('MeetScene');
+        return;
+      }
+    }
 
     this.playerCapabilities = {
       hasTurbo: (playerConfig.maximumBoost || 0) > 0.01,
@@ -583,8 +795,8 @@ export default class RaceScene extends Phaser.Scene {
     this.lastRollCountdownLabel = null;
 
     const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
-    const skylineKey = skylineRegions.has(this.raceDistrict)
-      ? 'raceSkyline_' + this.raceDistrict.toLowerCase() + '_' + this.raceTimeOfDay
+    const skylineKey = (skylineRegions.has(this.raceDistrict) || this.raceMode === 'CHAPTER08')
+      ? 'raceSkyline_' + (this.raceMode === 'CHAPTER08' ? 'oshiage' : this.raceDistrict.toLowerCase()) + '_' + this.raceTimeOfDay
       : null;
     // Keep regional skyline identity stable but vary the expressway furniture
     // from race to race. A session counter makes the sequence deterministic.
@@ -595,7 +807,7 @@ export default class RaceScene extends Phaser.Scene {
     // Oshiage's authored Skytree landmark belongs near the finish.
     // Keep the track furniture varied, but anchor this skyline so its tower
     // does not wander out of view from race to race.
-    const skylineStartRatio = this.raceDistrict === 'OSHIAGE'
+    const skylineStartRatio = (this.raceDistrict === 'OSHIAGE' || this.raceMode === 'CHAPTER08')
       ? 0.28
       : ((roadVariantCounter * 0.61803398875) % 1) * startWindow;
     const skylineTravelPx = this.raceDistanceM <= QUARTER_M + 1 ? 430 : (this.raceDistanceM <= HALF_MILE_M + 1 ? 760 : 1000);
@@ -621,7 +833,7 @@ export default class RaceScene extends Phaser.Scene {
       characters[this.playerCharacterId],
       this.playerCarState
     );
-    this.opponentVisual = this.isTutorial
+    this.opponentVisual = this.isTutorial || this.isStoryCruise
       ? null
       : this.createCarVisual(
           cars[this.opponentCarId],
@@ -664,11 +876,14 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.startButtonText = this.add.text(780, 54, this.isCoaching ? 'START PRACTICE' : this.isRollingStart ? 'START ROLL' : 'START RACE', {
+    this.startButtonText = this.add.text(780, 54, this.isStoryCruise?'START DRIVE':this.isCoaching ? 'START PRACTICE' : this.isRollingStart ? 'START ROLL' : 'START RACE', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
-    this.startButton.on('pointerdown', () => this.startRace());
+    this.startButton.on('pointerdown', () => {
+      if(this.isArkonMx5Drive && this.arkonMx5Phase!=='race')return;
+      this.startRace();
+    });
 
     if (this.isTutorial && !this.isCoaching) {
       this.startButton.setVisible(false).disableInteractive();
@@ -690,9 +905,13 @@ export default class RaceScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(46).setScrollFactor(0)
       .setVisible(false);
 
-    const rivalName = rivalDisplayCharacter?.name || 'Rival';
-    const moneyLabel = this.isTutorial
+    const rivalName = this.isStoryCruise ? 'SAYAKA // PASSENGER' : this.raceMode === 'CHAPTER08'
+      ? 'UNKNOWN CHALLENGER' : rivalDisplayCharacter?.name || 'Rival';
+    const moneyLabel = this.isStoryCruise ? 'CASUAL DRIVE // NO STAKES'
+      : this.isTutorial
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
+      : this.raceMode === 'CHAPTER08'
+        ? 'STORY RUN // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
@@ -724,7 +943,7 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.cancelButtonText = this.add.text(135, 54, this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : 'CANCEL RACE', {
+    this.cancelButtonText = this.add.text(135, 54, this.isStoryCruise?'SKIP DRIVE':this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : isChapter08DevReplay(this.registry) && this.raceMode === 'CHAPTER08' ? 'EXIT REPLAY' : 'CANCEL RACE', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
@@ -745,6 +964,16 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.isCoaching) this.setupCoachedLesson();
     else if (this.isTutorial) this.setupDrivingTutorial();
+    if (this.hasGinzaBanter) this.setupGinzaPassenger();
+    if (this.isStoryCruise) this.setupArkonStoryCruise();
+    if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
+    if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
+    if (this.isArkonCh8Drive) this.setupArkonCh8Passenger();
+    if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
+    if (this.isArkonCh7Solo) this.setupArkonCh7Solo();
+    // Replay exit is anchored on the MAIN play area for every scene
+    // by StoryDirector, including RaceScene. Do not create a second
+    // unresponsive header button underneath the cutscene overlay.
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -771,6 +1000,55 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if(this.isArkonCh6Cruise||this.isArkonCh7Solo)return; // No-input cinematics.
+    if(this.isStoryCruise){
+      this.endArkonStoryCruise();return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter10Race')?.active){
+      this.registry.set('arkonStoryChapter10RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter09Race')?.active){
+      this.registry.set('arkonStoryChapter09RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      this.registry.set('arkonStoryChapter08RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Race')?.active){
+      this.registry.set('arkonStoryChapter07RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      this.registry.set('arkonStoryChapter05RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      this.registry.set('arkonStoryMx5RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
+      this.scene.start('DevVaultStoryScene');
+      return;
+    }
+    if (this.raceMode === 'CHAPTER08' && isChapter08DevReplay(this.registry)) {
+      finishInteractiveChapter08Replay(this);
+      return;
+    }
     if (this.raceStarted || this.cancelConfirmPopup?.active || this.resultsShown) return;
 
     const isPink = this.raceDeal === 'PINK_SLIP';
@@ -863,6 +1141,17 @@ export default class RaceScene extends Phaser.Scene {
 
   forfeitRace(cashPenalty = 0) {
     if (this.resultsShown) return;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      this.registry.set('arkonStoryMx5RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
+      this.scene.start('DevVaultStoryScene');
+      return;
+    }
 
     const losses = Number(this.registry.get('losses') || 0);
     this.registry.set('losses', losses + 1);
@@ -1295,7 +1584,7 @@ export default class RaceScene extends Phaser.Scene {
       y: 0,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
-      depth: depth + 1.04,
+      depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
     });
     const body = bodyLayers.primary;
 
@@ -1338,6 +1627,401 @@ export default class RaceScene extends Phaser.Scene {
 
   // Oshiage's free practical lessons reuse the race renderer, player inputs,
   // vehicle physics and HUD. They bypass all race settlement and rewards.
+  setupGinzaPassenger() {
+    if (!this.hasGinzaBanter) return;
+    this.ginzaPassenger = createGinzaBanterHud(this);
+    this.ginzaBanterState = createGinzaBanterState(
+      this.player?.transmission?.currentGear
+    );
+    this.events.once('shutdown', () => this.ginzaPassenger?.destroy?.());
+  }
+
+  updateGinzaPassenger(telemetry) {
+    if (!this.hasGinzaBanter || !this.ginzaPassenger || this.resultsShown) return;
+    if (this.finished) {
+      this.ginzaPassenger.hide();
+      return;
+    }
+    const line = advanceGinzaBanter(this.ginzaBanterState, {
+      elapsed: this.greenClock == null ? 0 : this.raceClock - this.greenClock,
+      gear: this.player?.transmission?.currentGear ?? telemetry?.gear ?? 0,
+      running: this.raceStarted && this.greenClock != null,
+      finished: this.finished,
+    });
+    if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
+  }
+
+  setupArkonCh6Cruise(){
+    // Non-interactive scenic drive: a real moving car on the Yokohama road,
+    // but no countdown, AI contest, race settlement or hidden performance.
+    this.arkonCh6Seconds=0;
+    this.arkonCh6LineIndex=0;
+    this.arkonCh6Leaving=false;
+    this.controls.enabled=false;
+    this.startButton?.setVisible(false)?.disableInteractive();
+    this.startButtonText?.setVisible(false);
+    this.cancelButton?.setVisible(false)?.disableInteractive();
+    this.cancelButtonText?.setVisible(false);
+    this.treeSprite?.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('SAYAKA // PASSENGER');
+    this.stakeText?.setText('A QUIET NIGHT DRIVE // NO RACE');
+    this.prepareRollingVehicle(this.player);
+    this.setArkonMx5OpponentVisible(false);
+    this.arkonCh6Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>this.arkonCh6Dialogue?.destroy?.());
+  }
+  updateArkonCh6Cruise(dt){
+    if(this.arkonCh6Leaving)return;
+    this.arkonCh6Seconds+=dt;
+    const pt=this.advanceRollingVehicle(this.player,dt);
+    this.drawScene(pt,null,dt);
+    this.hud.update(pt,'YOKOHAMA // NIGHT DRIVE // NO RACE');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    const lines=[
+      [1,'sayaka','You really did bring the Porsche back.','homeNormal'],
+      [4.5,'arkon','I remembered the first time I saw it. On the transporter.','storySerious'],
+      [8,'sayaka','You looked as though it might swallow your entire workshop.','homeHappy'],
+      [12,'arkon','It nearly did.','storyCoolShy'],
+      [15,'sayaka','It feels wonderful. Very different from the broken car.','homeSerious'],
+      [18,'arkon','I wanted you to be the first to ride in it.','storySerious'],
+      [21,'sayaka','That is unexpectedly thoughtful.','homeHappy'],
+    ];
+    while(this.arkonCh6LineIndex<lines.length &&
+          this.arkonCh6Seconds>=lines[this.arkonCh6LineIndex][0]){
+      const [,speaker,words,pose]=lines[this.arkonCh6LineIndex++];
+      this.arkonCh6Dialogue?.show(speaker,words,pose);
+    }
+    if(this.arkonCh6Seconds>=26){
+      this.arkonCh6Leaving=true;
+      const s=this.registry.get('arkonStoryChapter06Cruise');
+      if(s?.active){
+        this.registry.set('arkonStoryChapter06Cruise',{...s,completed:true});
+        // Load the actual Ferris-wheel Meet BEFORE the finale stages render.
+        // Otherwise the outgoing generic Meet background is visible briefly
+        // and the chapter spends a frame catching up with the correct venue.
+        this.registry.set('meetLocation','yokohamaMinatoMirai');
+        this.registry.set('district','YOKOHAMA');
+        this.registry.set('arkonStoryTimeOfDay','night');
+        saveSessionState(this.registry);
+      }
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.cameras.main.fadeOut(1100,0,0,0);
+      this.time.delayedCall(1130,()=>queueSafeSceneStart(this,'MeetScene'));
+    }
+  }
+
+  setupArkonCh7Solo(){
+    this.arkonCh7Seconds=0;
+    this.arkonCh7LineIndex=0;
+    this.arkonCh7Leaving=false;
+    this.controls.enabled=false;
+    this.startButton?.setVisible(false)?.disableInteractive();
+    this.startButtonText?.setVisible(false);
+    this.cancelButton?.setVisible(false)?.disableInteractive();
+    this.cancelButtonText?.setVisible(false);
+    this.treeSprite?.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('EMPTY PASSENGER SEAT');
+    this.stakeText?.setText('ONE LAST DRIVE // NO RACE');
+    this.prepareRollingVehicle(this.player);
+    this.setArkonMx5OpponentVisible(false);
+    this.arkonCh7Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh7Phone=this.add.text(780,104,'',{
+      fontFamily:PIXEL_FONT,fontSize:'18px',color:'#f9e9e3',
+      backgroundColor:'#102130',padding:{left:25,right:25,top:14,bottom:14},
+      align:'center',
+    }).setOrigin(.5).setDepth(2850).setScrollFactor(0).setVisible(false);
+    this.arkonCh7Signal=this.add.text(780,168,'',{
+      fontFamily:PIXEL_FONT,fontSize:'13px',color:'#ff8585',
+      backgroundColor:'#161b24',padding:{left:14,right:14,top:10,bottom:10}
+    }).setOrigin(.5).setDepth(2849).setScrollFactor(0).setVisible(false);
+    this.events.once('shutdown',()=>{
+      this.arkonCh7Dialogue?.destroy?.();
+      this.arkonCh7Phone?.destroy?.();
+      this.arkonCh7Signal?.destroy?.();
+    });
+  }
+  updateArkonCh7Solo(dt){
+    if(this.arkonCh7Leaving)return;
+    this.arkonCh7Seconds+=dt;
+    const t=this.arkonCh7Seconds;
+    // The car really stops for the signal. No AI, timer result or stakes.
+    const stopped=t>=22&&t<31;
+    const pt=this.advanceRollingVehicle(this.player,stopped?0:dt);
+    if(stopped)pt.speedKmh=0;
+    this.drawScene(pt,null,stopped?0:dt);
+    this.hud.update(pt,'TOKYO // A DRIVE ALONE');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    const lines=[
+      [2,'She would have loved this thing.'],
+      [12,'Must be asleep. I should have taken her out earlier.'],
+      [15,'Absolutely. Full restoration. Yes, we have room for it.'],
+      [19,'Excellent. Another deal.'],
+    ];
+    while(this.arkonCh7LineIndex<lines.length &&
+        t>=lines[this.arkonCh7LineIndex][0]){
+      const [,words]=lines[this.arkonCh7LineIndex++];
+      this.arkonCh7Dialogue?.show('arkon',words,'storyThinking');
+    }
+    const phone=t>=5&&t<11
+      ? t<9?'SAYAKA FUJIEDA\\nRINGING...':'SAYAKA FUJIEDA\\nNO ANSWER'
+      :t>=14&&t<20?'BUSINESS CALL\\nNEW CONTRACT CONFIRMED'
+      :t>=24&&t<31
+      ?t<28?'SAYAKA FUJIEDA\\nRINGING...':'SAYAKA FUJIEDA\\nNO ANSWER'
+      :'';
+    this.arkonCh7Phone?.setText(phone).setVisible(Boolean(phone));
+    this.arkonCh7Signal?.setText(stopped?'●  RED LIGHT':'')
+      .setVisible(stopped);
+    if(t>=36){
+      this.arkonCh7Leaving=true;
+      const state=this.registry.get('arkonStoryChapter07Solo');
+      if(state?.active){
+        this.registry.set('arkonStoryChapter07Solo',{...state,completed:true});
+        saveSessionState(this.registry);
+      }
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.cameras?.main?.fadeOut?.(850,0,0,0);
+      this.time.delayedCall(900,()=>queueSafeSceneStart(this,'MeetScene'));
+    }
+  }
+
+  setupArkonCh8Passenger() {
+    this.arkonCh8Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh8LineIndex=0;
+    this.events.once('shutdown',()=>this.arkonCh8Dialogue?.destroy?.());
+  }
+
+  updateArkonCh8Passenger() {
+    if(!this.isArkonCh8Drive||!this.arkonCh8Dialogue||this.resultsShown)return;
+    if(this.finished){this.arkonCh8Dialogue.hide();return;}
+    if(!this.raceStarted||this.greenClock==null)return;
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    const index=Math.min(2,Number(this.registry.get('arkonStoryChapter08Race')?.index||0));
+    const lines=[
+      [
+        ['sayaka','It is rather nice to be out in a car with you again.','homeHappy'],
+        ['arkon','And you are still keeping an eye on my shifts?','storyTalking'],
+        ['sayaka','Some traditions deserve to survive.','homeHappy'],
+      ],[
+        ['sayaka','You never told me the wager was this large.','homeSerious'],
+        ['arkon','We are fine. The car is ready.','storyConfidentSmirk'],
+        ['sayaka','It is not the car I am worried about.','homeSerious'],
+      ],[
+        ['sayaka','You are racing for the people watching, not the cars.','homeSerious'],
+        ['arkon','A good result opens doors, Sayaka.','storyTalking'],
+        ['sayaka','Just be careful which ones you walk through.','homeSerious'],
+      ],
+    ][index];
+    const times=[0,2.6,5.2];
+    while(this.arkonCh8LineIndex<lines.length &&
+      elapsed>=times[this.arkonCh8LineIndex]){
+      const [speaker,text,pose]=lines[this.arkonCh8LineIndex++];
+      this.arkonCh8Dialogue.show(speaker,text,pose);
+    }
+  }
+
+  setupArkonCh5Passenger() {
+    this.arkonCh5Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh5LineIndex=0;
+    this.events.once('shutdown',()=>this.arkonCh5Dialogue?.destroy?.());
+  }
+
+  updateArkonCh5Passenger() {
+    if(!this.isArkonCh5Drive||!this.arkonCh5Dialogue||this.resultsShown)return;
+    if(this.finished){this.arkonCh5Dialogue.hide();return;}
+    if(!this.raceStarted || this.greenClock==null)return;
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    const index=Math.min(3,Number(this.registry.get('arkonStoryChapter05Loan')?.index||0));
+    const scripts=[
+      [
+        ['sayaka','Quite a car. Try to bring it back in one piece.','oshiageRelaxed'],
+        ['arkon','That was already on the checklist.','storyTalking'],
+        ['sayaka','Then perhaps keep your eyes on the road.','oshiageHappy'],
+      ],[
+        ['sayaka','The rotary sounds magnificent now.','oshiageHappy'],
+        ['arkon','Cooling is steady. Boost is right where we wanted it.','storyTalking'],
+        ['sayaka','And your confidence appears to be fully operational.','oshiageReviewing'],
+      ],[
+        ['sayaka','This Supra belongs in a museum.','oshiageReviewing'],
+        ['arkon','The owner would prefer it to be fast.','storyConfidentSmirk'],
+        ['sayaka','Those are not mutually exclusive.','oshiageHappy'],
+      ],[
+        ['sayaka','There is Daigo. Still in the same AE86.','oshiageRelaxed'],
+        ['arkon','At least one thing in Tokyo never changes.','storySheepish'],
+        ['sayaka','Please do not let this become a competition for my attention.','oshiageReviewing'],
+      ],
+    ];
+    const lines=scripts[index],times=[0,2.6,5.2];
+    while(this.arkonCh5LineIndex<lines.length &&
+      elapsed>=times[this.arkonCh5LineIndex]){
+      const [speaker,text,pose]=lines[this.arkonCh5LineIndex++];
+      this.arkonCh5Dialogue.show(speaker,text,pose);
+    }
+  }
+
+  // Chapter 03's Sayaka road-test is played IN the live RaceScene.
+  // The production Vehicle physics/AI is reused after the choice; the
+  // opening hands-free roll is only a scripted, low-speed establishment shot.
+  setupArkonMx5Drive() {
+    this.arkonMx5Phase='cruise';
+    this.arkonMx5Elapsed=0;
+    this.arkonMx5LineIndex=0;
+    this.arkonMx5S15Visible=false;
+    this.controls.enabled=false;
+    this.startButton.setVisible(false).disableInteractive();
+    this.startButtonText.setVisible(false);
+    this.cancelButton.setVisible(false).disableInteractive();
+    this.cancelButtonText.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('SAYAKA // PASSENGER');
+    this.stakeText?.setText('TEST DRIVE // NO STAKES');
+    this.prepareRollingVehicle(this.player);
+    this.prepareRollingVehicle(this.opponent);
+    this.opponent.positionM=this.player.positionM-20;
+    this.arkonMx5Dialogue=createGinzaBanterHud(this,{chapter03:true});
+    this.events.once('shutdown',()=>{
+      this.arkonMx5Dialogue?.destroy?.();
+      this._arkonMx5Choice?.destroy?.();
+    });
+    this.setArkonMx5OpponentVisible(false);
+  }
+
+  setArkonMx5OpponentVisible(visible) {
+    const visual=this.opponentVisual;
+    if(!visual)return;
+    for(const sprite of [
+      visual.rearWheel, visual.frontWheel,visual.rearWheelBacking,
+      visual.frontWheelBacking,visual.roadShadow,...(visual.bodyObjects||[]),
+    ])sprite?.setVisible?.(visible);
+  }
+
+  updateArkonMx5Drive(dt) {
+    const lines=[
+      [0,'sayaka','Well? How does the little Mazda feel?','homeNormal'],
+      [3.5,'arkon','The power comes in much harder. Needs a careful foot.','storySerious'],
+      [7,'sayaka','And it sounds excellent.','homeHappy'],
+      [10,'arkon','You have gone awfully quiet.','storyTalking'],
+      [13,'sayaka','I am enjoying the engine. You might try watching the road.','homeSerious'],
+      [17,'arkon','Both hands on the wheel. See?','storySheepish'],
+      [20,'sayaka','I can see that.','homeNormal'],
+      [23,'arkon','That S15 alongside us keeps revving.','storySerious'],
+      [26,'sayaka','How observant.','homeHappy'],
+      [29,'arkon','I think he wants a rolling race.','storyTalking'],
+      [32,'sayaka','You built my car. You are driving it. Your call.','homeNormal'],
+    ];
+    this.arkonMx5Elapsed+=dt;
+    const pt=this.advanceRollingVehicle(this.player,dt);
+    // The S15 comes into the adjacent lane from behind and gradually
+    // matches the MX-5. Only the visual approach is cinematic; once
+    // accepted, both vehicles use the normal rolling-start race physics.
+    if(this.arkonMx5Elapsed>=18 && !this.arkonMx5S15Visible){
+      this.arkonMx5S15Visible=true;
+      this.opponent.positionM=this.player.positionM-18;
+      this.setArkonMx5OpponentVisible(true);
+      this.rivalText?.setText('S15 // UNINVITED CHALLENGER');
+    }
+    const ot=this.advanceRollingVehicle(this.opponent,dt);
+    if(this.arkonMx5S15Visible){
+      const gap=this.player.positionM-this.opponent.positionM;
+      if(gap>0)this.opponent.positionM+=Math.min(gap,5*dt);
+    }
+    this.drawScene(pt,this.arkonMx5S15Visible?this.opponent.telemetry:null,dt);
+    this.hud.update(pt,'TATSUMI // SAYAKA TEST DRIVE // CRUISING');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    while(this.arkonMx5LineIndex<lines.length &&
+        this.arkonMx5Elapsed>=lines[this.arkonMx5LineIndex][0]){
+      const [,speaker,text,pose]=lines[this.arkonMx5LineIndex++];
+      this.arkonMx5Dialogue?.show(speaker,text,pose);
+    }
+    if(this.arkonMx5Elapsed>=35 && this.arkonMx5Phase==='cruise'){
+      this.arkonMx5Phase='decision'; // Freeze physics, camera and wheel motion.
+      this.arkonMx5Dialogue?.hide?.();
+      this._arkonMx5Choice=showStoryChoices(this,{
+        title:'AN UNINVITED CHALLENGE',
+        subtitle:'The S15 matches your speed. Sayaka looks across. Your call.',
+        choices:[
+          {id:'race',label:'ACCEPT THE ROLLING RACE',
+            description:'Use your controls to race the S15. No cash or pink slips.'},
+          {id:'decline',label:'KEEP CRUISING',
+            description:'Let the S15 go. Enjoy the drive with Sayaka.'},
+        ],
+        onChoose:choice=>{
+          this._arkonMx5Choice=null;
+          const selected=choice.id==='race'?'race':'decline';
+          this.registry.set('arkonStoryChoices',{
+            ...(this.registry.get('arkonStoryChoices')||{}),
+            arkonMx5Challenge:selected,
+          });
+          if(selected==='decline'){
+            this.registry.set('arkonStoryMx5RaceResult','declined');
+            saveSessionState(this.registry);
+            queueSafeSceneStart(this,'MeetScene');
+            return;
+          }
+          this.arkonMx5Phase='race';
+          this.arkonMx5Dialogue?.destroy?.();
+          this.arkonMx5Dialogue=null;
+          // Preserve the actual road position so the player doesn't see
+          // a scenery jump. The standard rolling countdown establishes new
+          // timing baselines for BOTH cars when GO is displayed.
+          this.finishTargetM=this.player.positionM+this.raceDistanceM;
+          this.finishCameraPx=null;
+          this.controls.enabled=true;
+          this.rivalText?.setText('S15 // ROLLING RACE');
+          this.stakeText?.setText('EXHIBITION // NO STAKES');
+          this.startRace();
+        },
+        onCancel:()=>{this._arkonMx5Choice=null;},
+      });
+    }
+  }
+
+  setupArkonStoryCruise() {
+    this.cruiseLineIndex=0;
+    this.cruiseDialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>this.cruiseDialogue?.destroy?.());
+  }
+
+  updateArkonStoryCruise(telemetry) {
+    if(!this.isStoryCruise || !this.raceStarted ||
+       this.greenClock==null || this.cruiseFinishing)return;
+    const travelled=Math.max(0,(telemetry?.positionM||0)-this.raceStartPositionM);
+    const lines=[
+      [0,'sayaka','That shift feels smoother than at the driving school.','oshiageReviewing'],
+      [35,'arkon','I changed the clutch linkage. And a few other things.','storyTalking'],
+      [95,'sayaka','Who built this engine?','oshiageSerious'],
+      [150,'arkon','I did. The transmission, too.','storySerious'],
+      [220,'sayaka','You were a race mechanic, weren\'t you?','oshiageReviewing'],
+      [290,'arkon','Once upon a time. Things got complicated.','storySheepish'],
+      [360,'sayaka','Whatever happened, the Civic drives beautifully.','oshiageRelaxed'],
+      [420,'arkon','Workshop is nearby. Fancy a truly terrible coffee?','storyTalking'],
+      [480,'sayaka','That is not the invitation you think it is.','oshiageHappy'],
+    ];
+    while(this.cruiseLineIndex<lines.length &&
+          travelled>=lines[this.cruiseLineIndex][0]){
+      const [,speaker,text,pose]=lines[this.cruiseLineIndex++];
+      this.cruiseDialogue?.show(speaker,text,pose);
+    }
+    if(travelled>=550) {
+      this.cruiseFinishing=true;
+      this.cruiseDialogue?.show('sayaka','All right. Show me that workshop.','oshiageRelaxed');
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.time.delayedCall(1700,()=>this.endArkonStoryCruise());
+    }
+  }
+
+  endArkonStoryCruise() {
+    if(!this.isStoryCruise || this.cruiseLeaving)return;
+    this.cruiseLeaving=true;
+    this.registry.set('arkonStoryCruiseComplete',true);
+    saveSessionState(this.registry);
+    queueSafeSceneStart(this,'GarageScene',{workshopLocationId:'shinonomeWorkshop'});
+  }
+
   setupCoachedLesson() {
     this.coach = new DrivingCoach(this.player);
     this.coachLaunch = this.coach.launch();
@@ -1355,7 +2039,7 @@ export default class RaceScene extends Phaser.Scene {
     // Shared race coach HUD: transparent zoomed face, compact manga dialogue
     // with left notch and a small red target decal. No physics changes.
     this.coachHud = createRaceCoachHud(this, {
-      speaker: 'LADY INSTRUCTOR // OSHIAGE',
+      speaker: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // OSHIAGE' : 'LADY INSTRUCTOR // OSHIAGE',
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
     });
@@ -1490,6 +2174,9 @@ export default class RaceScene extends Phaser.Scene {
       },
     };
     this.registry.set('oshiageCoachingProgress', outcomes);
+    if(!timedOut && this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryPhase')==='lesson')
+      this.registry.set('arkonStoryLessonCompleted',true);
     saveSessionState(this.registry);
 
 
@@ -1562,7 +2249,7 @@ export default class RaceScene extends Phaser.Scene {
       pages: [{
         speaker: 'left',
         pose: result.timedOut ? 'oshiageConcerned' : 'oshiageHappy',
-        nameOverride: 'LADY INSTRUCTOR',
+        nameOverride: this.registry.get('gameMode')==='arkonStory'?'SAYAKA':'LADY INSTRUCTOR',
         text: result.feedback + ' Have a look at your actual revs against the recommended ranges.',
       }],
       finalActionLabel: 'RETURN TO SCHOOL',
@@ -1625,7 +2312,8 @@ export default class RaceScene extends Phaser.Scene {
       concerned: 'characterSayakaHomeSad',
     };
     this.tutorialHud = createRaceDialogueHud(this, {
-      speaker: atSchool ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
+      speaker: atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
       depth: 80,
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
@@ -1831,7 +2519,8 @@ export default class RaceScene extends Phaser.Scene {
 
     const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
     this.tutorialHud.heading.setText(
-      (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
+      (atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
     );
     // The prose is her spoken instruction; a blank line separates it from
     // the all-caps action cue. The redundant uppercase step title is gone.
@@ -2014,11 +2703,14 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHud?.setPortrait('happy');
     this.tutorialHud?.heading?.setText(
       this.registry.get('raceReturnScene') === 'OshiageScene'
-        ? 'LADY INSTRUCTOR // WELL DONE' : 'SAYAKA // WELL DONE'
+        ? (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // WELL DONE' : 'LADY INSTRUCTOR // WELL DONE') : 'SAYAKA // WELL DONE'
     );
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
       this.registry.set('oshiageBasicLessonComplete', true);
+      if(this.registry.get('gameMode')==='arkonStory' &&
+         this.registry.get('arkonStoryPhase')==='lesson')
+        this.registry.set('arkonStoryLessonCompleted',true);
       saveSessionState(this.registry);
       this.tutorialPromptText?.setText(
         'Very nicely done! You made it into fourth gear.\n\nLESSON COMPLETE // RETURNING TO DRIVING SCHOOL'
@@ -2094,6 +2786,17 @@ export default class RaceScene extends Phaser.Scene {
     if (sceneCutsceneActive(this)) return;
 
     const dt = Math.min(deltaMs / 1000, 1 / 30);
+    if(this.isArkonCh7Solo){
+      this.raceClock+=dt;
+      this.updateArkonCh7Solo(dt);
+      return;
+    }
+    if(this.isArkonCh6Cruise){
+      this.raceClock+=dt;
+      this.updateArkonCh6Cruise(dt);
+      return;
+    }
+    if(this.isArkonMx5Drive && this.arkonMx5Phase==='decision')return;
     this.raceClock += dt;
 
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
@@ -2101,6 +2804,16 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.resultsShown) return;
     if (this.isTutorial && this.tutorialComplete) return;
+
+    // Before the challenger is accepted, the MX-5 is a REAL moving car
+    // rendered on the RaceScene road. Inputs and timing remain disabled:
+    // passengers can talk, the S15 can join, and the choice can freeze
+    // the road without a separate manga scene or fake results.
+    if(this.isArkonMx5Drive && this.arkonMx5Phase!=='race'){
+      if(this.arkonMx5Phase==='decision')return;
+      this.updateArkonMx5Drive(dt);
+      return;
+    }
 
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
@@ -2205,18 +2918,19 @@ export default class RaceScene extends Phaser.Scene {
 
     this.engineAudio?.update(
       playerT,
-      this.isTutorial ? null : oppT,
+      (this.isTutorial || this.isStoryCruise) ? null : oppT,
       this.player.config,
       this.opponent.config,
       dt
     );
 
-    if (!this.isTutorial) this.handleTiming(playerT, oppT);
+    if (!this.isTutorial && !this.isStoryCruise) this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
 
     let status = '';
-    if (this.isTutorial) {
-      status = this.isCoaching ? 'DRIVING SCHOOL // LADY INSTRUCTOR' : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
+    if (this.isStoryCruise)status='NIGHT DRIVE // SAYAKA // NO TIMER';
+    else if (this.isTutorial) {
+      status = this.isCoaching ? (this.registry.get('gameMode')==='arkonStory' ? 'DRIVING SCHOOL // SAYAKA' : 'DRIVING SCHOOL // LADY INSTRUCTOR') : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
     } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
@@ -2228,6 +2942,10 @@ export default class RaceScene extends Phaser.Scene {
     else if (this.countdownClock < 2) status = 'STAGED';
 
     this.hud.update(playerT, status);
+    if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
+    if (this.isArkonCh5Drive) this.updateArkonCh5Passenger();
+    if (this.isArkonCh8Drive) this.updateArkonCh8Passenger();
+    if (this.isStoryCruise) this.updateArkonStoryCruise(playerT);
     this.debug.update(playerT);
     if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
     else this.updateDrivingTutorial(controlState, playerT);
@@ -2347,6 +3065,7 @@ export default class RaceScene extends Phaser.Scene {
 
   showResultsOverlay() {
     this.engineAudio?.fadeOut();
+    const chapter08Race = this.raceMode === 'CHAPTER08';
     this.resultsShown = true;
     this.controls.enabled = false;
 
@@ -2371,11 +3090,47 @@ export default class RaceScene extends Phaser.Scene {
       opponentWon = true;
     }
 
+    if (chapter08Race) {
+      // This invitation-race loss is scripted and consequence-free, not a
+      // hidden power multiplier or a real career result.
+      playerWon = false;
+      opponentWon = true;
+      const playerTime = Number(this.times.finish);
+      if (Number.isFinite(playerTime) &&
+          (!Number.isFinite(this.opponentTimes.finish) || this.opponentTimes.finish >= playerTime)) {
+        this.opponentTimes.finish = Math.max(.1, playerTime - .175);
+      }
+    }
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        ['rivalRace','chapter02RivalRace'].includes(this.registry.get('arkonStoryPhase')) &&
+        this.opponentCharacterId==='storyDaigoKirishima' &&
+        (playerWon || opponentWon)) {
+      // Determined by the ordinary race clock, not by the Story Director.
+      const resultKey=this.registry.get('arkonStoryPhase')==='chapter02RivalRace'
+        ? 'arkonStoryChapter02RivalResult' : 'arkonStoryRivalResult';
+      this.registry.set(resultKey,playerWon?'won':'lost');
+    }
     const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
       ? this.settleRace(playerWon)
       : null;
 
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        ['rivalRace','chapter02RivalRace'].includes(this.registry.get('arkonStoryPhase')) &&
+        (this.registry.get('arkonStoryChapter02RivalResult') ||
+         this.registry.get('arkonStoryRivalResult'))) {
+      saveSessionState(this.registry); // preserve result before any scene transition
+    }
+    // The promised five lessons are claimed ONCE after a real regional title.
+    // The regional race settlement already awards its regular cash/coupons.
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        settlement?.teamChallengeCompleted &&
+        !this.registry.get('arkonStoryCreditsAwarded')) {
+      this.registry.set('arkonStoryLessonCredits',Math.max(0,
+        Number(this.registry.get('arkonStoryLessonCredits')||0))+5);
+      this.registry.set('arkonStoryCreditsAwarded',true);
+      saveSessionState(this.registry);
+    }
     if (playerWon) playVictorySting();
     else stopMusic();
 
@@ -2419,7 +3174,8 @@ export default class RaceScene extends Phaser.Scene {
           ? {
               primary: 'SKYTREE SHOWDOWN CHAMPION  +¥' + Number(settlement.cashReward || 0).toLocaleString('en-US'),
               secondary: settlement.wheelLabel
-                ? 'RARE WHEEL UNLOCKED // ' + settlement.wheelLabel.toUpperCase()
+                ? 'RARE WHEELS + ' + Number(settlement.couponAwards || 0) +
+                  ' × ' + String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() + ' COUPONS'
                 : String(settlement.couponAwards || 0) + ' × ' +
                   String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() + ' COUPONS',
             }
@@ -2430,18 +3186,13 @@ export default class RaceScene extends Phaser.Scene {
         if (!settlement.playerWon) {
           return {
             primary: 'STOCK CHALLENGE LOST',
-            secondary: 'COME BACK AND TRY AGAIN LATER',
+            secondary: 'INVITATION CLOSED // EARN A NEW RIVAL CHALLENGE',
           };
         }
-        return settlement.crewRecruitJoined
-          ? {
-              primary: 'CREW MEMBER JOINED',
-              secondary: 'SIGNATURE CAR LOANED TO WAREHOUSE HQ',
-            }
-          : {
-              primary: 'STOCK CHALLENGE WON',
-              secondary: 'RETURN TO THE MEET',
-            };
+        return {
+          primary: 'STOCK CHALLENGE WON',
+          secondary: 'RETURN TO THE MEET // RECRUITMENT DECISION AWAITS',
+        };
       }
 
       if (settlement.crewBattle) {
@@ -2701,6 +3452,36 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
+    // Stamp the unique CREW emblem in the bottom-right of the *overall*
+    // crew-battle victory result. Individual heat wins never display it,
+    // and repeat victories do not award a duplicate persistent badge.
+    const crewBadgeWon = Boolean(settlement?.crewBattleCompleted);
+    const crewBadge = crewBadgeWon && this.textures.exists('regionalCrewVictoryBadge')
+      ? this.add.image(1450, 582, 'regionalCrewVictoryBadge')
+          .setDisplaySize(104, 104)
+          .setDepth(depth + 12)
+          .setScrollFactor(0)
+          .setAlpha(0)
+          .setAngle(-8)
+      : null;
+    const crewBadgeCaption = crewBadge
+      ? this.add.text(
+          1450, 644,
+          settlement.crewBattleFirstClear ? 'CREW BADGE EARNED' : 'CREW BADGE',
+          {
+            fontFamily: PIXEL_FONT, fontSize: '9px',
+            color: '#f5dfab', backgroundColor: '#11141add',
+            padding: { x: 7, y: 4 },
+          }
+        ).setOrigin(0.5, 0).setDepth(depth + 13)
+          .setScrollFactor(0).setAlpha(0)
+      : null;
+    if (crewBadge) {
+      crewBadge.stampTargetScaleX = crewBadge.scaleX;
+      crewBadge.stampTargetScaleY = crewBadge.scaleY;
+      crewBadge.setScale(crewBadge.scaleX * 1.65, crewBadge.scaleY * 1.65);
+    }
+
     const perfectStarBadge =
       finalRegionalWin &&
       settlement?.teamChallengePerfect &&
@@ -2791,9 +3572,8 @@ export default class RaceScene extends Phaser.Scene {
         );
       }
     }
-    if (playerWon && settlement?.crewRecruitJoined) {
-      awardParts.push('CREW MEMBER JOINED');
-      awardParts.push('SIGNATURE CAR LOANED');
+    if (playerWon && settlement?.crewRecruitDecisionPending) {
+      awardParts.push('CREW INVITATION // RETURN TO MEET');
     }
     if (playerWon && settlement?.teamChallengeCompleted) {
       awardParts.push(String(
@@ -2965,11 +3745,8 @@ export default class RaceScene extends Phaser.Scene {
       );
     });
 
-    const playerDisplayName = [
-      String(this.registry.get('firstName') || '').trim(),
-      String(this.registry.get('lastName') || '').trim(),
-    ].filter(Boolean).join(' ') || playerCharacter.name;
-    const rivalDisplayName = rivalCharacter.name;
+    const playerDisplayName = getInGamePlayerDisplayName(this.registry);
+    const rivalDisplayName = chapter08Race ? 'UNKNOWN DRIVER' : rivalCharacter.name;
 
     // Return to the angled manga panels from R381, but crop the portrait image
     // with the exact same polygon used by its frame.
@@ -2985,10 +3762,24 @@ export default class RaceScene extends Phaser.Scene {
     playerFrame.lineStyle(5, ink, 0.92);
     playerFrame.strokePoints(playerPanelPoints, true);
 
+    const pairedArkonResult = this.showArkonResultPair && this.isGinzaDemoRace && !chapter08Race;
+    // An owner-only comic pairing inside the ONE existing player polygon:
+    // Sayaka reacts behind Arkon, who always keeps his charcoal suit.
+    const sayakaReactionProfile = pairedArkonResult
+      ? createCharacterProfile(this, {
+        characterId: 'sayakaFujieda',
+        pose: playerWon ? 'devScowl' : 'devLaughing',
+        x: 1224, y: 262, frameWidth: 318, frameHeight: 360,
+        side: 'left', depth: depth + 6.4,
+        profileOverride: { scale: 0.85, offsetX: -7, offsetY: 38 },
+        mask: false,
+      }) : null;
     const playerProfile = createCharacterProfile(this, {
-      characterId: this.playerCharacterId,
-      pose: playerWon ? 'win' : 'loss',
-      x: 1310,
+      characterId: pairedArkonResult ? 'arkonDen' : this.playerCharacterId,
+      pose: pairedArkonResult
+        ? (playerWon ? 'devLaughing' : 'devSerious')
+        : playerWon ? 'win' : 'loss',
+      x: pairedArkonResult ? 1420 : 1310,
       y: 252,
       frameWidth: 470,
       frameHeight: 390,
@@ -2996,9 +3787,11 @@ export default class RaceScene extends Phaser.Scene {
       depth: depth + 7,
       flipInward: true,
       mask: false,
-      profileOverride: playerWon
-        ? { scale: 1.00, offsetX: 0, offsetY: 18 }
-        : { scale: 1.04, offsetX: 0, offsetY: 20 },
+      profileOverride: pairedArkonResult
+        ? { scale: 0.98, offsetX: 14, offsetY: 24 }
+        : playerWon
+          ? { scale: 1.00, offsetX: 0, offsetY: 18 }
+          : { scale: 1.04, offsetX: 0, offsetY: 20 },
     });
 
     const playerMaskShape = this.make.graphics({ add: false });
@@ -3006,6 +3799,7 @@ export default class RaceScene extends Phaser.Scene {
     playerMaskShape.fillPoints(playerPanelPoints, true);
     const playerMask = playerMaskShape.createGeometryMask();
     playerProfile?.image?.setMask(playerMask);
+    sayakaReactionProfile?.image?.setMask(playerMask);
 
     const rivalPanelPoints = [
       new Phaser.Geom.Point(818, 126),
@@ -3021,7 +3815,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const rivalProfile = createCharacterProfile(this, {
       characterId: this.opponentCharacterId,
-      pose: playerWon ? 'loss' : 'win',
+      pose: chapter08Race ? 'ginzaNormal' : playerWon ? 'loss' : 'win',
       x: 982,
       y: 257,
       frameWidth: 355,
@@ -3041,8 +3835,12 @@ export default class RaceScene extends Phaser.Scene {
     rivalMaskShape.fillPoints(rivalPanelPoints, true);
     const rivalMask = rivalMaskShape.createGeometryMask();
     rivalProfile?.image?.setMask(rivalMask);
+    if (chapter08Race && rivalProfile?.image) {
+      rivalProfile.image.setTintFill(0x62656c).setAlpha(.88);
+    }
 
     const playerPortraitImage = playerProfile?.image || null;
+    const sayakaReactionImage = sayakaReactionProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
     const playerNameText = this.add.text(1515, 452, String(playerDisplayName || 'YOU').toUpperCase(), {
@@ -3066,7 +3864,7 @@ export default class RaceScene extends Phaser.Scene {
     // two authored lines per outcome without introducing random redraw flicker.
     const eventIndex = Math.max(0,
       Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
-    const rivalQuote = getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+    const rivalQuote = chapter08Race ? '...' : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
       eventIndex, playerWon
         ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
         : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
@@ -3100,7 +3898,9 @@ export default class RaceScene extends Phaser.Scene {
       }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
-    const actionHint = settlement?.gameOver
+    const actionHint = chapter08Race
+      ? 'PARK AT GINZA MOTOR GALLERY'
+      : settlement?.gameOver
       ? 'RUN OVER'
       : settlement?.crewBattleContinues
         ? 'NEXT CREW MATCH'
@@ -3131,7 +3931,18 @@ export default class RaceScene extends Phaser.Scene {
       advanced = true;
       tapTarget.disableInteractive();
 
-      if (isPinkSlip && settlement) {
+      if (chapter08Race) {
+        if (!isChapter08DevReplay(this.registry)) {
+          markCutsceneSeen(this.registry, 'chapter08RaceFinished');
+        }
+        this.registry.set('selectedRaceCategory', 'SINGLE');
+        this.registry.set('selectedRaceDeal', 'BET');
+        this.registry.set('selectedRaceMeetOffer', null);
+        saveSessionState(this.registry);
+        this.scene.start('CentralTokyoScene', {
+          locationId: 'ginzaMotorGallery', ginzaRoom: 1, chapter08Arrival: true,
+        });
+      } else if (isPinkSlip && settlement) {
         this.registry.set('pendingPinkSlipResult', {
           playerWon: Boolean(playerWon),
           gameOver: Boolean(settlement.gameOver),
@@ -3152,7 +3963,9 @@ export default class RaceScene extends Phaser.Scene {
       } else if (settlement?.gameOver) {
         this.scene.start('RunOverScene');
       } else if (settlement?.crewBattleContinues) {
-        this.startNextCrewBattleRound();
+        this.showCrewCaptainBetweenHeats(settlement);
+      } else if (settlement?.crewBattle) {
+        this.showCrewCaptainFinale(settlement, returnScene);
       } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
       } else if (
@@ -3220,6 +4033,17 @@ export default class RaceScene extends Phaser.Scene {
         alpha: pinkSlipShadeTargetAlpha,
         duration: 155,
         ease: 'Quad.Out',
+      });
+    }
+
+    if (sayakaReactionImage) {
+      const targetX = sayakaReactionImage.x;
+      sayakaReactionImage.x += 195;
+      sayakaReactionImage.setAlpha(0);
+      this.tweens.add({
+        targets: sayakaReactionImage,
+        x: targetX, alpha: 1, duration: 185,
+        delay: pinkRevealDelay, ease: 'Expo.Out',
       });
     }
 
@@ -3303,6 +4127,26 @@ export default class RaceScene extends Phaser.Scene {
         delay: pinkRevealDelay + 245,
         ease: 'Back.Out',
         onStart: () => this.cameras.main.shake(65, 0.0012),
+      });
+    }
+
+    if (crewBadge) {
+      this.tweens.add({
+        targets: crewBadge,
+        alpha: 1,
+        scaleX: crewBadge.stampTargetScaleX,
+        scaleY: crewBadge.stampTargetScaleY,
+        angle: 0,
+        duration: 175,
+        delay: pinkRevealDelay + 245,
+        ease: 'Back.Out',
+        onStart: () => this.cameras.main.shake(65, 0.0012),
+      });
+      this.tweens.add({
+        targets: crewBadgeCaption,
+        alpha: 1,
+        duration: 165,
+        delay: pinkRevealDelay + 365,
       });
     }
 
@@ -3411,7 +4255,7 @@ export default class RaceScene extends Phaser.Scene {
       });
       return;
     }
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     // Same-scene restart is the proven path used by Competition and Crew
     // Battles; scene.start(this.key) can leave the old RaceScene active.
@@ -3655,12 +4499,63 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', regionId);
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
     saveSessionState(this.registry);
     this.scene.restart();
+  }
+
+  showCrewCaptainBetweenHeats(settlement) {
+    const state = this.registry.get('crewBattleState');
+    const captainId = getCrewBattleCaptainId(state?.regionId || settlement?.regionId);
+    const definition = createCrewBattleCaptainInterlude(
+      state?.regionId || settlement?.regionId,
+      { playerScore: settlement?.playerScore, opponentScore: settlement?.opponentScore,
+        nextRound: state?.rounds?.[state.roundIndex] }
+    );
+    if (!definition || !captainId || sceneCutsceneActive(this)) {
+      this.startNextCrewBattleRound();
+      return;
+    }
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { CAPTAIN: captainId },
+      preloadPagePosesOnly: true,
+      onComplete: () => this.startNextCrewBattleRound(),
+    });
+    if (!result?.played) this.startNextCrewBattleRound();
+  }
+
+  showCrewCaptainFinale(settlement, returnScene) {
+    const captainId = getCrewBattleCaptainId(settlement?.regionId);
+    const definition = createCrewBattleCaptainResult(
+      settlement?.regionId, Boolean(settlement?.crewBattleCompleted)
+    );
+    const finish = () => {
+      this.registry.set('crewBattleEventPlayerSetup', null);
+      const finalCrewClear = settlement?.crewBattleFirstClear &&
+        settlement?.crewBattleCompleted &&
+        settlement?.tokyoChampionshipInvited &&
+        !hasSeenCutscene(this.registry,'chapter08Warehouse');
+      if (finalCrewClear) {
+        this.registry.set('workshopLocationId','shinonomeWarehouseStrip');
+        this.registry.set('crewSpaceActive',false);
+      }
+      saveSessionState(this.registry);
+      if (finalCrewClear) {
+        this.scene.start('GarageScene', {
+          workshopLocationId:'shinonomeWarehouseStrip',crewMode:false,
+        });
+      } else this.scene.start(returnScene || 'MeetScene');
+    };
+    if (!captainId || !definition || sceneCutsceneActive(this)) { finish(); return; }
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { CAPTAIN: captainId },
+      preloadPagePosesOnly: true,
+      onComplete: finish,
+    });
+    if (!result?.played) finish();
   }
 
   startNextCrewBattleRound() {
@@ -3687,6 +4582,17 @@ export default class RaceScene extends Phaser.Scene {
       return;
     }
 
+    const setup = getCrewEventCarSetup(unit.carId,
+      (this.registry.get('carStates') || {})[unit.carId] || {}, round.rule);
+    if (!setup.eligible) {
+      this.registry.set('crewBattleState', null);
+      this.registry.set('crewBattleEventPlayerSetup', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+    this.registry.set('crewBattleEventPlayerSetup', setup.state);
     this.registry.set('selectedCarId', unit.carId);
     this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
     this.registry.set('selectedOpponentCarId', round.carId);
@@ -3711,7 +4617,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', state.regionId);
     this.registry.set(
       'raceLocationLabel',
@@ -3753,7 +4659,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
 
     this.scene.restart();
@@ -3946,6 +4852,86 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter10Race')?.active){
+      // Real driving physics, no cash, pink slips or artificial win.
+      this.registry.set('arkonStoryChapter10RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true};
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter09Race')?.active){
+      // Chapter 09 uses real physics, with no automatic race economy rewards.
+      this.registry.set('arkonStoryChapter09RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true};
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      // The wager is escrowed by Chapter 08 and settled once on return.
+      // Normal race settlement must not grant unrelated career rewards.
+      this.registry.set('arkonStoryChapter08RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Race')?.active){
+      this.registry.set('arkonStoryChapter07RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      // The result does not grant cash, title, coupon, recruitment or ownership.
+      this.registry.set('arkonStoryChapter05RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      // Real physical rolling race in Sayaka's guest MX-5; no stakes,
+      // championship record, crew offers, coupons or permanent ownership.
+      this.registry.set('arkonStoryMx5RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      // Play with the actual engine/AI; change absolutely no career records,
+      // coupons, cash, crew offers or loan ownership in this dev-only fixture.
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,devStoryExhibition:true,
+      };
+      return this.raceSettlement;
+    }
+    if (this.raceMode === 'CHAPTER08') {
+      this.raceSettlement = {
+        playerWon: false, cashDelta: 0, cash: this.registry.get('cash') ?? 0,
+        pinkMessage: '', gameOver: false, chapter08Story: true,
+      };
+      return this.raceSettlement;
+    }
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
@@ -3964,9 +4950,15 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
+    // Ginza demo races follow ordinary street-race settlement (cash, wins,
+    // coupons and surprises). The loan is not a pink-slip-eligible asset.
     const newWins = wins + (playerWon ? 1 : 0);
     this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+    if(playerWon)recordArkonCh4Race(this.registry,{
+      carId:this.selectedCarId,mode:this.raceMode,deal:this.raceDeal,
+      playerWon:true,competitionWon:false,
+    });
     this.lastEasyCouponAward = playerWon && this.raceMode !== 'OSHIAGE_ELITE'
       ? this.processEasyCouponMilestone(newWins)
       : null;
@@ -4044,7 +5036,9 @@ export default class RaceScene extends Phaser.Scene {
           wheelId = prize.wheelId;
           wheelLabel = prize.wheelLabel;
         }
-      } else if (prize?.couponCarId && prize.coupons > 0) {
+      }
+      // Rare wheels are an extra, never a substitute for car coupons.
+      if (prize?.couponCarId && prize.coupons > 0) {
         couponCarId = prize.couponCarId;
         couponAwards = prize.coupons;
         const coupons = { ...(this.registry.get('carCoupons') || {}) };
@@ -4075,20 +5069,18 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceMode === 'CREW_RECRUIT') {
       const challenge = this.registry.get('crewRecruitChallenge');
-      let recruited = null;
-
       if (playerWon && challenge?.active) {
-        recruited = completeCrewRecruitChallenge(this.registry, challenge);
-      } else if (challenge?.active) {
-        this.registry.set('crewRecruitChallenge', {
-          ...challenge,
-          active: true,
-          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
-          lastLossAt: Date.now(),
-          // A defeat closes this attempt: the invitation must not reopen
-          // automatically on the result-screen return to MeetScene.
-          retryDeferredUntilExit: true,
+        // Winning earns the invitation, not automatic membership. The player
+        // decides yes/no in the next Meet manga scene.
+        this.registry.set('crewPendingJoinDecision', {
+          regionId: String(challenge.regionId || '').toUpperCase(),
+          characterId: String(challenge.characterId),
+          baseCarId: String(challenge.baseCarId),
+          wonAt: Date.now(),
         });
+        clearCrewRecruitChallenge(this.registry, challenge.regionId);
+      } else if (challenge?.active) {
+        resetCrewRecruitmentAfterLoss(this.registry, challenge);
       }
 
       this.registry.set('selectedRacePlayerCharacterId', null);
@@ -4102,11 +5094,12 @@ export default class RaceScene extends Phaser.Scene {
         gameOver: false,
         crewRecruit: true,
         crewRecruitWon: Boolean(playerWon),
-        crewRecruitJoined: Boolean(recruited),
-        crewRecruitRetry: Boolean(!playerWon && challenge?.active),
+        crewRecruitJoined: false,
+        crewRecruitDecisionPending: Boolean(playerWon && challenge?.active),
+        crewRecruitRetry: false,
         crewRecruitCharacterId: challenge?.characterId || this.opponentCharacterId,
         crewRecruitRegionId: String(challenge?.regionId || this.raceDistrict || '').toUpperCase(),
-        crewRecruitLoanCarId: recruited?.loanCarId || null,
+        crewRecruitLoanCarId: null,
       };
       return this.raceSettlement;
     }
@@ -4515,6 +5508,10 @@ export default class RaceScene extends Phaser.Scene {
         Math.max(0, Number(this.registry.get('competitionWins') || 0)) + 1
       );
       this.registry.set('competitionState', null);
+      recordArkonCh4Race(this.registry,{
+        carId:this.selectedCarId,mode:this.raceMode,
+        playerWon:true,competitionWon:true,
+      });
       saveSessionState(this.registry);
 
       this.raceSettlement = {
@@ -4639,13 +5636,15 @@ export default class RaceScene extends Phaser.Scene {
     const newCash = Math.max(0, oldCash + cashDelta);
     this.registry.set('cash', newCash);
 
-    this.recordMeetRaceOutcome(playerWon);
+    if (this.opponentCharacterId!=='storyDaigoKirishima')
+      this.recordMeetRaceOutcome(playerWon);
 
     let crewInviteInterest = null;
     if (
       playerWon &&
       this.raceMode === 'SINGLE' &&
       this.raceDeal === 'BET' &&
+      this.opponentCharacterId!=='storyDaigoKirishima' &&
       !cars[this.selectedCarId]?.crewLoan &&
       !this.registry.get('selectedRaceSpecialChallenge')
     ) {
@@ -4705,7 +5704,7 @@ export default class RaceScene extends Phaser.Scene {
 
     // The solo tutorial centres the player's car more prominently. Normal
     // races keep the two-car chase composition.
-    const targetPlayerX = W * (this.isTutorial ? 0.46 : 0.34);
+    const targetPlayerX = W * (this.isTutorial || this.isStoryCruise ? 0.46 : 0.34);
     const chaseCameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     // After the first car crosses the line, follow for a few more frames, then
@@ -4770,7 +5769,7 @@ export default class RaceScene extends Phaser.Scene {
       this.updateCarVisual(this.opponentVisual, ox, 351, ot, dt);
     }
 
-    this.drawEffects(pt, this.isTutorial ? null : ot);
+    this.drawEffects(pt, (this.isTutorial || this.isStoryCruise) ? null : ot);
     this.drawTree(cameraPx);
 
   }

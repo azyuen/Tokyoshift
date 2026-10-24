@@ -1,6 +1,7 @@
 import {stockClassFor,STOCK_CLASSES} from './stockClasses.js';
 import {REGULAR_CAR_IDS} from './vehicleEngineering.js';
 import { cars } from './cars.js';
+import { getDefaultFactoryPaintColor } from './factoryPaintPalettes.js';
 import {
   CREW_REGIONS,
   getRegionalCrewRoster,
@@ -14,6 +15,10 @@ import { createRivalBuildState } from './rivalBuilds.js';
 import { getEncounterAi } from './encounterProfiles.js';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js';
+import {
+  getCrewBattleRegionRules, getCrewBattleHeatRule,
+  getCrewEventCarSetup, getCrewBattleScout, eventStockState, isCrewEventFactoryStock,
+} from './crewBattleRules.js';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
@@ -83,6 +88,20 @@ export function getRecruitedCrewCharacterIds(source) {
     .map(member => member.characterId).filter(Boolean));
 }
 
+// Crew cars are borrowed but fully customisable while their driver belongs
+// to the active crew. In particular, a Ginza demo (also marked crewLoan)
+ // must never be considered an active recruit's car.
+export function isActiveCrewLoanCar(source, carId) {
+  const id = String(carId || '');
+  const car = cars[id];
+  if (!id || !car?.crewLoan || car.ginzaDemo || !car.crewOwnerCharacterId ||
+      !(value(source, 'ownedCarIds', []) || []).includes(id)) return false;
+  return Object.values(getCrewMembers(source)).some(member =>
+    member?.loanCarId === id &&
+    member?.characterId === car.crewOwnerCharacterId
+  );
+}
+
 export function getCrewMemberForRegion(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   return getCrewMembers(source)[key] || null;
@@ -127,7 +146,7 @@ export function isTokyoChampionshipInvited(source) {
 export function createStockCrewCarState(characterId, baseCarId = getCrewBaseCarId(characterId)) {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(baseCarId),
     nosInstalled: false,
     tuneLevel: 0,
     tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
@@ -145,7 +164,7 @@ export function createStockCrewCarState(characterId, baseCarId = getCrewBaseCarI
 export function createStockOpponentState(baseCarId) {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(baseCarId),
     nosInstalled: false,
     tuneLevel: 0,
     buildRating: 1,
@@ -159,10 +178,18 @@ export function createStockOpponentState(baseCarId) {
   };
 }
 
-export function isPerformanceStockState(state={}){
- const active=v=>{if(Array.isArray(v))return v.some(active);if(v&&typeof v==='object')return Object.values(v).some(active);if(v===null||v===undefined||v===false||v==='')return false;const n=Number(v);return Number.isFinite(n)?n!==0:true;};
- return !state.nosInstalled&&!state.collector&&!state.immutable&&!state.tuningLocked&&
- !['tuneLevel','tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning','specialistTuning','stage3Calibration','nosPower','nosShots','nosCapacitySeconds'].some(k=>active(state[k]));
+export function isPerformanceStockState(state = {}) {
+  // Shared factory-stock rule includes specialist tuning, NOS, legacy levels,
+  // stage-three calibration, engine, chassis and drivetrain upgrades.
+  const active = v => {
+    if (Array.isArray(v)) return v.some(active);
+    if (v && typeof v === 'object') return Object.values(v).some(active);
+    if (v == null || v === false || v === '') return false;
+    const n = Number(v);
+    return Number.isFinite(n) ? n !== 0 : true;
+  };
+  return isCrewEventFactoryStock(state) && !state.collector && !state.immutable && !state.tuningLocked &&
+    !['tuneLevel','tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning','specialistTuning','stage3Calibration','nosPower','nosShots','nosCapacitySeconds'].some(k => active(state[k]));
 }
 function isRegularRecruitCar(car){const id=car?.ownedBaseCarId||car?.id;return car&&!car.crewLoan&&!car.collector&&!car.tuningLocked&&!car.ginzaExclusive&&id!=='magna'&&REGULAR_CAR_IDS.includes(id);}
 
@@ -175,7 +202,8 @@ export function getStockCrewChallengeCarIds(source) {
     );
 }
 
-export const CREW_RECRUIT_POWER_CLASS_KW = 50;
+export const CREW_RECRUIT_POWER_CLASS_KW = 50; // legacy exported constant
+export const CREW_RECRUIT_POWER_TOLERANCE_KW = 40;
 
 function normaliseCrewRecruitDifficulty(source) {
   const key = String(value(source, 'playerDifficulty', 'STANDARD') || 'STANDARD')
@@ -186,12 +214,12 @@ function normaliseCrewRecruitDifficulty(source) {
 
 function getCrewRecruitPowerClass(powerKW) {
   const power = Math.max(0, Number(powerKW) || 0);
-  const minKW = Math.floor(power / CREW_RECRUIT_POWER_CLASS_KW) * CREW_RECRUIT_POWER_CLASS_KW;
-  const maxExclusiveKW = minKW + CREW_RECRUIT_POWER_CLASS_KW;
+  const minKW = Math.max(0, power - CREW_RECRUIT_POWER_TOLERANCE_KW);
+  const maxExclusiveKW = power + CREW_RECRUIT_POWER_TOLERANCE_KW + 0.001;
   return {
     minKW,
     maxExclusiveKW,
-    label: minKW + '–' + (maxExclusiveKW - 1) + ' kW',
+    label: 'WITHIN ±' + CREW_RECRUIT_POWER_TOLERANCE_KW + ' KW OF ' + power + ' KW',
   };
 }
 
@@ -208,9 +236,39 @@ export function getCrewRecruitmentChallengeRules(
 ) {
   const difficulty = normaliseCrewRecruitDifficulty(source);
   const baseCarId = String(challenge?.baseCarId || '');
-  const stockClass=stockClassFor(cars[baseCarId]);
-  const eligibleCarIds=getStockCrewChallengeCarIds(source).filter(id=>stockClass&&stockClassFor(cars[id])===stockClass);
-  return {playerDifficulty:difficulty,aiTier:difficulty==='HARD'?'ELITE':difficulty==='STANDARD'?'EXPERT':'SKILLED',aiRating:difficulty==='HARD'?5:difficulty==='STANDARD'?4:2,carRule:'STOCK',stockClass,powerClass:null,powerClassLabel:STOCK_CLASSES[stockClass]||'UNKNOWN',eligibleCarIds};
+  const states = value(source, 'carStates', {}) || {};
+  const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
+    .filter(carId => cars[carId] && !cars[carId].crewLoan);
+
+  // Both cars must be genuinely factory stock and within ±40 kW of the
+  // recruit's factory output. Easy mode lowers the rival's driving skill.
+  // Cosmetic paint/rims do not invalidate an otherwise stock performance build.
+  const opponentPerformance = baseCarId
+    ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
+    : null;
+  const powerClass = getCrewRecruitPowerClass(
+    opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
+  );
+  const eligibleCarIds = getStockCrewChallengeCarIds(source).filter(carId => {
+    const performance = getVehiclePerformance(carId, states[carId] || {});
+    const power = Number(performance?.car?.powerKW || 0);
+    return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
+  });
+
+  return {
+    playerDifficulty: difficulty,
+    // Easy recruitment should be a welcoming stock duel, not the personal
+    // Expert/Elite profile of whichever recruitable character appeared.
+    // Standard remains Expert and Hard remains Elite without any reductions.
+    aiTier: difficulty === 'HARD' ? 'ELITE'
+      : difficulty === 'STANDARD' ? 'EXPERT' : 'ROOKIE',
+    aiRating: difficulty === 'HARD' ? 5
+      : difficulty === 'STANDARD' ? 4 : 2,
+    carRule: 'STOCK',
+    powerClass,
+    powerClassLabel: powerClass.label,
+    eligibleCarIds,
+  };
 }
 
 export function getRecruitableCrewCandidates(source, regionId) {
@@ -235,31 +293,54 @@ export function getCrewRecruitmentState(source, regionId) {
       Number(raw.eligibleWinsSinceInvite ?? legacyMisses)
     ),
     lastCharacterId: String(raw.lastCharacterId || ''),
+    // Recently defeated invitations cannot recycle the same person until
+    // the region has exhausted its alternative recruitable challengers.
+    failedCharacterIds: Array.isArray(raw.failedCharacterIds)
+      ? [...new Set(raw.failedCharacterIds.map(String).filter(Boolean))] : [],
     lastWinToken: String(raw.lastWinToken || raw.lastRollToken || ''),
   };
 }
 
-export function getCrewInviteInterest(source) {
-  const interest = value(source, 'crewInviteInterest', null);
-  if (interest && typeof interest === 'object' && interest.characterId) {
+// All seven regions share one progress counter, including migrated saves.
+export function getGlobalCrewRecruitmentState(source) {
+  const all = value(source, 'crewRecruitmentState', {}) || {};
+  const previous = Object.entries(all)
+    .filter(([key]) => CREW_REGIONS.includes(key))
+    .reduce((sum, [,s]) => sum + Math.max(0,
+      Number(s?.eligibleWinsSinceInvite ?? s?.misses ?? 0)), 0);
+  return {
+    eligibleWinsSinceInvite: Math.min(CREW_INVITE_PITY_WINS - 1,
+      Math.max(0, Math.floor(Number(all.GLOBAL?.eligibleWinsSinceInvite ?? previous) || 0))),
+  };
+}
+
+export function getCrewInviteInterest(source, regionId = '') {
+  const region = String(regionId || '').toUpperCase();
+  const all = value(source, 'crewInviteInterests', {}) || {};
+  const legacy = value(source, 'crewInviteInterest', null);
+  const interest = region
+    ? all[region] || (String(legacy?.regionId || '').toUpperCase() === region ? legacy : null)
+    : legacy || CREW_REGIONS.map(key => all[key]).find(Boolean);
+  if (interest?.characterId) {
     return { ...interest };
   }
 
   // One-build migration path: the earlier crew prototype could leave a
   // crewPendingRecruit object in a save. Treat that as an invite interest
   // rather than silently discarding it.
-  const legacy = value(source, 'crewPendingRecruit', null);
-  if (legacy && typeof legacy === 'object' && legacy.characterId) {
+  const legacyPending = value(source, 'crewPendingRecruit', null);
+  if (legacyPending && typeof legacyPending === 'object' && legacyPending.characterId &&
+      (!region || String(legacyPending.regionId || '').toUpperCase() === region)) {
     return {
-      regionId: String(legacy.regionId || '').toUpperCase(),
-      characterId: String(legacy.characterId),
+      regionId: String(legacyPending.regionId || '').toUpperCase(),
+      characterId: String(legacyPending.characterId),
       baseCarId: String(
-        legacy.baseCarId ||
-        getCrewBaseCarId(legacy.characterId) ||
+        legacyPending.baseCarId ||
+        getCrewBaseCarId(legacyPending.characterId) ||
         ''
       ),
-      locationId: String(legacy.locationId || ''),
-      createdAt: Math.max(0, Number(legacy.offeredAt || Date.now())),
+      locationId: String(legacyPending.locationId || ''),
+      createdAt: Math.max(0, Number(legacyPending.offeredAt || Date.now())),
       source: 'legacyPendingRecruit',
     };
   }
@@ -267,10 +348,86 @@ export function getCrewInviteInterest(source) {
   return null;
 }
 
-export function clearCrewInviteInterest(registry) {
-  if (!registry?.set) return;
-  registry.set('crewInviteInterest', null);
-  registry.set('crewPendingRecruit', null);
+export function clearCrewInviteInterest(registry, regionId = '') {
+  if (!registry?.get || !registry?.set) return;
+  const region = String(regionId || '').toUpperCase();
+  if (!region) {
+    registry.set('crewInviteInterests', {});
+    registry.set('crewInviteInterest', null);
+    registry.set('crewPendingRecruit', null);
+    return;
+  }
+  const all = { ...(registry.get('crewInviteInterests') || {}) };
+  delete all[region];
+  registry.set('crewInviteInterests', all);
+  if (String(registry.get('crewInviteInterest')?.regionId || '').toUpperCase() === region)
+    registry.set('crewInviteInterest', null);
+  if (String(registry.get('crewPendingRecruit')?.regionId || '').toUpperCase() === region)
+    registry.set('crewPendingRecruit', null);
+}
+
+export function getCrewRecruitChallenge(source, regionId = '') {
+  const region = String(regionId || '').toUpperCase();
+  const all = value(source, 'crewRecruitChallenges', {}) || {};
+  const legacy = value(source, 'crewRecruitChallenge', null);
+  const challenge = region
+    ? all[region] || (String(legacy?.regionId || '').toUpperCase() === region ? legacy : null)
+    : legacy || CREW_REGIONS.map(key => all[key]).find(Boolean);
+  return challenge?.characterId ? { ...challenge } : null;
+}
+
+export function setCrewRecruitChallenge(registry, challenge) {
+  if (!registry?.get || !registry?.set || !challenge?.regionId) return null;
+  const region = String(challenge.regionId).toUpperCase();
+  const all = { ...(registry.get('crewRecruitChallenges') || {}) };
+  const old = registry.get('crewRecruitChallenge');
+  if (old?.regionId && !all[String(old.regionId).toUpperCase()])
+    all[String(old.regionId).toUpperCase()] = old;
+  all[region] = { ...challenge, regionId: region };
+  registry.set('crewRecruitChallenges', all);
+  registry.set('crewRecruitChallenge', all[region]);
+  return all[region];
+}
+
+export function clearCrewRecruitChallenge(registry, regionId = '') {
+  if (!registry?.get || !registry?.set) return;
+  const region = String(regionId || '').toUpperCase();
+  if (!region) {
+    registry.set('crewRecruitChallenges', {});
+    registry.set('crewRecruitChallenge', null);
+    return;
+  }
+  const all = { ...(registry.get('crewRecruitChallenges') || {}) };
+  delete all[region];
+  registry.set('crewRecruitChallenges', all);
+  if (String(registry.get('crewRecruitChallenge')?.regionId || '').toUpperCase() === region)
+    registry.set('crewRecruitChallenge', null);
+}
+
+// A lost stock challenge is final: clear every reminder/retry flag and reset
+// the global fourth-win pity count. The next offer must be a fresh invitation.
+export function resetCrewRecruitmentAfterLoss(registry, challenge) {
+  if (!registry?.get || !registry?.set || !challenge?.characterId) return;
+  const region = String(challenge.regionId || '').toUpperCase();
+  const store = { ...(registry.get('crewRecruitmentState') || {}) };
+  const old = { ...(store[region] || {}) };
+  const candidates = getRecruitableCrewCandidates(registry, region)
+    .map(member => member.characterId);
+  const failed = [...new Set([
+    ...(Array.isArray(old.failedCharacterIds) ? old.failedCharacterIds : []),
+    String(challenge.characterId),
+  ])];
+  store[region] = {
+    ...old, eligibleWinsSinceInvite: 0, misses: 0,
+    failedCharacterIds: candidates.length && candidates.every(id => failed.includes(id))
+      ? [] : failed,
+  };
+  store.GLOBAL = { eligibleWinsSinceInvite: 0 };
+  registry.set('crewRecruitmentState', store);
+  // A hard reset applies to the whole recruitment queue, not merely to the
+  // region where the loss occurred. Regional crew membership is unaffected.
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
 }
 
 export function createCrewInviteFromMeetWin(
@@ -290,16 +447,22 @@ export function createCrewInviteFromMeetWin(
   if (!key || !rivalId) return null;
   if (!isCrewUnlocked(registry) || isCrewComplete(registry)) return null;
   if (getCrewMemberForRegion(registry, key)) return null;
-  if (
-    getCrewInviteInterest(registry) ||
-    registry.get('crewRecruitChallenge')
-  ) return null;
+  // A pending invitation or accepted duel in ANOTHER region is not a blocker.
+  if (getCrewInviteInterest(registry, key) ||
+      getCrewRecruitChallenge(registry, key)?.active) return null;
 
-  const candidate = getRecruitableCrewCandidates(registry, key)
-    .find(member => member.characterId === rivalId);
+  const candidates = getRecruitableCrewCandidates(registry, key);
+  const candidate = candidates.find(member => member.characterId === rivalId);
   if (!candidate) return null;
 
   const state = getCrewRecruitmentState(registry, key);
+  // If the player lost to this character, beating their ordinary Meet car
+  // again does not issue the same stock challenge. Another driver must offer.
+  // If all candidates have been exhausted, reset the pool rather than
+  // permanently locking a region out of crew recruitment.
+  const exhausted = candidates.length &&
+    candidates.every(member => state.failedCharacterIds.includes(member.characterId));
+  const previouslyDefeated = !exhausted && state.failedCharacterIds.includes(rivalId);
   const token = String(
     winToken ||
     (locationId + ':' + rivalId + ':' +
@@ -307,19 +470,25 @@ export function createCrewInviteFromMeetWin(
   );
   if (state.lastWinToken && state.lastWinToken === token) return null;
 
-  const nextEligibleWins = state.eligibleWinsSinceInvite + 1;
-  const trigger =
+  const nextEligibleWins =
+    getGlobalCrewRecruitmentState(registry).eligibleWinsSinceInvite + 1;
+  // Wins against a previously failed opponent still advance global pity,
+  // but that same opponent can never issue the next invitation.
+  const trigger = !previouslyDefeated && (
     nextEligibleWins >= CREW_INVITE_PITY_WINS ||
-    Number(random()) < CREW_INVITE_INTEREST_CHANCE;
+    Number(random()) < CREW_INVITE_INTEREST_CHANCE
+  );
 
   const store = { ...(registry.get('crewRecruitmentState') || {}) };
   store[key] = {
-    eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins,
-    misses: trigger ? 0 : nextEligibleWins,
+    eligibleWinsSinceInvite: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins),
+    misses: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins),
     lastCharacterId: rivalId,
+    failedCharacterIds: exhausted ? [] : state.failedCharacterIds,
     lastWinToken: token,
     lastRollToken: token,
   };
+  store.GLOBAL = { eligibleWinsSinceInvite: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins) };
   registry.set('crewRecruitmentState', store);
 
   if (!trigger) return null;
@@ -333,8 +502,13 @@ export function createCrewInviteFromMeetWin(
     createdAt: Date.now(),
     source: 'meetWin',
   };
+  const invites = { ...(registry.get('crewInviteInterests') || {}) };
+  const old = registry.get('crewInviteInterest');
+  if (old?.regionId && !invites[String(old.regionId).toUpperCase()])
+    invites[String(old.regionId).toUpperCase()] = old;
+  invites[key] = interest;
+  registry.set('crewInviteInterests', invites);
   registry.set('crewInviteInterest', interest);
-  registry.set('crewPendingRecruit', null);
   return interest;
 }
 
@@ -347,14 +521,14 @@ export function acceptCrewInviteChallenge(
   const regionId = String(interest.regionId || '').toUpperCase();
   const characterId = String(interest.characterId || '');
   if (getCrewMemberForRegion(registry, regionId)) {
-    clearCrewInviteInterest(registry);
+    clearCrewInviteInterest(registry, regionId);
     return null;
   }
 
   const candidate = getRecruitableCrewCandidates(registry, regionId)
     .find(member => member.characterId === characterId);
   if (!candidate) {
-    clearCrewInviteInterest(registry);
+    clearCrewInviteInterest(registry, regionId);
     return null;
   }
 
@@ -370,8 +544,8 @@ export function acceptCrewInviteChallenge(
     source: 'meetInvite',
   };
 
-  registry.set('crewRecruitChallenge', challenge);
-  clearCrewInviteInterest(registry);
+  setCrewRecruitChallenge(registry, challenge);
+  clearCrewInviteInterest(registry, regionId);
   return challenge;
 }
 
@@ -379,11 +553,6 @@ export function acceptCrewInviteChallenge(
 // cached MeetScene modules fail closed instead of reintroducing popup recruits.
 export function rollCrewRecruitChallenge() {
   return null;
-}
-
-export function clearCrewRecruitChallenge(registry) {
-  if (!registry?.set) return;
-  registry.set('crewRecruitChallenge', null);
 }
 
 export function setPendingCrewRecruit(registry, challenge) {
@@ -395,7 +564,7 @@ export function setPendingCrewRecruit(registry, challenge) {
     offeredAt: Date.now(),
   };
   registry.set('crewPendingRecruit', pending);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewRecruitChallenge(registry, pending.regionId);
   return pending;
 }
 
@@ -453,17 +622,17 @@ export function acceptCrewMember(registry, pending = registry?.get?.('crewPendin
   registry.set('ownedCarIds', owned);
   registry.set('carStates', states);
   registry.set('carGarageLocations', locations);
+  clearCrewInviteInterest(registry, regionId);
+  clearCrewRecruitChallenge(registry, regionId);
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
   return members[regionId];
 }
 
 export function declinePendingCrewRecruit(registry) {
   if (!registry?.set) return;
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
 }
 
 export function removeAllCrewMembers(registry) {
@@ -477,8 +646,8 @@ export function removeAllCrewMembers(registry) {
 
   registry.set('selectedRacePlayerCharacterId', null);
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
   registry.set('crewBattleState', null);
   return removed;
 }
@@ -577,81 +746,93 @@ export function getCrewBattleUnits(source) {
   return units;
 }
 
-function regionalBuildRating(rank, index) {
-  const base = rank <= 2 ? 3 : rank <= 5 ? 4 : 5;
-  return Math.min(5, base + (index >= 4 ? 1 : 0));
-}
-
-function regionalDriverRating(rank, index) {
-  if (rank >= 6) return 5;
-  if (rank >= 3) return index >= 3 ? 5 : 4;
-  return index >= 4 ? 5 : 4;
-}
-
-function proLeaderAi(base = {}) {
-  return {
-    ...base,
-    reactionSkill: Math.max(0.97, Number(base.reactionSkill || 0)),
-    launchSkill: Math.max(0.98, Number(base.launchSkill || 0)),
-    shiftSkill: Math.max(0.99, Number(base.shiftSkill || 0)),
-    aggression: Math.max(0.96, Number(base.aggression || 0)),
-  };
+// Regional leaders are team captains, not the third racing opponent.
+export function getCrewBattleCaptainId(regionId) {
+  return getRegionalCrewRoster(regionId)?.mainRivalId || null;
 }
 
 export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
+  const rules = getCrewBattleRegionRules(key);
+  if (!rules) return [];
   const recruitedIds = getRecruitedCrewCharacterIds(source);
-
-  // Reuse the original seven-driver regional championship cast. Once one of
-  // those drivers defects to the player's crew, exactly six remain.
+  const captainId = getCrewBattleCaptainId(key);
   const originalSeven = buildTunerTeamChallengeRounds(key, '')
     .filter(round => round?.characterId && round?.carId);
-  const remaining = originalSeven
-    .filter(round => !recruitedIds.has(round.characterId));
 
-  // Keep the permanent regional leader as the final matchup even when
-  // the championship roster's authored order placed them earlier.
-  const leaderCharacterId = getRegionalCrewRoster(key)?.mainRivalId || null;
-  const otherOpponents = remaining.filter(round => round.characterId !== leaderCharacterId);
-  const leaderRound = remaining.find(round => round.characterId === leaderCharacterId);
-  const opponents = [
-    ...otherOpponents.slice(0, CREW_BATTLE_LINEUP_SIZE - 1),
-    ...(leaderRound ? [leaderRound] : otherOpponents.slice(CREW_BATTLE_LINEUP_SIZE - 1, CREW_BATTLE_LINEUP_SIZE)),
-  ];
+  // Five non-captain opponents remain after one recruit joins the player.
+  // Stable identity/order keeps the scout panel true to the actual heats.
+  const candidates = originalSeven.filter(round =>
+    round.characterId !== captainId && !recruitedIds.has(round.characterId)
+  );
+  const used = new Set();
+  const rounds = [];
 
-  const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
+  // The first three regions teach crew racing with quarter-mile standing
+  // starts only. Subsequent districts introduce rolling and half-mile heats.
+  const formats = {
+    ODAIBA: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    SHINAGAWA: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    TATSUMI: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    SHIBUYA: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 402.336]],
+    YOKOHAMA: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 804.672]],
+    DAIKOKU: [['Roll Race', 402.336], ['Standing Start', 804.672], ['Standing Start', 402.336]],
+    SHINJUKU: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 804.672]],
+  };
 
-  return opponents.map((baseRound, index) => {
-    const raceType = index % 3 === 1 ? 'Roll Race' : 'Standing Start';
-    const buildRating = regionalBuildRating(rank, index);
-    const encounterRating = regionalDriverRating(rank, index);
-    const leader = baseRound.characterId === leaderCharacterId;
+  for (let index = 0; index < CREW_BATTLE_LINEUP_SIZE; index++) {
+    const rule = getCrewBattleHeatRule(key, index);
+    const [raceType, distanceM] = formats[key]?.[index] || ['Standing Start', 402.336];
+    const rating = Math.min(5, rules.build + (index === 2 && rules.build < 5 ? 1 : 0));
+    const encounterRating = rules.ai[index];
     const baseAi = getEncounterAi(encounterRating);
-    const encounterAi = leader ? proLeaderAi(baseAi) : { ...baseAi };
-    const opponentBuildState = createRivalBuildState(
-      cars[baseRound.carId],
-      buildRating,
-      {
-        seed: 'crew-battle:' + key + ':' + baseRound.characterId,
-        raceType,
-      }
-    );
 
-    return {
+    // Author AI hardware to meet the same rules as the player. Build rating
+    // may decrease until the finished car is legal, but driver skill does not
+    // change. Never secretly power-trim an over-limit rival during the race.
+    const ranked = candidates.filter(r => !used.has(r.characterId)).map(candidate => {
+      if (rule.stock) {
+        const setup = getCrewEventCarSetup(candidate.carId,
+          eventStockState({ buildRating: 1, buildArchetype: 'stock' }), rule);
+        return { candidate, setup };
+      }
+      for (let targetRating = rating; targetRating >= 1; targetRating--) {
+        const baseBuild = createRivalBuildState(cars[candidate.carId], targetRating, {
+          seed: 'crew-battle:' + key + ':' + candidate.characterId,
+          raceType,
+          noNos: Boolean(rule.noNos),
+        });
+        const setup = getCrewEventCarSetup(candidate.carId, baseBuild, rule);
+        if (setup.eligible) return { candidate, setup };
+      }
+      return { candidate, setup: { eligible: false } };
+    });
+    const matched = ranked.find(item => item.setup.eligible);
+    if (!matched) break;
+    const baseRound = matched.candidate;
+    used.add(baseRound.characterId);
+    const state = matched.setup.state;
+    rounds.push({
       index,
       regionId: key,
       characterId: baseRound.characterId,
       carId: baseRound.carId,
       raceType,
-      distanceM: index >= 3 ? 804.672 : 402.336,
-      buildRating,
-      opponentBuildState,
+      distanceM,
+      buildRating: Number(state.buildRating || rating),
+      opponentBuildState: state,
+      opponentPowerKW: matched.setup.powerKW,
+      scout: getCrewBattleScout(state),
+      rule: { ...rule },
+      ruleLabel: rule.label,
       encounterRating,
-      encounterAi,
-      difficulty: leader ? 'PRO' : encounterRating >= 5 ? 'ELITE' : 'EXPERT',
-      leader,
-    };
-  });
+      encounterAi: { ...baseAi },
+      difficulty: encounterRating >= 5 ? 'ELITE' :
+        encounterRating >= 4 ? 'EXPERT' : 'SKILLED',
+      leader: false,
+    });
+  }
+  return rounds;
 }
 
 export function getRegionalCrewBattleReward(regionId) {

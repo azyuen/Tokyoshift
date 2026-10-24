@@ -1,3 +1,5 @@
+import { getInGamePlayerDisplayName } from '../data/characterDisplayName.js';
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
 import {
   getCarBodyScaleForWidth,
   preloadCarAppearanceAssets,
@@ -5,6 +7,8 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js';
 import { cars, carOrder } from '../data/cars.js';
+import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js';
+import { selectMixedCarPaint } from '../data/streetPaintPalettes.js';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -34,11 +38,15 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js';
 import { playMusic } from '../audio/MusicManager.js';
+import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js';
+import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js';
 import { saveSessionState } from '../state/GameState.js';
 import { restorePreferredCar } from '../state/CarSelection.js';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js';
 import { addSettingsButton } from '../ui/SettingsPanel.js';
 import { showTravelMap } from '../ui/TravelMap.js';
+import { preloadArkonMeetObserver, attachArkonMeetObserver } from '../ui/ArkonStoryMeetObserver.js';
+import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js';
 import { getTravelLocation } from '../data/travelRegions.js';
 import {
   getGarageCapacity,
@@ -69,7 +77,11 @@ import {
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js';
-import { createStreetShowdownRounds } from '../data/streetShowdowns.js';
+import {
+  createStreetShowdownRounds,
+  STREET_SHOWDOWN_CASH_ENTRY_FEES,
+  getStreetShowdownCouponEntryFee,
+} from '../data/streetShowdowns.js';
 import { createRivalBuildState } from '../data/rivalBuilds.js';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
 import {
@@ -100,6 +112,7 @@ import {
 } from '../data/tunerShops.js';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
+import { markCutsceneSeen } from '../data/cutscenes.js';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js';
 
 import { showCutsceneTester } from '../ui/CutsceneTester.js';
@@ -118,17 +131,28 @@ import {
   getRecruitableCrewCandidates,
   getCrewInviteInterest,
   clearCrewInviteInterest,
+  getCrewRecruitChallenge,
+  setCrewRecruitChallenge,
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
   getCrewRecruitmentChallengeRules,
+  acceptCrewMember,
+  resetCrewRecruitmentAfterLoss,
   createStockOpponentState,
   getCrewMemberForRegion,
   getCrewBattleProgress,
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
+  getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
 } from '../data/crewSystem.js';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js';
+import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js';
+import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js';
+import { getMeetProgressionActions } from '../data/meetProgressionActions.js';
+import { getRegionalChallengeReturnLines } from '../data/regionalChallengeReturnQuotes.js';
+import { showStreetShowdownView } from '../ui/StreetShowdownView.js';
+import { isStreetShowdownOfferRosterValid } from '../data/streetShowdownRoster.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -256,10 +280,23 @@ export default class MeetScene extends Phaser.Scene {
 
   preload() {
     restorePreferredCar(this.registry);
+    // Fallback for a saved direct-Meet arrival: no expensive rivals, offers
+    // or car assets should be prepared for the scripted Dogenzaka venue.
+    if (shouldLaunchDevVaultStory(this.registry)) return;
+    preloadArkonMeetObserver(this);
+    for (const [key, file] of [
+      ['meetBadgeRegional', 'badge_crown.png'],
+      ['meetBadgePerfect', 'badge_star.png'],
+      ['meetBadgeCrew', 'badge_crew.png'],
+    ]) {
+      if (!this.textures.exists(key)) this.load.image(
+        key, 'assets/Garage/' + file + '?v=20261016-r550'
+      );
+    }
     const initialLocationId = MEET_LOCATIONS[this.registry.get('meetLocation')]
       ? this.registry.get('meetLocation')
       : 'odaiba7eleven';
-    this.worldPhase = getWorldPhase();
+    this.worldPhase = getStoryWorldPhase(this.registry);
 
     // Generate/restore only the roster that can actually be seen on entry.
     // Other location rosters remain data-only until the player travels there.
@@ -321,8 +358,9 @@ export default class MeetScene extends Phaser.Scene {
     this.preloadedInitialCarIds = batch.carIds;
 
     const crewReveal =
-      getCrewInviteInterest(this.registry) ||
-      this.registry.get('crewRecruitChallenge');
+      getCrewInviteInterest(this.registry, initialRegion) ||
+      getCrewRecruitChallenge(this.registry, initialRegion) ||
+      this.registry.get('crewPendingJoinDecision');
     const signatureCarId = String(crewReveal?.baseCarId || '');
     if (signatureCarId && cars[signatureCarId]) {
       if (!this.preloadedInitialCarIds.includes(signatureCarId)) {
@@ -362,7 +400,7 @@ export default class MeetScene extends Phaser.Scene {
         if (bg?.path && !this.textures.exists(bg.key) &&
             !backgroundKeys.has(bg.key)) {
           backgroundKeys.add(bg.key);
-          this.load.image(bg.key, bg.path + '?v=20261016-r537');
+          this.load.image(bg.key, bg.path + '?v=20261022-r645');
           batch.queued += 1;
         }
       });
@@ -397,6 +435,15 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   create() {
+    // Replace only the specifically armed Shibuya/Dogenzaka developer arrival
+    // with a two-character private story tableau: no regular Meet cars/cards.
+    if (shouldLaunchDevVaultStory(this.registry) &&
+        queueSafeSceneStart(this,'DevVaultStoryScene')) {
+      claimDevVaultStoryLoan(this.registry);
+      saveSessionState(this.registry);
+      finishSceneLoading('READY');
+      return;
+    }
     document.body.dataset.scene = 'meet';
     this.scale.resize(1560, 840);
     playMusic('meet');
@@ -424,6 +471,8 @@ export default class MeetScene extends Phaser.Scene {
     this.specialChallengeActive = false;
     this.specialChallengePreparing = false;
     this.specialChallengeObjects = [];
+    this.competitionPopup = null;
+    this.competitionLoading = false;
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
@@ -546,15 +595,24 @@ export default class MeetScene extends Phaser.Scene {
     this.buildSidebar();
     this.buildBottomArea();
     this.buildDevControls();
-    this.buildCrewBattleButton();
+    this.buildMeetProgressionButtons();
     this.rollOffers({ resetTimer: false });
+    attachArkonMeetObserver(this);
 
-    const pendingRegionalChallengeShown = this.maybeShowPendingRegionalChallengeResult();
-    const pendingPinkSlipResultShown = pendingRegionalChallengeShown
-      ? false
-      : this.maybeShowPendingPinkSlipResult();
+    const regulationError = this.registry.get('crewBattleValidationError');
+    if (regulationError) {
+      this.registry.set('crewBattleValidationError', null);
+      saveSessionState(this.registry);
+      this.time.delayedCall(200, () => this.showCrewBattleRuleError(regulationError));
+    }
+
+    const pendingCrewJoinShown = this.maybeShowPendingCrewJoinDecision();
+    const pendingRegionalChallengeShown = pendingCrewJoinShown
+      ? false : this.maybeShowPendingRegionalChallengeResult();
+    const pendingPinkSlipResultShown = pendingCrewJoinShown || pendingRegionalChallengeShown
+      ? false : this.maybeShowPendingPinkSlipResult();
     const pendingResultShown =
-      pendingRegionalChallengeShown || pendingPinkSlipResultShown;
+      pendingCrewJoinShown || pendingRegionalChallengeShown || pendingPinkSlipResultShown;
 
     const activeChallenger = this.registry.get('specialChallenger');
     const activeRegionRivals = getRivalCharacterOrderForRegion(
@@ -622,6 +680,23 @@ export default class MeetScene extends Phaser.Scene {
     finishSceneLoading('READY');
   }
 
+  showCrewBattleRuleError(reason) {
+    const objects = [];
+    const depth = 950;
+    objects.push(this.add.rectangle(780, 392, 800, 130, 0x180e18, 0.98)
+      .setStrokeStyle(2, 0xff8a9a).setDepth(depth).setInteractive());
+    objects.push(this.add.text(780, 366, 'CREW RACE BLOCKED // REGULATIONS', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffe1e5',
+    }).setOrigin(0.5).setDepth(depth + 1));
+    objects.push(this.add.text(780, 413, String(reason), {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#ffffff',
+      align: 'center', wordWrap: { width: 750 },
+    }).setOrigin(0.5).setDepth(depth + 1));
+    const close = () => objects.forEach(obj => obj?.active && obj.destroy());
+    objects[0].on('pointerdown', close);
+    this.time.delayedCall(6000, close);
+  }
+
   isCrewTestDriveMode() {
     const selectedCarId = String(this.registry.get('selectedCarId') || '');
     return Boolean(
@@ -629,6 +704,84 @@ export default class MeetScene extends Phaser.Scene {
       cars[selectedCarId]?.crewLoan &&
       this.registry.get('selectedRacePlayerCharacterId')
     );
+  }
+
+  maybeShowPendingCrewJoinDecision() {
+    const pending = this.registry.get('crewPendingJoinDecision');
+    if (!pending?.characterId || !pending?.regionId) return false;
+    const rival = characters[pending.characterId];
+    const rivalName = String(rival?.name || 'RIVAL').toUpperCase();
+    const dialogue = getCrewInviteDialogue(pending.characterId);
+
+    this.time.delayedCall(160, () => {
+      const start = playMangaCutscene(this, 'crewRecruitmentJoin', {
+        force: true, preloadPagePosesOnly: true,
+        historyId: 'crewRecruitmentJoin:' + pending.characterId + ':' + pending.wonAt,
+        characterOverrides: { RIVAL: pending.characterId },
+        variables: {
+          REGION: String(pending.regionId).toUpperCase(),
+          RIVAL_NAME: rivalName,
+          CREW_JOIN_LINE: dialogue.joinLine,
+        },
+        onComplete: ({ reason }) => {
+          // Closing/skipping the manga isn't a refusal: preserve the choice
+          // until the player deliberately taps YES or NO.
+          if (reason !== 'action' && reason !== 'secondary') {
+            saveSessionState(this.registry);
+            return;
+          }
+          const accepted = reason === 'action';
+          const joined = accepted ? acceptCrewMember(this.registry, pending) : null;
+          if (!joined) resetCrewRecruitmentAfterLoss(this.registry, pending);
+          this.registry.set('crewPendingJoinDecision', null);
+          saveSessionState(this.registry);
+          const carName = String(
+            cars[joined?.baseCarId]?.shortName || cars[joined?.baseCarId]?.name || 'SIGNATURE CAR'
+          ).toUpperCase();
+          playMangaCutscene(this, 'crewRecruitmentAnswer', {
+            force: true, preloadPagePosesOnly: true,
+            historyId: 'crewRecruitmentAnswer:' + pending.characterId + ':' + pending.wonAt,
+            characterOverrides: { RIVAL: pending.characterId },
+            variables: {
+              REGION: String(pending.regionId).toUpperCase(),
+              RIVAL_NAME: rivalName,
+              PLAYER_REPLY: joined
+                ? "You're in. Welcome to the team!"
+                : accepted
+                  ? "I'd like to, but there's no room right now."
+                  : "Not this time. We'll keep racing our own ways.",
+              RIVAL_REPLY: joined
+                ? "I'll bring my car over to Crew Space. See you there!"
+                : 'Fair enough. See you on the street!',
+            },
+            onComplete: () => {
+              if (joined) this.showCrewJoinedToast(rivalName, carName);
+            },
+          });
+        },
+      });
+      if (!start?.played && !start?.active && !start?.loading) {
+        // Keep the invitation in the save for the next Meet entry if the
+        // manga renderer was unavailable; never silently accept or decline.
+        saveSessionState(this.registry);
+      }
+    });
+    return true;
+  }
+
+  showCrewJoinedToast(rivalName, carName) {
+    const panel = this.add.rectangle(1235, 132, 560, 108, 0x03070b, 0.96)
+      .setStrokeStyle(2, 0xe9c37b, 1).setDepth(901);
+    const title = this.add.text(1235, 111, rivalName + ' // CREW MEMBER', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe1a0',
+    }).setOrigin(0.5).setDepth(902);
+    const detail = this.add.text(1235, 148,
+      carName + ' + DRIVER NOW AT WAREHOUSE CREW SPACE', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#e7f2f7',
+        wordWrap: { width: 522 }, align: 'center',
+      }).setOrigin(0.5).setDepth(902);
+    this.time.delayedCall(6500, () => [panel, title, detail]
+      .forEach(obj => obj?.active && obj.destroy()));
   }
 
   maybeShowPendingRegionalChallengeResult() {
@@ -800,42 +953,123 @@ export default class MeetScene extends Phaser.Scene {
     return merged.filter(Boolean).slice(0, 3);
   }
 
-  buildCrewBattleButton() {
-    if (this.isCrewTestDriveMode()) return;
-    if (!isCrewComplete(this.registry) || !this.hasCar) return;
-
-    const location = getMeetLocation(this.selectedMeetLocation);
-    const regionId = String(location?.district || '').toUpperCase();
-    if (!regionId) return;
-
-    const progress = getCrewBattleProgress(this.registry);
-    const completed = Boolean(progress[regionId]?.completed);
-    const x = STAGE.x + STAGE.w - 150;
-    const y = STAGE.y + 38;
-
-    const button = this.add.rectangle(
-      x,
-      y,
-      270,
-      44,
-      completed ? 0x14251f : 0x241b32,
-      0.96
-    ).setStrokeStyle(2, completed ? 0x62e8c7 : 0xd875ff, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(55);
-
-    this.add.text(
-      x,
-      y,
-      completed ? 'CREW BATTLE // CLEARED  >' : 'REGIONAL CREW BATTLE  >',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: completed ? '#bff8e8' : '#f0c8ff',
+  getPinkMeetBadge(source, destination) {
+    if (this.textures.exists(destination)) return destination;
+    if (!this.textures.exists(source)) return source;
+    try {
+      const img = this.textures.get(source).getSourceImage();
+      const tex = this.textures.createCanvas(destination, img.width, img.height);
+      const ctx = tex.getContext();
+      ctx.drawImage(img, 0, 0);
+      const pixels = ctx.getImageData(0, 0, img.width, img.height);
+      const d = pixels.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // Preserve each icon's existing light/shadow detail, recoloured in
+        // the progression button's vivid pink palette (not monochrome grey).
+        const light = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+        d[i] = Math.round(136 + 119 * light);
+        d[i + 1] = Math.round(29 + 94 * light);
+        d[i + 2] = Math.round(80 + 110 * light);
       }
-    ).setOrigin(0.5).setDepth(56);
+      ctx.putImageData(pixels, 0, 0);
+      tex.refresh();
+      return destination;
+    } catch (_) {
+      if (this.textures.exists(destination)) this.textures.remove(destination);
+      return source;
+    }
+  }
 
-    button.on('pointerdown', () => this.showCrewBattleLineup(regionId));
+  buildMeetProgressionButtons() {
+    (this.meetProgressionButtonObjects || []).forEach(obj => obj?.destroy?.());
+    this.meetProgressionButtonObjects = [];
+    if (this.isCrewTestDriveMode() || !this.hasCar ||
+        cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
+    const regionId = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
+    const actions = getMeetProgressionActions(this.registry, regionId, this.hasCar);
+    const add = obj => {
+      this.meetProgressionButtonObjects.push(obj);
+      return obj;
+    };
+    // Match PINK SLIPS styling. A wider leftward plate fits the longest
+    // "CONTINUE REGIONAL CHALLENGE" caption without moving the right badge.
+    const width = 394;
+    const right = STAGE.x + STAGE.w - 34;
+    const centre = right - width / 2;
+    const icons = { REGIONAL: 'meetBadgeRegional', PERFECT: 'meetBadgePerfect',
+      CREW: 'meetBadgeCrew' };
+    actions.forEach((action, index) => {
+      const y = STAGE.y + 51 + index * 60;
+      const button = add(this.add.rectangle(centre, y, width, 36, 0x291620, 1)
+        .setStrokeStyle(2, 0xff5f93, 0.9).setDepth(55)
+        .setInteractive({ useHandCursor: true }));
+      add(this.add.text(centre - 20, y, action.label, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffdce8',
+      }).setOrigin(0.5).setDepth(56));
+      const source = icons[action.id];
+      if (this.textures.exists(source)) {
+        const tinted = this.getPinkMeetBadge(source, 'pink_' + source);
+        const badge = add(this.add.image(right, y, tinted)
+          .setDisplaySize(55, 55).setDepth(57));
+        if (tinted === source) badge.setTint(0xff5f93);
+      }
+      button.on('pointerdown', () => {
+        if (sceneCutsceneActive(this) || this.competitionPopup?.active ||
+            this.specialChallengeActive) return;
+        if (action.id === 'CREW') this.showCrewBattleIntroduction(regionId);
+        else this.startMeetProgressionChallenge(regionId, action.id);
+      });
+    });
+  }
+
+  startMeetProgressionChallenge(regionId, mode) {
+    const region = String(regionId || '').toUpperCase();
+    if (this.isCrewTestDriveMode() || !this.hasCar ||
+        cars[this.registry.get('selectedCarId')]?.ginzaDemo || sceneCutsceneActive(this)) return false;
+    const actions = getMeetProgressionActions(this.registry, region, this.hasCar);
+    if (!actions.some(action => action.id === mode)) return false;
+    return this.beginTunerTeamChallenge(region, { perfect: mode === 'PERFECT' });
+  }
+
+  showCrewBattleIntroduction(regionId) {
+    if (this.isCrewTestDriveMode() || !isCrewComplete(this.registry) ||
+        sceneCutsceneActive(this)) return false;
+
+    const key = String(regionId || '').toUpperCase();
+    const rounds = buildRegionalCrewBattleRounds(key, this.registry);
+    const units = getCrewBattleUnits(this.registry);
+    if (units.length < 3 || rounds.length < 3) return false;
+
+    // Captain manages the opposition without racing; the co-speaker races.
+    const leaderId = getCrewBattleCaptainId(key);
+    const challengerId = rounds[0]?.characterId;
+    if (!leaderId || !challengerId) return false;
+
+    const visits = this.registry.get('crewBattleIntroVisits') || {};
+    const count = Math.max(0, Math.floor(Number(visits[key]) || 0));
+    const definition = createRegionalCrewBattleIntroduction(key, count);
+    if (!definition) return false;
+
+    const leaderName = this.getRivalDisplayCharacter(leaderId)?.name ||
+      characters[leaderId]?.name || key + ' LEADER';
+
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { LEADER: leaderId, CHALLENGER: challengerId },
+      variables: { LEADER_NAME: String(leaderName).toUpperCase() },
+      // Repeatable invitation: load only idle and win portraits being shown.
+      preloadPagePosesOnly: true,
+      onComplete: ({ reason }) => {
+        // ACCEPT must be explicit. RACE LATER and SKIP return to the Meet.
+        if (reason === 'action') this.showCrewBattleLineup(key);
+      },
+    });
+
+    if (!result?.played) return false;
+    this.registry.set('crewBattleIntroVisits', {
+      ...visits, [key]: count + 1,
+    });
+    saveSessionState(this.registry);
+    return true;
   }
 
   showCrewBattleLineup(regionId) {
@@ -910,18 +1144,53 @@ export default class MeetScene extends Phaser.Scene {
       // Graphics mask is not a displayed object; destroy it with the slot.
       objects.push(shape); collection.push(shape);
     };
-    const sideFrame = (x, y, w, h, color, title) => {
+    const sideFrame = (x, y, w, h, color, title, titleOffsetX = 0) => {
       const p = polygon(x, y, w, h, 32);
       const g = add(this.add.graphics().setDepth(depth + 2));
       g.fillStyle(0x030b16, 0.77); g.fillPoints(p, true);
       g.lineStyle(5, color, 1); g.strokePoints(p, true);
-      text(x + 43, y + 10, title, 26, '#' + color.toString(16).padStart(6, '0'));
+      text(x + 43 + titleOffsetX, y + 10, title, 26,
+        '#' + color.toString(16).padStart(6, '0'));
     };
-    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
-    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
+    // Titles now sit in line with the angled portrait panels. Frame geometry
+    // remains unchanged, preserving the existing background and card padding.
+    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW', 18);
+    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW', 18);
+
+    // The street in the lower-right quadrant is intentionally reserved for
+    // scouting. Keep the skyline visible above the player's crew, and leave
+    // a clear gap before the bottom action buttons.
+    const regional = getCrewBattleRegionRules(regionId);
+    headerShape(806, 446, 724, 294, 0x06121f, 0.85);
+    text(830, 454, 'BATTLE BRIEFING', 13, '#f4e4a4');
+    add(this.add.text(830, 482, regional?.focus || 'CREW CHALLENGE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#96cfdc',
+      wordWrap: { width: 645 },
+    }).setDepth(depth + 9));
+    rounds.slice(0, 3).forEach((round, i) => {
+      const y = 519 + i * 70;
+      const distance = round.distanceM > 500 ? '1/2 MI' : '1/4 MI';
+      const mode = round.raceType === 'Roll Race' ? 'ROLL' : 'STANDING';
+      add(this.add.text(831, y,
+        'HEAT ' + (i + 1) + '  //  ' +
+        round.ruleLabel + '  /  ' + mode + ' ' + distance, {
+          fontFamily: PIXEL_FONT, fontSize: '10px', color: '#c3e1f0',
+        }).setDepth(depth + 9));
+      add(this.add.text(831, y + 27,
+        'SCOUT: ' + (round.scout?.focus || 'UNKNOWN SETUP') +
+        '   //   LIKELY: ' + (round.scout?.label || 'UNCONFIRMED'), {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80bac9',
+        }).setDepth(depth + 9));
+    });
+    const lineupComplianceLabel = add(this.add.text(831, 718,
+      'ASSIGN THREE COMPLIANT CARS // NO AUTO DOWN-TUNING', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7acddf',
+      }).setDepth(depth + 9));
 
     const xPlayer = [63, 292, 521];
-    const xRival = [821, 1050, 1279];
+    // Move the red character panels 14px right, but anchor the red car
+    // boxes at their original coordinates as requested.
+    const xRival = [835, 1064, 1293];
     const slotObjects = [[], [], []];
     let vsStamp = null;
     const createPortrait = (id, x, y, pts, collection) => {
@@ -953,7 +1222,8 @@ export default class MeetScene extends Phaser.Scene {
       const accent = rival ? 0xff477e : 0x35d6ff;
       const portrait = panel(x, y, 211, 168,
         rival ? 0x80304e : 0x165578, 0x050a10, 0.65, 13);
-      const carX = x - (rival ? 12 : 18);
+      // Blue car panels move left 12px. Red car panels do not move.
+      const carX = x - (rival ? 26 : 30);
       const carPanel = panel(carX, y + 228, 211, 98,
         rival ? 0x381b31 : 0x0a2b48, accent, 0.78, 8);
       collection.push(portrait.g, carPanel.g);
@@ -971,7 +1241,7 @@ export default class MeetScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
         align: 'center',
       }).setOrigin(0.5, 0).setDepth(depth + 8));
-      const t2 = add(this.add.text(x + 105, y + 199, carName, {
+      const t2 = add(this.add.text(carX + 105, y + 199, carName, {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#cbd8e5',
         align: 'center',
       }).setOrigin(0.5, 0).setDepth(depth + 8));
@@ -1017,14 +1287,30 @@ export default class MeetScene extends Phaser.Scene {
         drawCard(i, slots[i]);
       }
       const count = slots.filter(Boolean).length;
-      startLabel.setText(count === 3
-        ? 'DRIVERS READY - START BATTLE' : 'SELECT THREE DRIVERS');
+      const evaluations = slots.map((unit, index) => unit
+        ? getCrewEventCarSetup(unit.carId,
+          (this.registry.get('carStates') || {})[unit.carId] || {}, rounds[index]?.rule)
+        : null);
+      const uniqueDrivers = new Set(slots.filter(Boolean).map(unit => unit.id)).size === count;
+      const failedHeat = evaluations.findIndex(result => result && !result.eligible);
+      const valid = count === 3 && uniqueDrivers && failedHeat < 0;
+      startLabel.setText(valid ? 'DRIVERS READY - START BATTLE'
+        : count === 3 ? 'INELIGIBLE CAR / CHANGE YOUR LINEUP' : 'SELECT THREE DRIVERS');
+      const notice = !uniqueDrivers
+        ? 'EACH HEAT REQUIRES A DIFFERENT CREW DRIVER'
+        : failedHeat >= 0
+          ? 'HEAT ' + (failedHeat + 1) + ' NOT ELIGIBLE: ' + evaluations[failedHeat].reason
+          : count < 3
+            ? 'ASSIGN THREE DRIVERS // FOLLOW EACH HEAT RULE'
+            : 'THREE CARS CLEARED // NO AUTO DOWN-TUNING';
+      lineupComplianceLabel.setText(notice);
+      lineupComplianceLabel.setColor(failedHeat >= 0 || !uniqueDrivers ? '#ff9da3' : '#7acddf');
       if (vsStamp) {
         const j = objects.indexOf(vsStamp);
         if (j >= 0) objects.splice(j, 1);
         vsStamp.destroy(); vsStamp = null;
       }
-      if (count === 3) {
+      if (valid) {
         start.setFillStyle(0x116049).setInteractive({ useHandCursor: true });
         vsStamp = text(778, 437, 'VS', 55, '#ffffff',
           { stroke: '#100813', strokeThickness: 7 })
@@ -1048,19 +1334,30 @@ export default class MeetScene extends Phaser.Scene {
         .setInteractive().setDepth(z));
       addChoice(this.add.rectangle(780, 420, 1120, 650, 0x0a1828)
         .setStrokeStyle(3, 0x35d6ff).setDepth(z + 1));
-      addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // SLOT ' + (index + 1), {
+      addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // HEAT ' + (index + 1), {
         fontFamily: PIXEL_FONT, fontSize: '19px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 2));
+      const chosenHeat = rounds[index];
+      addChoice(this.add.text(780, 176,
+        chosenHeat.ruleLabel + '  //  ' +
+        (chosenHeat.raceType === 'Roll Race' ? 'ROLLING' : 'STANDING') +
+        '  ' + (chosenHeat.distanceM > 500 ? '1/2 MILE' : '1/4 MILE'), {
+          fontFamily: PIXEL_FONT, fontSize: '10px', color: '#e8d397',
+        }).setOrigin(0.5).setDepth(z + 2));
       // Each row owns its images and clips them to dedicated portrait/car frames.
       units.forEach((unit, i) => {
         const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
+        const crewSetup = getCrewEventCarSetup(
+          unit.carId, (this.registry.get('carStates') || {})[unit.carId] || {}, rounds[index]?.rule
+        );
+        const unavailable = occupied || !crewSetup.eligible;
         const x = i % 2 ? 1035 : 525;
         const y = 229 + Math.floor(i / 2) * 117;
         const rowW = 492, rowH = 108;
         addChoice(this.add.rectangle(x, y, rowW, rowH,
-          occupied ? 0x171c26 : 0x143044)
-          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff).setDepth(z + 2));
+          unavailable ? 0x171c26 : 0x143044)
+          .setStrokeStyle(2, unavailable ? 0x44505e : 0x35d6ff).setDepth(z + 2));
         const portraitX = x - 193, carX = x - 65;
         const makeClip = (left, top, width, height, image) => {
           const maskGraphics = this.make.graphics({ add: false });
@@ -1075,7 +1372,7 @@ export default class MeetScene extends Phaser.Scene {
           .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
         const profile = createCharacterProfile(this, {
           characterId: unit.characterId, pose: 'idle',
-          x: portraitX, y: y + 76, frameWidth: 110, frameHeight: 210,
+          x: portraitX, y: y + 46, frameWidth: 96, frameHeight: 150,
           side: 'center', depth: z + 4, mask: false, rivalContext: true,
           playerCharacterId: this.registry.get('playerCharacterId') || '',
         });
@@ -1094,33 +1391,53 @@ export default class MeetScene extends Phaser.Scene {
         }
         const name = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
         const model = String(car.shortName || unit.carId).toUpperCase();
-        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
+        const ownedState = (this.registry.get('carStates') || {})[unit.carId] || {};
+        const eventSetup = getCrewEventCarSetup(unit.carId, ownedState, rounds[index]?.rule);
+        const tuned = getVehiclePerformance(unit.carId, ownedState);
+        const actualPower = Math.round(Number(tuned?.car?.powerKW || car.powerKW || 0));
         const drive = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
         const infoX = x + 22;
+        const eventLine = eventSetup.eligible
+          ? actualPower + ' KW / ' + drive
+          : eventSetup.reason + ' / ' + actualPower + ' KW';
         [[name, y - 34, '#ffffff', 10],
          [model, y - 7, '#b8d9ed', 9],
-         [power + '  /  ' + drive, y + 23, '#72e0ed', 9]].forEach(([value, ty, color, size]) => {
+         [eventLine, y + 23, eventSetup.eligible ? '#72e0ed' : '#ff9da3', 8]].forEach(([value, ty, color, size]) => {
           addChoice(this.add.text(infoX, ty, value, {
             fontFamily: PIXEL_FONT, fontSize: size + 'px', color,
           }).setDepth(z + 5));
         });
-        if (!occupied) {
+        if (!unavailable) {
           addChoice(this.add.rectangle(x, y, rowW, rowH, 0xffffff, 0)
             .setInteractive({ useHandCursor: true }).setDepth(z + 6))
             .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
         }
       });
-      const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
+      const clearAll = addChoice(this.add.rectangle(640, 698, 230, 48, 0x29323d)
         .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
         .setDepth(z + 2));
-      addChoice(this.add.text(780, 698, 'CANCEL', {
+      addChoice(this.add.text(640, 698, 'CLEAR ALL', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff',
+      }).setOrigin(0.5).setDepth(z + 3));
+      clearAll.on('pointerdown', () => {
+        slots.fill(null);
+        dismiss();
+        refresh();
+      });
+      const cancel = addChoice(this.add.rectangle(920, 698, 230, 48, 0x29323d)
+        .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
+        .setDepth(z + 2));
+      addChoice(this.add.text(920, 698, 'CANCEL', {
         fontFamily: PIXEL_FONT, fontSize: '12px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 3));
       cancel.on('pointerdown', dismiss);
     };
     start.on('pointerdown', () => {
-      if (slots.some(u => !u)) return;
+      if (slots.some(u => !u) || slots.some((u, i) =>
+        !getCrewEventCarSetup(u.carId,
+          (this.registry.get('carStates') || {})[u.carId] || {}, rounds[i]?.rule).eligible
+      )) return;
       save(); close(); this.startCrewBattle(regionId, slots, rounds);
     });
     refresh();
@@ -1129,6 +1446,9 @@ export default class MeetScene extends Phaser.Scene {
   startCrewBattle(regionId, lineup, rounds = null) {
     const battleRounds = rounds || buildRegionalCrewBattleRounds(regionId, this.registry);
     if (!isCrewComplete(this.registry) || lineup.length !== 3 || battleRounds.length < 3) return;
+    if (new Set(lineup.map(u => u.id)).size !== 3 ||
+        lineup.some((unit, i) => !getCrewEventCarSetup(unit.carId,
+          (this.registry.get('carStates') || {})[unit.carId] || {}, battleRounds[i].rule).eligible)) return;
 
     const state = {
       active: true,
@@ -1155,6 +1475,10 @@ export default class MeetScene extends Phaser.Scene {
     const round = state?.rounds?.[index];
     if (!unit || !round || !cars[unit.carId] || !cars[round.carId]) return false;
 
+    const setup = getCrewEventCarSetup(unit.carId,
+      (this.registry.get('carStates') || {})[unit.carId] || {}, round.rule);
+    if (!setup.eligible) return false;
+    this.registry.set('crewBattleEventPlayerSetup', setup.state);
     this.registry.set('selectedCarId', unit.carId);
     this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
     this.registry.set('selectedOpponentCarId', round.carId);
@@ -1173,7 +1497,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', state.regionId);
     this.registry.set(
       'raceLocationLabel',
@@ -1232,7 +1556,8 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowRegionalCrewIntroduction({ countChallengeVisit = false } = {}) {
     if (this.isCrewTestDriveMode()) return false;
-    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
+    if (!this.hasCar || this.specialChallengeActive ||
+        this.competitionLoading || this.competitionPopup?.active) {
       return false;
     }
 
@@ -1288,13 +1613,13 @@ export default class MeetScene extends Phaser.Scene {
       const garage = (this.registry.get('carGarageLocations') || {})[car.id] ||
         this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
       backgroundKey = getWorkshopPhaseBackground(
-        garage, this.worldPhase || getWorldPhase()
+        garage, this.worldPhase || getStoryWorldPhase(this.registry)
       )?.key;
     } else if (!isPlayer) {
       // The actual current Meet asset already contains the road.
       backgroundKey = this.currentBackground?.texture?.key ||
         getMeetBackgroundForPhase(
-          this.selectedMeetLocation, this.worldPhase || getWorldPhase()
+          this.selectedMeetLocation, this.worldPhase || getStoryWorldPhase(this.registry)
         )?.key;
     }
 
@@ -1445,14 +1770,13 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowCrewInviteInterest() {
     if (this.isCrewTestDriveMode()) return false;
-    const interest = getCrewInviteInterest(this.registry);
-    if (!interest?.characterId || !interest?.regionId) return false;
-
     const location = getMeetLocation(this.selectedMeetLocation);
     const currentRegion = String(location?.district || '').toUpperCase();
+    const interest = getCrewInviteInterest(this.registry, currentRegion);
+    if (!interest?.characterId || !interest?.regionId) return false;
     if (String(interest.regionId).toUpperCase() !== currentRegion) return false;
     if (getCrewMemberForRegion(this.registry, currentRegion)) {
-      clearCrewInviteInterest(this.registry);
+      clearCrewInviteInterest(this.registry, currentRegion);
       saveSessionState(this.registry);
       return false;
     }
@@ -1460,7 +1784,7 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[interest.characterId];
     const car = cars[interest.baseCarId];
     if (!character || !car) {
-      clearCrewInviteInterest(this.registry);
+      clearCrewInviteInterest(this.registry, currentRegion);
       saveSessionState(this.registry);
       return false;
     }
@@ -1468,10 +1792,7 @@ export default class MeetScene extends Phaser.Scene {
     const signatureCarName = String(
       car.name || car.shortName || interest.baseCarId
     ).toUpperCase();
-    const playerName = [
-      String(this.registry.get('firstName') || '').trim(),
-      String(this.registry.get('lastName') || '').trim(),
-    ].filter(Boolean).join(' ') || 'PLAYER';
+    const playerName = getInGamePlayerDisplayName(this.registry);
     const dialogue = getCrewInviteDialogue(interest.characterId, {
       REGION: currentRegion, RIVAL_NAME: rivalName,
       SIGNATURE_CAR: signatureCarName, PLAYER_NAME: playerName.toUpperCase(),
@@ -1562,7 +1883,7 @@ export default class MeetScene extends Phaser.Scene {
           }
         } else {
           // NOT NOW on page three leaves the recruitment offer unaccepted.
-          clearCrewInviteInterest(this.registry);
+          clearCrewInviteInterest(this.registry, currentRegion);
           saveSessionState(this.registry);
         }
       },
@@ -1572,19 +1893,17 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowActiveCrewRecruitChallenge() {
     if (this.isCrewTestDriveMode()) return false;
-    let challenge = this.registry.get('crewRecruitChallenge');
+    const region = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
+    let challenge = getCrewRecruitChallenge(this.registry, region);
     if (!challenge?.active) return false;
 
-    // The player has to LEAVE the Meet after a failed recruitment race before
-    // being offered the same opponent again. The challenge remains saved.
-    // Older saves already have lastLossAt but lack the deferred flag; migrate
-    // them once rather than forcing an immediate rematch on a reloaded Meet.
-    if (challenge.lastLossAt && challenge.retryDeferredUntilExit == null) {
-      challenge = { ...challenge, retryDeferredUntilExit: true };
-      this.registry.set('crewRecruitChallenge', challenge);
+    // Legacy saves may retain a defeated challenge from the older automatic
+    // rematch loop. Retire it immediately, without offering the same rival.
+    if (challenge.lastLossAt || challenge.retryDeferredUntilExit) {
+      resetCrewRecruitmentAfterLoss(this.registry, challenge);
       saveSessionState(this.registry);
+      return false;
     }
-    if (challenge.retryDeferredUntilExit) return false;
     const location = getMeetLocation(this.selectedMeetLocation);
     if (String(challenge.regionId || '').toUpperCase() !==
         String(location?.district || '').toUpperCase()) return false;
@@ -1592,7 +1911,7 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[challenge.characterId];
     const opponentCar = cars[challenge.baseCarId];
     if (!character || !opponentCar) {
-      clearCrewRecruitChallenge(this.registry);
+      clearCrewRecruitChallenge(this.registry, region);
       saveSessionState(this.registry);
       return false;
     }
@@ -1622,8 +1941,8 @@ export default class MeetScene extends Phaser.Scene {
         speakerLabel: 'CHOOSE A CAR TO RACE',
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'Bring a factory-stock ' + rules.powerClassLabel + ' car. ' +
-          'Park fitted parts in your garage, or acquire an eligible car and return.',
+        text: 'Recruitment requires a factory-stock car within 40 kW of the rival. ' +
+          'Choose one from your garage, or acquire one and come back later.',
       }],
       finalActionLabel: 'READY TO RACE',
       secondaryFinalActionLabel: 'RACE LATER',
@@ -1671,17 +1990,23 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[challenge.characterId];
     const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
     if (!(recruitRules.eligibleCarIds || []).includes(playerCarId)) return;
+    // Select the actual regional duel before RaceScene reads the legacy
+    // active-challenge slot; accepted duels elsewhere remain untouched.
+    setCrewRecruitChallenge(this.registry, challenge);
 
     const characterRating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
     const rating = recruitRules.aiRating || characterRating;
     const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
     const tierAi = getEncounterAi(rating);
-    // Easy and Standard use their advertised driver tiers rather than inheriting
-    // stronger personal skill values from an Elite-grade character profile.
-    // Hard intentionally retains the more demanding max-of-personal-and-tier AI.
-    const encounterAi = recruitRules.playerDifficulty !== 'HARD'
-      ? getEncounterAi(rating)
-      : recruitRules.aiTier
+    // Easy must never inherit an Expert/Elite recruit's personal AI; the
+    // factory-stock duel uses a Rookie driver with the normal Easy assist.
+    // Standard keeps the exact Expert profile. Hard keeps the demanding
+    // max-of-character-and-Elite profile, both unchanged.
+    const encounterAi = recruitRules.playerDifficulty === 'EASY'
+      ? getEncounterAi(2)
+      : recruitRules.playerDifficulty === 'STANDARD'
+        ? getEncounterAi(4)
+        : recruitRules.aiTier
         ? {
             ...characterAi,
             reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
@@ -1722,7 +2047,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'MeetScene');
     this.registry.set('raceDistrict', String(challenge.regionId).toUpperCase());
     this.registry.set('raceLocationLabel', 'CREW RECRUITMENT');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
@@ -1775,7 +2100,10 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowTunerTeamChallenge({ countReofferVisit = false } = {}) {
     if (this.isCrewTestDriveMode()) return false;
-    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return false;
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        !this.registry.get('arkonStoryChapter02Done'))return false;
+    if (!this.hasCar || this.specialChallengeActive ||
+        this.competitionLoading || this.competitionPopup?.active) return false;
 
     const location = getMeetLocation(this.selectedMeetLocation);
     const regionId = String(location?.district || '').toUpperCase();
@@ -1820,9 +2148,11 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
-    // The perfect sweep can surface again on later Meet visits after the
-    // championship, but once its prize has been earned/claimed it is retired.
-    if (state.perfectEarned || state.perfectRewardClaimed) return false;
+    // Random invitations are ONLY for the first seven-racer encounter, or
+    // one short re-invitation after declining it. Started regional challenges
+    // and post-champion perfect sweeps are exclusively player-initiated.
+    if (state.perfectEarned || state.perfectRewardClaimed ||
+        state.championEarned || state.firstAttemptStarted) return false;
 
     const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
 
@@ -1880,215 +2210,128 @@ export default class MeetScene extends Phaser.Scene {
     return true;
   }
 
-  showTunerTeamChallengePopup(
-    regionId,
-    { skipCallout = false, forceCallout = false } = {}
-  ) {
-    if (this.isCrewTestDriveMode()) return;
-    if (this.tunerChallengePopup?.active || !this.hasCar) return;
-
+  getPreparedRegionalChallengeRounds(regionId) {
     const key = String(regionId || '').toUpperCase();
-    const shop = getTunerShopForRegion(key);
-    if (!shop) return;
-
-    let state = getTunerTeamChallengeState(this.registry, key);
+    const state = getTunerTeamChallengeState(this.registry, key);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const generatedRounds = materialiseRegionalChallengeRounds(
+    const generated = materialiseRegionalChallengeRounds(
       buildTunerTeamChallengeRounds(
-        key,
-        playerCharacterId,
-        this.registry.get('playerDifficulty') || 'STANDARD',
-        this.registry
-      ),
-      Number(this.registry.get('wins') || 0)
+        key, playerCharacterId,
+        this.registry.get('playerDifficulty') || 'STANDARD', this.registry
+      ), Number(this.registry.get('wins') || 0)
     );
-    const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
+    const old = Array.isArray(state.rounds) ? state.rounds : [];
     const recruited = getRecruitedCrewCharacterIds(this.registry);
-    // Rebuild legacy saved lineups if recruitment has made any opponent invalid.
-    // Otherwise preserve the old saved identities and championship stage.
-    const hasRecruitedOpponent = storedRounds.some(round => recruited.has(round?.characterId));
-    const rounds = hasRecruitedOpponent ? generatedRounds : Array.from(
-      { length: TUNER_TEAM_CHALLENGE_STAGES },
-      (_, index) => {
-        const stored = storedRounds[index];
-        const generated = generatedRounds[index];
-        return stored?.characterId && characters[stored.characterId]
-          ? {
-              ...generated,
-              characterId: stored.characterId,
-              carId: getRegionalRivalSignatureCarId(key, stored.characterId, generated.carId),
-            }
-          : generated;
-      }
-    );
+    const invalid = old.some(round => recruited.has(round?.characterId));
+    // Reuse saved opponents and their stage on resume, unless recruitment
+    // made a previous roster illegal; this preserves mid-run continuity.
+    return invalid ? generated : Array.from({ length: TUNER_TEAM_CHALLENGE_STAGES },
+      (_, i) => {
+        const saved = old[i];
+        const fresh = generated[i];
+        return saved?.characterId && characters[saved.characterId]
+          ? { ...fresh, ...saved,
+              carId: getRegionalRivalSignatureCarId(key, saved.characterId, fresh.carId) }
+          : fresh;
+      });
+  }
 
-    state = this.setTunerChallengeState(key, {
-      ...state,
-      invited: true,
-      offeredOnce: true,
+  beginTunerTeamChallenge(regionId, { perfect = false } = {}) {
+    const key = String(regionId || '').toUpperCase();
+    if (!this.hasCar || this.isCrewTestDriveMode() || sceneCutsceneActive(this)) return false;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       !this.registry.get('arkonStoryChapter02Done'))return false;
+    const state = getTunerTeamChallengeState(this.registry, key);
+    if (state.perfectEarned || state.perfectRewardClaimed) return false;
+    if (perfect && !state.championEarned) return false;
+    if (!perfect && state.championEarned) return false;
+    const continuingPerfect = Boolean(perfect && state.perfectAttempt &&
+      state.stage > 0 && state.stage < TUNER_TEAM_CHALLENGE_STAGES);
+    const rounds = this.getPreparedRegionalChallengeRounds(key);
+    if (rounds.length !== TUNER_TEAM_CHALLENGE_STAGES || rounds.some(r => !r?.carId)) return false;
+    const next = this.setTunerChallengeState(key, {
+      ...state, firstAttemptStarted: true, invited: true, offeredOnce: true,
+      activeSession: true, paused: false, pausedAt: 0,
+      reofferVisitsRemaining: 0, retryNotBefore: 0,
+      stage: perfect && !continuingPerfect ? 0 : state.stage,
+      perfectAttempt: perfect ? true : state.perfectAttempt,
+      perfectEligible: perfect ? true : state.perfectEligible,
+      playerCarId: continuingPerfect && state.playerCarId
+        ? state.playerCarId : (this.registry.get('selectedCarId') || ''),
       rounds,
     });
+    if (!cars[next.playerCarId]) return false;
     saveSessionState(this.registry);
+    this.startTunerTeamChallengeRound(key);
+    return true;
+  }
 
-    const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
-
+  // Retain this entry point for the first, organic call-out (and the dev
+  // shortcut). All subsequent attempts use the dedicated Meet buttons.
+  showTunerTeamChallengePopup(regionId, { forceCallout = false } = {}) {
+    if (this.isCrewTestDriveMode() || !this.hasCar || sceneCutsceneActive(this)) return false;
+    const key = String(regionId || '').toUpperCase();
+    const state = getTunerTeamChallengeState(this.registry, key);
+    const shop = getTunerShopForRegion(key);
+    if (!shop || (!forceCallout && (state.championEarned || state.firstAttemptStarted))) {
+      return false;
+    }
+    const rounds = this.getPreparedRegionalChallengeRounds(key);
+    if (!rounds[0]?.characterId) return false;
+    // A declined first invitation is reissued as a very short rival-led
+    // manga exchange, never a generic modal with rectangular action buttons.
+    const isReturn = state.offeredAt === 'RETURN';
+    const returnLines = getRegionalChallengeReturnLines(key);
+    const npcId = isReturn
+      ? getCrewBattleCaptainId(key) || rounds[0].characterId
+      : rounds[0].characterId;
+    const npcName = String(characters[npcId]?.name || key + ' RIVAL').toUpperCase();
+    const definition = isReturn
+      ? {
+          id: 'regionalChallengeReturnInvite',
+          category: 'REGION / CHALLENGE',
+          title: key + ' // REGIONAL CHALLENGE',
+          once: false,
+          characters: { left: '$NPC' },
+          pages: [
+            { speaker: 'left', pose: 'idle',
+              text: returnLines[0] },
+            { speaker: 'left', pose: 'idle',
+              text: returnLines[1],
+              emphasis: true, requireActionButton: true },
+          ],
+          finalActionLabel: 'ACCEPT',
+          secondaryFinalActionLabel: 'RACE LATER',
+        }
+      : 'tunerTeamCallout';
     const postpone = () => {
       const visits = Phaser.Math.Between(
-        TUNER_TEAM_REOFFER_MIN_VISITS,
-        TUNER_TEAM_REOFFER_MAX_VISITS
+        TUNER_TEAM_REOFFER_MIN_VISITS, TUNER_TEAM_REOFFER_MAX_VISITS
       );
-      const nextState = getTunerTeamChallengeState(this.registry, key);
       this.setTunerChallengeState(key, {
-        ...nextState,
-        invited: false,
-        offeredOnce: true,
-        activeSession: false,
-        misses: 0,
-        reofferVisitsRemaining: visits,
-        rounds,
+        invited: false, offeredOnce: true, activeSession: false,
+        reofferVisitsRemaining: visits, misses: 0, rounds,
       });
       saveSessionState(this.registry);
     };
-
-    const acceptAndStart = () => {
-      const nextState = getTunerTeamChallengeState(this.registry, key);
-      const startingPerfectRematch = Boolean(
-        nextState.championEarned &&
-        !nextState.perfectEarned &&
-        !nextState.perfectAttempt
-      );
-
-      this.setTunerChallengeState(key, {
-        ...nextState,
-        invited: true,
-        offeredOnce: true,
-        reofferVisitsRemaining: 0,
-        activeSession: true,
-        paused: false,
-        pausedAt: 0,
-        stage: startingPerfectRematch ? 0 : nextState.stage,
-        perfectAttempt: startingPerfectRematch ? true : nextState.perfectAttempt,
-        perfectEligible: startingPerfectRematch ? true : nextState.perfectEligible,
-        playerCarId: this.registry.get('selectedCarId') || '',
-        rounds,
-      });
-      saveSessionState(this.registry);
-      this.startTunerTeamChallengeRound(key);
-    };
-
-    // The first invitation now explains the entire event. Accepting it goes
-    // directly to the race-opening manga tableau; there is no intermediate
-    // seven-portrait challenge card anymore.
-    if (!perfectRematch && state.stage <= 0 && !state.activeSession && !skipCallout) {
-      const npcId = rounds[0]?.characterId || shop.mechanicId || null;
-      const npcName = characters[npcId]?.name || (key + ' CREW');
-
-      const cutscene = playMangaCutscene(this, 'tunerTeamCallout', {
-        historyId: 'tunerTeamCallout:' + key,
-        force: Boolean(forceCallout),
-        characterOverrides: { NPC: npcId },
-        variables: {
-          REGION: key,
-          SHOP: shop.label,
-          NPC_NAME: npcName.toUpperCase(),
-          NPC_SUBTITLE: (key + ' // REGIONAL CREW').toUpperCase(),
-        },
-        onComplete: ({ reason }) => {
-          if (reason === 'secondary') {
-            postpone();
-            return;
-          }
-          if (reason === 'action' || reason === 'skip') {
-            this.time.delayedCall(80, acceptAndStart);
-          }
-        },
-      });
-
-      if (cutscene.played) return;
-    }
-
-    // Returning/resuming challenges use a compact confirmation only. The old
-    // seven-box popup has been retired; the crew reveal belongs to RaceScene.
-    const depth = 160;
-    const objects = [];
-    const add = obj => {
-      objects.push(obj);
-      return obj;
-    };
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
-      .setDepth(depth).setInteractive());
-
-    const panel = add(this.add.rectangle(780, 420, 700, 300, 0x07111d, 0.995)
-      .setStrokeStyle(3, perfectRematch ? 0xffd36a : 0xa8f3e3, 0.96)
-      .setDepth(depth + 1));
-
-    const displayStage = perfectRematch && !state.perfectAttempt ? 0 : state.stage;
-    const title = perfectRematch
-      ? key + ' // PERFECT STREAK'
-      : key + ' // REGIONAL CHALLENGE';
-    const body = perfectRematch
-      ? 'Seven straight wins. One car. One loss resets the streak.'
-      : displayStage > 0
-        ? displayStage + ' OF 7 DEFEATED // NEXT: RACER ' + (displayStage + 1)
-        : 'SEVEN RACERS // BEAT THE REGIONAL CREW';
-
-    add(this.add.text(780, 335, title, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '13px',
-      color: '#f4fbff',
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(780, 390, body, {
-      fontFamily: BODY_FONT,
-      fontSize: '14px',
-      color: '#c5d3da',
-      fontStyle: '700',
-      align: 'center',
-      wordWrap: { width: 590 },
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    const accept = add(this.add.rectangle(665, 485, 270, 52, 0x18342c, 1)
-      .setStrokeStyle(2, 0xa8f3e3, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(
-      665,
-      485,
-      perfectRematch
-        ? (displayStage > 0 ? 'RESUME STREAK' : 'START STREAK')
-        : (displayStage > 0 ? 'RESUME CHALLENGE' : 'ACCEPT CHALLENGE'),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#effffb',
-      }
-    ).setOrigin(0.5).setDepth(depth + 3));
-
-    const later = add(this.add.rectangle(930, 485, 190, 52, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(930, 485, 'NOT YET', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#c7d5de',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
-      this.tunerChallengePopup = null;
-    };
-
-    blocker.on('pointerdown', () => {});
-    later.on('pointerdown', () => {
-      dismiss();
-      postpone();
+    const result = playMangaCutscene(this, definition, {
+      historyId: isReturn ? 'regionalChallengeReturnInvite:' + key : 'tunerTeamCallout:' + key,
+      force: Boolean(forceCallout),
+      characterOverrides: { NPC: npcId },
+      variables: {
+        REGION: key, SHOP: shop.label,
+        NPC_NAME: npcName, NPC_SUBTITLE: key + ' // REGIONAL CREW',
+      },
+      onComplete: ({ reason }) => {
+        if (reason === 'action') {
+          // Manga scene must be fully torn down before the race transition.
+          this.time.delayedCall(80, () => this.beginTunerTeamChallenge(key));
+        } else {
+          postpone();
+        }
+      },
     });
-    accept.on('pointerdown', () => {
-      dismiss();
-      acceptAndStart();
-    });
-
-    this.tunerChallengePopup = panel;
+    return Boolean(result?.played);
   }
 
   startTunerTeamChallengeRound(regionId) {
@@ -2121,7 +2364,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'MeetScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', key);
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
@@ -2235,71 +2478,74 @@ export default class MeetScene extends Phaser.Scene {
     if (isArkonDen(this.registry)) this.registry.set('devMode', true);
     if (!this.registry.get('devMode')) return;
 
-    // Compact developer-only controls live together in the top-left of the
-    // Meet stage. Keep all six actions and their existing unlock conditions.
-    const width = 292;
-    const x = STAGE.x + 18 + width / 2;
-    const startY = STAGE.y + 22;
-    const gap = 39;
+    // One permanent developer button expands into a six-action grid.
     const fill = 0x321523;
     const stroke = 0xff72a6;
     const textColor = '#ffd1e1';
+    const controls = [];
+    const x = STAGE.x + 114;
+    const y = STAGE.y + 24;
+    const deploy = this.add.rectangle(x, y, 188, 34, fill, 0.97)
+      .setStrokeStyle(1, stroke, 0.98)
+      .setInteractive({ useHandCursor: true }).setDepth(88);
+    const deployLabel = this.add.text(x, y, 'D) DEPLOY  +', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: textColor,
+    }).setOrigin(0.5).setDepth(89);
+
+    const setExpanded = value => {
+      this.devControlsExpanded = Boolean(value);
+      deployLabel.setText(this.devControlsExpanded ? 'D) DEPLOY  -' : 'D) DEPLOY  +');
+      controls.forEach(({ box, label }) => {
+        box.setVisible(this.devControlsExpanded);
+        label.setVisible(this.devControlsExpanded);
+        if (this.devControlsExpanded) box.setInteractive({ useHandCursor: true });
+        else box.disableInteractive();
+      });
+    };
+    deploy.on('pointerover', () => deploy.setStrokeStyle(2, 0xffa7c6, 1));
+    deploy.on('pointerout', () => deploy.setStrokeStyle(1, stroke, 0.98));
+    deploy.on('pointerdown', () => setExpanded(!this.devControlsExpanded));
 
     const makeButton = (index, labelText, onPress) => {
-      const y = startY + index * gap;
-      const box = this.add.rectangle(
-        x, y, width, 32, fill, 0.96
-      ).setStrokeStyle(1, stroke, 0.98)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(88);
-
-      const label = this.add.text(x, y, labelText, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: textColor,
+      const column = index % 3;
+      const row = Math.floor(index / 3);
+      const bx = STAGE.x + 111 + column * 187;
+      const by = STAGE.y + 68 + row * 44;
+      const box = this.add.rectangle(bx, by, 182, 36, fill, 0.97)
+        .setStrokeStyle(1, stroke, 0.98).setDepth(88)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add.text(bx, by, labelText, {
+        fontFamily: PIXEL_FONT, fontSize: '6px', color: textColor,
       }).setOrigin(0.5).setDepth(89);
-
       box.on('pointerover', () => box.setStrokeStyle(2, 0xffa7c6, 1));
       box.on('pointerout', () => box.setStrokeStyle(1, stroke, 0.98));
       box.on('pointerdown', onPress);
-      return { box, label, defaultText: labelText };
+      const control = { box, label, defaultText: labelText };
+      controls.push(control);
+      return control;
     };
 
     this.devScenesControl = makeButton(
-      0, 'D) SCENES',
-      () => {
-        if (!sceneCutsceneActive(this)) showCutsceneTester(this);
-      }
+      0, 'D) SCENES', () => { if (!sceneCutsceneActive(this)) showCutsceneTester(this); }
     );
-
     this.devRefreshChallengesControl = makeButton(
-      1, 'D) REFRESH MEET',
-      () => this.devRefreshAllChallenges()
+      1, 'D) REFRESH MEET', () => this.devRefreshAllChallenges()
     );
-
-    // The existing Special Challenger action is the pink-slip test shortcut.
     this.devForceChallengerControl = makeButton(
-      2, 'D) PINK SLIP',
-      () => this.forceDevSpecialChallenger()
+      2, 'D) PINK SLIP', () => this.forceDevSpecialChallenger()
     );
-
-    // Preserve the existing regional tuner-team challenge shortcut.
     this.devForceTeamChallengeControl = makeButton(
-      3, 'D) REGIONAL CHALLENGE',
-      () => this.forceDevTunerTeamChallenge()
+      3, 'D) REGIONAL CHALLENGE', () => this.forceDevTunerTeamChallenge()
     );
-
     this.devForceCrewRecruitControl = makeButton(
-      4, 'D) DEPLOY RECRUIT',
-      () => this.forceDevCrewRecruitment()
+      4, 'D) DEPLOY RECRUIT', () => this.forceDevCrewRecruitment()
     );
-
     if (isArkonDen(this.registry) && isCrewComplete(this.registry)) {
       this.devForceRegionalCrewBattleControl = makeButton(
-        5, 'D) CREW CHALLENGE',
-        () => this.forceDevRegionalCrewBattle()
+        5, 'D) CREW CHALLENGE', () => this.forceDevRegionalCrewBattle()
       );
     }
+    setExpanded(false);
   }
 
   flashDevControl(control, message, color = '#f4fbff') {
@@ -2328,7 +2574,7 @@ export default class MeetScene extends Phaser.Scene {
     const units = getCrewBattleUnits(this.registry);
     const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
 
-    if (!regionId || units.length < 7 || rounds.length < 6) {
+    if (!regionId || units.length < 3 || rounds.length < 3) {
       this.flashDevControl(
         this.devForceRegionalCrewBattleControl,
         'D) CREW UNAVAILABLE',
@@ -2337,7 +2583,7 @@ export default class MeetScene extends Phaser.Scene {
       return;
     }
 
-    this.showCrewBattleLineup(regionId);
+    this.showCrewBattleIntroduction(regionId);
     this.flashDevControl(
       this.devForceRegionalCrewBattleControl,
       'D) CREW READY',
@@ -2506,7 +2752,7 @@ export default class MeetScene extends Phaser.Scene {
 
   updateGpsPanel() {
     const current = getMeetLocation(this.selectedMeetLocation);
-    const phase = this.worldPhase || getWorldPhase();
+    const phase = this.worldPhase || getStoryWorldPhase(this.registry);
     this.locationText?.setText(
       current.district + ' // ' +
       current.label + ' // ' +
@@ -2516,17 +2762,16 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   releaseDeferredCrewRecruitment() {
-    const challenge = this.registry.get('crewRecruitChallenge');
-    if (!challenge?.active || !challenge.retryDeferredUntilExit) return;
-    this.registry.set('crewRecruitChallenge', {
-      ...challenge,
-      retryDeferredUntilExit: false,
-    });
-    // The caller saves together with the departure's cash/location changes.
+    // Migration guard: do not revive legacy defeated recruitment duels.
+    const region = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
+    const challenge = getCrewRecruitChallenge(this.registry, region);
+    if (!challenge?.lastLossAt && !challenge?.retryDeferredUntilExit) return;
+    resetCrewRecruitmentAfterLoss(this.registry, challenge);
+    saveSessionState(this.registry);
   }
 
   travelToLocation(locationId, suppliedCost = null) {
-    if (!this.hasCar) return false;
+    if (!this.hasCar || !canVisitDuringGinzaLoan(this.registry, locationId)) return false;
 
     const travelTarget = getTravelLocation(locationId);
     if (!travelTarget) return false;
@@ -2586,8 +2831,13 @@ export default class MeetScene extends Phaser.Scene {
         this.rollOffers({ resetTimer: false });
         this.persistMeetRound();
         this.updateGpsPanel();
+        this.buildMeetProgressionButtons();
 
         this.time.delayedCall(60, () => {
+          // Region-specific pending invitations open only after arriving in
+          // their own region; do not interrupt them with a regional intro.
+          if (this.maybeShowCrewInviteInterest()) return;
+          if (this.maybeShowActiveCrewRecruitChallenge()) return;
           const introShown = this.maybeShowRegionalCrewIntroduction({
             countChallengeVisit: true,
           });
@@ -2906,6 +3156,8 @@ export default class MeetScene extends Phaser.Scene {
         ? 'canalYardUnlocked'
         : null;
     if (storyId) {
+      if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+      if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
       try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
     }
 
@@ -2930,6 +3182,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', requestedCost = null) {
+    if (isGinzaLoanActive(this.registry)) return false;
     const garageTier = Number(this.registry.get('garageTier') || 0);
     const destinationId = isWorkshopUnlocked(workshopLocationId, garageTier)
       ? workshopLocationId
@@ -3616,7 +3869,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     saveSessionState(this.registry);
@@ -3653,7 +3906,8 @@ export default class MeetScene extends Phaser.Scene {
     const wins = Number(this.registry.get('wins') || 0);
     const remaining = this.getCompetitionCooldownRemainingMs();
     const crewTestDrive = this.isCrewTestDriveMode();
-    const unlocked = this.hasCar && !crewTestDrive && wins >= 1 && remaining <= 0;
+    const unlocked = this.hasCar && !crewTestDrive &&
+      wins >= 1 && remaining <= 0;
 
     item.locked = !unlocked;
     item.label.setText(
@@ -3679,26 +3933,40 @@ export default class MeetScene extends Phaser.Scene {
 
   chooseCompetitionCharacter(rating = 3, exclude = []) {
     const playerId = this.getActiveDriverCharacterId();
-    const blocked = new Set([playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry)]);
+    const blocked = new Set([
+      playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry),
+    ]);
     const location = getMeetLocation(this.selectedMeetLocation);
     const target = Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5);
 
+    // A Street Showdown is hosted by THIS region. Recruited teammates,
+    // locked regional leaders and the active driver cannot reappear as rivals.
+    // Ordinary single-race Meet opponents are intentionally NOT excluded:
+    // someone can compete in two different events on the same evening.
     const regional = getRivalCharacterOrderForRegion(location.district)
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
-        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
-    const global = rivalCharacterOrder
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
-        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
-    const pool = regional.length ? regional : global;
-    if (!pool.length) return this.chooseEventCharacter(target, exclude);
+      .filter(id =>
+        !blocked.has(id) &&
+        characters[id]?.rivalEligible !== false &&
+        Boolean(characters[id]) &&
+        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district)
+      );
+    if (!regional.length) return null;
 
-    const closestDistance = Math.min(...pool.map(id =>
+    const closestDistance = Math.min(...regional.map(id =>
       Math.abs(Number(characters[id]?.skill?.rating || 3) - target)
     ));
-    const closest = pool.filter(id =>
+    const closest = regional.filter(id =>
       Math.abs(Number(characters[id]?.skill?.rating || 3) - target) === closestDistance
     );
-    return Phaser.Utils.Array.GetRandom(closest.length ? closest : pool);
+    return Phaser.Utils.Array.GetRandom(closest.length ? closest : regional);
+  }
+
+  isCompetitionOfferRosterValid(offer) {
+    return isStreetShowdownOfferRosterValid(offer, {
+      source: this.registry,
+      activeDriverCharacterId: this.getActiveDriverCharacterId(),
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    });
   }
 
   getCompetitionRefreshToken() {
@@ -3711,11 +3979,11 @@ export default class MeetScene extends Phaser.Scene {
     const difficulty = profile.difficulty || 'MED';
 
     const settings = {
-      EASY: { entryFee: 10000, cashPrize: 20000 },
-      MED: { entryFee: 20000, cashPrize: 32000 },
-      HARD: { entryFee: 35000, cashPrize: 48000 },
-      ELITE: { entryFee: 50000, cashPrize: 70000 },
-    }[difficulty] || { entryFee: 20000, cashPrize: 32000 };
+      EASY: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.EASY, cashPrize: 20000 },
+      MED: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.MED, cashPrize: 32000 },
+      HARD: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.HARD, cashPrize: 48000 },
+      ELITE: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.ELITE, cashPrize: 70000 },
+    }[difficulty] || { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.MED, cashPrize: 32000 };
 
     const owned = this.registry.get('ownedCarIds') || [];
     const playerCarId = this.registry.get('selectedCarId');
@@ -3760,11 +4028,20 @@ export default class MeetScene extends Phaser.Scene {
       return {
         ...physical,
         characterId,
-        paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+        paintColor: selectMixedCarPaint(physical.carId, {
+          region: location.district, characterId,
+          isMainRival: Boolean(characters[characterId]?.mainRival),
+          seed: refreshToken + ':showdown:' + physical.carId + ':' + usedCharacters.length,
+        })?.color ?? getFactoryPaintColor(physical.carId, 0) ??
+          Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
       };
     });
+
+    // Never save a three-heat invitation that lacks three eligible identities.
+    if (rounds.some(round => !round.characterId) ||
+        new Set(rounds.map(round => round.characterId)).size !== 3) return null;
 
     const rollingRoundCount = rounds.filter(round => round.raceType === 'Roll Race').length;
     const rollingPrizeBonusPerRound = Number(
@@ -3779,11 +4056,7 @@ export default class MeetScene extends Phaser.Scene {
     if (prizeType === 'COUPON' && prizeCarId) {
       const carValue = Math.max(0, Number(MARKET_BASE_PRICES[prizeCarId] || 0));
       const couponRequirement = Math.max(1, getCarCouponRequirement(prizeCarId));
-      const rawCouponFee = carValue > 0
-        ? (carValue / couponRequirement) * 0.05
-        : 60000;
-      const roundedCouponFee = Math.round(rawCouponFee / 5000) * 5000;
-      entryFee = Phaser.Math.Clamp(roundedCouponFee, 60000, 220000);
+      entryFee = getStreetShowdownCouponEntryFee(carValue, couponRequirement);
     }
 
     return {
@@ -3797,7 +4070,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R479',
+      balanceVersion: 'R20261016-fees',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -3819,7 +4092,8 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R479' ||
+      !this.isCompetitionOfferRosterValid(current) ||
+      current?.balanceVersion !== 'R20261016-fees' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
@@ -3838,10 +4112,12 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   showCompetitionPopup(storyConfirmed = false) {
-    if (this.isCrewTestDriveMode()) return;
-    if (this.specialChallengeActive || !this.hasCar) return;
-    if (this.getCompetitionCooldownRemainingMs() > 0) return;
+    if (this.isCrewTestDriveMode() || this.specialChallengeActive ||
+        !this.hasCar || this.competitionLoading || this.competitionPopup?.active ||
+        this.getCompetitionCooldownRemainingMs() > 0) return;
 
+    // Keep the authored first-visit invitation, then show the redesigned
+    // full-screen Skytree-style roster instead of the old box popup.
     if (!storyConfirmed) {
       const story = playMangaCutscene(this, 'competitionIntroduction', {
         characterOverrides: { PROMOTER: 'tetsuyaKanda' },
@@ -3850,149 +4126,59 @@ export default class MeetScene extends Phaser.Scene {
       });
       if (story.played) return;
     }
-    if (Number(this.registry.get('wins') || 0) < 1) return;
-    if (this.competitionPopup?.active) return;
+    if (Number(this.registry.get('wins') || 0) < 1 ||
+        sceneCutsceneActive(this)) return;
 
     const offer = this.getCompetitionOffer();
+    if (!offer || !this.isCompetitionOfferRosterValid(offer)) return;
 
-    recordCarMagazineSightings(
-      this.registry,
-      (offer.rounds || []).map(round => ({ carId: round.carId, source: 'competition' })),
-      'competition'
-    );
-
-    const cash = Number(this.registry.get('cash') || 0);
-    const enoughCash = cash >= offer.entryFee;
-    const selectedCarId = this.registry.get('selectedCarId');
-    const eligibleCar = carMatchesCompetitionRestriction(selectedCarId, offer.restriction);
-    const enough = enoughCash && eligibleCar;
-    const couponRequired = offer.prizeCarId
-      ? getCarCouponRequirement(offer.prizeCarId)
-      : 0;
-    const couponOwned = offer.prizeCarId
-      ? getCarCouponCount(this.registry, offer.prizeCarId)
-      : 0;
-    const prizeText = offer.prizeType === 'COUPON'
-      ? cars[offer.prizeCarId].shortName + ' COUPON\n' +
-        couponOwned + ' OWNED // ' + couponRequired + ' PER CAR'
-      : '¥' + offer.prizeCash.toLocaleString('en-US');
-
-    const depth = 120;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
-      .setDepth(depth).setInteractive());
-
-    const panel = add(this.add.rectangle(780, 420, 780, 540, 0x07111d, 0.995)
-      .setStrokeStyle(3, 0x45d7ff, 0.95).setDepth(depth + 1));
-
-    add(this.add.text(780, 192, 'STREET SHOWDOWN // THREE RACES', {
-      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#eefaff'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      780,
-      235,
-      'WIN ALL THREE RACES IN A ROW' +
-        (offer.restriction
-          ? '\\nCLASS // ' + offer.restriction.label
-          : '\\n' + (offer.rounds[0]?.showdownEra || 'STREET') +
-            ' BUILDS // UP TO LV' + (offer.rounds[0]?.showdownMaxLevel || 1)),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#8faabb',
-        fontStyle: '600',
-        align: 'center',
-        lineSpacing: 4,
+    // Skytree preloads its opponents before drawing the screen. Do the same
+    // here for ALL three cards and side-profile cars so previews never flash
+    // missing texture errors, even on iPads and older saved Meet profiles.
+    const present = () => {
+      this.competitionLoading = false;
+      if (!this.sys.isActive() || this.competitionPopup?.active ||
+          this.specialChallengeActive) return;
+      const current = this.getCompetitionOffer();
+      if (!current || !this.isCompetitionOfferRosterValid(current)) return;
+      if (current.id !== offer.id) {
+        // The player changed car or the Meet refreshed during asset loading.
+        this.showCompetitionPopup(true);
+        return;
       }
-    ).setOrigin(0.5).setDepth(depth + 2));
 
-    add(this.add.text(535, 292, 'ENTRY', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
-    }).setOrigin(0.5).setDepth(depth + 2));
+      recordCarMagazineSightings(
+        this.registry,
+        current.rounds.map(round => ({ carId: round.carId, source: 'competition' })),
+        'competition'
+      );
 
-    add(this.add.text(535, 326, '¥' + offer.entryFee.toLocaleString('en-US'), {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffe08a'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(1025, 292, 'GRAND PRIZE', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(1025, 326, prizeText, {
-      fontFamily: PIXEL_FONT,
-      fontSize: offer.prizeType === 'COUPON' ? '9px' : '13px',
-      color: offer.prizeType === 'COUPON' ? '#ff9fc7' : '#73f5a5',
-      align: 'center',
-      lineSpacing: 4,
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    offer.rounds.forEach((round, i) => {
-      const y = 395 + i * 54;
-      add(this.add.text(470, y, 'ROUND ' + (i + 1), {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#718fa3'
-      }).setOrigin(0, 0.5).setDepth(depth + 2));
-
-      add(this.add.text(650, y, round.skillLabel + ' // ' + round.showdownTuningPoints + ' TP', {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d9edf7'
-      }).setOrigin(0, 0.5).setDepth(depth + 2));
-
-      add(this.add.text(1040, y, cars[round.carId].shortName, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: i === 2 && offer.prizeType === 'COUPON' ? '#ff9fc7' : '#9db7c8'
-      }).setOrigin(1, 0.5).setDepth(depth + 2));
-    });
-
-    add(this.add.text(780, 565, 'NO TUNING OR CAR CHANGES BETWEEN ROUNDS', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8fa0aa'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    const enter = add(this.add.rectangle(665, 625, 260, 48, enough ? 0x0d2b29 : 0x24161a, 1)
-      .setStrokeStyle(2, enough ? 0x62e8c7 : 0x7a4652, 1)
-      .setDepth(depth + 2));
-
-    const enterText = add(this.add.text(
-      665,
-      625,
-      enough
-        ? 'ENTER // ¥' + offer.entryFee.toLocaleString('en-US')
-        : !eligibleCar
-          ? 'NEED ' + offer.restriction.label
-          : 'NEED MORE CASH',
-      {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: enough ? '#f1fffb' : '#b1848f'
-      }
-    ).setOrigin(0.5).setDepth(depth + 3));
-
-    const close = add(this.add.rectangle(895, 625, 170, 48, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-
-    add(this.add.text(895, 625, 'CLOSE', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
-      this.competitionPopup = null;
+      this.competitionPopup = showStreetShowdownView(this, {
+        offer: current,
+        location: getMeetLocation(this.selectedMeetLocation),
+        onClose: () => { this.competitionPopup = null; },
+        onEnter: selected => {
+          // The preview is not a transaction. Revalidate once at acceptance,
+          // and preserve the existing one-fee, three-heat race settlement.
+          const latest = this.getCompetitionOffer();
+          if (!latest || latest.id !== selected.id ||
+              !this.isCompetitionOfferRosterValid(latest)) {
+            this.showCompetitionPopup(true);
+            return;
+          }
+          this.startCompetition(latest);
+        },
+      });
     };
 
-    blocker.on('pointerdown', dismiss);
-    close.on('pointerdown', dismiss);
-
-    if (enough) {
-      enter.setInteractive({ useHandCursor: true });
-      enter.on('pointerdown', () => {
-        dismiss();
-        this.startCompetition(offer);
-      });
-    }
-
-    this.competitionPopup = panel;
+    // A Meet invitation can be scheduled while artwork loads. Block that
+    // automatic story handoff AND repeated Showdown taps until this view is
+    // ready, so manga overlays never cover the Showdown ENTER button.
+    this.competitionLoading = true;
+    if (this.ensureMeetRosterAssets(
+      offer.rounds, this.selectedMeetLocation, 'LOADING SHOWDOWN', present
+    )) return;
+    present();
   }
 
   configureCompetitionRound(state, index) {
@@ -4021,7 +4207,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceMeetOffer', null);
 
     const location = getMeetLocation(state.locationId);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     return true;
@@ -4029,7 +4215,10 @@ export default class MeetScene extends Phaser.Scene {
 
   startCompetition(offer) {
     if (!offer || !this.hasCar) return;
-    if (!carMatchesCompetitionRestriction(this.registry.get('selectedCarId'), offer.restriction)) return;
+    // Curated Ginza collector loans may enter every regional Street Showdown
+    // irrespective of the usual showroom-era/drivetrain restrictions.
+    if (!isGinzaLoanActive(this.registry) &&
+        !carMatchesCompetitionRestriction(this.registry.get('selectedCarId'), offer.restriction)) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < offer.entryFee) return;
@@ -4133,10 +4322,10 @@ export default class MeetScene extends Phaser.Scene {
     const location = getMeetLocation(locationId);
     const phaseBackground = getMeetBackgroundForPhase(
       location.id,
-      this.worldPhase || getWorldPhase()
+      this.worldPhase || getStoryWorldPhase(this.registry)
     );
     if (phaseBackground?.path) {
-      queueImage(phaseBackground.key, phaseBackground.path + '?v=20260928-r245');
+      queueImage(phaseBackground.key, phaseBackground.path + '?v=20261022-r645');
     }
 
     // Keep the authored legacy texture as a fail-safe without changing the
@@ -4146,9 +4335,10 @@ export default class MeetScene extends Phaser.Scene {
       queueImage(fallbackBackground.key, fallbackBackground.path + '?v=20260928-r245');
     }
 
+    const region = String(getMeetLocation(locationId)?.district || '').toUpperCase();
     const inviteCharacterId = String(
-      getCrewInviteInterest(this.registry)?.characterId ||
-      this.registry.get('crewRecruitChallenge')?.characterId ||
+      getCrewInviteInterest(this.registry, region)?.characterId ||
+      getCrewRecruitChallenge(this.registry, region)?.characterId ||
       ''
     );
 
@@ -4185,6 +4375,23 @@ export default class MeetScene extends Phaser.Scene {
         : offer?.carId;
       if (displayCarId && cars[displayCarId]) carIds.add(displayCarId);
     });
+
+    // A queued recruit may not occupy one of the three visible Meet slots.
+    // Load their portrait and signature car anyway before the manga invitation.
+    if (inviteCharacterId) {
+      const visual = getCharacterVisualForContext(inviteCharacterId, {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }) || {};
+      queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+      queueImage(visual.winSpriteKey, visual.winPath
+        ? getCharacterAssetUrl(visual.winPath) : null);
+      queueImage(visual.lossSpriteKey, visual.lossPath
+        ? getCharacterAssetUrl(visual.lossPath) : null);
+      const recruit = getCrewInviteInterest(this.registry, region) ||
+        getCrewRecruitChallenge(this.registry, region);
+      if (cars[recruit?.baseCarId]) carIds.add(recruit.baseCarId);
+    }
 
     carIds.forEach(id => {
       queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
@@ -4444,7 +4651,12 @@ export default class MeetScene extends Phaser.Scene {
         // created during the global cooldown from banking a future offer.
         incomingPinkChallenge: false,
         incomingPinkPrompted: false,
-        paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+        paintColor: selectMixedCarPaint(carId, {
+          region: location.district, characterId,
+          isMainRival: Boolean(characters[characterId]?.mainRival),
+          seed: Phaser.Math.Between(0, 2147483647),
+        })?.color ?? getFactoryPaintColor(carId, 0) ??
+          paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
         locked: false,
         resultState: null,
@@ -4511,7 +4723,7 @@ export default class MeetScene extends Phaser.Scene {
       Math.max(0, this.offers.length - 1)
     );
 
-    const worldPhase = this.worldPhase || getWorldPhase();
+    const worldPhase = this.worldPhase || getStoryWorldPhase(this.registry);
     const phaseBackground = getMeetBackgroundForPhase(location.id, worldPhase);
     this.setMeetBackground(
       phaseBackground?.key || location.bgKey,
@@ -4651,7 +4863,7 @@ export default class MeetScene extends Phaser.Scene {
     // Warm the opposite phase only after the Meet is interactive, avoiding a
     // doubled initial background load while making later phase flips instant.
     const location = getMeetLocation(this.selectedMeetLocation);
-    const oppositePhase = (this.worldPhase || getWorldPhase()) === 'day' ? 'night' : 'day';
+    const oppositePhase = (this.worldPhase || getStoryWorldPhase(this.registry)) === 'day' ? 'night' : 'day';
     const oppositeBackground = getMeetBackgroundForPhase(location.id, oppositePhase);
     if (oppositeBackground?.path) {
       queueImage(oppositeBackground.key, oppositeBackground.path + '?v=20260928-r245');
@@ -4696,6 +4908,19 @@ export default class MeetScene extends Phaser.Scene {
       if (obj?.destroy) obj.destroy();
     }
     this.stageObjects = [];
+  }
+
+  // A private conversation temporarily empties the Meet stage and rival cards.
+  // Nothing is removed from the actual roster or saved results.
+  setStoryEncounterActive(active) {
+    const showing = Boolean(active);
+    this._storyEncounterActive = showing;
+    [...(this.stageObjects || []), ...(this.cardObjects || [])].forEach(item => {
+      if (item?.setVisible && item?.active) item.setVisible(!showing);
+    });
+    if (this.rivalsTitleText?.active) {
+      this.rivalsTitleText.setText(showing ? 'AFTER HOURS // PRIVATE CONVERSATION' : 'RIVALS');
+    }
   }
 
   getOfferCharacterSpriteKey(offer) {
@@ -5076,6 +5301,7 @@ export default class MeetScene extends Phaser.Scene {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
 
+    if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
     const pinkCooldown = this.getPinkSlipRequestCooldownRaces();
     if (pinkCooldown > 0) {
       this.pinkSlipButton?.disableInteractive();
@@ -5153,6 +5379,13 @@ export default class MeetScene extends Phaser.Scene {
 
   updatePinkSlipControl(offer) {
     if (!offer) return;
+    if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) {
+      this.pinkSlipButton?.disableInteractive()
+        .setFillStyle(0x11161c, 1).setStrokeStyle(1, 0x46545e, 1);
+      this.pinkSlipButtonLabel?.setText('GALLERY LOAN // NO PINKS').setColor('#72838f');
+      this.pinkResponseText?.setText('Sayaka will not risk the gallery car in a pink-slip race.');
+      return;
+    }
 
     if (!offer.pinkChallenged) {
       const ownedCars = this.registry.get('ownedCarIds') || [];
@@ -5353,7 +5586,7 @@ export default class MeetScene extends Phaser.Scene {
   updateRefreshTimer() {
     this.updateCompetitionCooldownButton();
 
-    const nextWorldPhase = getWorldPhase();
+    const nextWorldPhase = getStoryWorldPhase(this.registry);
     if (nextWorldPhase !== this.worldPhase) {
       this.worldPhase = nextWorldPhase;
       const location = getMeetLocation(this.selectedMeetLocation);
@@ -5419,7 +5652,7 @@ export default class MeetScene extends Phaser.Scene {
           }
 
           const noteBg = this.add.rectangle(
-          STAGE.x + STAGE.w - 200,
+          STAGE.x + 195,
           STAGE.y + 32,
           370,
           44,
@@ -5428,7 +5661,7 @@ export default class MeetScene extends Phaser.Scene {
         ).setStrokeStyle(1, challenger ? 0xff5f93 : 0x4bdcff, 0.8).setDepth(84);
 
         const note = this.add.text(
-          STAGE.x + STAGE.w - 200,
+          STAGE.x + 195,
           STAGE.y + 32,
           'NEW RIVALS ARRIVE',
           {
@@ -5675,7 +5908,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     this.persistMeetRound();

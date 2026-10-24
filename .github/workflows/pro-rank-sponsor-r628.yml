@@ -1,0 +1,45 @@
+name: R628 Pro Rank Sponsorship
+on:
+  pull_request:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proTournament.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/ProVictoryResults.js'
+      - 'tests/pro-ranking-sponsor-r628.mjs'
+      - '.github/workflows/pro-rank-sponsor-r628.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proTournament.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/ProVictoryResults.js'
+      - 'tests/pro-ranking-sponsor-r628.mjs'
+      - '.github/workflows/pro-rank-sponsor-r628.yml'
+jobs:
+  sponsorship:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax and both presentation surfaces
+        run: |
+          node --check src/data/proCircuit.js
+          node --check src/data/proSeason.js
+          node --check src/data/proTournament.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/ProVictoryResults.js
+      - name: Run sponsor tier and atomic payout regressions
+        run: |
+          node --test tests/pro-ranking-sponsor-r628.mjs
+          node --test tests/drag-open-circuit-r575.mjs
+          node --test tests/pro-victory-r616.mjs

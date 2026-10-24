@@ -1,0 +1,48 @@
+name: Regional Crew Captains and Regulations
+on:
+  push:
+    branches: [main, feature/crew-battle-captains-rules-20261016]
+    paths:
+      - 'src/data/crewBattleRules.js'
+      - 'src/data/crewSystem.js'
+      - 'src/data/crewBattleIntroductions.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/crew-battle-rules-r547.mjs'
+      - 'tests/crew-regulations-uninstall-r619.mjs'
+      - 'tests/crew-playbook-r625.mjs'
+      - 'tests/crew-whiteboard-progression-r627.mjs'
+      - 'src/data/crewBattlePlaybook.js'
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'assets/Garage/whiteboard_crewbattle.png'
+      - 'assets/Garage/whiteboard_crewrecruit.png'
+      - 'src/data/cutscenes.js'
+      - 'src/data/partUninstall.js'
+      - 'src/scenes/GarageScene.js'
+      - 'tests/crew-battle-introduction-r545.mjs'
+      - 'tests/region-crew-tuning-r529.mjs'
+      - '.github/workflows/crew-battle-rules-r547.yml'
+  workflow_dispatch:
+jobs:
+  crew-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check modified module syntax
+        run: |
+          node --check src/data/crewBattleRules.js
+          node --check src/data/crewBattlePlaybook.js
+          node --check src/data/cutscenes.js
+          node --check src/data/crewSystem.js
+          node --check src/data/crewBattleIntroductions.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/data/partUninstall.js
+      - name: Validate rules, narrative, lineup and startup imports
+        run: |
+          node --test tests/crew-battle-rules-r547.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-playbook-r625.mjs tests/crew-whiteboard-progression-r627.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs

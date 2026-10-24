@@ -179,11 +179,11 @@ test('retired Auto Market wheel room in old saves is routed to cars, not a broke
   assert.match(central, /\{ id: 'used', label: 'USED CARS' \}/);
 });
 
-test('Rims is second Custom Works service, with Bodykit disabled and Paint exclusive', () => {
+test('Rims is second Custom Works service, with Bodykits moved out of the service list', () => {
   const scene = read('src/scenes/OshiageScene.js');
   const garage = read('src/scenes/GarageScene.js');
-  assert.match(scene, /this\.button\(590, 743, 338, 65, 'RIMS'/);
-  assert.match(scene, /this\.button\(955, 743, 338, 65, 'BODYKIT \/\/ COMING SOON'/);
+  assert.match(scene, /this\.button\(860, 745, 545, 64, 'RIMS'/);
+  assert.doesNotMatch(scene, /BODYKIT \/\/ COMING SOON/);
   assert.match(scene, /drawRimShop\(\)/);
   assert.match(scene, /getOshiageRimListings\(\)/);
   assert.match(scene, /ROOT \+ 'oshiage_wheels_' \+ cleanPhase/);

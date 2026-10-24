@@ -1,4 +1,6 @@
 import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js';
+import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js';
+import { applyStoryDialogueTypography } from './StoryDialogueTypography.js';
 
 // One geometry source for live race dialogue and phone-call dialogue.
 // Coordinates use Tokyo SHIFT's native 1560 x 840 landscape viewport.
@@ -19,6 +21,10 @@ export const RACE_COACH_LAYOUT = Object.freeze({
   }),
 });
 
+// Phone and compact share placement; phone retains its independent colours,
+// outlined bubble, caller/player sides and floating phone icon.
+export const PHONE_DIALOGUE_LAYOUTS = COMPACT_DIALOGUE_LAYOUTS;
+
 export const RACE_DIALOGUE_THEMES = Object.freeze({
   standard: Object.freeze({
     fill: 0xfffcf1, fillAlpha: 0.985,
@@ -29,6 +35,52 @@ export const RACE_DIALOGUE_THEMES = Object.freeze({
     border: 0x287bb5, heading: '#145b8d', text: '#11304b',
   }),
 });
+
+// Global phone-call presentation template used by BOTH call engines (the
+// vibrating pick-up choreography and the standard phone dialogue fallback).
+// Leave race coaching untouched: its separate 'standard' theme has no veil.
+export const PHONE_CALL_PRESENTATION = Object.freeze({
+  backdropColor: 0x071421,
+  backdropOpacity: 0.42,
+  iconSize: 62,
+  iconOffsetX: -27,
+  iconOffsetY: -12,
+});
+
+// Reusable anonymous incoming caller portrait. Phaser draws a neutral grey
+// head-and-shoulders silhouette once into a transparent texture; it never
+// reveals the identity of an intentionally unknown customer (including Sayaka).
+export const ANONYMOUS_CALLER_TEXTURE='phoneAnonymousCallerSilhouette';
+export const ANONYMOUS_CALLER_PATH='assets/Ui/phone_unknown.png';
+export const ANONYMOUS_CALLER_VISUAL=Object.freeze({
+  faceAnchor:Object.freeze({x:.5,y:.37,headHeight:.37}),
+});
+export function ensureAnonymousCallerPortrait(scene){
+  if(!scene?.textures || !scene?.make?.graphics)return '';
+  if(scene.textures.exists(ANONYMOUS_CALLER_TEXTURE))return ANONYMOUS_CALLER_TEXTURE;
+  const g=scene.make.graphics({add:false});
+  g.fillStyle(0x3b4752,1);
+  g.fillEllipse(128,248,248,148);
+  g.fillRoundedRect(103,143,50,68,16);
+  g.fillEllipse(128,101,120,146);
+  g.fillStyle(0x68747f,1);
+  g.fillEllipse(128,107,94,116);
+  g.fillStyle(0x46525d,1);
+  g.fillEllipse(128,249,212,110);
+  g.generateTexture(ANONYMOUS_CALLER_TEXTURE,256,256);
+  g.destroy();
+  return ANONYMOUS_CALLER_TEXTURE;
+}
+
+export function createPhoneCallBackdrop(scene, { depth = 305 } = {}) {
+  const width = Number(scene.scale?.width || 1560);
+  const height = Number(scene.scale?.height || 840);
+  return scene.add.rectangle(
+    width / 2, height / 2, width, height,
+    PHONE_CALL_PRESENTATION.backdropColor,
+    PHONE_CALL_PRESENTATION.backdropOpacity,
+  ).setScrollFactor(0).setDepth(depth).setInteractive();
+}
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -86,7 +138,7 @@ function drawRaceTargetDecal(scene, layout) {
 }
 
 // Reusable presentation surface. The phone variant uses the same floating
-// head and speech geometry as coaching, but a blue tint and phone-corner badge.
+// head and speech geometry as coaching, but a blue tint and a larger floating phone glyph.
 export function createRaceDialogueHud(scene, {
   speaker = '',
   theme = 'standard',
@@ -122,21 +174,26 @@ export function createRaceDialogueHud(scene, {
     wordWrap: { width: bubble.textWidth },
   }).setScrollFactor(0).setDepth(depth + 4));
 
-  let iconBadge = null;
   if (theme === 'phone') {
-    const badgeX = bubble.right - 1;
-    const badgeY = bubble.top;
-    iconBadge = own(scene.add.circle(badgeX, badgeY, 31, 0xe2f3ff, 0.99)
-      .setStrokeStyle(4, style.border).setScrollFactor(0).setDepth(depth + 5));
+    // Apply the exact same FINAL rendered font size as normal manga dialogue.
+    // Both ordinary calls and opening/swipe calls use this shared HUD,
+    // so neither scene is allowed to override typography locally.
+    applyStoryDialogueTypography({ heading, dialogue });
+    // Icon floats ABOVE the top-right bubble edge; never surround it with a
+    // circle. This is consistent for normal calls and the swiping phone scene.
+    const iconX = bubble.right + PHONE_CALL_PRESENTATION.iconOffsetX;
+    const iconY = bubble.top + PHONE_CALL_PRESENTATION.iconOffsetY;
     if (phoneIconKey && scene.textures.exists(phoneIconKey)) {
       const source = scene.textures.get(phoneIconKey).getSourceImage();
-      const icon = own(scene.add.image(badgeX, badgeY, phoneIconKey)
+      const icon = own(scene.add.image(iconX, iconY, phoneIconKey)
         .setScrollFactor(0).setDepth(depth + 6));
-      icon.setScale(Math.min(37 / Math.max(1, source.width || 1),
-        37 / Math.max(1, source.height || 1)));
+      icon.setScale(Math.min(
+        PHONE_CALL_PRESENTATION.iconSize / Math.max(1, source.width || 1),
+        PHONE_CALL_PRESENTATION.iconSize / Math.max(1, source.height || 1),
+      ));
     } else {
-      own(scene.add.text(badgeX, badgeY, '☎', {
-        fontFamily: BODY, fontSize: '35px', color: '#17639b', fontStyle: 'bold',
+      own(scene.add.text(iconX, iconY, '☎', {
+        fontFamily: BODY, fontSize: '60px', color: '#17639b', fontStyle: 'bold',
       }).setOrigin(0.5).setScrollFactor(0).setDepth(depth + 6));
     }
   }
@@ -152,6 +209,20 @@ export function createRaceDialogueHud(scene, {
     const texture = scene.textures.get(key);
     texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const source = texture.getSourceImage();
+    if(key===ANONYMOUS_CALLER_TEXTURE){
+      // phone_unknown.png is a COMPLETE graphic, not a character face.
+      // Fit its whole canvas within the regular phone portrait aperture.
+      // Face detection otherwise zooms into a tiny section of the artwork.
+      const sw=Math.max(1,Number(source.naturalWidth||source.width||1));
+      const sh=Math.max(1,Number(source.naturalHeight||source.height||1));
+      const padding=5;
+      const zoom=Math.min((face.width-padding*2)/sw,
+        (face.height-padding*2)/sh);
+      portrait.setScale(zoom);
+      portrait.setPosition(face.x+(face.width-sw*zoom)/2,
+        face.y+(face.height-sh*zoom)/2);
+      return;
+    }
     const anchor = resolveCharacterFaceAnchor(source, key, characterVisual, pose);
     const zoom = Math.max(0.12, Math.min(2.2,
       face.headHeight / Math.max(1, anchor.headHeight)));
@@ -164,7 +235,6 @@ export function createRaceDialogueHud(scene, {
   const setAccent = color => {
     if (theme !== 'phone') return;
     speech.redraw(color);
-    iconBadge?.setStrokeStyle(4, color);
   };
   let destroyed = false;
   const cleanup = () => {

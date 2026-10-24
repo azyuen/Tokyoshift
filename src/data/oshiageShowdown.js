@@ -3,6 +3,7 @@
 // venue selection screen between heats, then receive the grand prize.
 import { cars } from './cars.js';
 import { getBaseCarId } from './carOwnership.js';
+import { isGinzaLoanActive } from './ginzaLoanAccess.js';
 import {
   OSHIAGE_ELITE_VENUES, OSHIAGE_ELITE_COOLDOWN_MS,
   getOshiageEliteProgress, getOshiageEliteRemainingMs,
@@ -41,7 +42,13 @@ export function getOshiageShowdownAccess(source, venueId, now = Date.now()) {
   if (cooldown > 0) return { allowed: false, reason: '15-MINUTE COOLDOWN', cooldown };
   const id = String(read(source, 'selectedCarId', '') || '');
   const car = cars[id] || cars[getBaseCarId(id)];
-  if (!car || !((read(source, 'ownedCarIds', []) || []).includes(id)) || car.crewLoan)
+  // The collector car is temporary, but explicitly entrusted for street
+  // racing and Skytree showdowns. This bypass applies ONLY to the exact
+  // active gallery loan, never to arbitrary unowned cars or crew loans.
+  const isActiveGalleryLoan = isGinzaLoanActive(source) &&
+    read(source, 'ginzaTestDrive')?.carId === id && car?.ginzaDemo;
+  if (!car || car.crewLoan ||
+      (!isActiveGalleryLoan && !((read(source, 'ownedCarIds', []) || []).includes(id))))
     return { allowed: false, reason: 'SELECT YOUR OWN CAR' };
   if (Number(read(source, 'cash', 0) || 0) < venue.entryFee)
     return { allowed: false, reason: 'NOT ENOUGH CASH FOR ENTRY' };
@@ -54,7 +61,11 @@ export function applyOshiageShowdownHeat(registry, series) {
   const opponent = series.lineup?.[round];
   const venue = OSHIAGE_ELITE_VENUES[series.venueId];
   if (!opponent || !cars[opponent.carId] || !cars[series.playerCarId]) return false;
-  if (!(registry.get('ownedCarIds') || []).includes(series.playerCarId)) return false;
+  const exactLoan = isGinzaLoanActive(registry) &&
+    registry.get('ginzaTestDrive')?.carId === series.playerCarId &&
+    cars[series.playerCarId]?.ginzaDemo;
+  if (!exactLoan &&
+      !(registry.get('ownedCarIds') || []).includes(series.playerCarId)) return false;
   registry.set('oshiageEliteVenue', series.venueId);
   registry.set('oshiageLocation', 'oshiageSkytreeMeet');
   registry.set('district', 'OSHIAGE');

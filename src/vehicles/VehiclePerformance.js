@@ -2,6 +2,7 @@ import {effectiveFinalDrive} from './Transmission.js';
 import {estimateElapsed} from './PerformanceEstimate.js';
 import Engine,{refreshEngineOutput} from './Engine.js';
 import { cars } from '../data/cars.js';
+import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js';
 import { applyEngineTuning } from '../data/tuning.js';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js';
@@ -85,7 +86,10 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
 }
 
 export function getBuiltCar(carId, state = {}) {
-  const car = cars[carId];
+  // Owned duplicates (e.g. 240z__copy2) have separate tuning state but share
+  // the model/engine. Do not rely on this module's URL-cached cars catalogue
+  // already having the runtime instance registered.
+  const car = cars[carId] || cars[getBaseCarId(carId)];
   if (!car) return null;
   const engine = engines[car.engine];
   if (!engine) return null;

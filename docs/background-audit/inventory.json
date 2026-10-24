@@ -1,0 +1,2134 @@
+{
+  "date": "2026-10-22T06:53:36.434530+00:00",
+  "notes": "Perspective/horizon/vanishing points have NOT been measured visually",
+  "summary": {
+    "interior_ginza": {
+      "count": 5,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 5
+        }
+      ],
+      "ratio_count": 1
+    },
+    "interior_market": {
+      "count": 9,
+      "dimensions": [
+        {
+          "width": 1836,
+          "height": 857,
+          "count": 9
+        }
+      ],
+      "ratio_count": 1
+    },
+    "interior_office": {
+      "count": 3,
+      "dimensions": [
+        {
+          "width": 1536,
+          "height": 1024,
+          "count": 3
+        }
+      ],
+      "ratio_count": 1
+    },
+    "interior_oshiage": {
+      "count": 8,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 8
+        }
+      ],
+      "ratio_count": 1
+    },
+    "interior_registration": {
+      "count": 4,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 4
+        }
+      ],
+      "ratio_count": 1
+    },
+    "outdoor_central": {
+      "count": 4,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 4
+        }
+      ],
+      "ratio_count": 1
+    },
+    "outdoor_meet": {
+      "count": 42,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 42
+        }
+      ],
+      "ratio_count": 1
+    },
+    "outdoor_oshiage": {
+      "count": 4,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 4
+        }
+      ],
+      "ratio_count": 1
+    },
+    "race_multilayer": {
+      "count": 30,
+      "dimensions": [
+        {
+          "width": 2172,
+          "height": 724,
+          "count": 18
+        },
+        {
+          "width": 1122,
+          "height": 1402,
+          "count": 6
+        },
+        {
+          "width": 2078,
+          "height": 757,
+          "count": 2
+        },
+        {
+          "width": 2172,
+          "height": 300,
+          "count": 1
+        },
+        {
+          "width": 2077,
+          "height": 757,
+          "count": 1
+        },
+        {
+          "width": 1986,
+          "height": 724,
+          "count": 1
+        },
+        {
+          "width": 2173,
+          "height": 724,
+          "count": 1
+        }
+      ],
+      "ratio_count": 7
+    },
+    "race_skyline": {
+      "count": 18,
+      "dimensions": [
+        {
+          "width": null,
+          "height": null,
+          "count": 16
+        },
+        {
+          "width": 3072,
+          "height": 512,
+          "count": 2
+        }
+      ],
+      "ratio_count": 2
+    },
+    "workshop_core": {
+      "count": 6,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 6
+        }
+      ],
+      "ratio_count": 1
+    },
+    "workshop_crew": {
+      "count": 2,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 2
+        }
+      ],
+      "ratio_count": 1
+    },
+    "workshop_dyno": {
+      "count": 2,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 2
+        }
+      ],
+      "ratio_count": 1
+    },
+    "workshop_tuner": {
+      "count": 16,
+      "dimensions": [
+        {
+          "width": 1672,
+          "height": 941,
+          "count": 16
+        }
+      ],
+      "ratio_count": 1
+    }
+  },
+  "day_night_pairs": [
+    {
+      "day": "assets/CentralTokyo/dragcomplex/regoroom_day.png",
+      "night": "assets/CentralTokyo/dragcomplex/regoroom_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragcomplex/regozoomed_day.png",
+      "night": "assets/CentralTokyo/dragcomplex/regozoomed_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_complex_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_complex_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_frontcrowd_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_frontcrowd_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_standleft_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_standmid_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_standmid_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_standright_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_standright_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_complex_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_complex_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_frontcrowd_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_frontcrowd_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_standleft_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_standmid_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_standmid_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_standright_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_standright_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_complex_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_complex_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_frontcrowd_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_frontcrowd_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_standleft_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_standmid_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_standmid_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_standright_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_standright_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_dragstrip_day.png",
+      "night": "assets/CentralTokyo/tokyo_dragstrip_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_ginza02_day.png",
+      "night": "assets/CentralTokyo/tokyo_ginza02_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_ginza_day.png",
+      "night": "assets/CentralTokyo/tokyo_ginza_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_new_day.png",
+      "night": "assets/CentralTokyo/tokyo_new_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_trainstation_day.png",
+      "night": "assets/CentralTokyo/tokyo_trainstation_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_used_day.png",
+      "night": "assets/CentralTokyo/tokyo_used_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/CentralTokyo/tokyo_wheels_day.png",
+      "night": "assets/CentralTokyo/tokyo_wheels_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Garage/shinonome_canalyard_day.png",
+      "night": "assets/Garage/shinonome_canalyard_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Garage/shinonome_crewspace_day.png",
+      "night": "assets/Garage/shinonome_crewspace_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Garage/shinonome_dyno_day.png",
+      "night": "assets/Garage/shinonome_dyno_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Garage/shinonome_warehouse_day.png",
+      "night": "assets/Garage/shinonome_warehouse_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Garage/shinonome_workshop_day.png",
+      "night": "assets/Garage/shinonome_workshop_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/daikoku_reamemiya_day.png",
+      "night": "assets/Locations/TunerShops/daikoku_reamemiya_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/odaiba_esprit_day.png",
+      "night": "assets/Locations/TunerShops/odaiba_esprit_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/shibuya_amuse_day.png",
+      "night": "assets/Locations/TunerShops/shibuya_amuse_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/shinagawa_spoon_day.png",
+      "night": "assets/Locations/TunerShops/shinagawa_spoon_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/shinagawa_zerosports_day.png",
+      "night": "assets/Locations/TunerShops/shinagawa_zerosports_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/shinjuku_topsecret_day.png",
+      "night": "assets/Locations/TunerShops/shinjuku_topsecret_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/tatsumi_jun_day.png",
+      "night": "assets/Locations/TunerShops/tatsumi_jun_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Locations/TunerShops/yokohama_mines_day.png",
+      "night": "assets/Locations/TunerShops/yokohama_mines_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/daikoku_harbor_day.png",
+      "night": "assets/Meet/Night/daikoku_harbor_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/daikoku_open_lot_day.png",
+      "night": "assets/Meet/Night/daikoku_open_lot_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/daikoku_pa_day.png",
+      "night": "assets/Meet/Night/daikoku_pa_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/odaiba_7eleven_day.png",
+      "night": "assets/Meet/Night/odaiba_7eleven_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/odaiba_gundam_plaza_day.png",
+      "night": "assets/Meet/Night/odaiba_gundam_plaza_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/odaiba_miraikan_day.png",
+      "night": "assets/Meet/Night/odaiba_miraikan_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shibuya_center_gai_day.png",
+      "night": "assets/Meet/Night/shibuya_center_gai_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shibuya_dogenzaka_day.png",
+      "night": "assets/Meet/Night/shibuya_dogenzaka_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shibuya_scramble_day.png",
+      "night": "assets/Meet/Night/shibuya_scramble_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinagawa_konan_day.png",
+      "night": "assets/Meet/Night/shinagawa_konan_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinagawa_oi_wharf_day.png",
+      "night": "assets/Meet/Night/shinagawa_oi_wharf_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinagawa_tennozu_isle_day.png",
+      "night": "assets/Meet/Night/shinagawa_tennozu_isle_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinjuku_3dcat_day.png",
+      "night": "assets/Meet/Night/shinjuku_3dcat_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinjuku_godzilla_day.png",
+      "night": "assets/Meet/Night/shinjuku_godzilla_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/shinjuku_metrogov_day.png",
+      "night": "assets/Meet/Night/shinjuku_metrogov_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/tatsumi_bridgefront_plaza_day.png",
+      "night": "assets/Meet/Night/tatsumi_bridgefront_plaza_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/tatsumi_harbor_loop_day.png",
+      "night": "assets/Meet/Night/tatsumi_harbor_loop_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/yokohama_bay_bridge_day.png",
+      "night": "assets/Meet/Night/yokohama_bay_bridge_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/yokohama_minato_mirai_day.png",
+      "night": "assets/Meet/Night/yokohama_minato_mirai_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Meet/Day/yokohama_red_brick_day.png",
+      "night": "assets/Meet/Night/yokohama_red_brick_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_paint_day.png",
+      "night": "assets/Oshiage/oshiage_paint_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_school_day.png",
+      "night": "assets/Oshiage/oshiage_school_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_shop_day.png",
+      "night": "assets/Oshiage/oshiage_shop_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_skytree01_day.png",
+      "night": "assets/Oshiage/oshiage_skytree01_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_skytree02_day.png",
+      "night": "assets/Oshiage/oshiage_skytree02_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Oshiage/oshiage_wheels_day.png",
+      "night": "assets/Oshiage/oshiage_wheels_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_daikoku_day.webp",
+      "night": "assets/Race/Skylines/skyline_daikoku_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_odaiba_day.png",
+      "night": "assets/Race/Skylines/skyline_odaiba_night.png",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_odaiba_day.webp",
+      "night": "assets/Race/Skylines/skyline_odaiba_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_oshiage_day.webp",
+      "night": "assets/Race/Skylines/skyline_oshiage_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_shibuya_day.webp",
+      "night": "assets/Race/Skylines/skyline_shibuya_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_shinagawa_day.webp",
+      "night": "assets/Race/Skylines/skyline_shinagawa_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_shinjuku_day.webp",
+      "night": "assets/Race/Skylines/skyline_shinjuku_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_tatsumi_day.webp",
+      "night": "assets/Race/Skylines/skyline_tatsumi_night.webp",
+      "dimensions_match": true
+    },
+    {
+      "day": "assets/Race/Skylines/skyline_yokohama_day.webp",
+      "night": "assets/Race/Skylines/skyline_yokohama_night.webp",
+      "dimensions_match": true
+    }
+  ],
+  "mismatched_pairs": [
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_frontcrowd_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_frontcrowd_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_standleft_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/full_standmid_day.png",
+      "night": "assets/CentralTokyo/dragstrip/full_standmid_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/half_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/half_standleft_night.png",
+      "dimensions_match": false
+    },
+    {
+      "day": "assets/CentralTokyo/dragstrip/low_standleft_day.png",
+      "night": "assets/CentralTokyo/dragstrip/low_standleft_night.png",
+      "dimensions_match": false
+    }
+  ],
+  "byte_identical_duplicates": [
+    [
+      "assets/CentralTokyo/tokyo_auto_market_new.png",
+      "assets/CentralTokyo/tokyo_new_night.png"
+    ],
+    [
+      "assets/CentralTokyo/tokyo_auto_market_used.png",
+      "assets/CentralTokyo/tokyo_used_night.png"
+    ],
+    [
+      "assets/CentralTokyo/tokyo_auto_market_wheels.png",
+      "assets/CentralTokyo/tokyo_wheels_night.png"
+    ],
+    [
+      "assets/Oshiage/oshiage_paint_day.png",
+      "assets/Oshiage/oshiage_paint_night.png"
+    ]
+  ],
+  "images": [
+    {
+      "path": "assets/CentralTokyo/dragcomplex/regoroom_day.png",
+      "group": "interior_registration",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3983357,
+      "sha256": "ebd7da5e8f70832c366cbe03ea1f3307c151146b1ed1267535baeebceb5209b7"
+    },
+    {
+      "path": "assets/CentralTokyo/dragcomplex/regoroom_night.png",
+      "group": "interior_registration",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2561436,
+      "sha256": "9ad738f980cfd416bfd78f34cab1c39ead5bde96387d446767bf7c36cc60603b"
+    },
+    {
+      "path": "assets/CentralTokyo/dragcomplex/regozoomed_day.png",
+      "group": "interior_registration",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2253242,
+      "sha256": "ae11af17fec9fe76fd2e0b351807161dfb7c2c824111f35d20bae5165e6a5441"
+    },
+    {
+      "path": "assets/CentralTokyo/dragcomplex/regozoomed_night.png",
+      "group": "interior_registration",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2403075,
+      "sha256": "7899993a8e67c8166cf091e9f9be1db5cea6f9626cec4a3ea1d359329e7e6012"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_complex_day.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 1611669,
+      "sha256": "bcf0eea07cd07c8ed3d328a672cfd14d915d62c905f582d9afeccadf491ced19"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_complex_night.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 2271879,
+      "sha256": "9fcd839fba1970cc398aa6097a9a77c64990c80f904d10cf18c140f7f0c16fb1"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_frontcrowd_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 1077596,
+      "sha256": "f514e9f728db48a79b1c49bb60484467d8a39631432394fbc5c2449e84c248d5"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_frontcrowd_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 300,
+      "ratio": 7.24,
+      "format": "PNG",
+      "bytes": 657679,
+      "sha256": "05d51e83e955921af87361cf9fddaf0f8351157d634efce171c85f324bd3d4b6"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standleft_day.png",
+      "group": "race_multilayer",
+      "width": 2077,
+      "height": 757,
+      "ratio": 2.743725,
+      "format": "PNG",
+      "bytes": 2371400,
+      "sha256": "2ef45c5c79da57b328a421c5c0960cbf843c0c106a5d0c682ae6334503633a0f"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standleft_night.png",
+      "group": "race_multilayer",
+      "width": 1986,
+      "height": 724,
+      "ratio": 2.743094,
+      "format": "PNG",
+      "bytes": 1716284,
+      "sha256": "4611ba54260843f7e77631e3723eb2ae06d518148b98fa9b51680345c0c8eaa0"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standmid_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2375822,
+      "sha256": "482f34e4de6b3cdb40082ec649e1b48f08dfef13d7ef5d3715ce6fd01979e03d"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standmid_night.png",
+      "group": "race_multilayer",
+      "width": 2173,
+      "height": 724,
+      "ratio": 3.001381,
+      "format": "PNG",
+      "bytes": 1716776,
+      "sha256": "5ce6e9fe6bce59c6c5a0aa7eb6698fed4120bba3e3d3c3e7547d69df192f42e3"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standright_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2425167,
+      "sha256": "cb4404abbaa681382b165daad70405c51b1cfd4af713799c6f48396d7e43452a"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/full_standright_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 1575799,
+      "sha256": "d86bcb595d950c8dedb8a5e960b04dd0bd68d6fa2c5e4f42e33e66b13165784a"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_complex_day.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 2193756,
+      "sha256": "535f271d857126d6ce11553ca90c27de0959acbce0a71b16b854d379c77b3b5b"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_complex_night.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 2206970,
+      "sha256": "af8189da6d5815f64751d63936cdbdcc35f3304d510dd24cb31557a9259cef9c"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_frontcrowd_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 814400,
+      "sha256": "b28cc7d8f70643fee67a6f7f6e4f7a53d497ec6ef0ed611df28488a48cbc73f9"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_frontcrowd_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 895528,
+      "sha256": "8468d122ae195ee425ee56c39c903eae7992013de2205eee955bf98be6b048b0"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standleft_day.png",
+      "group": "race_multilayer",
+      "width": 2078,
+      "height": 757,
+      "ratio": 2.745046,
+      "format": "PNG",
+      "bytes": 2301166,
+      "sha256": "c691129e578b9f0c738d4a24ea232cdae9c42d94a30916842a6f6bfdcfb7865a"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standleft_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2320975,
+      "sha256": "237ce3d3eb8f28e3341f4d7f45d4bd0a90018d099ef0077bc96719a7315d2867"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standmid_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 1960625,
+      "sha256": "47d4b1cff00fcf45dcb20c4a5e9b7992ba338a06a061076f4655f8e4e231cd0f"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standmid_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2181774,
+      "sha256": "1e50538eb9ca76cb703a596328a666ebb0a830a80b5fbb29d855be15bb00ed91"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standright_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2437194,
+      "sha256": "549a55818abe847cb0fc5a5c181d870c512ef7965b8d12a646d3295412af1d63"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/half_standright_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2234494,
+      "sha256": "b706bce278fb5ec8b9253b978ada505572339e81dd63eacaff2d2688d7377b0a"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_complex_day.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 2154691,
+      "sha256": "89cdd826db21160043f0b4ef72f7a22f87e0954889a608701e4b54d14996b743"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_complex_night.png",
+      "group": "race_multilayer",
+      "width": 1122,
+      "height": 1402,
+      "ratio": 0.800285,
+      "format": "PNG",
+      "bytes": 2157631,
+      "sha256": "3f7e4a3abf8ec513ac5639eba62d7d68a00aed66e72650d445fdf3a6f207356f"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_frontcrowd_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 508919,
+      "sha256": "aff1223acf69169d4dc6e1f491789b8920a2c07dee41a691626ff95895b301e6"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_frontcrowd_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 613258,
+      "sha256": "fb9da355d03c45d05ba6db29560ae2a8667801425c3e90c36bba355f58fd197a"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standleft_day.png",
+      "group": "race_multilayer",
+      "width": 2078,
+      "height": 757,
+      "ratio": 2.745046,
+      "format": "PNG",
+      "bytes": 2154240,
+      "sha256": "7ba5f20811c36557bd546ba7d05045d4fea09561d8cc86f63698a183f88dd682"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standleft_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2274811,
+      "sha256": "0bd49139b95da7e77fec3f389e30d2fd3cb91797a2c457f04b65e720999c8895"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standmid_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 1742131,
+      "sha256": "71706b75e6786e2c247bde8665b87cd681c2cb9aa9ddfd6287947bdc9a77920b"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standmid_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2066896,
+      "sha256": "f10c338587d83712158dbdc63e35d6aaa751e617c8770c188b44898ce72c6f55"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standright_day.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2426239,
+      "sha256": "5826dcf162762a7161cdafc7df679bf525f273c0b01f6e9500230900f3a2daf8"
+    },
+    {
+      "path": "assets/CentralTokyo/dragstrip/low_standright_night.png",
+      "group": "race_multilayer",
+      "width": 2172,
+      "height": 724,
+      "ratio": 3.0,
+      "format": "PNG",
+      "bytes": 2241596,
+      "sha256": "5fd974f0da4d1b6314f2e080359b1b27ba0a7ac4169cd1988eb42ca1daa1528c"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_auto_market_new.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3995656,
+      "sha256": "3da9f4fe3c76d1cf20ae1f601d296b0bc35ecd2773895f1119b2c9f52a180ba7"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_auto_market_used.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3921819,
+      "sha256": "26d291d2f219b985b20026af45ebf707faa20a3cfa16460d6eda1e67a6aa7aed"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_auto_market_wheels.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3835950,
+      "sha256": "0568d93ae44307b101aaaba3487983bceecf7cff73189353e3b16c148e333380"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_dragstrip_day.png",
+      "group": "outdoor_central",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3080745,
+      "sha256": "7410f83e86182d54c05f1af911485a5dc604b81d1b23dcb1e84311326a91a18a"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_dragstrip_night.png",
+      "group": "outdoor_central",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2838807,
+      "sha256": "13592db9e8d2b67b2230e2d71fff245dd67a982f5705a0420b95ac883d30576e"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_ginza02_day.png",
+      "group": "interior_ginza",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3994049,
+      "sha256": "bae5e7ac9d8c64a46e7601bc39a16937a25c34cd870945dcff4da1a113e6adbb"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_ginza02_night.png",
+      "group": "interior_ginza",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2462495,
+      "sha256": "0a691a205a1bea88d5c689c60f03e7e2d971da6699d97932908f86e04506e089"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_ginza03.png",
+      "group": "interior_ginza",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2572039,
+      "sha256": "7dee5adc20dd791bf9e2828f84d00f01785533dd5fe41ea533deab5d114c8c8c"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_ginza_day.png",
+      "group": "interior_ginza",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2507694,
+      "sha256": "4fb837c217fb2a1e5d2141ddc033cb6e218cd524600020aad6ed2f1a3d3cb219"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_ginza_night.png",
+      "group": "interior_ginza",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2451238,
+      "sha256": "cb3e34d818c6144a9cfb18e3661c1969f005ede984b7f7d6297d26bf18641137"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_new_day.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 2637306,
+      "sha256": "146604bb35d312c5ba1ea9a3e0d3d9dcc845cb6a22af924bd0893cacb6ee3e0a"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_new_night.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3995656,
+      "sha256": "3da9f4fe3c76d1cf20ae1f601d296b0bc35ecd2773895f1119b2c9f52a180ba7"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_trainstation_day.png",
+      "group": "outdoor_central",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2855489,
+      "sha256": "405490a8c50b5d4d35087d98831a9a8be88bbdfd3c51eb1d49fab5dc83c30247"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_trainstation_night.png",
+      "group": "outdoor_central",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2873570,
+      "sha256": "994e5398c5eca3a77eedb0d25fefd0e1e9ac81201db674c8141ee4596b819d41"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_used_day.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 2903215,
+      "sha256": "a4fa16dd8059f617390b1e78df10bf1d011409ac481b6693db0313620bb896d8"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_used_night.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3921819,
+      "sha256": "26d291d2f219b985b20026af45ebf707faa20a3cfa16460d6eda1e67a6aa7aed"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_wheels_day.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 2831239,
+      "sha256": "2463cc6f76ece613fe7c8c24d9fda2f39350f2e4bac972d841cd18edf9e481f2"
+    },
+    {
+      "path": "assets/CentralTokyo/tokyo_wheels_night.png",
+      "group": "interior_market",
+      "width": 1836,
+      "height": 857,
+      "ratio": 2.142357,
+      "format": "PNG",
+      "bytes": 3835950,
+      "sha256": "0568d93ae44307b101aaaba3487983bceecf7cff73189353e3b16c148e333380"
+    },
+    {
+      "path": "assets/Garage/shinonome_canalyard_day.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2964435,
+      "sha256": "cf022ea11e32df597cb7a957449dede94e04b4b821aafadf81008b7f6f559ab9"
+    },
+    {
+      "path": "assets/Garage/shinonome_canalyard_night.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2746660,
+      "sha256": "5fcc4be799db34514912f18f8003936a29d9095228ddfe313389a34255ba6bd5"
+    },
+    {
+      "path": "assets/Garage/shinonome_canalyard_office.png",
+      "group": "interior_office",
+      "width": 1536,
+      "height": 1024,
+      "ratio": 1.5,
+      "format": "PNG",
+      "bytes": 3630256,
+      "sha256": "8bc87367298317a9c0aadd21a1904eaf31c11a22535863009b7440ce01e6bdd1"
+    },
+    {
+      "path": "assets/Garage/shinonome_crewspace_day.png",
+      "group": "workshop_crew",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2766056,
+      "sha256": "98a09cc84f659e753059e039632e94e44187869c1e4247118331a0954946366b"
+    },
+    {
+      "path": "assets/Garage/shinonome_crewspace_night.png",
+      "group": "workshop_crew",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2515658,
+      "sha256": "b2f87b8a3495ddc308f1068e5c81bccd16f1bb15e246aa8ce4f14bf59d8caa8f"
+    },
+    {
+      "path": "assets/Garage/shinonome_dyno_day.png",
+      "group": "workshop_dyno",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3666262,
+      "sha256": "2cacdbafde22d19b3e9b0153ab36d13faa2ddcbe6dbfe44773f2806606b88a98"
+    },
+    {
+      "path": "assets/Garage/shinonome_dyno_night.png",
+      "group": "workshop_dyno",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2241433,
+      "sha256": "ab34a4b5e7677cb2e5a828400b89a823816950a29b1fbae22fc96faa2b7dd804"
+    },
+    {
+      "path": "assets/Garage/shinonome_warehouse_day.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2457944,
+      "sha256": "cea5225145888a644d2edf1f82b2f770d981321139b6c92f4c422d8644e194fc"
+    },
+    {
+      "path": "assets/Garage/shinonome_warehouse_night.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2640668,
+      "sha256": "d51fb55d7e01e35495e293277a178a8b84212f1fba929e1202ef7a24ccd17597"
+    },
+    {
+      "path": "assets/Garage/shinonome_warehouse_office.png",
+      "group": "interior_office",
+      "width": 1536,
+      "height": 1024,
+      "ratio": 1.5,
+      "format": "PNG",
+      "bytes": 3534434,
+      "sha256": "f06d471e9fe92f5c67dff972d302153588b5710e8e39ad394619667774186e59"
+    },
+    {
+      "path": "assets/Garage/shinonome_workshop_day.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2537182,
+      "sha256": "86d34389b19b4048a5323d91755a1e6b54b343f962fdb227022e5a0403d06d1b"
+    },
+    {
+      "path": "assets/Garage/shinonome_workshop_night.png",
+      "group": "workshop_core",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2344380,
+      "sha256": "333ee4ea2bdbd4bbca587c5a43a918cea53ec1c72534f0f323987351f71a993a"
+    },
+    {
+      "path": "assets/Garage/shinonome_workshop_office.png",
+      "group": "interior_office",
+      "width": 1536,
+      "height": 1024,
+      "ratio": 1.5,
+      "format": "PNG",
+      "bytes": 3632503,
+      "sha256": "09e6c296ea8b48b25350dcc2ed31ccc4fb276405153a16beca56621aaf9eb93a"
+    },
+    {
+      "path": "assets/Locations/TunerShops/daikoku_reamemiya_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2582473,
+      "sha256": "dd0af3fd28075b4eb6bcbf308febacf3339d3b5d236affd3844050c7f2f51b08"
+    },
+    {
+      "path": "assets/Locations/TunerShops/daikoku_reamemiya_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4010237,
+      "sha256": "c0b79b7b05d7e3e1ccc4ecf4fcec8893f2ecdd05f9fe2276f4bdd649422d1c35"
+    },
+    {
+      "path": "assets/Locations/TunerShops/odaiba_esprit_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2748544,
+      "sha256": "d4c0dc88d0327f2736112d6cf780d246b5888a2d24c49f764c3d4eb979ade769"
+    },
+    {
+      "path": "assets/Locations/TunerShops/odaiba_esprit_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4059505,
+      "sha256": "58e5c1fef76f8cc3b9dd05d3ab5013e73f9171eb23e7e9ebbdb35acb2d28b13a"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shibuya_amuse_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2692578,
+      "sha256": "03b64647c5cf390320c8d0794416dd6cfb9e6b5274f31982c1f994f22c9fa897"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shibuya_amuse_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4039959,
+      "sha256": "39a0078ddaf2c608a9cf671d416ab92978617ec22bf85f5440181f8e9b075b45"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinagawa_spoon_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2681578,
+      "sha256": "c11a3ed4cd46f4d9d5da65ab75c01c84f79d0ffbf1a1703917c33b3dcda2c3f4"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinagawa_spoon_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4119582,
+      "sha256": "e3055e5d2be93d1ff7d593dcd188574557fc4bb16f27e746457c84b97b172580"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinagawa_zerosports_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2447602,
+      "sha256": "c90780dc964fbb92485cd32a2e3ed03c93f8c7a11ca9c870a9e3476d5d0793dd"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinagawa_zerosports_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4059858,
+      "sha256": "9cc133cc4061b801ff54c8c8a97a6f4a97579f53596038253b82d6b89a0c51fc"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinjuku_topsecret_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2797303,
+      "sha256": "a823b8763cce82f17434a9619fdbe5aeeb091a458c8493125ff02d640e67d552"
+    },
+    {
+      "path": "assets/Locations/TunerShops/shinjuku_topsecret_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4079789,
+      "sha256": "e4afcae02dffe3f90de38ad6a8b6aa6652457429538575073a795b673e0180e9"
+    },
+    {
+      "path": "assets/Locations/TunerShops/tatsumi_jun_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2682140,
+      "sha256": "c98a2f84174e0608832a8ff670f2e94c8f072cae874653752f7ccf3025bf2a7f"
+    },
+    {
+      "path": "assets/Locations/TunerShops/tatsumi_jun_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4040944,
+      "sha256": "86ac510d13137ec9d268e97bfa4e65881dae3cf7ad93cb7aa7d56a0b119a15d1"
+    },
+    {
+      "path": "assets/Locations/TunerShops/yokohama_mines_day.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2709938,
+      "sha256": "0db5e32e834ac8be011e35ba0308f68f50a71a17b54c773d2ccd3fb816a8c3b0"
+    },
+    {
+      "path": "assets/Locations/TunerShops/yokohama_mines_night.png",
+      "group": "workshop_tuner",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2734337,
+      "sha256": "1ae2d7ac259d512af41c58ce80abd60c2aa64b40cb102fdbbec210072b82e78e"
+    },
+    {
+      "path": "assets/Meet/Day/daikoku_harbor_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3604201,
+      "sha256": "376112f7bf09eb6eab5c392b85b9b794c4032553b290f41e753a81ff02967ff0"
+    },
+    {
+      "path": "assets/Meet/Day/daikoku_open_lot_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3592925,
+      "sha256": "72bb54bcd587bb6d30baf773d55278d9ed81ac18f4096d8fef300cc96316b271"
+    },
+    {
+      "path": "assets/Meet/Day/daikoku_pa_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2332994,
+      "sha256": "6aef66ed545d4147c6f59931746d084cfc453263b31013bca2bda8dbac872a73"
+    },
+    {
+      "path": "assets/Meet/Day/odaiba_7eleven_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4157331,
+      "sha256": "e3fb0ecc29fe466cac31e2dabc2d89eb0751322dea5225d36ef44060f0c2673a"
+    },
+    {
+      "path": "assets/Meet/Day/odaiba_gundam_plaza_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2982170,
+      "sha256": "6b6d6238dcc6bf6a08b96d002bb19a88f44166db987a23ac2d4f5e72d82fe5cf"
+    },
+    {
+      "path": "assets/Meet/Day/odaiba_miraikan_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4151470,
+      "sha256": "a6d5956414c61f2fd1fc78df2d17583bc985283716cf2cfb86a48bd8537a380d"
+    },
+    {
+      "path": "assets/Meet/Day/shibuya_center_gai_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2922602,
+      "sha256": "350640a47a1cfe2c28f9ee507d9153bf49661b7a71aa941417ebf074329dd73e"
+    },
+    {
+      "path": "assets/Meet/Day/shibuya_dogenzaka_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2996510,
+      "sha256": "0d19fc07bedc403e9da2260b2da8c4fa3dd7b71fea83f58c78df68ca5007c7ea"
+    },
+    {
+      "path": "assets/Meet/Day/shibuya_scramble_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2874529,
+      "sha256": "57bae6b7df22dae4772859e79e3d1354d5fe4e06c9c9ffeb02cb5ee1659da9bb"
+    },
+    {
+      "path": "assets/Meet/Day/shinagawa_konan_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2748133,
+      "sha256": "d18285b127bd64ce05753c19ff8f3e0065fed86decd973e46980180a0aba1a9d"
+    },
+    {
+      "path": "assets/Meet/Day/shinagawa_oi_wharf_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2647031,
+      "sha256": "f0775e9c1b44f1eb4912b3c2ca837135cb0f60b78e6a54a4aae60dd27d7acf0b"
+    },
+    {
+      "path": "assets/Meet/Day/shinagawa_tennozu_isle_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2791333,
+      "sha256": "7d3385dfb101f7733aa8123e4c26292f35704d9ddd50643b215b5f64400246aa"
+    },
+    {
+      "path": "assets/Meet/Day/shinjuku_3dcat_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4260006,
+      "sha256": "ea03a6fa98c6a49fdf189c297824b5bfe8fdf64a92db8752735b0a1e730b7a73"
+    },
+    {
+      "path": "assets/Meet/Day/shinjuku_godzilla_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4416959,
+      "sha256": "f6513148772970573c5dcc98040fb75a01c08016cb60119d56bb7385a07ba951"
+    },
+    {
+      "path": "assets/Meet/Day/shinjuku_metrogov_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2918822,
+      "sha256": "c11a89f623028be7d417642556789dbaf0d5017ac23a7509f5838221cf7749f1"
+    },
+    {
+      "path": "assets/Meet/Day/tatsumi_bridgefront_plaza_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2371189,
+      "sha256": "fc44b859ac68b15708c40db53cdd7e0cc58ebed29979ba04b96653c8442e8652"
+    },
+    {
+      "path": "assets/Meet/Day/tatsumi_district_loop_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3534358,
+      "sha256": "214d3765be342773d443a6b3d872f1dd419019c08ecbcf3902e0203ade0951bd"
+    },
+    {
+      "path": "assets/Meet/Day/tatsumi_harbor_loop_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3893967,
+      "sha256": "71807d64fe049e6582bd5515783dfe4c9977acd36a112abc7320eebbdab587d8"
+    },
+    {
+      "path": "assets/Meet/Day/yokohama_bay_bridge_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2711379,
+      "sha256": "1786808f2842c3804aca096c2cdb7b88b479c4475012b5917a1e591d828840bb"
+    },
+    {
+      "path": "assets/Meet/Day/yokohama_minato_mirai_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2806890,
+      "sha256": "b1507f2a240860684d5f031a3365c198510a8459d8ba89feea8f6f91b4fff4dd"
+    },
+    {
+      "path": "assets/Meet/Day/yokohama_red_brick_day.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2906587,
+      "sha256": "abe24f2d67dacf9cd4b28429ceafabbf64a98d9a18d82ba7a2188b1bb707b50c"
+    },
+    {
+      "path": "assets/Meet/Night/daikoku_harbor_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2599116,
+      "sha256": "a3ebe2d27993fb2ad598a071e95ed236571cc8e63dccabe0caae473e9628e6f3"
+    },
+    {
+      "path": "assets/Meet/Night/daikoku_open_lot_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2499988,
+      "sha256": "af0ce120e247a6308fae0130a949b8e537cd361da017274c2a542ee070e6ad1d"
+    },
+    {
+      "path": "assets/Meet/Night/daikoku_pa_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2128904,
+      "sha256": "4a1a27fcfd489a2f92a9f57bab350eb858e03bbf941f7a5396f05f0f55fa9257"
+    },
+    {
+      "path": "assets/Meet/Night/odaiba_7eleven_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2556096,
+      "sha256": "cb39b1ce85208e245a2b6c4a713fdca78d892f6db6a641773b202cd3287251b9"
+    },
+    {
+      "path": "assets/Meet/Night/odaiba_gundam_plaza_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2880032,
+      "sha256": "699a0725b41c2a8148a905b43bbf1c6f76e3617c58cc20bc5818f8049ddfa90c"
+    },
+    {
+      "path": "assets/Meet/Night/odaiba_miraikan_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2694938,
+      "sha256": "2f545b49284b67136d6b795c55a9d17ba8e87b630b42a6ffa72092139f556344"
+    },
+    {
+      "path": "assets/Meet/Night/shibuya_center_gai_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3140318,
+      "sha256": "9c6e13491c7aa6bfc9d33b92886caaa3f61fa049c4204c898e3734d32145b354"
+    },
+    {
+      "path": "assets/Meet/Night/shibuya_dogenzaka_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3089238,
+      "sha256": "022c4312796d46074412ec13bf6568a7306aaf9daf46651a3d778027c222b07f"
+    },
+    {
+      "path": "assets/Meet/Night/shibuya_scramble_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3055548,
+      "sha256": "de3a4e236a5dd35b836e3d14ab1be79e10916541639339f84844b22283021d33"
+    },
+    {
+      "path": "assets/Meet/Night/shinagawa_konan_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2757598,
+      "sha256": "c75ec066776f940a7081ce46345ac1f157deac8901bc8eb94ff97d2944062f56"
+    },
+    {
+      "path": "assets/Meet/Night/shinagawa_oi_wharf_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2693450,
+      "sha256": "ea61fb6bef7810bbe069b7c9d60a0583d305262bc54c34df7fb7b5e3b5a6decf"
+    },
+    {
+      "path": "assets/Meet/Night/shinagawa_tennozu_isle_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2959968,
+      "sha256": "81e3e2d415f051aa8dd99c198a6949e6736a32ee3410242d85ce66b6d73c1df7"
+    },
+    {
+      "path": "assets/Meet/Night/shinjuku_3dcat_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4286261,
+      "sha256": "5ee4b4a890a5b3b2e9c2e9d9a2737ad9e87036f70ea44d7d0b6ea0bc20361cf6"
+    },
+    {
+      "path": "assets/Meet/Night/shinjuku_godzilla_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4404152,
+      "sha256": "be72a1df2fb47df9145bfa7f94da511f9a4e956311752f2f8450f29f2c3378b6"
+    },
+    {
+      "path": "assets/Meet/Night/shinjuku_metrogov_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4237708,
+      "sha256": "ea78a68b1332f1786457280d213eb4fd62f8d53a3b63110d98efb32fde2547a3"
+    },
+    {
+      "path": "assets/Meet/Night/tatsumi_bridgefront_plaza_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2470675,
+      "sha256": "8d687e89f2d9ce51d126db9949ccd87dad9195236ee13058b34a879cf72a039d"
+    },
+    {
+      "path": "assets/Meet/Night/tatsumi_harbor_loop_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2524360,
+      "sha256": "48897330cf4fcf7fdac5d936b60d9df7bcb8027f1edf8585d4dd3728808c57bd"
+    },
+    {
+      "path": "assets/Meet/Night/tatsumi_skyline_vista_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2582392,
+      "sha256": "eeda39fbed1531d81d89d54446ab4ed434e8fed9bb3ae95bdda03ff0f0b3c267"
+    },
+    {
+      "path": "assets/Meet/Night/yokohama_bay_bridge_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2603621,
+      "sha256": "18ff7ad08e274f2b6e3b0ccdd3efcbc800217a15353e048c6c693e1e8ba96b68"
+    },
+    {
+      "path": "assets/Meet/Night/yokohama_minato_mirai_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2708991,
+      "sha256": "433931ef460a45a653ee039f6c6174266f47f500e991f561fa15558e6d8a7003"
+    },
+    {
+      "path": "assets/Meet/Night/yokohama_red_brick_night.png",
+      "group": "outdoor_meet",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 2873415,
+      "sha256": "0c3b2c7935f39195982822c3245060f5de71116471b1fe6415d8da77ee843082"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_paint_day.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3562892,
+      "sha256": "4d330bb3100b57e5014de2dbc23017650a5d29a81c5af1e50e99c088fba59b7e"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_paint_night.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3562892,
+      "sha256": "4d330bb3100b57e5014de2dbc23017650a5d29a81c5af1e50e99c088fba59b7e"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_school_day.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4210254,
+      "sha256": "fa56d1f6cbc6803580ec91e4f359bc56f6d78ea8d9ebfbbe36ebffda764511c2"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_school_night.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4054380,
+      "sha256": "63ee3f22fb5925a7f425f0d2eb9b547c7e985635cdb7c8b551a72720dde70460"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_shop_day.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4085522,
+      "sha256": "1f978e3fbd6772ff16f212de4fea96abdc1bbb21e8a23258f6a4e8059acffc4f"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_shop_night.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3928327,
+      "sha256": "9e3268f3334e70b2eeea927c653c108c869cdd8fdcbb5161c431f44f0ee25950"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_skytree01_day.png",
+      "group": "outdoor_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4105584,
+      "sha256": "0c0166a32624688c7eebcb27c8dd1ece7f190be3deb68c5af6621b0c6926f9bc"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_skytree01_night.png",
+      "group": "outdoor_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4130657,
+      "sha256": "94a1c417d3a0c76e2d1565f37cbce2e3f9e758e1028c5aa1b5d509142ffaaf5d"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_skytree02_day.png",
+      "group": "outdoor_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 4250892,
+      "sha256": "e9806887eb8465f8a8bfbaf4225f44a0e1032a6da8b87fc540c8f279081e12b9"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_skytree02_night.png",
+      "group": "outdoor_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3452740,
+      "sha256": "f020fca9cee043c801cb576134c5df5670571d70ca9ab43ea0ab86ad1e1a77b3"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_wheels_day.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3409807,
+      "sha256": "27a1aadfa41827fe3199d9ea88f8bc922a3661d1ef5bd34f2f9783fcf51db48a"
+    },
+    {
+      "path": "assets/Oshiage/oshiage_wheels_night.png",
+      "group": "interior_oshiage",
+      "width": 1672,
+      "height": 941,
+      "ratio": 1.776833,
+      "format": "PNG",
+      "bytes": 3819800,
+      "sha256": "a8216c3023aff43fd82f4729adbe68440fab24b26f4140566d5c2f3c1ed8bb38"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_daikoku_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 835040,
+      "sha256": "3520d3ac7dac3bde1f706d70ef50db0bc3731d2c8e50152274849a4bc922fb50"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_daikoku_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 951338,
+      "sha256": "1e7992c8a565023eb9527e200578058e9f044cb42c072de867b55e247deda3dd"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_odaiba_day.png",
+      "group": "race_skyline",
+      "width": 3072,
+      "height": 512,
+      "ratio": 6.0,
+      "format": "PNG",
+      "bytes": 1727717,
+      "sha256": "ede913a5213c5197e8a2a6546a1958071a690a7b153b58cc834751bd2f6c876e"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_odaiba_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 841042,
+      "sha256": "9679f1d1d9681496e8b88a28c7548632a12a5fd3acf270a634efc2f39698f12a"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_odaiba_night.png",
+      "group": "race_skyline",
+      "width": 3072,
+      "height": 512,
+      "ratio": 6.0,
+      "format": "PNG",
+      "bytes": 1688349,
+      "sha256": "ee5ea353d6d55385c77daa8d507fbcaa7fc3529ca01247930db24b1899c17977"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_odaiba_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1074652,
+      "sha256": "7fdf0d0c965d7162bb020878ecc0f5088bee4f8c9ab6d0d62eec06b0e7bb1083"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_oshiage_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 778772,
+      "sha256": "f04c49f62787f63a23c803f78d2935f40273e34776b8b980cbbafe4133c5eeb8"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_oshiage_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 785952,
+      "sha256": "4a6f1a9f8684d262f39be2442e1d5db0474cf5c2b53680f83c920d5b57ffff81"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shibuya_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1025142,
+      "sha256": "26cae85e69f06bc82fc251b3db8b4c0e707cc84ebb99eca3f2b37627fe4a2d96"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shibuya_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 980068,
+      "sha256": "8f11bfeb0dc85a2987a248f521c8b3a62d4c4d8aae8b879ac646e8337988b50d"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shinagawa_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1072780,
+      "sha256": "3b379e21d300c638d6fa112784d6c40c66bc2de1d3e3e046da933d017df53d1e"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shinagawa_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 966580,
+      "sha256": "9c7f476a8c78216006718cdf1c831cac9b05ec0d8bff2968ad72b4a58709afbe"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shinjuku_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1095996,
+      "sha256": "949a3e2ac7e71f94b85601c7197c4983fdd8a95e10e521ac025b8ac6fb9822e0"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_shinjuku_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1018018,
+      "sha256": "8d70b22b5f6aeef760a49f36cd3d9331228923c557816bcfc8c4a776d75dfedd"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_tatsumi_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1040916,
+      "sha256": "dcb8b6064f3819f512fd1500f782713cd19c988a583ce92427d01d62665eb3c2"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_tatsumi_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1028612,
+      "sha256": "a793cf6f978214dd15a9052bb0a877b17f06cef3faaf4d9848ff1d5e6e320f38"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_yokohama_day.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1059514,
+      "sha256": "4343ae95a0acf243628ed3705c141788751257a2e308244e1dd9a50c618738c1"
+    },
+    {
+      "path": "assets/Race/Skylines/skyline_yokohama_night.webp",
+      "group": "race_skyline",
+      "width": null,
+      "height": null,
+      "ratio": null,
+      "format": "UNKNOWN",
+      "bytes": 1015246,
+      "sha256": "daded6da24850a399476186fe99c3a1021be15d90e612552641358ce4f07c96b"
+    }
+  ]
+}

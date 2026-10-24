@@ -1,0 +1,50 @@
+name: R577 Chapter 09 and Pro Strip UI
+on:
+  push:
+    paths:
+      - 'src/data/chapter09.js'
+      - 'src/data/cutscenes.js'
+      - 'src/data/storyChapters.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/chapter09-drag-r577.mjs'
+      - '.github/workflows/chapter09-drag-r577.yml'
+  pull_request:
+    paths:
+      - 'src/data/chapter09.js'
+      - 'src/data/cutscenes.js'
+      - 'src/data/storyChapters.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/chapter09-drag-r577.mjs'
+      - '.github/workflows/chapter09-drag-r577.yml'
+  workflow_dispatch:
+jobs:
+  story-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check game and story module syntax
+        run: |
+          node --check src/data/chapter09.js
+          node --check src/data/cutscenes.js
+          node --check src/data/characters.js
+          node --check src/data/storyChapters.js
+          node --check src/ui/Chapter09Story.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/StoryArchivePanel.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Chapter, season and story archive regression
+        run: |
+          node --test tests/chapter09-drag-r577.mjs
+          node --test tests/drag-open-circuit-r575.mjs
+          node --test tests/story-archive-r570.mjs
+          node --test tests/drag-complex-r448.mjs

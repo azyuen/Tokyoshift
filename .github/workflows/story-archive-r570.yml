@@ -1,0 +1,51 @@
+name: R570 player Story Archive and chapter replays
+on:
+  pull_request:
+    paths:
+      - 'src/data/storyChapters.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'src/ui/StoryArchivePlayback.js'
+      - 'src/ui/StoryArchivePanel.js'
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'src/ui/Chapter08Story.js'
+      - 'src/ui/OfficePanel.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/ui/CarHistoryPanel.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/story-archive-r570.mjs'
+      - '.github/workflows/story-archive-r570.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/StoryArchivePanel.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'tests/story-archive-r570.mjs'
+  workflow_dispatch:
+jobs:
+  story-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Javascript modules
+        run: |
+          node --check src/data/storyChapters.js
+          node --check src/ui/StoryReplaySession.js
+          node --check src/ui/StoryArchivePlayback.js
+          node --check src/ui/StoryArchivePanel.js
+          node --check src/ui/Chapter08DevReplay.js
+          node --check src/ui/Chapter08Story.js
+          node --check src/ui/OfficePanel.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/CarHistoryPanel.js
+          node --check src/state/GameState.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Regression tests — story, PWA and save isolation
+        run: node --test tests/story-archive-r570.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs

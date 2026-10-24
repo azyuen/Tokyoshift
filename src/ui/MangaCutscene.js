@@ -17,6 +17,7 @@ import {
 } from '../characters/CharacterProfileRenderer.js';
 import { saveSessionState } from '../state/GameState.js';
 import { playPhoneConversation } from './PhoneConversation.js';
+import { applyStoryDialogueTypography } from './StoryDialogueTypography.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -48,8 +49,9 @@ const interpolate = (value, variables = {}) => String(value ?? '').replace(
   (_, key) => variables[key] == null ? '' : String(variables[key])
 );
 
-export function sceneCutsceneActive(scene) {
-  return Boolean(scene?._mangaCutscene?.active || scene?._phoneConversation?.active);
+export function sceneCutsceneActive(scene,{ignoreChapter09Stage=false}={}) {
+  return Boolean(scene?._mangaCutscene?.active || scene?._phoneConversation?.active ||
+    (!ignoreChapter09Stage && scene?._chapter09Stage?.active));
 }
 
 function playerDisplayName(scene, playerCharacterId) {
@@ -208,6 +210,28 @@ function queueCharacterAssets(scene, characterRefs, playerCharacterId, context =
     });
   });
   return queued;
+}
+
+/** Load optional milestone backgrounds only for cutscenes that declare them. */
+function queueCutsceneBackdropAssets(scene, definition) {
+  let queued = 0;
+  const seen = new Set();
+  Object.values(definition.backdrops || {}).forEach(spec => {
+    const key = String(spec?.key || '');
+    const path = String(spec?.path || '');
+    if (!key || !path || seen.has(key) || scene.textures.exists(key)) return;
+    seen.add(key);
+    scene.load.image(key, path);
+    queued++;
+  });
+  return queued;
+}
+
+function sizeChapterBackdrop(image, scene) {
+  const frame = image?.texture?.getSourceImage?.();
+  const width = Math.max(1, Number(frame?.width || 1));
+  const height = Math.max(1, Number(frame?.height || 1));
+  image.setScale(Math.max(scene.scale.width / width, scene.scale.height / height));
 }
 
 function freezeScene(scene) {
@@ -434,7 +458,7 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
     frameWidth: frame.width,
     frameHeight: frame.height,
     side,
-    flipInward: true,
+    flipInward: !actor?.ginzaArkonFaceSayaka,
   });
 
   image
@@ -504,6 +528,11 @@ function replaceActorProfile(
   }
 
   const frame = frameFor(scene, side);
+  // Ginza's Arkon cameo should face Sayaka, not away from her. Derive this
+  // from the authored scene and character rather than flipping all right-side
+  // manga actors in unrelated career cutscenes.
+  const ginzaArkonFaceSayaka = side === 'right' && characterId === 'arkonDen' &&
+    String(context.definition?.id || '').startsWith('ginzaMicro_');
   const profile = createCharacterProfile(scene, {
     characterId,
     pose,
@@ -513,7 +542,7 @@ function replaceActorProfile(
     frameHeight: frame.frameHeight,
     side,
     depth: BASE_DEPTH + (side === 'center' ? 18 : 15),
-    flipInward: true,
+    flipInward: !ginzaArkonFaceSayaka,
     dimmed,
     // Manga characters are staged as full silhouettes. Profile cards keep
     // their rectangular masks; cutscenes intentionally let hair/arms/poses
@@ -564,6 +593,7 @@ function replaceActorProfile(
     profile,
     rivalContext: Boolean(rivalContext),
     playerCharacterId: context.playerCharacterId,
+    ginzaArkonFaceSayaka,
   };
   return controller.actors[side];
 }
@@ -581,6 +611,7 @@ function drawDialogue(controller, page) {
   const width = Number(scene.scale.width || 1560);
   const height = Number(scene.scale.height || 840);
   const speaker = page.speaker || 'system';
+  const isPhoneCall = Boolean(page.phoneCall);
 
   // Compact manga card: with the actors now smaller and staged higher, the
   // dialogue no longer needs to act as a full-width character crop. Keep it
@@ -607,8 +638,9 @@ function drawDialogue(controller, page) {
         Boolean(speakingActor?.rivalContext)
       );
 
-  const card = scene.add.rectangle(x, y, cardWidth, cardHeight, 0xfffcf1, 1)
-    .setStrokeStyle(6, 0x111111, 1)
+  const card = scene.add.rectangle(x, y, cardWidth, cardHeight,
+    isPhoneCall ? (speaker === 'right' ? 0x16464a : 0x193650) : 0xfffcf1, 1)
+    .setStrokeStyle(isPhoneCall ? 4 : 6, isPhoneCall ? 0x78badd : 0x111111, 1)
     .setDepth(BASE_DEPTH + 30)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
@@ -627,7 +659,7 @@ function drawDialogue(controller, page) {
     labelY,
     labelWidth,
     labelHeight,
-    0x111111,
+    isPhoneCall ? 0x0c253c : 0x111111,
     1
   ).setDepth(BASE_DEPTH + 31).setScrollFactor(0);
 
@@ -636,7 +668,7 @@ function drawDialogue(controller, page) {
       ? labelX + labelWidth / 2 - 16
       : labelX - labelWidth / 2 + 16,
     labelY,
-    label,
+    isPhoneCall ? (speaker === 'right' ? 'YOU // PHONE' : label + ' // PHONE') : label,
     {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
@@ -654,7 +686,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: BODY_FONT,
       fontSize: page.emphasis ? '14px' : '13px',
-      color: '#111111',
+      color: isPhoneCall ? '#ffffff' : '#111111',
       fontStyle: page.emphasis ? '800' : '700',
       lineSpacing: 5,
       wordWrap: { width: cardWidth - 76 },
@@ -662,6 +694,12 @@ function drawDialogue(controller, page) {
   ).setOrigin(0, 0.5)
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
+
+  // This is the same shared font rule used by every phone call. Apply it
+  // AFTER text creation so old global text-factory boosts cannot cause the
+  // visual font size to diverge between manga and phone templates.
+  applyStoryDialogueTypography({ dialogue: body, heading: labelText,
+    emphasis: Boolean(page.emphasis) });
 
   const finalPage = controller.pageIndex >= (definition.pages?.length || 1) - 1;
   const rawAction = page.actionLabel || (finalPage
@@ -691,7 +729,7 @@ function drawDialogue(controller, page) {
     footerY,
     actionWidth,
     42,
-    actionEnabled ? 0x111111 : 0x565656,
+    actionEnabled ? (isPhoneCall ? 0x215b85 : 0x111111) : 0x565656,
     1
   ).setDepth(BASE_DEPTH + 33)
     .setScrollFactor(0);
@@ -751,7 +789,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
-      color: '#333333',
+      color: isPhoneCall ? '#daeefa' : '#333333',
     }
   ).setOrigin(0, 0.5)
     .setDepth(BASE_DEPTH + 32)
@@ -863,6 +901,13 @@ function renderPage(controller, pageIndex, firstPage = false) {
 
   controller.pageIndex = pageIndex;
   clearDialogue(controller);
+  const backdrop = definition.backdrops?.[page.backdrop];
+  if (backdrop?.key && controller.backdropImage &&
+      context.scene.textures.exists(backdrop.key) &&
+      controller.backdropImage.texture.key !== backdrop.key) {
+    controller.backdropImage.setTexture(backdrop.key);
+    sizeChapterBackdrop(controller.backdropImage, context.scene);
+  }
 
   // When the two equal car bays appear, clear the small opening title plate
   // so it cannot overlap the left-hand car's top header. The main manga
@@ -905,6 +950,12 @@ function renderPage(controller, pageIndex, firstPage = false) {
   }
 
   drawDialogue(controller, page);
+  // Interactive story galleries (Scenes 06/07) own this page until NEXT is
+  // tapped. drawDialogue happens AFTER onPageChange starts their overlay:
+  // hide the newly created card so touch gestures cannot advance the manga.
+  if (context.scene._portraitGallery?.active) {
+    context.scene._portraitGallery.hideMangaUI?.();
+  }
   if (firstPage) showIntroCard(controller);
 }
 
@@ -967,7 +1018,9 @@ function finaliseController(controller, {
 }
 
 function beginOverlay(scene, definition, context, historyId, existingFreezeState = null) {
-  if (sceneCutsceneActive(scene)) {
+  if (sceneCutsceneActive(scene,{
+    ignoreChapter09Stage: Boolean(context?.options?.chapter09RoomBackdrop),
+  })) {
     return { played: false, reason: 'active', active: false };
   }
 
@@ -1029,6 +1082,19 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setScrollFactor(0)
     .setAlpha(0);
 
+  // Two locations can share one manga cutscene without creating custom UI.
+  const openingBackdrop = definition.backdrops?.[definition.pages?.[0]?.backdrop];
+  let backdropImage = null;
+  let backdropVeil = null;
+  if (openingBackdrop?.key && scene.textures.exists(openingBackdrop.key)) {
+    backdropImage = scene.add.image(width / 2, height / 2, openingBackdrop.key)
+      .setDepth(BASE_DEPTH + 2).setScrollFactor(0);
+    sizeChapterBackdrop(backdropImage, scene);
+    backdropVeil = scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.32)
+      .setDepth(BASE_DEPTH + 3).setScrollFactor(0);
+  }
+  controller.backdropImage = backdropImage;
+
   const titleText = interpolate(definition.title || definition.id, context.variables);
   const titlePlate = scene.add.rectangle(
     52 + Math.min(520, Math.max(280, titleText.length * 17)) / 2,
@@ -1063,7 +1129,7 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setInteractive({ useHandCursor: true })
     .setAlpha(0);
 
-  controller.objects.push(blocker, shade, titlePlate, title, skip);
+  controller.objects.push(blocker, shade, ...(backdropImage ? [backdropImage, backdropVeil] : []), titlePlate, title, skip);
   controller.topTitleObjects = [titlePlate, title];
   controller.topTitleHidden = false;
 
@@ -1171,7 +1237,9 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     return { played: false, reason: 'missing', active: false };
   }
 
-  if (sceneCutsceneActive(scene)) {
+  if (sceneCutsceneActive(scene,{
+    ignoreChapter09Stage: Boolean(options.chapter09RoomBackdrop),
+  })) {
     return { played: false, reason: 'active', active: false };
   }
 
@@ -1228,7 +1296,7 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     characterRefs,
     context.playerCharacterId,
     context
-  );
+  ) + queueCutsceneBackdropAssets(scene, definition);
 
   if (queued <= 0) {
     return beginOverlay(scene, definition, context, historyId);

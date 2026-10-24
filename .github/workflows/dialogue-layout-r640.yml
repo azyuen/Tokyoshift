@@ -1,0 +1,41 @@
+name: R640 notch-safe dialogue and Ginza result scope
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, fix/dialogue-layout-arkon-r640]
+    paths:
+      - 'src/ui/CompactDialogueLayout.js'
+      - 'src/ui/CompactStoryDialogue.js'
+      - 'src/ui/GinzaBanterHud.js'
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/dialogue-layout-r640.mjs'
+      - 'tests/opening-phone-prototype-r515.mjs'
+      - 'tests/phone-template-r572.mjs'
+      - '.github/workflows/dialogue-layout-r640.yml'
+jobs:
+  dialogue-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and import integrity
+        run: |
+          node --check src/ui/CompactDialogueLayout.js
+          node --check src/ui/CompactStoryDialogue.js
+          node --check src/ui/GinzaBanterHud.js
+          node --check src/ui/RaceCoachHud.js
+          node --check src/ui/PhoneConversation.js
+          node --check src/ui/OpeningPhonePrototype.js
+          node --check src/scenes/RaceScene.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/story/StoryDirector.js
+          node --test tests/startup-import-integrity-r508.mjs
+      - name: Layout, call-animation, Arkon and story regressions
+        run: |
+          node --test tests/dialogue-layout-r640.mjs tests/opening-phone-prototype-r515.mjs tests/phone-template-r572.mjs tests/scene-phone-meet-r564.mjs tests/ginza-arkon-showdowns-r637.mjs tests/ginza-banter-r633.mjs tests/story-director-r639.mjs tests/pro-victory-r616.mjs

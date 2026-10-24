@@ -4,13 +4,14 @@ import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
   inferWorkshopTier,
-  normaliseCarGarageLocations,
+  normaliseCarGarageLocations, getArkonStoryWorkshopTier,
 } from '../data/workshopProgression.js';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js';
 import { registerOwnedCarInstances } from '../data/carOwnership.js';
 import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js';
 import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js';
+import { getDefaultFactoryPaintColor } from '../data/factoryPaintPalettes.js';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -18,6 +19,16 @@ export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
 export const PROFILE_STORE_BACKUP_KEY = 'tokyoShiftProfilesV1Backup';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
+export const ARKON_STORY_MODE = 'arkonStory';
+// Completely separate storage namespace: normal career slots keep their legacy shape.
+const ARKON_STORY_SAVE_PREFIX = 'tokyoShiftArkonStorySaveV1:';
+const ARKON_STORY_MODE_PREFIX = 'tokyoShiftArkonStorySelectedV1:';
+const storySaveKey = slot => ARKON_STORY_SAVE_PREFIX + slot;
+const storyModeKey = slot => ARKON_STORY_MODE_PREFIX + slot;
+
+const isArkonProfile = state => (String(state?.firstName || '') + String(state?.lastName || ''))
+  .toLowerCase().replace(/[^a-z0-9]/g, '') === 'arkonden';
+const isArkonStory = state => state?.gameMode === ARKON_STORY_MODE && isArkonProfile(state);
 
 const REMOVED_CAR_IDS = new Set(['gr86']);
 
@@ -35,17 +46,17 @@ export const STARTER_CAR_IDS = ['ae86', 'ef'];
 
 // Existing profiles may legitimately have started with the old EK9 option.
 // Keep it save-compatible without exposing it as a starter for new games.
-const SAVE_COMPATIBLE_STARTER_CAR_IDS = ['ae86', 'ef', 'ek9'];
+const SAVE_COMPATIBLE_STARTER_CAR_IDS = ['ae86', 'ef', 'ek9', '240z'];
 
 export function normaliseStarterCarId(value = 'ae86') {
   const id = String(value || '');
   return SAVE_COMPATIBLE_STARTER_CAR_IDS.includes(id) ? id : 'ae86';
 }
 
-export function createStarterCarState() {
+export function createStarterCarState(carId = 'ae86') {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(carId),
     nosInstalled: false,
     tuneLevel: 0,
     tuning: {
@@ -70,13 +81,88 @@ export function createDefaultGameState(options = {}) {
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
+    gameMode: 'career',
+    arkonStoryChapter: 0,
+    arkonStoryChoices: {},
+    arkonStoryFirstChoice: null,
+    arkonStoryFirstReply: null,
+    arkonStoryChapter01Done: false,
+    arkonStoryChapter01AfterHoursDone: false,
+    arkonStoryChapter01FullDone: false,
+    arkonStoryChapter01RevisedDone: false,
+    arkonStoryChapter02Done: false,
+    arkonStoryChapter02FishPaid: false,
+    arkonStoryChapter02RivalResult: null,
+    arkonStoryCruiseComplete: false,
+    arkonStoryChapter03Done: false,
+    arkonStoryChapter04Done: false,
+    arkonStoryChapter05Done: false,
+    arkonStoryCh5PacingVersion: 1,
+    arkonStoryChapter06Done: false,
+    arkonStoryChapter07Done: false,
+    arkonStoryChapter07Work: null,
+    arkonStoryChapter07Race: null,
+    arkonStoryChapter07RaceResult: null,
+    arkonStoryChapter07Solo: null,
+    arkonStoryChapter07SoloFinished: false,
+    arkonStoryChapter08Done: false,
+    arkonStoryChapter08RacesDone: 0,
+    arkonStoryChapter08Race: null,
+    arkonStoryChapter08RaceResult: null,
+    arkonStoryChapter08LastResult: null,
+    arkonStoryChapter08ContractSigned: false,
+    arkonStoryChapter08ContractTerms: null,
+    arkonStoryChapter09Done: false,
+    arkonStoryChapter09RacesDone: 0,
+    arkonStoryChapter09Race: null,
+    arkonStoryChapter09RaceResult: null,
+    arkonStoryChapter09LastResult: null,
+    arkonStoryChapter09ResolvedToLeave: false,
+    arkonStoryChapter09Refused: false,
+    arkonStoryChapter09ExitStatus: null,
+    arkonStoryChapter10Done: false,
+    arkonStoryChapter10ProjectsDone: 0,
+    arkonStoryChapter10FeesEarned: 0,
+    arkonStoryChapter10Settlement: null,
+    arkonStoryChapter10Race: null,
+    arkonStoryChapter10RaceResult: null,
+    arkonStoryChapter10RaceDone: false,
+    arkonStoryChapter10RaceOutcome: null,
+    arkonStoryGinzaPartnership: null,
+    arkonStoryCareerSeed: null,
+    arkonStoryChapter06Accounts: null,
+    arkonStoryChapter06Cruise: null,
+    arkonStoryChapter06CruiseFinished: false,
+    arkonStoryChapter05JobsDone: 0,
+    arkonStoryChapter05Loan: null,
+    arkonStoryChapter05RaceResult: null,
+    arkonStoryChapter05Results: {}, 
+    arkonStoryCanalYardUnlocked: false,
+    arkonStoryWarehouseUnlocked: false,
+    arkonStoryRwbProject: null,
+    arkonStoryChapter04Work: null,
+    arkonStoryCustomerJobsDone: 0,
+    arkonStoryMx5CustomerTuning: null,
+    arkonStoryChapter03Seed: 0,
+    arkonStoryMx5RaceResult: null,
+    arkonStoryMx5Loan: null,
+    arkonStoryPhase: 'opening',
+    arkonStoryTimeOfDay: 'night',
+    arkonStorySayakaNoticed: false,
+    arkonStoryRivalResult: null,
+    arkonStoryAtSchool: false,
+    arkonStorySchoolRevealed: false,
+    arkonStoryLessonCompleted: false,
+    arkonStoryLessonCredits: 0,
+    arkonStoryCreditsAwarded: false,
+    arkonStoryGinzaUnlocked: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
     preferredCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
-      [starterCarId]: createStarterCarState(),
+      [starterCarId]: createStarterCarState(starterCarId),
     },
     carHistory: [],
     carMagazineSightings: {},
@@ -90,9 +176,12 @@ export function createDefaultGameState(options = {}) {
     pinkSlipOpportunityUsed: false,
     incomingPinkSlipLastOfferRace: -999,
     cash: 5000,
+    ethanYuenCompensationR638: false,
+    ethanYuenCompensationDialoguePending: false,
     playerDifficulty: 'STANDARD',
     devMode: false,
     cutscenesSeen: [],
+    storyDirectorProgress: null,
     regionWins: {},
     tunerShopProgress: {},
     tunerTeamChallenges: {},
@@ -100,14 +189,21 @@ export function createDefaultGameState(options = {}) {
     crewMembers: {},
     crewRecruitmentState: {},
     crewInviteInterest: null,
+    crewInviteInterests: {},
     crewRecruitChallenge: null,
+    crewRecruitChallenges: {},
     crewPendingRecruit: null,
+    crewPendingJoinDecision: null,
     crewBattleProgress: {},
     crewBattleLineups: {},
+    crewBattleIntroVisits: {},
     crewBattleState: null,
     crewSpaceActive: false,
     crewPreviousCarId: null,
     tokyoChampionshipInvited: false,
+    ginzaVaultInvited: false,
+    ginzaVaultOwnerWelcomed: false,
+    ginzaTestDrive: null,
     selectedRacePlayerCharacterId: null,
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
@@ -176,7 +272,9 @@ export function createDefaultGameState(options = {}) {
 
 export function createFreshRunStateFromRegistry(registry) {
   const starterCarId = normaliseStarterCarId(registry?.get?.('starterCarId'));
-  const state = createDefaultGameState({ starterCarId });
+  const state = registry?.get?.('gameMode') === ARKON_STORY_MODE
+    ? createArkonStoryState(getActiveProfileIndex())
+    : createDefaultGameState({ starterCarId });
 
   state.firstName = String(registry?.get?.('firstName') || '');
   state.lastName = String(registry?.get?.('lastName') || '');
@@ -184,7 +282,7 @@ export function createFreshRunStateFromRegistry(registry) {
   state.playerDifficulty = normalisePlayerDifficulty(
     registry?.get?.('playerDifficulty') || state.playerDifficulty
   );
-  state.devMode = Boolean(registry?.get?.('devMode'));
+  state.devMode = state.gameMode !== ARKON_STORY_MODE && Boolean(registry?.get?.('devMode'));
   const timerStartedAt = Number(registry?.get?.('__playTimerStartedAt') || Date.now());
   state.playTimeMs =
     Math.max(0, Number(registry?.get?.('playTimeMs') || 0)) +
@@ -203,6 +301,9 @@ export function createFreshRunStateFromRegistry(registry) {
   );
 
   if (state.devMode) state.cash = 1000000000;
+  // Restart Night never resets a profile-level one-time compensation award.
+  state.ethanYuenCompensationR638 = Boolean(registry?.get?.('ethanYuenCompensationR638'));
+  state.ethanYuenCompensationDialoguePending = Boolean(registry?.get?.('ethanYuenCompensationDialoguePending'));
 
   return state;
 }
@@ -394,6 +495,7 @@ export function getActiveProfileIndex() {
 }
 
 function mirrorActiveProfile(slot) {
+  // Old mirrors always contain Career. Story never writes to legacy save keys.
   const manual = slot?.manual || null;
   const session = slot?.session || manual || null;
 
@@ -412,6 +514,65 @@ export function setActiveProfileIndex(index) {
   return slotIndex;
 }
 
+function readArkonStorySave(index) {
+  const value = readJson(storySaveKey(index));
+  return isArkonStory(value) ? value : null;
+}
+
+function persistArkonStorySave(index, state) {
+  if (!isArkonStory(state)) return false;
+  const key = storySaveKey(index);
+  writeJson(key, state);
+  // localStorage silently fails on some mobile devices (quota/private mode).
+  return JSON.stringify(readJson(key)) === JSON.stringify(state);
+}
+
+export function getProfileGameMode(index = getActiveProfileIndex()) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  // Read-only check: saving Arkon's story must NEVER rewrite shared profile data.
+  const slot = readJson(PROFILE_STORE_KEY)?.slots?.[slotIndex];
+  if (!isArkonProfile(slot?.session || slot?.manual)) return 'career';
+  return readJson(storyModeKey(slotIndex)) === ARKON_STORY_MODE
+    ? ARKON_STORY_MODE : 'career';
+}
+
+export function resetArkonStoryState() {
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) !== ARKON_STORY_MODE) return false;
+  // Reset only Arkon's private Story key: NEVER touch any Career slot.
+  return persistArkonStorySave(index, createArkonStoryState(index));
+}
+
+export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
+  const state = createDefaultGameState({ starterCarId: '240z' });
+  state.firstName = 'Arkon';
+  state.lastName = 'Den';
+  state.playerCharacterId = 'arkonDen';
+  state.gameMode = ARKON_STORY_MODE;
+  state.devMode = false;
+  state.cash = 5000;
+  state.openingChapter = 'done';
+  state.arkonStoryChapter = 1;
+  state.storyDirectorProgress = {
+    id: 'arkonChapter01Revised', index: 0, ownerSlot: profileSlot, version: 1,
+  };
+  return normaliseState(state);
+}
+
+export function setProfileGameMode(index, requestedMode) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const slot = ensureProfileStore().slots[slotIndex];
+  const career = slot?.session || slot?.manual;
+  if (!isArkonProfile(career)) return false;
+  const isStory = requestedMode === ARKON_STORY_MODE;
+  if (isStory && !readArkonStorySave(slotIndex) &&
+      !persistArkonStorySave(slotIndex, createArkonStoryState(slotIndex))) {
+    return false;
+  }
+  writeJson(storyModeKey(slotIndex), isStory ? ARKON_STORY_MODE : 'career');
+  return getProfileGameMode(slotIndex) === (isStory ? ARKON_STORY_MODE : 'career');
+}
+
 export function getProfileSlots() {
   const store = ensureProfileStore();
   const activeIndex = getActiveProfileIndex();
@@ -422,7 +583,7 @@ export function getProfileSlots() {
       String(state?.firstName || '').trim().toLowerCase() +
       String(state?.lastName || '').trim().toLowerCase()
     ).replace(/[^a-z0-9]/g, '');
-    const profileCharacterId = profileNameKey.includes('arkonden')
+    const profileCharacterId = profileNameKey === 'arkonden'
       ? 'arkonDen'
       : (state?.playerCharacterId || null);
 
@@ -442,7 +603,7 @@ export function getProfileSlots() {
       selectedCarId: state?.selectedCarId || null,
       district: String(state?.district || 'ODAIBA'),
       garageTier: Math.max(0, Number(state?.garageTier || 0)),
-      championCount: profileNameKey.includes('arkonden')
+      championCount: profileNameKey === 'arkonden'
         ? ARKON_DEV_CHAMPIONSHIP_REGIONS.length
         : Object.values(state?.tunerTeamChallenges || {})
             .filter(item => Boolean(item?.championEarned || item?.completed)).length,
@@ -456,6 +617,10 @@ export function getProfileSlots() {
           )
         )).length,
       updatedAt: slot?.updatedAt || null,
+      selectedMode: isArkonProfile(state) &&
+        readJson(storyModeKey(index)) === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career',
+      storyStarted: isArkonProfile(state) && Boolean(readArkonStorySave(index)),
+      storyChapter: Math.max(1, Number(readArkonStorySave(index)?.arkonStoryChapter || 1)),
     };
   });
 }
@@ -464,6 +629,8 @@ export function beginNewProfile(index) {
   const slotIndex = setActiveProfileIndex(index);
   const store = ensureProfileStore();
   store.slots[slotIndex] = null;
+  removeKey(storySaveKey(slotIndex));
+  removeKey(storyModeKey(slotIndex));
   writeProfileStore(store);
   mirrorActiveProfile(null);
   return slotIndex;
@@ -473,6 +640,8 @@ export function deleteProfileSlot(index) {
   const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
   const store = ensureProfileStore();
   store.slots[slotIndex] = null;
+  removeKey(storySaveKey(slotIndex));
+  removeKey(storyModeKey(slotIndex));
   writeProfileStore(store);
 
   if (slotIndex === getActiveProfileIndex()) {
@@ -493,12 +662,18 @@ export function getProfileState(index, preferSession = true) {
 
 export function exportProfileBackup(index, build = 'R247') {
   const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const slot = ensureProfileStore().slots[slotIndex];
   const state = getProfileState(slotIndex, true);
   if (!state) return null;
+  const story = isArkonProfile(state) ? readArkonStorySave(slotIndex) : null;
 
   return {
     format: 'TOKYO_SHIFT_PROFILE_BACKUP',
-    formatVersion: 1,
+    formatVersion: story ? 2 : 1,
+    ...(story ? {
+      storyState: clonePlain(normaliseState(story)),
+      selectedMode: getProfileGameMode(slotIndex),
+    } : {}),
     gameBuild: String(build || 'UNKNOWN'),
     exportedAt: new Date().toISOString(),
     slot: slotIndex + 1,
@@ -514,7 +689,7 @@ export function importProfileBackup(index, payload) {
   if (String(payload.format || '') !== 'TOKYO_SHIFT_PROFILE_BACKUP') {
     throw new Error('NOT A TOKYO SHIFT PROFILE BACKUP');
   }
-  if (Number(payload.formatVersion || 0) !== 1) {
+  if (![1, 2].includes(Number(payload.formatVersion || 0))) {
     throw new Error('UNSUPPORTED BACKUP VERSION');
   }
   if (!payload.state || typeof payload.state !== 'object') {
@@ -527,6 +702,17 @@ export function importProfileBackup(index, payload) {
   };
   const store = ensureProfileStore();
   const existing = store.slots[slotIndex];
+  const incomingStory = Number(payload.formatVersion) === 2 && payload.storyState &&
+    isArkonStory(payload.storyState) && isArkonProfile(state)
+      ? { ...normaliseState(payload.storyState),
+          storyDirectorProgress: payload.storyState.storyDirectorProgress
+            ? { ...payload.storyState.storyDirectorProgress, ownerSlot: slotIndex }
+            : null }
+      : null;
+  // Importing an older Career-only backup must not silently destroy a Story run.
+  const keepStory = isArkonProfile(state) && !incomingStory
+    ? readArkonStorySave(slotIndex) : null;
+  const safeStory = incomingStory || keepStory;
   store.slots[slotIndex] = {
     manual: clonePlain(state),
     session: clonePlain(state),
@@ -534,13 +720,20 @@ export function importProfileBackup(index, payload) {
     updatedAt: new Date().toISOString(),
   };
   writeProfileStore(store);
+  if (safeStory && !persistArkonStorySave(slotIndex, safeStory))
+    throw new Error('STORY BACKUP COULD NOT BE SAVED');
+  if (!safeStory) removeKey(storySaveKey(slotIndex));
+  const targetMode = isArkonProfile(state) && safeStory &&
+    payload.selectedMode === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career';
+  writeJson(storyModeKey(slotIndex), targetMode);
 
   // Import is destructive, so do not claim success unless the profile really
   // survived a round-trip through localStorage. This catches quota/private
   // storage failures before Settings reloads the app and hides the error.
   const writtenSlot = ensureProfileStore().slots[slotIndex];
   const writtenState = writtenSlot?.session || writtenSlot?.manual || null;
-  if (!writtenState || JSON.stringify(writtenState) !== JSON.stringify(state)) {
+  if (!writtenState || JSON.stringify(writtenState) !== JSON.stringify(state) ||
+      (safeStory && JSON.stringify(readArkonStorySave(slotIndex)) !== JSON.stringify(safeStory))) {
     throw new Error('BACKUP COULD NOT BE SAVED');
   }
 
@@ -548,7 +741,8 @@ export function importProfileBackup(index, payload) {
     mirrorActiveProfile(writtenSlot);
 
     const mirroredSession = readJson(SESSION_KEY);
-    if (!mirroredSession || JSON.stringify(mirroredSession) !== JSON.stringify(state)) {
+    const expected = state;
+    if (!mirroredSession || JSON.stringify(mirroredSession) !== JSON.stringify(expected)) {
       throw new Error('ACTIVE PROFILE COULD NOT BE RESTORED');
     }
   }
@@ -558,18 +752,21 @@ export function importProfileBackup(index, payload) {
 
 export function activateProfile(registry, index, preferSession = true) {
   const slotIndex = setActiveProfileIndex(index);
-  const state = getProfileState(slotIndex, preferSession);
+  const state = readSessionState() || getProfileState(slotIndex, preferSession);
   if (!state) return null;
   return applyStateToRegistry(registry, state);
 }
 
 export function readManualSave() {
-  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
-  return slot?.manual || null;
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) === ARKON_STORY_MODE) return readArkonStorySave(index);
+  return ensureProfileStore().slots[index]?.manual || null;
 }
 
 export function readSessionState() {
-  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) === ARKON_STORY_MODE) return readArkonStorySave(index);
+  const slot = ensureProfileStore().slots[index];
   const state = slot?.session || slot?.manual || null;
   if (state) return state;
 
@@ -768,6 +965,33 @@ export function normaliseState(input = {}) {
     delete migratedGarageLocations[oldLoanCarId];
   }
 
+  // Legacy Story profiles started with an EF. Replace ONLY an untouched
+  // stock starter with a factory 240Z. Do not silently delete a tuned Civic,
+  // player-acquired EF, or any existing parts/history when loading old saves.
+  const namedArkon = (String(input.firstName||'')+String(input.lastName||''))
+    .toLowerCase().replace(/[^a-z0-9]/g,'')==='arkonden';
+  const former = input.carStates?.ef;
+  const untouched = former?.acquiredVia==='starter' && former?.stock!==false &&
+    ['tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning']
+      .every(key => Object.values(former[key]||{}).every(v => !Number(v))) &&
+    Number(former.tuneLevel||0)===0 && !former.nosInstalled;
+  if(input.gameMode===ARKON_STORY_MODE && namedArkon &&
+     (input.starterCarId==='ef' || !input.starterCarId) &&
+     input.ownedCarIds?.includes('ef') && untouched){
+    const replacement={...input.carStates};
+    delete replacement.ef;
+    replacement['240z']=createStarterCarState('240z');
+    const locations={...migratedGarageLocations};
+    locations['240z']=locations.ef||'shinonomeWorkshop';
+    delete locations.ef;
+    input={...input,starterCarId:'240z',
+      ownedCarIds:input.ownedCarIds.map(id=>id==='ef'?'240z':id),
+      selectedCarId:input.selectedCarId==='ef'?'240z':input.selectedCarId,
+      preferredCarId:input.preferredCarId==='ef'?'240z':input.preferredCarId,
+      carStates:replacement,carGarageLocations:locations};
+    Object.assign(migratedGarageLocations,locations);
+    delete migratedGarageLocations.ef;
+  }
   const requestedStarterCarId =
     input.starterCarId ||
     Object.entries(input.carStates || {}).find(
@@ -798,18 +1022,39 @@ export function normaliseState(input = {}) {
     String(input.lastName || '').trim().toLowerCase()
   ).replace(/[^a-z0-9]/g, '');
   const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
-  const devName = joinedDevName.includes('arkonden');
-  const legacyDevCash = rawCash >= 900000000;
-  const devMode = Boolean(input.devMode || devName || legacyDevCash);
-  const normalisedCash = devName && !input.devMode
+  const storyMode = input.gameMode === ARKON_STORY_MODE && joinedDevName === 'arkonden';
+  const devName = joinedDevName === 'arkonden' && !storyMode;
+  const legacyDevCash = rawCash >= 900000000 && !storyMode;
+  const devMode = !storyMode && Boolean(input.devMode || devName || legacyDevCash);
+  // R675: R668 Chapter 06 paid only ¥150k at the ending. Existing
+  // completed Arkon Story profiles receive the corrected ¥2.4m net uplift
+  // exactly once, preserving every subsequent chapter's saved progress.
+  const legacyCh6Paid=storyMode && input.arkonStoryChapter06Done &&
+    input.arkonStoryChapter06Accounts?.distributed &&
+    input.arkonStoryChapter06Accounts?.economyVersion!==2;
+  const ch6LegacyProfitAdjustment=legacyCh6Paid?2400000:0;
+  const normalisedCash = (devName && !input.devMode
     ? Math.max(rawCash, 1000000000)
-    : rawCash;
+    : rawCash)+ch6LegacyProfitAdjustment;
 
+  // R665 migration: older Chapter 04 saves held only an abstract RWB
+  // liability; make it occupy the actual Canal Yard garage slot on load.
+  const storyRwbAcquired=storyMode && input.arkonStoryRwbProject?.acquired &&
+    !input.arkonStoryRwbProject?.gifted &&
+    input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
+  const storyRwbGifted=storyMode && input.arkonStoryRwbProject?.gifted &&
+    input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
   const owned = (
     Array.isArray(input.ownedCarIds)
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
-  ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
+  ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)) &&
+      !(storyRwbGifted&&carId==='rwbStellaPorsche'));
+
+  if(storyRwbAcquired && !owned.includes('rwbStellaPorsche'))owned.push('rwbStellaPorsche');
+  if(storyRwbAcquired && !migratedGarageLocations.rwbStellaPorsche)
+    migratedGarageLocations.rwbStellaPorsche='shinonomeCanalYard';
+  if(storyRwbGifted)delete migratedGarageLocations.rwbStellaPorsche;
 
   // Developer special never enters carOrder, markets, coupons or rival pools.
   // Grant once, preserving existing Magna upgrades and avoiding re-grants after sale.
@@ -832,11 +1077,22 @@ export function normaliseState(input = {}) {
     .map(remapLoanCarId)
     .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
-  let garageTier = inferWorkshopTier(owned.length, input.garageTier);
+  let garageTier = inferWorkshopTier(owned.filter(id => !String(id).startsWith('ginzaDemo_')).length, input.garageTier);
+  // Story property access is chapter-authored, never purchased or inferred
+  // from fleet size, cash or regional wins. Career behaviour is unchanged.
+  if (storyMode) garageTier = getArkonStoryWorkshopTier(input);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
     : WORKSHOP_TIERS[garageTier].id;
+  if(storyMode && input.arkonStoryChapter06Done && garageTier>=2 &&
+     !input.arkonStoryChapter07Done &&
+     ['shinonomeWorkshop','shinonomeCanalYard'].includes(workshopLocationId))
+     workshopLocationId='shinonomeWarehouseStrip';
+  if (storyMode && input.storyDirectorProgress?.id==='arkonChapter03' &&
+      Number(input.storyDirectorProgress.index||0)<=3 && garageTier>=1) {
+    workshopLocationId='shinonomeCanalYard';
+  }
   let carGarageLocations = normaliseCarGarageLocations(
     owned,
     migratedGarageLocations,
@@ -860,7 +1116,7 @@ export function normaliseState(input = {}) {
 
   // A profile literally named Arkon Den is the developer avatar. Keep Arkon
   // out of the normal playable pool while still migrating existing dev saves.
-  const playerCharacterId = devName
+  const playerCharacterId = (devName || storyMode)
     ? 'arkonDen'
     : playableCharacterOrder.includes(input.playerCharacterId)
       ? input.playerCharacterId
@@ -870,7 +1126,28 @@ export function normaliseState(input = {}) {
     ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
-  if (grantDevMagna) mergedCarStates.magna = { ...createStarterCarState(), acquiredVia: 'developerSpecial' };
+  if(storyRwbAcquired){
+    mergedCarStates.rwbStellaPorsche={
+      ...mergedCarStates.rwbStellaPorsche,
+      immutable:true,tuningLocked:true,collector:true,
+      storedProject:true,roadworthy:Boolean(input.arkonStoryRwbProject?.roadworthy &&
+        Number(input.arkonStoryChapter06Accounts?.restorationDone)>=3),
+    };
+  }
+  if(storyRwbGifted)delete mergedCarStates.rwbStellaPorsche;
+  if (grantDevMagna) {
+    const existingMagna = input.carStates?.magna || {};
+    mergedCarStates.magna = {
+      ...createStarterCarState('magna'), ...existingMagna,
+      // Upgrade only legacy default-white developer Magnas to Frontier Green.
+      // Other saved factory/custom colours remain unchanged.
+      paintColor: existingMagna.paintColor == null ||
+        (existingMagna.paintColor === 0xffffff &&
+         (!existingMagna.acquiredVia || existingMagna.acquiredVia === 'developerSpecial'))
+        ? getDefaultFactoryPaintColor('magna') : existingMagna.paintColor,
+      acquiredVia: 'developerSpecial',
+    };
+  }
   // R501: old bodykit image pairs are incompatible with the new car assets.
   // Treat all previous kits as stock without touching paint, tune or rim IDs.
   Object.entries(mergedCarStates).forEach(([carId, carState]) => {
@@ -888,9 +1165,11 @@ export function normaliseState(input = {}) {
     };
     delete mergedCarStates[oldLoanCarId];
   }
+  // Vault test cars are temporary visitors, not acquired property. Never
+  // turn a gallery loan into an owned vehicle in permanent car history.
   const carHistory = normaliseCarHistory(
-    input.carHistory || [],
-    owned,
+    (input.carHistory || []).filter(entry => !String(entry?.carId || '').startsWith('ginzaDemo_')),
+    owned.filter(id => !String(id).startsWith('ginzaDemo_')),
     mergedCarStates
   );
 
@@ -984,6 +1263,172 @@ export function normaliseState(input = {}) {
     ...base,
     ...input,
     version: 9,
+    gameMode: storyMode ? ARKON_STORY_MODE : 'career',
+    arkonStoryChapter: storyMode ? Math.max(1, Math.min(10, Number(input.arkonStoryChapter || 1))) : 0,
+    arkonStoryChoices: storyMode && input.arkonStoryChoices && typeof input.arkonStoryChoices === 'object'
+      && !Array.isArray(input.arkonStoryChoices) ? clonePlain(input.arkonStoryChoices) : {},
+    arkonStoryFirstChoice: storyMode && ['careful','bold'].includes(input.arkonStoryFirstChoice)
+      ? input.arkonStoryFirstChoice : null,
+    arkonStoryFirstReply: storyMode && ['honest','tease'].includes(input.arkonStoryFirstReply)
+      ? input.arkonStoryFirstReply : null,
+    arkonStoryChapter01Done: storyMode && Boolean(input.arkonStoryChapter01Done),
+    arkonStoryChapter01AfterHoursDone: storyMode && Boolean(input.arkonStoryChapter01AfterHoursDone),
+    arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
+    arkonStoryChapter01RevisedDone: storyMode && Boolean(input.arkonStoryChapter01RevisedDone),
+    arkonStoryChapter02Done: storyMode && Boolean(input.arkonStoryChapter02Done),
+    arkonStoryChapter02FishPaid: storyMode && Boolean(input.arkonStoryChapter02FishPaid),
+    arkonStoryChapter02RivalResult: storyMode &&
+      ['won','lost'].includes(input.arkonStoryChapter02RivalResult)
+        ? input.arkonStoryChapter02RivalResult : null,
+    arkonStoryCruiseComplete: storyMode && Boolean(input.arkonStoryCruiseComplete),
+    arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
+    arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
+    arkonStoryChapter05Done: storyMode && Boolean(input.arkonStoryChapter05Done),
+    arkonStoryCh5PacingVersion:storyMode?1:0,
+    arkonStoryChapter06Done: storyMode && Boolean(input.arkonStoryChapter06Done),
+    arkonStoryChapter07Done: storyMode && Boolean(input.arkonStoryChapter07Done),
+    arkonStoryChapter07Work: storyMode && input.arkonStoryChapter07Work &&
+      typeof input.arkonStoryChapter07Work==='object' ? {
+        stage:Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter07Work.stage)||0))),
+        jobsDone:Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter07Work.jobsDone)||0))),
+        racesDone:Math.max(0,Math.min(2,Math.floor(Number(input.arkonStoryChapter07Work.racesDone)||0))),
+        shops:[...new Set((Array.isArray(input.arkonStoryChapter07Work.shops)
+          ?input.arkonStoryChapter07Work.shops:[]).filter(x=>
+            ['ODAIBA','SHIBUYA','SHINJUKU','YOKOHAMA','DAIKOKU','SHINAGAWA','TATSUMI'].includes(x)))],
+        converted:Boolean(input.arkonStoryChapter07Work.converted),
+      }:null,
+    arkonStoryChapter07Race: storyMode && input.arkonStoryChapter07Race?.active
+      ?clonePlain(input.arkonStoryChapter07Race):null,
+    arkonStoryChapter07RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter07RaceResult)
+      ?input.arkonStoryChapter07RaceResult:null,
+    arkonStoryChapter07Solo: storyMode && input.arkonStoryChapter07Solo?.active
+      ?clonePlain(input.arkonStoryChapter07Solo):null,
+    arkonStoryChapter07SoloFinished: storyMode &&
+      Boolean(input.arkonStoryChapter07SoloFinished),
+    arkonStoryChapter08Done: storyMode && Boolean(input.arkonStoryChapter08Done),
+    arkonStoryChapter08RacesDone: storyMode
+      ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter08RacesDone)||0))):0,
+    arkonStoryChapter08Race: storyMode && input.arkonStoryChapter08Race?.active
+      ?clonePlain(input.arkonStoryChapter08Race):null,
+    arkonStoryChapter08RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter08RaceResult)
+      ?input.arkonStoryChapter08RaceResult:null,
+    arkonStoryChapter08LastResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter08LastResult)
+      ?input.arkonStoryChapter08LastResult:null,
+    arkonStoryChapter08ContractSigned: storyMode &&
+      Boolean(input.arkonStoryChapter08ContractSigned),
+    arkonStoryChapter08ContractTerms: storyMode &&
+      input.arkonStoryChapter08ContractTerms &&
+      typeof input.arkonStoryChapter08ContractTerms==='object'
+      ?clonePlain(input.arkonStoryChapter08ContractTerms):null,
+    arkonStoryChapter09Done: storyMode && Boolean(input.arkonStoryChapter09Done),
+    arkonStoryChapter09RacesDone: storyMode
+      ?Math.max(0,Math.min(2,Math.floor(Number(input.arkonStoryChapter09RacesDone)||0))):0,
+    arkonStoryChapter09Race: storyMode && input.arkonStoryChapter09Race?.active
+      ?clonePlain(input.arkonStoryChapter09Race):null,
+    arkonStoryChapter09RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter09RaceResult)
+      ?input.arkonStoryChapter09RaceResult:null,
+    arkonStoryChapter09LastResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter09LastResult)
+      ?input.arkonStoryChapter09LastResult:null,
+    arkonStoryChapter09ResolvedToLeave: storyMode && Boolean(input.arkonStoryChapter09ResolvedToLeave),
+    arkonStoryChapter09Refused: storyMode && Boolean(input.arkonStoryChapter09Refused),
+    arkonStoryChapter09ExitStatus: storyMode && typeof input.arkonStoryChapter09ExitStatus==='string'
+      ?input.arkonStoryChapter09ExitStatus.slice(0,150):null,
+    arkonStoryChapter10Done: storyMode && Boolean(input.arkonStoryChapter10Done),
+    arkonStoryChapter10ProjectsDone: storyMode
+      ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter10ProjectsDone)||0))):0,
+    arkonStoryChapter10FeesEarned: storyMode
+      ?Math.max(0,Math.floor(Number(input.arkonStoryChapter10FeesEarned)||0)):0,
+    arkonStoryChapter10Settlement: storyMode && input.arkonStoryChapter10Settlement &&
+      typeof input.arkonStoryChapter10Settlement==='object'
+      ?clonePlain(input.arkonStoryChapter10Settlement):null,
+    arkonStoryChapter10Race: storyMode && input.arkonStoryChapter10Race?.active
+      ?clonePlain(input.arkonStoryChapter10Race):null,
+    arkonStoryChapter10RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter10RaceResult)
+      ?input.arkonStoryChapter10RaceResult:null,
+    arkonStoryChapter10RaceDone: storyMode && Boolean(input.arkonStoryChapter10RaceDone),
+    arkonStoryChapter10RaceOutcome: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter10RaceOutcome)
+      ?input.arkonStoryChapter10RaceOutcome:null,
+    arkonStoryGinzaPartnership: storyMode && input.arkonStoryGinzaPartnership &&
+      typeof input.arkonStoryGinzaPartnership==='object'
+      ?clonePlain(input.arkonStoryGinzaPartnership):null,
+    arkonStoryCareerSeed: storyMode && input.arkonStoryCareerSeed &&
+      typeof input.arkonStoryCareerSeed==='object'
+      ?clonePlain(input.arkonStoryCareerSeed):null,
+    arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
+      typeof input.arkonStoryChapter06Accounts==='object'
+      ? {...clonePlain(input.arkonStoryChapter06Accounts),
+          ...(legacyCh6Paid?{economyVersion:2,warehouseRentMonths:3}: {})}
+      :null,
+    arkonStoryChapter06Cruise: storyMode && input.arkonStoryChapter06Cruise?.active
+      ? clonePlain(input.arkonStoryChapter06Cruise):null,
+    arkonStoryChapter06CruiseFinished: storyMode &&
+      Boolean(input.arkonStoryChapter06CruiseFinished),
+    arkonStoryChapter05JobsDone: storyMode
+      ? Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter05JobsDone)||0))):0,
+    arkonStoryChapter05Loan: storyMode && input.arkonStoryChapter05Loan?.active
+      ? clonePlain(input.arkonStoryChapter05Loan):null,
+    arkonStoryChapter05RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter05RaceResult)
+      ? input.arkonStoryChapter05RaceResult:null,
+    arkonStoryChapter05Results: storyMode &&
+      input.arkonStoryChapter05Results && typeof input.arkonStoryChapter05Results==='object'
+      ? clonePlain(input.arkonStoryChapter05Results):{},
+    arkonStoryChapter04Work: storyMode && input.arkonStoryChapter04Work?.started
+      ? {started:true,
+          cashWins:Math.max(0,Math.min(3,Math.trunc(Number(input.arkonStoryChapter04Work.cashWins)||0))),
+          showdownWins:Math.max(0,Math.min(1,Math.trunc(Number(input.arkonStoryChapter04Work.showdownWins)||0))) }
+      : null,
+    arkonStoryRwbProject: storyMode && input.arkonStoryRwbProject?.acquired &&
+      input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
+      ? {
+          ...clonePlain(input.arkonStoryRwbProject),
+          roadworthy:Boolean(input.arkonStoryRwbProject.roadworthy) &&
+            (Boolean(input.arkonStoryRwbProject.gifted) ||
+             Number(input.arkonStoryChapter06Accounts?.restorationDone)>=3),
+          // R665 repairs old abstract balances; R668 maintains the
+          // deliberately *paid-off* Chapter 06 liability at exactly zero.
+          outstandingFinance: input.arkonStoryChapter06Accounts?.financeCleared ||
+            input.arkonStoryRwbProject.gifted
+            ? 0 : Number(input.arkonStoryRwbProject.outstandingFinance)<2000000
+              ? 3000000 : Number(input.arkonStoryRwbProject.outstandingFinance)||3000000,
+        } : null,
+    arkonStoryCustomerJobsDone: storyMode
+      ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
+    arkonStoryChapter03Seed: storyMode ? (Number(input.arkonStoryChapter03Seed)>>>0) : 0,
+    arkonStoryMx5CustomerTuning: storyMode && input.arkonStoryMx5CustomerTuning
+      && typeof input.arkonStoryMx5CustomerTuning==='object'
+      ? clonePlain(input.arkonStoryMx5CustomerTuning) : null,
+    arkonStoryMx5RaceResult: storyMode &&
+      ['won','lost','declined','forfeit'].includes(input.arkonStoryMx5RaceResult)
+      ? input.arkonStoryMx5RaceResult : null,
+    arkonStoryCanalYardUnlocked: storyMode && garageTier>=1,
+    arkonStoryWarehouseUnlocked: storyMode && garageTier>=2,
+    arkonStoryMx5Loan: storyMode && input.arkonStoryMx5Loan?.active
+      ? clonePlain(input.arkonStoryMx5Loan) : null,
+    arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
+    // Migrate R652 chapters already past the nighttime introduction without
+    // restarting their scripted checkpoints or resetting any races.
+    arkonStoryTimeOfDay: storyMode && (
+      input.arkonStoryTimeOfDay==='day' ||
+      (input.arkonStoryTimeOfDay!=='night' &&
+       ['practice','goSchool','lesson','complete'].includes(input.arkonStoryPhase))
+    ) ? 'day' : 'night',
+    arkonStorySayakaNoticed: storyMode && Boolean(input.arkonStorySayakaNoticed),
+    arkonStoryRivalResult: storyMode && ['won','lost'].includes(input.arkonStoryRivalResult)
+      ? input.arkonStoryRivalResult : null,
+    arkonStoryAtSchool: storyMode && Boolean(input.arkonStoryAtSchool),
+    arkonStorySchoolRevealed: storyMode && Boolean(input.arkonStorySchoolRevealed),
+    arkonStoryLessonCompleted: storyMode && Boolean(input.arkonStoryLessonCompleted),
+    arkonStoryLessonCredits: storyMode ? Math.max(0,Math.min(25,Math.floor(Number(input.arkonStoryLessonCredits)||0))) : 0,
+    arkonStoryCreditsAwarded: storyMode && Boolean(input.arkonStoryCreditsAwarded),
+    arkonStoryGinzaUnlocked: storyMode && Boolean(input.arkonStoryGinzaUnlocked),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1036,6 +1481,8 @@ export function normaliseState(input = {}) {
       ? Math.floor(Number(input.incomingPinkSlipLastOfferRace))
       : -999,
     cash: normalisedCash,
+    ethanYuenCompensationR638: Boolean(input.ethanYuenCompensationR638),
+    ethanYuenCompensationDialoguePending: Boolean(input.ethanYuenCompensationDialoguePending),
     competitionWins: devName
       ? Math.max(1, Math.floor(Number(input.competitionWins || 0)))
       : Math.max(0, Math.floor(Number(input.competitionWins || 0))),
@@ -1052,6 +1499,42 @@ export function normaliseState(input = {}) {
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
       ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
       : [],
+    storyDirectorProgress:
+      input.storyDirectorProgress?.version === 1 &&
+      typeof input.storyDirectorProgress.id === 'string' &&
+      Number.isSafeInteger(input.storyDirectorProgress.index) &&
+      input.storyDirectorProgress.index >= 0 &&
+      Number.isSafeInteger(input.storyDirectorProgress.ownerSlot)
+        ? { id: input.storyDirectorProgress.id,
+            // R670 inserts two challenger conversations and one rematch
+             // scenery hold. Translate old numeric checkpoints exactly once.
+             index: storyMode && input.storyDirectorProgress.id==='arkonChapter05' &&
+               !input.arkonStoryCh5PacingVersion
+               ? input.storyDirectorProgress.index +
+                 (input.storyDirectorProgress.index>=110?3:
+                  input.storyDirectorProgress.index>=78?2:
+                  input.storyDirectorProgress.index>=57?1:0)
+               : input.storyDirectorProgress.index,
+            ownerSlot: input.storyDirectorProgress.ownerSlot, version: 1,
+            ...(input.storyDirectorProgress.vars &&
+               typeof input.storyDirectorProgress.vars==='object' &&
+               !Array.isArray(input.storyDirectorProgress.vars)
+              ? { vars:Object.fromEntries(Object.entries(input.storyDirectorProgress.vars)
+                  .filter(([key,val])=>/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key) &&
+                    (typeof val==='string' && val.length<=80 ||
+                     typeof val==='boolean' ||
+                     typeof val==='number' && Number.isFinite(val)))
+                  .slice(0,24)) }
+              : {}) }
+        : storyMode && input.arkonStoryChapter01AfterHoursDone &&
+          !input.arkonStoryChapter01FullDone
+          ? { id:'arkonChapter01', index:37,
+              ownerSlot:getActiveProfileIndex(), version:1 }
+          : storyMode && input.arkonStoryChapter01Done &&
+            !input.arkonStoryChapter01AfterHoursDone
+          ? { id:'arkonChapter01', index:29,
+              ownerSlot:getActiveProfileIndex(), version:1 }
+          : null,
     regionWins: normalisedRegionWins,
     tunerShopProgress:
       input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
@@ -1091,8 +1574,19 @@ export function normaliseState(input = {}) {
           }
         : {},
     crewInviteInterest: migrateShinagawaSayakaRecruit(input.crewInviteInterest || null),
+    crewInviteInterests: Object.fromEntries(
+      Object.entries(input.crewInviteInterests || {})
+        .filter(([region, invite]) => ARKON_DEV_CHAMPIONSHIP_REGIONS.includes(region) && invite?.characterId)
+        .map(([region, invite]) => [region, migrateShinagawaSayakaRecruit(invite)])
+    ),
     crewRecruitChallenge: migrateShinagawaSayakaRecruit(input.crewRecruitChallenge || null),
+    crewRecruitChallenges: Object.fromEntries(
+      Object.entries(input.crewRecruitChallenges || {})
+        .filter(([region, invite]) => ARKON_DEV_CHAMPIONSHIP_REGIONS.includes(region) && invite?.characterId)
+        .map(([region, invite]) => [region, migrateShinagawaSayakaRecruit(invite)])
+    ),
     crewPendingRecruit: migrateShinagawaSayakaRecruit(input.crewPendingRecruit || null),
+    crewPendingJoinDecision: migrateShinagawaSayakaRecruit(input.crewPendingJoinDecision || null),
     crewBattleProgress:
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
         ? input.crewBattleProgress
@@ -1101,6 +1595,15 @@ export function normaliseState(input = {}) {
       input.crewBattleLineups && typeof input.crewBattleLineups === 'object'
         ? input.crewBattleLineups
         : {},
+    crewBattleIntroVisits: Object.fromEntries(
+      ['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'SHIBUYA', 'YOKOHAMA', 'DAIKOKU', 'SHINJUKU']
+        .filter(region => input.crewBattleIntroVisits?.[region] != null)
+        .map(region => [
+          region,
+          Math.max(0, Math.min(1000000,
+            Math.floor(Number(input.crewBattleIntroVisits[region]) || 0))),
+        ])
+    ),
     crewBattleState:
       input.crewBattleState && typeof input.crewBattleState === 'object'
         ? input.crewBattleState
@@ -1108,6 +1611,14 @@ export function normaliseState(input = {}) {
     crewSpaceActive: Boolean(input.crewSpaceActive),
     crewPreviousCarId: input.crewPreviousCarId ? remapLoanCarId(String(input.crewPreviousCarId)) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
+    ginzaVaultInvited: Boolean(input.ginzaVaultInvited),
+    ginzaVaultOwnerWelcomed: Boolean(input.ginzaVaultOwnerWelcomed),
+    ginzaTestDrive: input.ginzaTestDrive?.carId && String(input.ginzaTestDrive.carId).startsWith('ginzaDemo_')
+      ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || ''),
+          previousPreferredId: String(input.ginzaTestDrive.previousPreferredId || ''),
+          ...( ['armed','started'].includes(input.ginzaTestDrive.devVaultNightOutR641)
+            ? { devVaultNightOutR641: input.ginzaTestDrive.devVaultNightOutR641 } : {} ) }
+      : null,
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
       input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda'
@@ -1154,7 +1665,16 @@ export function normaliseState(input = {}) {
     competitionState: input.competitionState && typeof input.competitionState === 'object'
       ? input.competitionState
       : null,
-    proCircuit: normaliseProCircuitState(input.proCircuit),
+    proCircuit: (() => {
+      const circuit=normaliseProCircuitState(input.proCircuit);
+      // R574 official first-round head-to-head events lived in competitionState,
+      // not proCircuit. Those players must resume their current professional
+      // bracket, not be migrated back into open-circuit event selection.
+      if(input.proCircuit?.seasonStatus==null&&input.competitionState?.active&&
+        input.competitionState?.proEvent&&!input.competitionState?.openCircuit)
+        circuit.seasonStatus='ACTIVE';
+      return circuit;
+    })(),
     competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
     carCoupons:
       input.carCoupons && typeof input.carCoupons === 'object'
@@ -1261,6 +1781,82 @@ export function snapshotRegistry(registry) {
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
+    gameMode: registry.get('gameMode') || 'career',
+    arkonStoryChapter: registry.get('arkonStoryChapter') || 0,
+    arkonStoryChoices: registry.get('arkonStoryChoices') || {},
+    arkonStoryFirstChoice: registry.get('arkonStoryFirstChoice') || null,
+    arkonStoryFirstReply: registry.get('arkonStoryFirstReply') || null,
+    arkonStoryChapter01Done: Boolean(registry.get('arkonStoryChapter01Done')),
+    arkonStoryChapter01AfterHoursDone: Boolean(registry.get('arkonStoryChapter01AfterHoursDone')),
+    arkonStoryChapter01FullDone: Boolean(registry.get('arkonStoryChapter01FullDone')),
+    arkonStoryChapter01RevisedDone: Boolean(registry.get('arkonStoryChapter01RevisedDone')),
+    arkonStoryChapter02Done: Boolean(registry.get('arkonStoryChapter02Done')),
+    arkonStoryChapter02FishPaid: Boolean(registry.get('arkonStoryChapter02FishPaid')),
+    arkonStoryChapter02RivalResult: registry.get('arkonStoryChapter02RivalResult'),
+    arkonStoryCruiseComplete: Boolean(registry.get('arkonStoryCruiseComplete')),
+    arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
+    arkonStoryChapter04Done: Boolean(registry.get('arkonStoryChapter04Done')),
+    arkonStoryChapter05Done: Boolean(registry.get('arkonStoryChapter05Done')),
+    arkonStoryCh5PacingVersion:1,
+    arkonStoryChapter06Done: Boolean(registry.get('arkonStoryChapter06Done')),
+    // R672 saves both chapters 07 and 08 mid-race and on completion;
+    // missing Chapter 07 fields previously lost across full reloads.
+    arkonStoryChapter07Done: Boolean(registry.get('arkonStoryChapter07Done')),
+    arkonStoryChapter07Work: registry.get('arkonStoryChapter07Work')||null,
+    arkonStoryChapter07Race: registry.get('arkonStoryChapter07Race')||null,
+    arkonStoryChapter07RaceResult: registry.get('arkonStoryChapter07RaceResult')||null,
+    arkonStoryChapter07Solo: registry.get('arkonStoryChapter07Solo')||null,
+    arkonStoryChapter07SoloFinished: Boolean(registry.get('arkonStoryChapter07SoloFinished')),
+    arkonStoryChapter08Done: Boolean(registry.get('arkonStoryChapter08Done')),
+    arkonStoryChapter08RacesDone: Number(registry.get('arkonStoryChapter08RacesDone')||0),
+    arkonStoryChapter08Race: registry.get('arkonStoryChapter08Race')||null,
+    arkonStoryChapter08RaceResult: registry.get('arkonStoryChapter08RaceResult')||null,
+    arkonStoryChapter08LastResult: registry.get('arkonStoryChapter08LastResult')||null,
+    arkonStoryChapter08ContractSigned: Boolean(registry.get('arkonStoryChapter08ContractSigned')),
+    arkonStoryChapter08ContractTerms: registry.get('arkonStoryChapter08ContractTerms')||null,
+    arkonStoryChapter09Done: Boolean(registry.get('arkonStoryChapter09Done')),
+    arkonStoryChapter09RacesDone: Number(registry.get('arkonStoryChapter09RacesDone')||0),
+    arkonStoryChapter09Race: registry.get('arkonStoryChapter09Race')||null,
+    arkonStoryChapter09RaceResult: registry.get('arkonStoryChapter09RaceResult')||null,
+    arkonStoryChapter09LastResult: registry.get('arkonStoryChapter09LastResult')||null,
+    arkonStoryChapter09ResolvedToLeave: Boolean(registry.get('arkonStoryChapter09ResolvedToLeave')),
+    arkonStoryChapter09Refused: Boolean(registry.get('arkonStoryChapter09Refused')),
+    arkonStoryChapter09ExitStatus: registry.get('arkonStoryChapter09ExitStatus')||null,
+    arkonStoryChapter10Done: Boolean(registry.get('arkonStoryChapter10Done')),
+    arkonStoryChapter10ProjectsDone: Number(registry.get('arkonStoryChapter10ProjectsDone')||0),
+    arkonStoryChapter10FeesEarned: Number(registry.get('arkonStoryChapter10FeesEarned')||0),
+    arkonStoryChapter10Settlement: registry.get('arkonStoryChapter10Settlement')||null,
+    arkonStoryChapter10Race: registry.get('arkonStoryChapter10Race')||null,
+    arkonStoryChapter10RaceResult: registry.get('arkonStoryChapter10RaceResult')||null,
+    arkonStoryChapter10RaceDone: Boolean(registry.get('arkonStoryChapter10RaceDone')),
+    arkonStoryChapter10RaceOutcome: registry.get('arkonStoryChapter10RaceOutcome')||null,
+    arkonStoryGinzaPartnership: registry.get('arkonStoryGinzaPartnership')||null,
+    arkonStoryCareerSeed: registry.get('arkonStoryCareerSeed')||null,
+    arkonStoryChapter06Accounts: registry.get('arkonStoryChapter06Accounts')||null,
+    arkonStoryChapter06Cruise: registry.get('arkonStoryChapter06Cruise')||null,
+    arkonStoryChapter06CruiseFinished:
+      Boolean(registry.get('arkonStoryChapter06CruiseFinished')),
+    arkonStoryChapter05JobsDone: Number(registry.get('arkonStoryChapter05JobsDone')||0),
+    arkonStoryChapter05Loan: registry.get('arkonStoryChapter05Loan')||null,
+    arkonStoryChapter05RaceResult: registry.get('arkonStoryChapter05RaceResult')||null,
+    arkonStoryChapter05Results: registry.get('arkonStoryChapter05Results')||{},
+    arkonStoryRwbProject: registry.get('arkonStoryRwbProject') || null,
+    arkonStoryChapter04Work: registry.get('arkonStoryChapter04Work') || null,
+    arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
+    arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
+    arkonStoryMx5CustomerTuning: registry.get('arkonStoryMx5CustomerTuning')||null,
+    arkonStoryMx5RaceResult: registry.get('arkonStoryMx5RaceResult')||null,
+    arkonStoryMx5Loan: registry.get('arkonStoryMx5Loan')||null,
+    arkonStoryPhase: registry.get('arkonStoryPhase'),
+    arkonStoryTimeOfDay: registry.get('arkonStoryTimeOfDay'),
+    arkonStorySayakaNoticed: Boolean(registry.get('arkonStorySayakaNoticed')),
+    arkonStoryRivalResult: registry.get('arkonStoryRivalResult'),
+    arkonStoryAtSchool: Boolean(registry.get('arkonStoryAtSchool')),
+    arkonStorySchoolRevealed: Boolean(registry.get('arkonStorySchoolRevealed')),
+    arkonStoryLessonCompleted: Boolean(registry.get('arkonStoryLessonCompleted')),
+    arkonStoryLessonCredits: Number(registry.get('arkonStoryLessonCredits')||0),
+    arkonStoryCreditsAwarded: Boolean(registry.get('arkonStoryCreditsAwarded')),
+    arkonStoryGinzaUnlocked: Boolean(registry.get('arkonStoryGinzaUnlocked')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
@@ -1279,9 +1875,12 @@ export function snapshotRegistry(registry) {
     pinkSlipOpportunityUsed: Boolean(registry.get('pinkSlipOpportunityUsed')),
     incomingPinkSlipLastOfferRace: Number(registry.get('incomingPinkSlipLastOfferRace') ?? -999),
     cash: registry.get('cash') ?? 5000,
+    ethanYuenCompensationR638: Boolean(registry.get('ethanYuenCompensationR638')),
+    ethanYuenCompensationDialoguePending: Boolean(registry.get('ethanYuenCompensationDialoguePending')),
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
     cutscenesSeen: registry.get('cutscenesSeen') || [],
+    storyDirectorProgress: registry.get('storyDirectorProgress') || null,
     regionWins: registry.get('regionWins') || {},
     tunerShopProgress: registry.get('tunerShopProgress') || {},
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
@@ -1289,14 +1888,21 @@ export function snapshotRegistry(registry) {
     crewMembers: registry.get('crewMembers') || {},
     crewRecruitmentState: registry.get('crewRecruitmentState') || {},
     crewInviteInterest: registry.get('crewInviteInterest') || null,
+    crewInviteInterests: registry.get('crewInviteInterests') || {},
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
+    crewRecruitChallenges: registry.get('crewRecruitChallenges') || {},
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
+    crewPendingJoinDecision: registry.get('crewPendingJoinDecision') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
     crewBattleLineups: registry.get('crewBattleLineups') || {},
+    crewBattleIntroVisits: registry.get('crewBattleIntroVisits') || {},
     crewBattleState: registry.get('crewBattleState') || null,
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
     tokyoChampionshipInvited: Boolean(registry.get('tokyoChampionshipInvited')),
+    ginzaVaultInvited: Boolean(registry.get('ginzaVaultInvited')),
+    ginzaVaultOwnerWelcomed: Boolean(registry.get('ginzaVaultOwnerWelcomed')),
+    ginzaTestDrive: registry.get('ginzaTestDrive') || null,
     selectedRacePlayerCharacterId: registry.get('selectedRacePlayerCharacterId') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
@@ -1375,19 +1981,45 @@ function writeActiveSlot(update) {
 }
 
 export function saveSessionState(registry) {
+  // R569: dev rehearsal is intentionally an in-memory sandbox. Do not persist
+  // its temporary workshop, race flags or cutscene progress to the real slot.
+  if ((registry?.get?.('__chapter08DevReplay') === true &&
+       Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
+      (registry?.get?.('__storyArchiveSceneReplay') === true &&
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
+      registry?.get?.('__devVaultStoryRaceActive') === true ||
+      registry?.get?.('__arkonStoryPlayableReplay') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
-  writeActiveSlot({ session: state });
+  if (state.gameMode === ARKON_STORY_MODE) {
+    if (getProfileGameMode() !== ARKON_STORY_MODE) return null;
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
+  } else {
+    if (getProfileGameMode() === ARKON_STORY_MODE) return null;
+    writeActiveSlot({ session: state });
+  }
   return state;
 }
 
 export function saveManualState(registry) {
+  if ((registry?.get?.('__chapter08DevReplay') === true &&
+       Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
+      (registry?.get?.('__storyArchiveSceneReplay') === true &&
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
+      registry?.get?.('__devVaultStoryRaceActive') === true ||
+      registry?.get?.('__arkonStoryPlayableReplay') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),
     savedAt: new Date().toISOString(),
   };
-  writeActiveSlot({ manual: state, session: state });
+  if (state.gameMode === ARKON_STORY_MODE) {
+    if (getProfileGameMode() !== ARKON_STORY_MODE) return null;
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
+  } else {
+    if (getProfileGameMode() === ARKON_STORY_MODE) return null;
+    writeActiveSlot({ manual: state, session: state });
+  }
   return state;
 }
 
@@ -1402,7 +2034,7 @@ export function saveIdentityState(registry) {
     registry.set('playerCharacterId', 'arkonDen');
   }
 
-  if (devName && !registry.get('devMode')) {
+  if (devName && registry.get('gameMode') !== ARKON_STORY_MODE && !registry.get('devMode')) {
     registry.set('devMode', true);
     registry.set('cash', Math.max(1000000000, Number(registry.get('cash') || 0)));
   }
@@ -1414,7 +2046,10 @@ export function restoreManualSave(registry) {
   const saved = readManualSave();
   if (!saved) return null;
   const state = applyStateToRegistry(registry, saved);
-  writeActiveSlot({ session: state });
+  if (state.gameMode === ARKON_STORY_MODE) {
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
+  }
+  else writeActiveSlot({ session: state });
   return state;
 }
 
@@ -1422,8 +2057,15 @@ export function restoreManualSave(registry) {
 // clears only the active character slot, never the other two profiles.
 export function clearAllSaves() {
   const activeIndex = getActiveProfileIndex();
+  if (getProfileGameMode(activeIndex) === ARKON_STORY_MODE) {
+    removeKey(storySaveKey(activeIndex));
+    removeKey(storyModeKey(activeIndex));
+    return;
+  }
   const store = ensureProfileStore();
   store.slots[activeIndex] = null;
+  removeKey(storySaveKey(activeIndex));
+  removeKey(storyModeKey(activeIndex));
   writeProfileStore(store);
   mirrorActiveProfile(null);
 }

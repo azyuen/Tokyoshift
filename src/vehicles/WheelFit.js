@@ -144,7 +144,9 @@ export function getAxleWheelFit(
     const tyreBottomOffset = numberOr(metrics?.visibleBottomFromCenter, height / 2);
     return {
       offsetX: sourceX * renderBodyScale - tyreCentreOffsetX * wheelScale,
-      offsetY: -tyreBottomOffset * wheelScale,
+      // Explicit trim is optional; legacy reference cars stay on the PNG ground line.
+      offsetY: -tyreBottomOffset * wheelScale +
+        numberOr(visual[isFront ? 'referenceFrontWheelYOffset' : 'referenceRearWheelYOffset'], 0) * renderBodyScale,
       wheelScale,
       backingRadius: Math.max(5, diameter * renderBodyScale * 0.505),
       wellRadiusSource: diameter / 2,

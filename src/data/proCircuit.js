@@ -5,7 +5,7 @@
 import { MAIN_RIVAL_BY_REGION } from './characters.js';
 import { getCrewCount, isCrewComplete, areAllCrewBattlesComplete } from './crewSystem.js';
 
-export const PRO_CIRCUIT_SCHEMA_VERSION = 2;
+export const PRO_CIRCUIT_SCHEMA_VERSION = 3;
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;
 
 // Deliberately stable identities: DO NOT regenerate names/IDs each time the
@@ -26,12 +26,15 @@ const GENERIC_TEAM_NAMES = Object.freeze([
   'Streetline Engineering', 'Blue Arc', 'Midnight Theory', 'Vertex Motorsport',
 ]);
 
+// These are persistent standalone championships, not short season events.
+// Drivers contest five live knockout stages; crews contest three full fixtures
+// (nine personally driven heats). Masters changes racing format by fixture.
 export const PRO_CIRCUIT_TROPHIES = Object.freeze([
-  Object.freeze({ id: 'shutoSpeed', label: 'SHUTO SPEED TROPHY', discipline: 'DRIVER', format: 'FIVE_FIXTURE', restriction: 'OPEN', fixtures: 5 }),
-  Object.freeze({ id: 'tokyoTechnical', label: 'TOKYO TECHNICAL TROPHY', discipline: 'DRIVER', format: 'FIVE_FIXTURE', restriction: 'POWER_CLASS_NOS_OFF', fixtures: 5 }),
-  Object.freeze({ id: 'triDrive', label: 'TRI-DRIVE TROPHY', discipline: 'TEAM', format: 'FIVE_FIXTURE', restriction: 'DRIVETRAIN_DIVERSITY', fixtures: 5 }),
-  Object.freeze({ id: 'teamGrandPrix', label: 'TEAM GRAND PRIX TROPHY', discipline: 'TEAM', format: 'FIVE_FIXTURE', restriction: 'OPEN', fixtures: 5 }),
-  Object.freeze({ id: 'tokyoMasters', label: 'TOKYO MASTERS TROPHY', discipline: 'MIXED', format: 'FIVE_FIXTURE', restriction: 'MIXED', fixtures: 5 }),
+  Object.freeze({ id:'shutoSpeed',label:'SHUTO SPEED TROPHY',discipline:'DRIVER',format:'FIVE_ROUND_KNOCKOUT',restriction:'OPEN',fixtures:5,season:1,entryFee:75000,prizeCash:230000,repeatCash:85000,description:'OPEN-CLASS SPEED GAUNTLET · FIVE KNOCKOUTS',stages:['QUALIFYING','ELIMINATION I','ELIMINATION II','SEMIFINAL','GRAND FINAL'] }),
+  Object.freeze({ id:'tokyoTechnical',label:'TOKYO TECHNICAL TROPHY',discipline:'DRIVER',format:'FIVE_ROUND_KNOCKOUT',restriction:'POWER_CLASS_NOS_OFF',fixtures:5,season:1,entryFee:65000,prizeCash:215000,repeatCash:80000,maxPowerKW:260,noNos:true,description:'260 KW MAX · NO NOS · FIVE STAGES',stages:['SCRUTINEERING','QUALIFYING','ELIMINATION','SEMIFINAL','PRECISION FINAL'] }),
+  Object.freeze({ id:'triDrive',label:'TRI-DRIVE TROPHY',discipline:'TEAM',format:'THREE_FIXTURE_SERIES',restriction:'DRIVETRAIN_DIVERSITY',fixtures:3,season:2,entryFee:85000,prizeCash:265000,repeatCash:90000,description:'THREE FIXTURES · FWD + RWD + AWD',formats:['DUEL','DUEL','DUEL'] }),
+  Object.freeze({ id:'teamGrandPrix',label:'TEAM GRAND PRIX TROPHY',discipline:'TEAM',format:'THREE_FIXTURE_SERIES',restriction:'OPEN',fixtures:3,season:2,entryFee:100000,prizeCash:300000,repeatCash:100000,description:'THREE FULL 3V3 FIXTURES · NINE HEATS',formats:['DUEL','DUEL','DUEL'] }),
+  Object.freeze({ id:'tokyoMasters',label:'TOKYO MASTERS TROPHY',discipline:'MIXED',format:'THREE_FIXTURE_GAUNTLET',restriction:'MIXED',fixtures:3,season:3,requiredTrophies:2,entryFee:125000,prizeCash:375000,repeatCash:125000,description:'INVITATIONAL · DUEL / RELAY / FOUR-WIDE',formats:['DUEL','RELAY','FOUR_WIDE'] }),
 ]);
 
 export const PRO_CIRCUIT_CHAMPIONSHIPS = Object.freeze([
@@ -119,6 +122,11 @@ export function createDefaultProCircuitState() {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: 1,
     eventTick: 0, // advances on completed in-game events, never wall-clock time
+    seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
+    openCircuitTick: 0, // successful standalone event completions only
+    minorTrophyIndex: 0,
+    minorTrophyCooldownUntil: 0,
+    crewAdviceCooldownUntil: 0, // eventTick after this event + two OTHER completions
     qualified: false, // Phase 2 sets this after the professional qualifier
     playerDriver: createStanding(1400),
     playerTeam: createStanding(1400),
@@ -135,6 +143,7 @@ export function createDefaultProCircuitState() {
     activeChampionship: null,
     championshipHistory: [],
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
+    trophyHistory: [],
     championshipWins: { DRIVER: 0, TEAM: 0 },
   };
 }
@@ -159,10 +168,27 @@ export function normaliseProCircuitState(raw) {
   const source = safeObject(raw);
   const trophies = safeObject(source.trophyWins);
   const championships = safeObject(source.championshipWins);
+  // Existing careers have already entered seasons implicitly. Preserve their
+  // progress rather than moving them back into the new OPEN pre-season state.
+  const legacySeasonStarted = Number(source.calendar?.round || 0) > 0 ||
+    Boolean(source.calendar?.history?.length) ||
+    Number(source.playerDriver?.seasonPoints || 0) > 0 ||
+    Number(source.playerTeam?.seasonPoints || 0) > 0 ||
+    Boolean(source.activeCrewEvent || source.activeTournament || source.activeTimedEvent ||
+      source.activeChampionship);
+  const legacyStatus = Number(source.calendar?.round || 0) >= 8
+    ? 'COMPLETE' : legacySeasonStarted ? 'ACTIVE' : 'OPEN';
+  const seasonStatus = ['OPEN', 'ACTIVE', 'COMPLETE'].includes(source.seasonStatus)
+    ? source.seasonStatus : legacyStatus;
   return {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: boundedInteger(source.season, 1, 1, 10000),
     eventTick: boundedInteger(source.eventTick, 0, 0, 10000000),
+    seasonStatus,
+    openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
+    minorTrophyIndex: boundedInteger(source.minorTrophyIndex, 0, 0, PRO_CIRCUIT_TROPHIES.length - 1),
+    minorTrophyCooldownUntil: boundedInteger(source.minorTrophyCooldownUntil, 0, 0, 10000000),
+    crewAdviceCooldownUntil: boundedInteger(source.crewAdviceCooldownUntil, 0, 0, 10000000),
     qualified: Boolean(source.qualified),
     playerDriver: normaliseStanding(source.playerDriver, initial.playerDriver),
     playerTeam: normaliseStanding(source.playerTeam, initial.playerTeam),
@@ -192,6 +218,7 @@ export function normaliseProCircuitState(raw) {
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
       t.id, boundedInteger(trophies[t.id], 0, 0, 10000),
     ])),
+    trophyHistory: Array.isArray(source.trophyHistory) ? source.trophyHistory.filter(h => h && typeof h.id === 'string' && PRO_CIRCUIT_TROPHIES.some(t=>t.id===h.trophyId)).slice(-100) : [],
     championshipWins: {
       DRIVER: boundedInteger(championships.DRIVER, 0, 0, 10000),
       TEAM: boundedInteger(championships.TEAM, 0, 0, 10000),
@@ -234,6 +261,29 @@ function seededRows(state, kind) {
       a.id.localeCompare(b.id)
     )
     .map((record, index) => ({ ...record, seed: index + 1 }));
+}
+
+// Sponsorship is tied to the same persistent Pro Rank across Open Circuit
+// and the eight-round Season. Only paid event purses receive commission:
+// fees, racing performance, season points and championship seeds are unchanged.
+// Lock the rate to the player's standing BEFORE the event is settled.
+export function getProPrizeBonusPercent(rank) {
+  const place = Number(rank);
+  if (!Number.isInteger(place) || place < 1) return 0;
+  if (place === 1) return 100;
+  if (place <= 3) return 75;
+  if (place <= 5) return 50;
+  if (place <= 10) return 30;
+  if (place <= 14) return 15;
+  return 0;
+}
+
+export function getProPrizeWithBonus(cashPrize, rank) {
+  const basePrize = Number.isFinite(Number(cashPrize))
+    ? Math.max(0, Math.floor(Number(cashPrize))) : 0;
+  const bonusPercent = getProPrizeBonusPercent(rank);
+  const bonusCash = Math.floor(basePrize * bonusPercent / 100);
+  return { basePrize, bonusPercent, bonusCash, totalPrize: basePrize + bonusCash };
 }
 
 export function getProCircuitDriverSeeds(proCircuit) {

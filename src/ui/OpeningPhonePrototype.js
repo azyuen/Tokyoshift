@@ -1,9 +1,12 @@
-// Opening-only prototype for the phone-call choreography. Other authored
-// phone scenes continue to use PhoneConversation until this design is approved.
+// Animated ringing/pick-up renderer for all authored swipe-style phone calls.
+// Shares the same global backdrop/icon template as PhoneConversation.
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js';
-import { createRaceDialogueHud } from './RaceCoachHud.js';
+import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
+  ANONYMOUS_CALLER_TEXTURE, ANONYMOUS_CALLER_PATH, ANONYMOUS_CALLER_VISUAL,
+} from './RaceCoachHud.js';
+import { PHONE_CARD_SWIPE_DISTANCE } from './CompactDialogueLayout.js';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -14,30 +17,13 @@ const DEPTH = 308;
 export const OPENING_PHONE_LAYOUT = Object.freeze({
   phone: { x: 780, y: 370, maxSize: 260, pickupY: 606 },
   card: { x: 780, y: 432, width: 1040, height: 288, portraitWidth: 260 },
-  transitionMs: 420,
+  transitionMs: 280,
 });
 
 // Same uncaged face crop and white/blue race speech bubble as in-race
 // dialogue, repositioned entirely into the TOP THIRD for this phone call.
 // Right layout mirrors the left when the player answers.
-export const OPENING_PHONE_DIALOGUE_LAYOUTS = Object.freeze({
-  left: Object.freeze({
-    face: { x: 38, y: 65, width: 210, height: 210,
-      targetX: 143, targetY: 172, headHeight: 174 },
-    bubble: { left: 249, right: 814, top: 83, bottom: 269,
-      notchDepth: 27, notchHalfHeight: 27,
-      headingX: 286, headingY: 102,
-      textX: 286, textY: 133, textWidth: 487 },
-  }),
-  right: Object.freeze({
-    face: { x: 1312, y: 65, width: 210, height: 210,
-      targetX: 1417, targetY: 172, headHeight: 174 },
-    bubble: { left: 746, right: 1311, top: 83, bottom: 269,
-      notchDepth: 27, notchHalfHeight: 27,
-      headingX: 783, headingY: 102,
-      textX: 783, textY: 133, textWidth: 487 },
-  }),
-});
+export const OPENING_PHONE_DIALOGUE_LAYOUTS = PHONE_DIALOGUE_LAYOUTS;
 const safeDestroy = object => { try { object?.destroy?.(); } catch (_) {} };
 const withAlpha = object => object?.setAlpha?.(0);
 
@@ -68,21 +54,27 @@ function makeDialogueCard(scene, {
     characterVisual,
     phoneIconKey: PHONE_TEXTURE,
   });
-  hud.dialogue.setText(text).setFontSize('19px').setLineSpacing(5);
+  // Inherit the shared story dialogue font from createRaceDialogueHud;
+  // the opening call must not shrink it again after creating the panel.
+  hud.dialogue.setText(text);
   const add = item => { sprites.push(item); return item; };
-  const buttonX = side === 'right' ? speech.left + 116 : speech.right - 116;
-  const buttonY = speech.bottom + 29;
-  const button = add(scene.add.rectangle(buttonX, buttonY, 208, 46,
-    0x1e6a9e, 1).setStrokeStyle(2, 0xaee1ff)
+  // As in regular manga scenes, the action is anchored at the bottom right,
+  // independent of the speaking side, rather than beneath the top bubble.
+  const buttonX = (scene.scale?.width || 1560) - 248;
+  const buttonY = (scene.scale?.height || 840) - 49;
+  const button = add(scene.add.rectangle(buttonX, buttonY, 252, 48,
+    0x111111, 1).setStrokeStyle(2, 0xffffff)
+    .setScrollFactor(0).setDepth(depth + 10)
     .setInteractive({ useHandCursor: true }));
   add(scene.add.text(buttonX, buttonY,
     finalPage ? 'END CALL >' : 'CONTINUE >', {
       fontFamily: PIXEL, fontSize: '10px', color: '#ffffff',
-    }).setOrigin(0.5));
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(depth + 11));
+  // Only the face/bubble/icon swipe. Keep the action in its fixed bottom
+  // position rather than dragging it across the entire screen.
   const group = scene.add.container(0, 0,
-    [...hud.objects, ...sprites]).setScrollFactor(0).setDepth(depth);
-  // The portrait's crop uses a geometry mask. Keep that mask aligned while
-  // the whole call swipes vertically, instead of clipping the head mid-swipe.
+    [...hud.objects]).setScrollFactor(0).setDepth(depth);
+  // Portrait crop needs to follow the small bubble-local vertical movement.
   const alignMask = () => hud.maskShape?.setY(group.y);
   let destroyed = false;
   const dispose = () => {
@@ -91,6 +83,7 @@ function makeDialogueCard(scene, {
     scene.tweens?.killTweensOf?.(group);
     hud.destroy();
     group.destroy(true);
+    sprites.forEach(safeDestroy);
   };
   button.on('pointerdown', () => onContinue?.(group, button, alignMask));
   return { group, dispose, alignMask };
@@ -113,6 +106,7 @@ export function playOpeningPhonePrototype(scene, {
   if (!chapter.length) return { played: false, reason: 'empty', active: false };
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || 'renMizuno';
   const assets = getOpeningPhoneAssets(callerId, callerPose, playerCharacterId);
+  if(!callerId)assets.caller={key:ANONYMOUS_CALLER_TEXTURE,path:ANONYMOUS_CALLER_PATH};
   const fullVars = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'Driver').trim() || 'Driver',
     ...variables,
@@ -163,13 +157,14 @@ export function playOpeningPhonePrototype(scene, {
     const page = chapter[index] || {};
     const player = page.speaker === 'player';
     const actor = player ? characters[playerCharacterId] : characters[callerId];
+    const anonymous=!player && !callerId;
     const asset = player ? assets.player : assets.caller;
     const vars = { ...fullVars, ...(page.variables || {}) };
     const text = formatMessage(page.text, vars);
     const card = makeDialogueCard(scene, {
       side: player ? 'right' : 'left',
       asset,
-      characterVisual: actor?.visual || {},
+      characterVisual: anonymous ? ANONYMOUS_CALLER_VISUAL : actor?.visual || {},
       speaker: player ? String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
         : String(callerName || actor?.name || 'CALLER').toUpperCase(),
       text,
@@ -179,10 +174,9 @@ export function playOpeningPhonePrototype(scene, {
         guard = true;
         button.disableInteractive();
         state.phase = 'transition';
-        // Entire caller card swipes vertically off the screen before the
-        // opposite-handed player card slides into its place.
+        // Exit by a short slide inside the speech-box height, not offscreen.
         doTween(group, {
-          y: -460, alpha: 0, duration: OPENING_PHONE_LAYOUT.transitionMs,
+          y: -PHONE_CARD_SWIPE_DISTANCE, alpha: 0, duration: OPENING_PHONE_LAYOUT.transitionMs,
           ease: 'Cubic.In', onUpdate: alignMask, onComplete: () => {
             card.dispose();
             if (currentCard === card) currentCard = null;
@@ -194,7 +188,7 @@ export function playOpeningPhonePrototype(scene, {
       },
     });
     currentCard = card;
-    card.group.setY(400).setAlpha(0);
+    card.group.setY(PHONE_CARD_SWIPE_DISTANCE).setAlpha(0);
     card.alignMask();
     doTween(card.group, {
       y: 0, alpha: 1, duration: OPENING_PHONE_LAYOUT.transitionMs,
@@ -205,8 +199,9 @@ export function playOpeningPhonePrototype(scene, {
   const showIncoming = () => {
     if (!state.active) return;
     state.phase = 'ringing';
-    own(scene.add.rectangle(780, 420, 1560, 840,
-      0x0b1524, 0.65).setDepth(DEPTH).setScrollFactor(0).setInteractive());
+    // One persistent translucent veil for ringing AND conversation. The
+    // pickup clears only the ringing sprites, never the background veil.
+    own(createPhoneCallBackdrop(scene,{depth:DEPTH}));
     own(scene.add.text(780, 158, 'INCOMING CALL', {
       fontFamily: PIXEL, fontSize: '26px', color: '#ebfaff',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 4));

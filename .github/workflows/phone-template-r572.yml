@@ -1,0 +1,47 @@
+name: R572 universal phone conversation styling
+on:
+  pull_request:
+    paths:
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'src/ui/CanalYardStory.js'
+      - 'src/ui/Chapter08Story.js'
+      - 'tests/phone-template-r572.mjs'
+      - '.github/workflows/phone-template-r572.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'tests/phone-template-r572.mjs'
+  workflow_dispatch:
+jobs:
+  shared-phone-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check both phone renderers and all scene entry points
+        run: |
+          node --check src/ui/RaceCoachHud.js
+          node --check src/ui/PhoneConversation.js
+          node --check src/ui/OpeningPhonePrototype.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/ui/CanalYardStory.js
+          node --check src/ui/Chapter08Story.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/StoryArchivePlayback.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/TrainStationScene.js
+      - name: Test global phone style, chapters and save-state isolation
+        run: |
+          node --test tests/phone-template-r572.mjs tests/chapter08-phone-r571.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/story-archive-r570.mjs

@@ -1,3 +1,4 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
 import {
   MEET_LOCATIONS,
   getMeetLocation,
@@ -99,11 +100,14 @@ function locationTimeLabel(location, worldPhase) {
   return worldPhase === 'day' ? 'DAY' : 'NIGHT';
 }
 
+import { isGinzaLoanActive, canVisitDuringGinzaLoan, GINZA_LOAN_BLOCK_LABEL } from '../data/ginzaLoanAccess.js';
+
 export function showTravelMap(scene, options = {}) {
   const {
     currentLocationId,
     onTravel,
     onHome = null,
+    onExit = null,
     onWorkshopUpgrade = null,
     title = 'TOKYO REGION MAP',
     fromWorkshop = false,
@@ -115,8 +119,9 @@ export function showTravelMap(scene, options = {}) {
 
   const crewTravelMode = travelMode === 'crew';
   const openingTrainMode = travelMode === 'openingTrain';
+  const chapter08GinzaMode = travelMode === 'chapter08Ginza';
 
-  const worldPhase = getWorldPhase();
+  const worldPhase = getStoryWorldPhase(scene.registry);
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
   const mapAttemptKey = '_travelMapAssetAttempted_' + worldPhase;
 
@@ -172,15 +177,17 @@ export function showTravelMap(scene, options = {}) {
   let selectedRegionId = null;
   let selectedLocationId = null;
   const garageTier = () => Number(scene.registry.get('garageTier') || 0);
+  const ginzaLoanBlocked = location => Boolean(location) && !canVisitDuringGinzaLoan(scene.registry, location.id);
   const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
 
   const crewBlockedLocation = location => {
     if (!crewTravelMode || !location) return false;
 
     const target = getTravelLocation(location.id);
-    if (location.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
-      return true;
-    }
+    if (location.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') return true;
+    // Allow crew drivers to visit Oshiage School and Custom Works, but not
+    // the standalone Elite/Skytree competitive event.
+    if (target?.regionId === 'OSHIAGE' && location.id === 'oshiageSkytreeMeet') return true;
 
     // Crew Space is physically attached to Warehouse HQ. The crew map can
     // launch street travel, but it cannot move the player between Shinonome
@@ -194,14 +201,15 @@ export function showTravelMap(scene, options = {}) {
 
   const crewBlockedLabel = location => {
     const target = location ? getTravelLocation(location.id) : null;
-    if (location?.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
-      return 'CREW CAR // SPECIAL DISTRICTS UNAVAILABLE';
+    if (location?.id === 'oshiageSkytreeMeet') return 'CREW CAR // ELITE SHOWDOWN UNAVAILABLE';
+    if (location?.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+      return 'CREW CAR // CENTRAL TOKYO UNAVAILABLE';
     }
     return 'CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE';
   };
 
   const locationAvailable = location => {
-    if (!location) return false;
+    if (!location || ginzaLoanBlocked(location)) return false;
     if (crewBlockedLocation(location)) return false;
     if (location.centralTokyoUnlock) {
       return isCentralTokyoLocationUnlocked(scene.registry, location.id);
@@ -223,6 +231,10 @@ export function showTravelMap(scene, options = {}) {
 
   const visibleLocationsForRegion = region => {
     if (!region) return [];
+    if (chapter08GinzaMode) {
+      return region.id === 'CENTRAL_TOKYO'
+        ? region.locations.filter(item => item.id === 'ginzaMotorGallery') : [];
+    }
     if (openingTrainMode) {
       return region.id === HOME_REGION_ID
         ? region.locations.filter(item => item.id === 'shinonomeWorkshop')
@@ -250,7 +262,9 @@ export function showTravelMap(scene, options = {}) {
       const targetTier = Number(
         item.garageTier || getWorkshopByLocationId(item.id).tier || 0
       );
-      return targetTier <= tier + 1;
+      // Story players see only chapter-unlocked properties; money and
+      // regional championships never reveal a purchasable future garage.
+      return targetTier <= tier + (scene.registry.get('gameMode')==='arkonStory'?0:1);
     });
   };
 
@@ -627,7 +641,10 @@ export function showTravelMap(scene, options = {}) {
   ).setOrigin(0.5).setDepth(depth + 12));
 
   const getTargetCost = location => {
-    if (!location) return 0;
+    if (!location || chapter08GinzaMode) return 0;
+    // Never strand a borrower who spends their last yen at a street meet.
+    // The return trip to Ginza is always free until the car is handed back.
+    if (isGinzaLoanActive(scene.registry) && location.id === 'ginzaMotorGallery') return 0;
 
     if (location.kind === 'home') {
       return fromWorkshop ? 0 : Number(homeCost ?? HOME_RETURN_COST);
@@ -842,7 +859,7 @@ export function showTravelMap(scene, options = {}) {
     const cost = getTargetCost(location);
     const isCurrent = !fromWorkshop && location?.id === currentLocationId;
     const isHome = location?.kind === 'home';
-    const available = locationAvailable(location) || isHome;
+    const available = locationAvailable(location);
     const enough = currentCash >= cost;
 
     travelButton.removeAllListeners('pointerdown');
@@ -852,6 +869,13 @@ export function showTravelMap(scene, options = {}) {
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
       travelLabel.setColor('#72838f').setText('SELECT A LOCATION');
+      return;
+    }
+
+    if (ginzaLoanBlocked(location)) {
+      travelButton.disableInteractive().setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#83939c').setText(GINZA_LOAN_BLOCK_LABEL);
       return;
     }
 
@@ -905,7 +929,9 @@ export function showTravelMap(scene, options = {}) {
             .setStrokeStyle(2, 0x8b4f5c, 1);
           travelLabel
             .setColor('#c99aa4')
-            .setText('REGIONAL WINS ' + wins + '/' + requiredWins);
+            .setText(scene.registry.get('gameMode')==='arkonStory'
+              ? 'UNLOCKED THROUGH STORY'
+              : 'REGIONAL WINS ' + wins + '/' + requiredWins);
           return;
         }
 
@@ -1046,8 +1072,22 @@ export function showTravelMap(scene, options = {}) {
         runHomeAction(location, cost);
         return;
       }
-      dismiss();
-      onTravel?.(location.id, cost);
+      if (workshopActionPending) return;
+      workshopActionPending = true;
+      travelButton.disableInteractive();
+      travelLabel.setText('TRAVELLING...');
+      // Dismissing this input-owning map and changing the Phaser Scene within
+      // the SAME pointerdown can hang iPad Safari. Do both next event loop.
+      window.setTimeout(() => {
+        try {
+          dismiss();
+          onTravel?.(location.id, cost);
+        } catch(error) {
+          console.error('[TOKYO SHIFT] map journey failed',error);
+          workshopActionPending = false;
+          scene.showWorkshopToast?.('TRAVEL COULD NOT START // TRY AGAIN');
+        }
+      }, 0);
     });
   };
 
@@ -1074,7 +1114,7 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
-    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(selectedRegionId);
+    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
     const regionOpen = openingTrainMode || (!crewRegionBlocked && (
       selectedRegionId === currentRegionId ||
       isTravelRegionUnlocked(scene.registry, selectedRegionId)
@@ -1086,6 +1126,10 @@ export function showTravelMap(scene, options = {}) {
     regionLockText
       .setText(openingTrainMode
         ? ''
+        : isGinzaLoanActive(scene.registry) &&
+          selectedRegionId === 'CENTRAL_TOKYO' &&
+          location?.id === 'ginzaMotorGallery'
+          ? 'RETURN TO GINZA // FREE'
         : !regionOpen
           ? crewRegionBlocked
             ? 'CREW CAR // UNAVAILABLE'
@@ -1101,6 +1145,7 @@ export function showTravelMap(scene, options = {}) {
       : region.description);
 
     const tunerShop = getTunerShopForRegion(selectedRegionId);
+    const loanTunerBlocked = isGinzaLoanActive(scene.registry) && Boolean(tunerShop);
     const tunerUnlocked = Boolean(
       tunerShop && isTunerShopUnlocked(scene.registry, selectedRegionId)
     );
@@ -1110,12 +1155,19 @@ export function showTravelMap(scene, options = {}) {
       !tunerUnlocked &&
       (tunerChallenge.invited || tunerChallenge.stage > 0)
     );
-    const showTunerPanel = tunerUnlocked || challengeVisible;
+    const showTunerPanel = loanTunerBlocked || tunerUnlocked || challengeVisible;
 
     tunerPanelObjects.forEach(obj => obj.setVisible(showTunerPanel));
     tunerBadge.removeAllListeners('pointerdown');
 
-    if (tunerUnlocked) {
+    if (loanTunerBlocked) {
+      tunerKicker.setText('TUNER SHOP // LOCKED').setColor('#84909a');
+      tunerName.setText('').setColor('#8b99a3');
+      tunerSpecialty.setText('').setColor('#71808b');
+      tunerArrow.setText('').setVisible(false);
+      tunerBadge.disableInteractive().setFillStyle(0x111820, 0.97)
+        .setStrokeStyle(1, 0x40515d, 1);
+    } else if (tunerUnlocked) {
       // Once unlocked, the map is navigation only. Championship/perfect-sweep
       // progression is surfaced through Meet/result flows instead.
       tunerKicker
@@ -1139,13 +1191,17 @@ export function showTravelMap(scene, options = {}) {
 
       tunerBadge.on('pointerdown', () => {
         const returnScene = scene.sys?.settings?.key || 'GarageScene';
-        dismiss();
-        scene.scene.start('TunerShopScene', {
-          regionId: selectedRegionId,
-          returnScene,
-          returnLocationId: currentLocationId,
-          fromWorkshop,
-        });
+        const regionId = selectedRegionId;
+        tunerBadge.disableInteractive();
+        window.setTimeout(() => {
+          dismiss();
+          scene.scene.start('TunerShopScene', {
+            regionId,
+            returnScene,
+            returnLocationId: currentLocationId,
+            fromWorkshop,
+          });
+        }, 0);
       });
     } else if (challengeVisible) {
       tunerKicker
@@ -1193,9 +1249,11 @@ export function showTravelMap(scene, options = {}) {
       const selected = selectedLocationId === item.id;
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
-      const available = locationAvailable(item) || item.kind === 'home';
+      const available = locationAvailable(item);
       row.label.setText(openingTrainMode ? 'HOME' : item.label);
-      if (crewBlockedLocation(item)) {
+      if (ginzaLoanBlocked(item)) {
+        row.meta.setText(GINZA_LOAN_BLOCK_LABEL);
+      } else if (crewBlockedLocation(item)) {
         row.meta.setText('CREW CAR // UNAVAILABLE');
       } else if (item.kind === 'garageUpgrade') {
         const unlocked = isWorkshopUnlocked(item.id, garageTier());
@@ -1228,7 +1286,8 @@ export function showTravelMap(scene, options = {}) {
 
       row.box.removeAllListeners('pointerdown');
 
-      if (available || item.centralTokyoUnlock || item.available !== false) {
+      if (!ginzaLoanBlocked(item) &&
+          (available || item.centralTokyoUnlock || item.available !== false)) {
         row.box.setInteractive({ useHandCursor: true });
         row.box.on('pointerdown', () => {
           selectedLocationId = item.id;
@@ -1257,12 +1316,13 @@ export function showTravelMap(scene, options = {}) {
 
   TRAVEL_REGION_ORDER.forEach(regionId => {
     if (openingTrainMode && regionId !== HOME_REGION_ID) return;
+    if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
     const region = TRAVEL_REGIONS[regionId];
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId);
-    const unlocked = openingTrainMode || (!crewRegionBlocked && (
+    const crewRegionBlocked = crewTravelMode && regionId === 'CENTRAL_TOKYO';
+    const unlocked = openingTrainMode || chapter08GinzaMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
     ));
 
@@ -1321,7 +1381,8 @@ export function showTravelMap(scene, options = {}) {
     ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
-      if (crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId)) return;
+      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
+      if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
       selectedRegionId = regionId;
 
       if (regionId === currentRegionId && !fromWorkshop) {
@@ -1360,8 +1421,24 @@ export function showTravelMap(scene, options = {}) {
     };
   });
 
-  blocker.on('pointerdown', dismiss);
-  closeButton.on('pointerdown', dismiss);
+  if (!chapter08GinzaMode) {
+    blocker.on('pointerdown', dismiss);
+    closeButton.on('pointerdown', dismiss);
+  } else {
+    // Story-only destination. During a developer rehearsal, X exits the
+    // sandbox and restores their original career; the real chapter keeps
+    // map travel directed exclusively towards the scripted Ginza run.
+    if (typeof onExit === 'function') {
+      closeButton.setAlpha(1).setInteractive({useHandCursor:true});
+      closeButton.on('pointerdown', () => {
+        dismiss();
+        onExit();
+      });
+    } else {
+      closeButton.setAlpha(.25).disableInteractive();
+    }
+    blocker.on('pointerdown', () => {});
+  }
   frame.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
   infoPanel.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
 

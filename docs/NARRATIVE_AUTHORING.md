@@ -4,6 +4,8 @@ Read [CHARACTER_BIBLE.md](CHARACTER_BIBLE.md) before writing character dialogue,
 
 Also read [CAREER_NARRATIVE.md](CAREER_NARRATIVE.md) for the saved synopsis, approved Sayaka/father history, ending direction and proposed emotional-beat backlog. Preserve the distinction between approved facts, conditional ending direction and unimplemented scene suggestions. Update that backlog as scenes are actually implemented.
 
+**For Arkon Den Story Mode:** read [the approved 23 October Arkon story checkpoint](ARKON_DEN_STORY_ARC_2026-10-23.md) before proposing or implementing Chapters 04 onward, Ginza's origin, the RWB gift or the later Career intersection. The checkpoint is creative direction, not deployed gameplay; reconcile its earlier-time-period Ginza lock with Career's established later Ginza unlock and Sayaka reveal gates.
+
 ## Current foundation
 
 The owner approved Character Bible v1 for individualised Career scenes on 7 October 2026, with deeper Story Mode to be designed much later. The repository is the continuity source; do not depend on a previous chat.

@@ -1,0 +1,42 @@
+name: R579 Chapter 09 Establishing Shot
+on:
+  push:
+    paths:
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-establishing-r579.yml'
+  pull_request:
+    paths:
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-establishing-r579.yml'
+  workflow_dispatch:
+jobs:
+  chapter09-opening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validate affected modules
+        run: |
+          node --check src/ui/Chapter09EstablishingShot.js
+          node --check src/ui/Chapter09Story.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/ui/StoryArchivePanel.js
+          node --check src/ui/CutsceneTester.js
+      - name: Regression checks
+        run: |
+          node --test tests/chapter09-establishing-r579.mjs
+          node --test tests/chapter09-drag-r577.mjs
+          node --test tests/story-archive-r570.mjs
+          node --test tests/drag-open-circuit-r575.mjs
