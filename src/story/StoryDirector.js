@@ -9,13 +9,13 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261025-r685';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261025-r684';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r685';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r686';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261025-r685';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261025-r686';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import {
