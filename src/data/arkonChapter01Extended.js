@@ -165,12 +165,12 @@ export const ARKON_CHAPTER_01_EXTENDED_STEPS = [
   {type:'WAIT_SCENE',scene:'GarageScene'},
   ...garage('THE UNGLAMOROUS WORK'),
   manga('A DIFFERENT KIND OF PROGRESS',[
-    ['a','Ten wins. The Civic is still a collection of noises pretending to be a machine.','devLaughing'],
+    ['a','Ten wins. My old car is still a collection of noises pretending to be a machine.','devLaughing'],
     ['a','I have started learning which ones matter.'],
     ['a','I used to think winning meant buying the next part as soon as I could afford it.'],
     ['a','Now I have a list. Things I need. Things I want. Things I would regret paying for.'],
     ['a','The workshop she mentioned is on the other side of the district.'],
-    ['a','I could arrive in the Civic and try to look impressive.'],
+    ['a','I could arrive in my car and try to look impressive.'],
     ['a','Or I could arrive with an honest record of what I have done.'],
     ['a','I think I know which one she would choose.','devSerious'],
     ['a','That is annoying. I am starting to hear her voice when I make decisions.'],
@@ -318,7 +318,7 @@ export const ARKON_CHAPTER_01_EXTENDED_STEPS = [
   ]),
   {type:'CLEAR_STAGE'},
   manga('CHAPTER 01 // AFTER HOURS',[
-    ['a','The Civic still needs work. So do I.','devSerious'],
+    ['a','The car still needs work. So do I.','devSerious'],
     ['a','But I have a way forward now: a notebook, an opportunity, and a reason to keep showing up.'],
     ['a','Tomorrow, I find out whether anyone else thinks I have earned a place in their workshop.'],
     ['a','For tonight, the engine is cooling and the city is finally quiet.'],
