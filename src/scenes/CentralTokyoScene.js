@@ -24,7 +24,7 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261022-r635';
+} from '../data/characters.js?v=20261024-r680';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -61,7 +61,7 @@ import {
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan, ginzaRoomDuringLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
-import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261023-r658';
+import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261024-r680';
 import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import {
   getGarageDeliveryOptions,
@@ -83,8 +83,8 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
-import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261024-r680';
+import { hasSeenCutscene } from '../data/cutscenes.js?v=20261024-r680';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261022-r637';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';

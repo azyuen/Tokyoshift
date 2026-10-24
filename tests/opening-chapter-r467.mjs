@@ -242,7 +242,7 @@ test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => 
   const goodbye = CUTSCENES.openingSayakaFarewell.pages;
   assert.equal(intro.length, 5);
   assert.equal(goodbye.length, 4);
-  assert.match(intro[0].text, /father said you needed this/);
+  assert.match(intro[0].text, /Your parents say you never stop talking about cars/);
   assert.match(intro[2].text, /even know how to drive/);
   assert.match(intro[3].text, /press accelerate/);
   assert.match(intro[4].text, /clutch in, shift gears/);
@@ -285,12 +285,12 @@ test('the very next workshop tap uses Daichi exactly as drivetrain tuning does',
   assert.doesNotMatch(garage, /spawnOpeningCompanion\('daichiSakamoto', false\)/);
 });
 
-test('Daichi dialogue begins with the father and stock car but keeps later tuning exposition', () => {
+test('Daichi dialogue introduces the personally gifted stock car without a racing-parent legacy', () => {
   const pages = CUTSCENES.openingDaichiAfterSayaka.pages;
   assert.match(pages[0].text, /after all these years talking about driving/i);
-  assert.match(pages[1].text, /my dad would get me one/);
+  assert.match(pages[1].text, /Sayaka said some friends helped get it ready/);
   assert.match(pages[2].text, /picked a good one/);
-  assert.match(pages[2].text, /ex-pro driver/);
+  assert.doesNotMatch(pages.map(p=>p.text).join(' '), /ex-pro driver|father.{0,30}racing|dad.{0,30}racing/i);
   assert.match(pages[3].text, /looks stock to me/);
   assert.match(pages[4].text, /Good thing your childhood friend/);
   assert.equal(pages.length, 9, 'Four initial exchanges plus five final Daichi lines');

@@ -1,16 +1,16 @@
-import { characters } from '../data/characters.js?v=20261006-r391';
+import { characters } from '../data/characters.js?v=20261024-r680';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261018-r588';
+} from '../data/cutscenes.js?v=20261024-r680';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261023-r658';
+} from './MangaCutscene.js?v=20261024-r680';
 import { playCanalYardStory } from './CanalYardStory.js?v=20261023-r658';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
-import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261023-r658';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261024-r680';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
 import { startChapter09 } from './Chapter09Story.js?v=20261023-r658';
 import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';

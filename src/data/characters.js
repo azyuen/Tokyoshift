@@ -1432,11 +1432,11 @@ regionExclusive: true, teamRole: 'core',
     teamRole: 'pro-circuit-strategist',
     personality: 'Controlled, perceptive and discreet; she offers help without announcing every reason for it.',
     // Public-facing bio must not spoil the later Ginza and pro-circuit reveals.
-    bio: 'An old friend of the player’s father from his racing days. She delivers the player’s first car and keeps much of her own past private.',
+    bio: 'A longtime friend of both the player’s parents. She recognises the player’s enthusiasm for cars, delivers their first car and keeps her own professional life private.',
     drivingStyle: 'Careful strategic planning, not active regional street racing.',
     tuningFocus: 'Race strategy, telemetry, opponent analysis and adapting the team plan.',
     preferredCars: ['r32', 'gc8'],
-    introQuote: 'Your father would want you to make this car your own.',
+    introQuote: 'Take good care of it. The first car is where your own stories begin.',
     resultQuotes: {
       win: 'Preparation matters.',
       loss: 'We will revise the plan.',

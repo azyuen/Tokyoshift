@@ -1,8 +1,8 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261024-r680';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261023-r658';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261024-r680';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 

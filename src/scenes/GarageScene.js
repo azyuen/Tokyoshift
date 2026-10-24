@@ -8,7 +8,7 @@ import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-r
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261023-r653';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261024-r680';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -55,7 +55,7 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261024-r675';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261024-r675';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261024-r680';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
   ETHAN_GIFT_PENDING_KEY, isEthanName,
@@ -63,12 +63,12 @@ import {
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261023-r658';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261021-r627';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261024-r680';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r662';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261023-r658';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261024-r680';
 import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
@@ -3030,7 +3030,7 @@ export default class GarageScene extends Phaser.Scene {
     add(this.add.text(
       440,
       248,
-      'Jump between owned garages or unlock the next workshop here.',
+      'Visit your workshops or pay to fit out the next space here.',
       {
         fontFamily: BODY_FONT,
         fontSize: '11px',

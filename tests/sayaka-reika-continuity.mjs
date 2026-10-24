@@ -49,13 +49,15 @@ test('Reika and Sayaka use the already uploaded, distinct sprite sets', () => {
 test('Sayaka starts as family friend then becomes Ginza curator then pro strategist', () => {
   const opening = CUTSCENES.openingSayakaKeys;
   assert.equal(opening.characters.left, 'sayakaFujieda');
-  assert.match(opening.pages[0].text, /father said you needed this/i);
+  assert.match(opening.pages[0].text, /Your parents say you never stop talking about cars/i);
   assert.match(opening.pages[1].text, /finally got my own car/i);
   assert.doesNotMatch(opening.pages.map(p => p.text).join(' '), /curat|strategist/i);
   const daichi = CUTSCENES.openingDaichiAfterSayaka;
   assert.equal(daichi.characters.left, 'daichiSakamoto');
-  assert.match(daichi.pages[2].text, /ex-pro driver/i);
-  assert.doesNotMatch(daichi.pages.map(p => p.text).join(' '), /Sayaka|curat|strategist/i);
+  assert.match(daichi.pages[2].text, /plenty of potential/i);
+  assert.doesNotMatch(daichi.pages.map(p=>p.text).join(' '), /ex-pro driver|racing father/i);
+  assert.match(daichi.pages.map(p=>p.text).join(' '), /Sayaka said some friends helped get it ready/i);
+  assert.doesNotMatch(daichi.pages.map(p=>p.text).join(' '), /curat|strategist|Aruken|Denzaki/i);
 
   const ginza = CUTSCENES.ginzaInvitation;
   assert.match(ginza.pages.map(p => p.text).join(' '), /curate and manage/i);
@@ -65,7 +67,8 @@ test('Sayaka starts as family friend then becomes Ginza curator then pro strateg
   assert.equal(pro.once, true);
   assert.ok(getCutsceneIds().includes('proCircuitStrategistReveal'));
   assert.equal(pro.characters.left, 'sayakaFujieda');
-  assert.match(pro.pages.map(p => p.text).join(' '), /racing-team strategist/i);
+  assert.match(pro.pages.map(p => p.text).join(' '), /helping drivers and engineers with strategy/i);
+  assert.doesNotMatch(pro.pages.map(p=>p.text).join(' '), /Aruken|Denzaki|father.{0,30}strategist/i);
   assert.match(pro.pages.map(p => p.text).join(' '), /join as your team strategist/i);
 
   const central = readFileSync('src/scenes/CentralTokyoScene.js', 'utf8');
