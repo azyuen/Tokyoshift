@@ -47,9 +47,9 @@ test('Chapter 8 invitation, Ginza identity and strategist role stay, but Aruken 
   for(const id of scenes)assert.strictEqual(CUTSCENES[id],CHAPTER08_SCENES[id],id);
   assert.equal(CUTSCENES.chapter08ManagerCall.callerId,'masatoKuroda');
   assert.equal(CUTSCENES.chapter08SayakaCall.callerId,'sayakaFujieda');
-  assert.match(content(CUTSCENES.chapter08SayakaCall),/someone else who used to charge into races/i);
+  assert.match(content(CUTSCENES.chapter08SayakaCall),/somebody else who used to charge into races/i);
   const ginza=CHAPTER08_SCENES.chapter08Ginza;
-  assert.match(content(ginza),/remarkably stubborn engineers/i);
+  assert.match(content(ginza),/rather stubborn engineers/i);
   assert.match(content(ginza),/team manager and strategist/i);
   assert.match(content(ginza),/manage this place/i);
   assert.doesNotMatch(content(ginza),/Aruken|Denzaki|From Warehouse HQ|Arkon Den/i);
