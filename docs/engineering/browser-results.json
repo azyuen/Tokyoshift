@@ -30,6 +30,32 @@
         "savedRestored": true
       },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
+      "recruitmentClass": [
+        {
+          "difficulty": "EASY",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        },
+        {
+          "difficulty": "STANDARD",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        },
+        {
+          "difficulty": "HARD",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        }
+      ],
       "dyno": {
         "state": "COMPLETE",
         "error": null,
@@ -42,8 +68,8 @@
         "opponentCharacterId": "daigoArakawa",
         "playerKW": 206,
         "opponentKW": 206,
-        "playerDistance": 444.2537304756318,
-        "opponentDistance": 441.31118567712855,
+        "playerDistance": 443.44265212735695,
+        "opponentDistance": 441.00136320851425,
         "finished": true,
         "falseStart": false
       },
@@ -79,6 +105,32 @@
         "savedRestored": true
       },
       "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
+      "recruitmentClass": [
+        {
+          "difficulty": "EASY",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        },
+        {
+          "difficulty": "STANDARD",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        },
+        {
+          "difficulty": "HARD",
+          "stockClass": "B",
+          "label": "FACTORY CLASS B / Sports",
+          "eligible": [
+            "r34"
+          ]
+        }
+      ],
       "dyno": null,
       "race": null,
       "input": "scene action handlers; automated pedal/gear input for dyno and race",

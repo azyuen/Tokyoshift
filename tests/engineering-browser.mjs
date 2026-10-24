@@ -74,6 +74,14 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
  const potentialHelp=await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('GarageScene').workshopToastObjects.find(o=>typeof o.text==='string')?.text);
  assert.match(potentialHelp,/DEVELOPMENT/);assert.match(potentialHelp,/INCLUDING CAR/);
  await page.screenshot({path:`artifacts/engineering/potential-${viewport.width}.png`});
+ const recruitmentClass=await page.evaluate(async()=>{
+  const {getCrewRecruitmentChallengeRules}=await import('./src/data/crewSystem.js');
+  const rows=['EASY','STANDARD','HARD'].map(playerDifficulty=>{
+   const r=getCrewRecruitmentChallengeRules({ownedCarIds:['r34','evo6'],carStates:{},playerDifficulty},{baseCarId:'r34'});
+   return {difficulty:playerDifficulty,stockClass:r.stockClass,label:r.powerClassLabel,eligible:r.eligibleCarIds};
+  });return rows;
+ });
+ for(const r of recruitmentClass){assert.equal(r.stockClass,'B');assert.match(r.label,/FACTORY CLASS B/);assert.deepEqual(r.eligible,['r34']);}
  let dyno=null,race=null;
  if(viewport.width===1024&&!process.env.ENGINEERING_GARAGE_ONLY){
   console.log('Garage verified; opening actual DynoScene');
@@ -98,5 +106,5 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
   await page.screenshot({path:'artifacts/engineering/race-1024.png'});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
- results.push({viewport,profileLoaded:true,park,paidService,potentialHelp,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
+ results.push({viewport,profileLoaded:true,park,paidService,potentialHelp,recruitmentClass,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
 }}finally{await browser.close();fs.writeFileSync(process.env.ENGINEERING_GARAGE_ONLY?'docs/engineering/potential-browser-results.json':'docs/engineering/browser-results.json',JSON.stringify({browser:'Chromium',phaserLocalOverride:Boolean(process.env.PHASER_LOCAL),results},null,2));}
