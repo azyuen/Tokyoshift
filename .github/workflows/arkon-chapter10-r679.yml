@@ -1,0 +1,45 @@
+name: R679 Aruken reciprocity and Porsche finale
+on:
+  push:
+    branches:
+      - main
+      - feature/arkon-r679-reciprocity-finale
+    paths:
+      - 'src/data/arkonChapter0*.js'
+      - 'src/data/arkonChapter10*.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/story/ArkonR679CheckpointMigration.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/ui/ArkonChapter10Finale.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/ui/ArkonPlayableReplay.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/arkon-chapter10-r67*.mjs'
+      - '.github/workflows/arkon-chapter10-r679.yml'
+  workflow_dispatch:
+jobs:
+  story:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check modified JavaScript
+        run: |
+          node --check src/data/arkonChapter05.js
+          node --check src/data/arkonChapter06.js
+          node --check src/data/arkonChapter10.js
+          node --check src/data/arkonChapter10Work.js
+          node --check src/state/GameState.js
+          node --check src/story/StoryScript.js
+          node --check src/story/StoryDirector.js
+          node --check src/story/ArkonR679CheckpointMigration.js
+          node --check src/ui/ArkonPlayableReplay.js
+          node --check src/ui/ArkonChapter10Finale.js
+          node --check src/scenes/RaceScene.js
+      - name: Story and save regressions
+        run: |
+          node --test tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-story-r678.mjs
