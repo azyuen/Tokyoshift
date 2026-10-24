@@ -37,7 +37,11 @@ test('The agreed dock artwork is real and no Daikoku rival is renamed',()=>{
   assert.equal(dock.cars[0].width,undefined);
   assert.equal(dock.cars[0].carId,'forester');
   assert.ok(dock.characters.some(x=>x.id==='storyDockForeman'));
-  assert.ok(dock.characters.some(x=>x.id==='arkonDen'&&x.pose==='storyMechanicCrouch'));
+  assert.ok(dock.characters.some(x=>x.id==='arkonDen'&&x.pose==='storyMechanic'));
+  const inspection=ARKON_CHAPTER_02.steps.filter(x=>x.type==='STAGE'&&
+    x.backgroundId==='meet:daikokuOpenLot:day')[1];
+  assert.ok(inspection.characters.some(x=>x.id==='arkonDen'&&
+    x.pose==='storyMechanicCrouch'));
   assert.equal(getStoryBackground(dock.backgroundId).asset.path,
     'assets/Meet/Day/daikoku_open_lot_day.png');
   assert.ok(existsSync('assets/Cars/stock/forester_stock_body.png'));
