@@ -1,5 +1,7 @@
 # Engineering overhaul status — 2026-10-16 recovery
 
+Next task (user update, 24 October): **Prepare an integrated, playable vehicle engineering build using the latest main branch, preserving all existing gameplay and save compatibility. Test it before deployment.** See NEXT_WORK_TASK.md; this takes priority over older next-step lists below.
+
 ## Verified preserved state
 - Active development head: cce86ef3f11a08faa1852e471dad23c67ae3636b.
 - Recovery handoff: checkpoint/vehicle-engineering-20261016 at ce47d7414bbabf0e020fe712be6f59ccc4014fe7.
