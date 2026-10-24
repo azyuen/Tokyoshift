@@ -7,7 +7,7 @@ import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=2026102
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
-import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261023-r655';
+import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261025-r685';
 import {getChapter05DuelCar,getChapter05DuelActor} from '../story/Chapter05MeetLayout.js?v=20261023-r670';
 
 export function showStoryStage(scene, {
@@ -396,8 +396,9 @@ export function showStoryStage(scene, {
       const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
       const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
         (Number.isFinite(Number(characterScale))?Number(characterScale):1);
-      const layer=Number(template?(portraitDepth+i):
-        (a.depth??(carInFront
+      const layer=Number(template
+        ? (a.role==='chapter01RepairSayaka'?portraitDepth-3:portraitDepth+i)
+        : (a.depth??(carInFront
           ?Math.min(portraitDepth+i,estimate?.depth??portraitDepth+i)
           :Math.max(portraitDepth+i,estimate?.depth??portraitDepth+i))));
       const sprite=addImage(a.asset,x,feet,null,height,layer,
