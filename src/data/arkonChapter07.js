@@ -4,10 +4,10 @@
 const A='arkonDen',S='sayakaFujieda';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
-const manga=(title,lines,cast={left:A,right:S})=>({
+const manga=(title,lines,cast={left:A,right:S},arkOutfit=null)=>({
   type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
     speaker,text,
-    leftPose:cast.left===A?(speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
+    leftPose:cast.left===A?(arkOutfit||(speaker==='left'?pose||'storyTalking':'storyIdle')):'idle',
     rightPose:cast.right===S?(speaker==='right'?pose||'oshiageRelaxed':'oshiageRelaxed'):'idle',
   })),
 });
@@ -27,7 +27,7 @@ const road=(venue,label,car='240z')=>stage(label,'meet:'+venue+':night',car);
 const specialist=(shop,id,caption,title,exchange)=>[
   ...stage(caption,'tuner:'+shop+':night','240z',
     [{id:A,pose:'storyMechanic'},{id,pose:'idle',role:'observer'}]),
-  manga(title,exchange,{left:A,right:id}),
+  manga(title,exchange,{left:A,right:id},'storyMechanic'),
 ];
 
 export const ARKON_CHAPTER_07={
@@ -45,12 +45,12 @@ export const ARKON_CHAPTER_07={
       say('I suppose you do look rather handsome.','oshiageHappy'),
       ark('Was that a compliment?','storySurprised'),
       say('Do not get used to it.','oshiageHappy'),
-    ]),
+    ],{left:A,right:S},'ginzaSuit'),
     ...hq('ANOTHER SIGNED CONTRACT','$SELECTED_CAR',[{id:A,pose:'storyMechanic'}]),
     manga('THE BUSINESS IS BOOMING',[
       ark('Three more commissions. I ought to be exhausted.','storyMechanic'),
       ark('Instead, I keep wondering what else we could build.','storyConfidentSmirk'),
-    ],{left:A}),
+    ],{left:A},'storyMechanic'),
     {type:'ARKON_CH7_JOB',index:0},
     ...hq('THE 240Z // A NEW PLAN'),
     manga('A CAR TO MATCH THE NAME',[
