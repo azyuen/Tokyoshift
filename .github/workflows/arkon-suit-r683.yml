@@ -1,0 +1,32 @@
+name: R683 Aruken suited manga expression audit
+on:
+  push:
+    branches: [main, fix/arkon-suit-expressions-r683]
+    paths:
+      - 'src/data/arkonSuitedMangaPose.js'
+      - 'src/data/arkonChapter07.js'
+      - 'src/data/arkonChapter08.js'
+      - 'src/data/arkonChapter09.js'
+      - 'src/data/arkonChapter10.js'
+      - 'src/data/characters.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/arkon-suited-portraits-r683.mjs'
+      - '.github/workflows/arkon-suit-r683.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          for file in src/data/characters.js src/data/arkonSuitedMangaPose.js src/ui/MangaCutscene.js src/data/arkonChapter07.js src/data/arkonChapter08.js src/data/arkonChapter09.js src/data/arkonChapter10.js tests/arkon-suited-portraits-r683.mjs; do node --check "$file"; done
+      - name: Chapter 7–10 portrait and regression tests
+        run: |
+          node --test tests/arkon-suited-portraits-r683.mjs tests/arkon-chapter07-fixes-r682.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-continuity-r681.mjs
