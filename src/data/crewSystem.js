@@ -212,17 +212,6 @@ function normaliseCrewRecruitDifficulty(source) {
   return ['EASY', 'STANDARD', 'HARD'].includes(key) ? key : 'STANDARD';
 }
 
-function getCrewRecruitPowerClass(powerKW) {
-  const power = Math.max(0, Number(powerKW) || 0);
-  const minKW = Math.max(0, power - CREW_RECRUIT_POWER_TOLERANCE_KW);
-  const maxExclusiveKW = power + CREW_RECRUIT_POWER_TOLERANCE_KW + 0.001;
-  return {
-    minKW,
-    maxExclusiveKW,
-    label: 'WITHIN ±' + CREW_RECRUIT_POWER_TOLERANCE_KW + ' KW OF ' + power + ' KW',
-  };
-}
-
 // Saved challenge identity must still match the canonical regional roster.
 export function isValidCrewRecruitChallenge(challenge) {
   return Boolean(challenge?.active &&
@@ -236,24 +225,11 @@ export function getCrewRecruitmentChallengeRules(
 ) {
   const difficulty = normaliseCrewRecruitDifficulty(source);
   const baseCarId = String(challenge?.baseCarId || '');
-  const states = value(source, 'carStates', {}) || {};
-  const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
-    .filter(carId => cars[carId] && !cars[carId].crewLoan);
-
-  // Both cars must be genuinely factory stock and within ±40 kW of the
-  // recruit's factory output. Easy mode lowers the rival's driving skill.
-  // Cosmetic paint/rims do not invalidate an otherwise stock performance build.
-  const opponentPerformance = baseCarId
-    ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
-    : null;
-  const powerClass = getCrewRecruitPowerClass(
-    opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
-  );
-  const eligibleCarIds = getStockCrewChallengeCarIds(source).filter(carId => {
-    const performance = getVehiclePerformance(carId, states[carId] || {});
-    const power = Number(performance?.car?.powerKW || 0);
-    return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
-  });
+  // Difficulty changes the driver, never the factory-class requirement.
+  const stockClass = isRegularRecruitCar(cars[baseCarId]) ? stockClassFor(cars[baseCarId]) : null;
+  const powerClass = { label: stockClass ? 'FACTORY CLASS ' + STOCK_CLASSES[stockClass] : 'NO ELIGIBLE FACTORY CLASS' };
+  const eligibleCarIds = getStockCrewChallengeCarIds(source).filter(carId =>
+    stockClass && stockClassFor(cars[carId]) === stockClass);
 
   return {
     playerDifficulty: difficulty,
@@ -265,6 +241,7 @@ export function getCrewRecruitmentChallengeRules(
     aiRating: difficulty === 'HARD' ? 5
       : difficulty === 'STANDARD' ? 4 : 2,
     carRule: 'STOCK',
+    stockClass,
     powerClass,
     powerClassLabel: powerClass.label,
     eligibleCarIds,

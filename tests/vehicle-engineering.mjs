@@ -44,10 +44,10 @@ test('stock eligibility rejects active/legacy performance and permits inactive p
  assert.ok(isPerformanceStockState({stock:false,paintColor:123,visualMods:{rims:3},savedPresets:[stage(3)]}));
  for(const state of [{tuneLevel:1},{engineTuning:{internals:'1'}},{tuning:{engine:1}},{drivetrainTuning:{launchSetup:1}},{chassisTuning:{tyres:1}},{exhaustNosTuning:{nosKit:1}},{nosInstalled:true},{nosPower:20},{nosShots:1},{nosCapacitySeconds:1},{stage3Calibration:{ecuBias:-1}},{specialistTuning:['test']},{immutable:true},{collector:true}])assert.equal(isPerformanceStockState(state),false,JSON.stringify(state));
 });
-test('all 42 models preserve current main stock recruitment tolerance on all difficulties',()=>{
+test('all 42 models require the same fixed stock class on all difficulties',()=>{
  const source={ownedCarIds:[...ids,...Object.keys(cars).filter(id=>cars[id].collector)],carStates:{}};
  for(const difficulty of ['EASY','STANDARD','HARD'])for(const id of carOrder){const r=getCrewRecruitmentChallengeRules({...source,playerDifficulty:difficulty},{baseCarId:id});assert.equal(r.carRule,'STOCK');assert.ok(r.eligibleCarIds.length>=2,id);
-  for(const candidate of r.eligibleCarIds){assert.ok(carOrder.includes(candidate));assert.ok(Math.abs(getBuiltCar(candidate,{}).car.powerKW-getBuiltCar(id,{}).car.powerKW)<=40);}
+  for(const candidate of r.eligibleCarIds){assert.ok(carOrder.includes(candidate));assert.equal(stockClassFor(cars[candidate]),stockClassFor(cars[id]));}
   assert.ok(!getCrewRecruitmentChallengeRules({...source,playerDifficulty:difficulty,carStates:{[id]:{tuneLevel:1}}},{baseCarId:id}).eligibleCarIds.includes(id));
  }
 });
@@ -73,4 +73,12 @@ test('actual profile migration preserves parked hardware, copies, presets and ca
  registerOwnedCarInstance('r34__copy_save','r34');
  const s={...createDefaultGameState(),firstName:'Engineering',lastName:'Fixture',wins:90,cash:123456,ownedCarIds:['ae86','r34__copy_save'],selectedCarId:'r34__copy_save',carStates:{ae86:stage(1),'r34__copy_save':parkPerformanceParts({...stage(3),savedPresets:[stage(2)],stage3Calibration:{ecuBias:-1}})}};
  const r=normaliseState(JSON.parse(JSON.stringify(s)));assert.equal(r.wins,90);assert.equal(r.cash,123456);assert.deepEqual(r.carStates['r34__copy_save'].parkedPerformanceParts,s.carStates['r34__copy_save'].parkedPerformanceParts);assert.deepEqual(r.carStates['r34__copy_save'].savedPresets,[stage(2)]);assert.equal(getBuiltCar('r34__copy_save',r.carStates['r34__copy_save']).car.powerKW,206);assert.ok(getBuiltCar('r34__copy_save',restorePerformanceParts(r.carStates['r34__copy_save'])).car.powerKW>400);
+});
+
+test('same power does not bypass stock class and invalid rivals fail closed',()=>{
+ const source={ownedCarIds:['r34','evo6'],carStates:{}};
+ const r=getCrewRecruitmentChallengeRules(source,{baseCarId:'r34'});
+ assert.deepEqual(r.eligibleCarIds,['r34']);
+ assert.equal(r.stockClass,'B');
+ assert.deepEqual(getCrewRecruitmentChallengeRules(source,{baseCarId:'missing'}).eligibleCarIds,[]);
 });

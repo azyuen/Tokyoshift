@@ -1941,7 +1941,7 @@ export default class MeetScene extends Phaser.Scene {
         speakerLabel: 'CHOOSE A CAR TO RACE',
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'Recruitment requires a factory-stock car within 40 kW of the rival. ' +
+        text: 'Recruitment requires a factory-stock car in ' + rules.powerClassLabel + '. ' +
           'Choose one from your garage, or acquire one and come back later.',
       }],
       finalActionLabel: 'READY TO RACE',

@@ -1,0 +1,407 @@
+TAP version 13
+# {"models":43,"coldMs":140.488038,"warmMs":3.367876000000024}
+# Subtest: PI cache distinguishes all transmission difficulty parameters
+ok 1 - PI cache distinguishes all transmission difficulty parameters
+  ---
+  duration_ms: 67.439259
+  type: 'test'
+  ...
+# Subtest: parking parts never removes their resale contribution or counts duplicates twice
+ok 2 - parking parts never removes their resale contribution or counts duplicates twice
+  ---
+  duration_ms: 9.909108
+  type: 'test'
+  ...
+# Subtest: saved core simulations are complete and standard stages never regress
+ok 3 - saved core simulations are complete and standard stages never regress
+  ---
+  duration_ms: 9.27291
+  type: 'test'
+  ...
+# Subtest: PI cold/warm timing is recorded without imposing a machine-specific gate
+ok 4 - PI cold/warm timing is recorded without imposing a machine-specific gate
+  ---
+  duration_ms: 161.497066
+  type: 'test'
+  ...
+# Subtest: Warehouse stored kits coexist with factory parking and retain resale value
+ok 5 - Warehouse stored kits coexist with factory parking and retain resale value
+  ---
+  duration_ms: 57.87236
+  type: 'test'
+  ...
+# Subtest: reconciled source keeps one module identity and upstream recruitment safeguards
+ok 6 - reconciled source keeps one module identity and upstream recruitment safeguards
+  ---
+  duration_ms: 9.825594
+  type: 'test'
+  ...
+# Subtest: recruitment identity follows all 42 canonical character/car/region assignments
+ok 7 - recruitment identity follows all 42 canonical character/car/region assignments
+  ---
+  duration_ms: 0.844558
+  type: 'test'
+  ...
+# Subtest: original specialist and tier fee required
+ok 8 - original specialist and tier fee required
+  ---
+  duration_ms: 1.137954
+  type: 'test'
+  ...
+# Subtest: complete reversible tuning snapshot preserves purchases and cosmetics
+ok 9 - complete reversible tuning snapshot preserves purchases and cosmetics
+  ---
+  duration_ms: 1.426224
+  type: 'test'
+  ...
+# Subtest: Daichi handles ordinary workshop upgrades at Warehouse HQ
+ok 10 - Daichi handles ordinary workshop upgrades at Warehouse HQ
+  ---
+  duration_ms: 1.601305
+  type: 'test'
+  ...
+# Subtest: existing stored kits are never overwritten
+ok 11 - existing stored kits are never overwritten
+  ---
+  duration_ms: 0.183213
+  type: 'test'
+  ...
+# Subtest: recruitment is stock-only and within the factory class on Easy
+ok 12 - recruitment is stock-only and within the factory class on Easy
+  ---
+  duration_ms: 0.73183
+  type: 'test'
+  ...
+# Subtest: 43 canonical engines have valid stock power, torque, gearing and classes
+ok 13 - 43 canonical engines have valid stock power, torque, gearing and classes
+  ---
+  duration_ms: 32.103613
+  type: 'test'
+  ...
+# Subtest: gdb progression, display, dyno and immutable input
+ok 14 - gdb progression, display, dyno and immutable input
+  ---
+  duration_ms: 7.334534
+  type: 'test'
+  ...
+# Subtest: gf8 progression, display, dyno and immutable input
+ok 15 - gf8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 5.265672
+  type: 'test'
+  ...
+# Subtest: s15 progression, display, dyno and immutable input
+ok 16 - s15 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.956052
+  type: 'test'
+  ...
+# Subtest: starion progression, display, dyno and immutable input
+ok 17 - starion progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.693852
+  type: 'test'
+  ...
+# Subtest: fto progression, display, dyno and immutable input
+ok 18 - fto progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.515415
+  type: 'test'
+  ...
+# Subtest: mx5 progression, display, dyno and immutable input
+ok 19 - mx5 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.651768
+  type: 'test'
+  ...
+# Subtest: sa22c progression, display, dyno and immutable input
+ok 20 - sa22c progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.188338
+  type: 'test'
+  ...
+# Subtest: mx6 progression, display, dyno and immutable input
+ok 21 - mx6 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.472962
+  type: 'test'
+  ...
+# Subtest: prelude progression, display, dyno and immutable input
+ok 22 - prelude progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.386634
+  type: 'test'
+  ...
+# Subtest: sw20 progression, display, dyno and immutable input
+ok 23 - sw20 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.802815
+  type: 'test'
+  ...
+# Subtest: soarer progression, display, dyno and immutable input
+ok 24 - soarer progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.4844
+  type: 'test'
+  ...
+# Subtest: forester progression, display, dyno and immutable input
+ok 25 - forester progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.796385
+  type: 'test'
+  ...
+# Subtest: svx progression, display, dyno and immutable input
+ok 26 - svx progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.903915
+  type: 'test'
+  ...
+# Subtest: xt progression, display, dyno and immutable input
+ok 27 - xt progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.229711
+  type: 'test'
+  ...
+# Subtest: ae86 progression, display, dyno and immutable input
+ok 28 - ae86 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.407976
+  type: 'test'
+  ...
+# Subtest: ef progression, display, dyno and immutable input
+ok 29 - ef progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.957294
+  type: 'test'
+  ...
+# Subtest: ek9 progression, display, dyno and immutable input
+ok 30 - ek9 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.623126
+  type: 'test'
+  ...
+# Subtest: s2000 progression, display, dyno and immutable input
+ok 31 - s2000 progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.494935
+  type: 'test'
+  ...
+# Subtest: fc3s progression, display, dyno and immutable input
+ok 32 - fc3s progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.381888
+  type: 'test'
+  ...
+# Subtest: rx7fd progression, display, dyno and immutable input
+ok 33 - rx7fd progression, display, dyno and immutable input
+  ---
+  duration_ms: 4.244161
+  type: 'test'
+  ...
+# Subtest: rx8 progression, display, dyno and immutable input
+ok 34 - rx8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.955611
+  type: 'test'
+  ...
+# Subtest: galant progression, display, dyno and immutable input
+ok 35 - galant progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.211553
+  type: 'test'
+  ...
+# Subtest: evo5 progression, display, dyno and immutable input
+ok 36 - evo5 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.494154
+  type: 'test'
+  ...
+# Subtest: evo6 progression, display, dyno and immutable input
+ok 37 - evo6 progression, display, dyno and immutable input
+  ---
+  duration_ms: 3.022421
+  type: 'test'
+  ...
+# Subtest: gc8 progression, display, dyno and immutable input
+ok 38 - gc8 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.693772
+  type: 'test'
+  ...
+# Subtest: r32 progression, display, dyno and immutable input
+ok 39 - r32 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.682615
+  type: 'test'
+  ...
+# Subtest: r34 progression, display, dyno and immutable input
+ok 40 - r34 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.976002
+  type: 'test'
+  ...
+# Subtest: 3000gt progression, display, dyno and immutable input
+ok 41 - 3000gt progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.719971
+  type: 'test'
+  ...
+# Subtest: a60 progression, display, dyno and immutable input
+ok 42 - a60 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.244492
+  type: 'test'
+  ...
+# Subtest: jza80 progression, display, dyno and immutable input
+ok 43 - jza80 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.354927
+  type: 'test'
+  ...
+# Subtest: nsx progression, display, dyno and immutable input
+ok 44 - nsx progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.527824
+  type: 'test'
+  ...
+# Subtest: z32 progression, display, dyno and immutable input
+ok 45 - z32 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.855312
+  type: 'test'
+  ...
+# Subtest: z33 progression, display, dyno and immutable input
+ok 46 - z33 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.744467
+  type: 'test'
+  ...
+# Subtest: 240z progression, display, dyno and immutable input
+ok 47 - 240z progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.644438
+  type: 'test'
+  ...
+# Subtest: crx progression, display, dyno and immutable input
+ok 48 - crx progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.89421
+  type: 'test'
+  ...
+# Subtest: dc2 progression, display, dyno and immutable input
+ok 49 - dc2 progression, display, dyno and immutable input
+  ---
+  duration_ms: 8.456134
+  type: 'test'
+  ...
+# Subtest: eclipse progression, display, dyno and immutable input
+ok 50 - eclipse progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.352584
+  type: 'test'
+  ...
+# Subtest: familia progression, display, dyno and immutable input
+ok 51 - familia progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.193246
+  type: 'test'
+  ...
+# Subtest: 180sx progression, display, dyno and immutable input
+ok 52 - 180sx progression, display, dyno and immutable input
+  ---
+  duration_ms: 6.471308
+  type: 'test'
+  ...
+# Subtest: st205 progression, display, dyno and immutable input
+ok 53 - st205 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.337571
+  type: 'test'
+  ...
+# Subtest: jzx100 progression, display, dyno and immutable input
+ok 54 - jzx100 progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.402628
+  type: 'test'
+  ...
+# Subtest: b4rsk progression, display, dyno and immutable input
+ok 55 - b4rsk progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.469919
+  type: 'test'
+  ...
+# Subtest: magna progression, display, dyno and immutable input
+ok 56 - magna progression, display, dyno and immutable input
+  ---
+  duration_ms: 2.832739
+  type: 'test'
+  ...
+# Subtest: all individual workshop upgrade paths produce valid builds
+ok 57 - all individual workshop upgrade paths produce valid builds
+  ---
+  duration_ms: 412.739844
+  type: 'test'
+  ...
+# Subtest: supporting hardware controls boost; small NA conversions retain lower absolute power than RB26/2JZ builds
+ok 58 - supporting hardware controls boost; small NA conversions retain lower absolute power than RB26/2JZ builds
+  ---
+  duration_ms: 24.202615
+  type: 'test'
+  ...
+# Subtest: stock eligibility rejects active/legacy performance and permits inactive presets/cosmetics
+ok 59 - stock eligibility rejects active/legacy performance and permits inactive presets/cosmetics
+  ---
+  duration_ms: 0.637289
+  type: 'test'
+  ...
+# Subtest: all 42 models require the same fixed stock class on all difficulties
+ok 60 - all 42 models require the same fixed stock class on all difficulties
+  ---
+  duration_ms: 14.852049
+  type: 'test'
+  ...
+# Subtest: duplicate instances retain classes but cannot bypass NOS restrictions
+ok 61 - duplicate instances retain classes but cannot bypass NOS restrictions
+  ---
+  duration_ms: 1.347967
+  type: 'test'
+  ...
+# Subtest: parking/restoring preserves purchases, calibration and saved presets through JSON
+ok 62 - parking/restoring preserves purchases, calibration and saved presets through JSON
+  ---
+  duration_ms: 0.941392
+  type: 'test'
+  ...
+# Subtest: PI matches independent 120Hz runs within 3 percent
+ok 63 - PI matches independent 120Hz runs within 3 percent
+  ---
+  duration_ms: 266.404368
+  type: 'test'
+  ...
+# Subtest: catalogue data remain immutable after builds
+ok 64 - catalogue data remain immutable after builds
+  ---
+  duration_ms: 2.144774
+  type: 'test'
+  ...
+# Subtest: actual profile migration preserves parked hardware, copies, presets and career state
+ok 65 - actual profile migration preserves parked hardware, copies, presets and career state
+  ---
+  duration_ms: 6.228447
+  type: 'test'
+  ...
+# Subtest: same power does not bypass stock class and invalid rivals fail closed
+ok 66 - same power does not bypass stock class and invalid rivals fail closed
+  ---
+  duration_ms: 0.20832
+  type: 'test'
+  ...
+1..66
+# tests 66
+# suites 0
+# pass 66
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1056.496632

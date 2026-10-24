@@ -17,8 +17,8 @@
       ],
       "championshipCash": 838500,
       "shortfallForSecondChoice": 1706500,
-      "plazaWinsFromUnspentPrizes": 2,
-      "plazaWinsFromEntryFeeOnly": 3
+      "plazaWinsFromUnspentPrizes": 7,
+      "plazaWinsFromEntryFeeOnly": 10
     },
     {
       "difficulty": "EASY",
@@ -35,8 +35,8 @@
       ],
       "championshipCash": 838500,
       "shortfallForSecondChoice": 936500,
-      "plazaWinsFromUnspentPrizes": 2,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 4,
+      "plazaWinsFromEntryFeeOnly": 7
     },
     {
       "difficulty": "EASY",
@@ -54,7 +54,7 @@
       "championshipCash": 838500,
       "shortfallForSecondChoice": 216500,
       "plazaWinsFromUnspentPrizes": 1,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromEntryFeeOnly": 4
     },
     {
       "difficulty": "EASY",
@@ -71,8 +71,8 @@
       ],
       "championshipCash": 838500,
       "shortfallForSecondChoice": 386500,
-      "plazaWinsFromUnspentPrizes": 1,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 2,
+      "plazaWinsFromEntryFeeOnly": 5
     },
     {
       "difficulty": "STANDARD",
@@ -89,8 +89,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 2330000,
-      "plazaWinsFromUnspentPrizes": 4,
-      "plazaWinsFromEntryFeeOnly": 5
+      "plazaWinsFromUnspentPrizes": 14,
+      "plazaWinsFromEntryFeeOnly": 17
     },
     {
       "difficulty": "STANDARD",
@@ -107,8 +107,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 1430000,
-      "plazaWinsFromUnspentPrizes": 3,
-      "plazaWinsFromEntryFeeOnly": 3
+      "plazaWinsFromUnspentPrizes": 9,
+      "plazaWinsFromEntryFeeOnly": 12
     },
     {
       "difficulty": "STANDARD",
@@ -125,8 +125,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 580000,
-      "plazaWinsFromUnspentPrizes": 1,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 4,
+      "plazaWinsFromEntryFeeOnly": 7
     },
     {
       "difficulty": "STANDARD",
@@ -143,8 +143,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 780000,
-      "plazaWinsFromUnspentPrizes": 2,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 5,
+      "plazaWinsFromEntryFeeOnly": 8
     },
     {
       "difficulty": "HARD",
@@ -161,8 +161,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 2330000,
-      "plazaWinsFromUnspentPrizes": 4,
-      "plazaWinsFromEntryFeeOnly": 5
+      "plazaWinsFromUnspentPrizes": 14,
+      "plazaWinsFromEntryFeeOnly": 17
     },
     {
       "difficulty": "HARD",
@@ -179,8 +179,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 1430000,
-      "plazaWinsFromUnspentPrizes": 3,
-      "plazaWinsFromEntryFeeOnly": 3
+      "plazaWinsFromUnspentPrizes": 9,
+      "plazaWinsFromEntryFeeOnly": 12
     },
     {
       "difficulty": "HARD",
@@ -197,8 +197,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 580000,
-      "plazaWinsFromUnspentPrizes": 1,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 4,
+      "plazaWinsFromEntryFeeOnly": 7
     },
     {
       "difficulty": "HARD",
@@ -215,8 +215,8 @@
       ],
       "championshipCash": 645000,
       "shortfallForSecondChoice": 780000,
-      "plazaWinsFromUnspentPrizes": 2,
-      "plazaWinsFromEntryFeeOnly": 2
+      "plazaWinsFromUnspentPrizes": 5,
+      "plazaWinsFromEntryFeeOnly": 8
     }
   ]
 }

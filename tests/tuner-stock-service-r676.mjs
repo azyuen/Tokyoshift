@@ -55,7 +55,7 @@ test('existing stored kits are never overwritten', () => {
   assert.equal(getStockTuneServiceAction(generic).action,null);
   assert.equal(applyStockTuneService(generic),null);
 });
-test('recruitment is stock-only and within +/-40kW on Easy', () => {
+test('recruitment is stock-only and within the factory class on Easy', () => {
   const garage={ownedCarIds:['ek9','fc3s','gc8','rx7fd'],playerDifficulty:'EASY',
     carStates:{gc8:{tuning:{engine:2}},rx7fd:{nosInstalled:true}}};
   const source={get:key=>garage[key]};
