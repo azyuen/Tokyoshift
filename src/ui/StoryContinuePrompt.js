@@ -22,7 +22,7 @@ export function showStoryContinuePrompt(scene,{
   const stage={x:24,y:92,w:1138,h:528};
   // Responsive plate dimensions: labels like "CHAPTER 01 // FIRST
   // IMPRESSIONS" must fit with padding on narrow iPad stage layouts.
-  const w=Math.min(365,stage.w-36),h=82;
+  const w=Math.min(455,stage.w-36),h=82;
   const x=Math.round(stage.x+stage.w-w/2-16);
   const y=Math.round(stage.y+stage.h-h/2-15);
   const plate=add(scene.add.graphics().setDepth(depth+1).setScrollFactor(0));
@@ -38,9 +38,12 @@ export function showStoryContinuePrompt(scene,{
   // Phaser sizes text after measuring glyph widths; shrink any unexpectedly
   // long translations instead of bleeding outside the parallelogram.
   if(title.width>w-65)title.setFontSize('8px');
-  if(caption)add(scene.add.text(x,y+19,String(caption),{
+  // The button already belongs to Aruken's Story; display the chapter title
+  // alone, not a redundant ARUKEN DENZAKI prefix on every scene prompt.
+  const shortCaption=String(caption||'').replace(/^ARUKEN DENZAKI\s*\/\/\s*/i,'');
+  if(shortCaption)add(scene.add.text(x,y+19,shortCaption,{
     fontFamily:BODY,fontSize:'11px',color:'#b9e6ec',align:'center',
-    wordWrap:{width:w-76,useAdvancedWrap:true},
+    wordWrap:{width:w-88,useAdvancedWrap:true},
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
   const hit=add(scene.add.rectangle(x,y,w,h,0xffffff,.001)
     .setDepth(depth+3).setScrollFactor(0).setInteractive({useHandCursor:true}));
