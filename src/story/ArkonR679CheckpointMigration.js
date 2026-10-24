@@ -22,7 +22,7 @@ export function migrateArkonR679Checkpoint(compiled,checkpoint,registry){
       // Yokohama scene referring to a sale that never occurred.
       index=32;
     }else{
-      index+=index>=56?15:index>=45?10:index>=32?9:0;
+      index+=index>=56?13:index>=45?10:index>=32?9:0;
     }
   }
   if(!Number.isInteger(index)||index<0||

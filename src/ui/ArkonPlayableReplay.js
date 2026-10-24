@@ -108,6 +108,8 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter10FeesEarned',0);
   registry.set('arkonStoryChapter10Settlement',null);
   registry.set('arkonStoryChapter10ZSale',null);
+  registry.set('arkonStoryChapter10Cruise',null);
+  registry.set('arkonStoryChapter10CruiseFinished',false);
   registry.set('arkonStoryChapter10Race',null);
   registry.set('arkonStoryChapter10RaceResult',null);
   registry.set('arkonStoryChapter10RaceDone',false);

@@ -125,6 +125,8 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter10FeesEarned: 0,
     arkonStoryChapter10Settlement: null,
     arkonStoryChapter10ZSale: null,
+    arkonStoryChapter10Cruise: null,
+    arkonStoryChapter10CruiseFinished: false,
     arkonStoryChapter10Race: null,
     arkonStoryChapter10RaceResult: null,
     arkonStoryChapter10RaceDone: false,
@@ -1347,6 +1349,10 @@ export function normaliseState(input = {}) {
       ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter10ProjectsDone)||0))):0,
     arkonStoryChapter10FeesEarned: storyMode
       ?Math.max(0,Math.floor(Number(input.arkonStoryChapter10FeesEarned)||0)):0,
+    arkonStoryChapter10Cruise: storyMode && input.arkonStoryChapter10Cruise?.active
+      ?clonePlain(input.arkonStoryChapter10Cruise):null,
+    arkonStoryChapter10CruiseFinished: storyMode &&
+      Boolean(input.arkonStoryChapter10CruiseFinished),
     arkonStoryChapter10ZSale: storyMode && input.arkonStoryChapter10ZSale?.status==='sold'
       ?clonePlain(input.arkonStoryChapter10ZSale):null,
     arkonStoryChapter10Settlement: storyMode && input.arkonStoryChapter10Settlement &&
@@ -1833,6 +1839,8 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter10FeesEarned: Number(registry.get('arkonStoryChapter10FeesEarned')||0),
     arkonStoryChapter10Settlement: registry.get('arkonStoryChapter10Settlement')||null,
     arkonStoryChapter10ZSale: registry.get('arkonStoryChapter10ZSale')||null,
+    arkonStoryChapter10Cruise: registry.get('arkonStoryChapter10Cruise')||null,
+    arkonStoryChapter10CruiseFinished: Boolean(registry.get('arkonStoryChapter10CruiseFinished')),
     arkonStoryChapter10Race: registry.get('arkonStoryChapter10Race')||null,
     arkonStoryChapter10RaceResult: registry.get('arkonStoryChapter10RaceResult')||null,
     arkonStoryChapter10RaceDone: Boolean(registry.get('arkonStoryChapter10RaceDone')),
