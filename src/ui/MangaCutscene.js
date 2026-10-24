@@ -18,6 +18,7 @@ import {
 import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261023-r664';
 import { applyStoryDialogueTypography } from './StoryDialogueTypography.js?v=20261023-r658';
+import { resolveArkonSuitedMangaPose } from '../data/arkonSuitedMangaPose.js?v=20261025-r683';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -169,8 +170,7 @@ function queueCharacterAssets(scene, characterRefs, playerCharacterId, context =
         const token = pageCharacterToken(context.definition, page, side);
         const id = resolveCharacterToken(token, context);
         if (!id || !characters[id]) continue;
-        const pose = page?.[side + 'Pose'] ||
-          (page.speaker === side ? page.pose : null) || 'idle';
+        const pose = desiredPose(page,side,'idle',id);
         const asset = getCharacterProfileTexture(id, pose, {
           rivalContext: tokenUsesPlayerSubstitute(token, context),
           playerCharacterId,
@@ -391,12 +391,15 @@ function showIntroCard(controller) {
   });
 }
 
-function desiredPose(page, side, currentPose) {
+function desiredPose(page, side, currentPose, characterId = null) {
   const explicit = page?.[side + 'Pose'];
-  if (explicit) return explicit;
-
-  if (page?.pose && page?.speaker === side) return page.pose;
-  return currentPose || 'idle';
+  const pose = explicit ||
+    (page?.pose && page?.speaker === side ? page.pose : null) ||
+    currentPose || 'idle';
+  // ginzaSuit is the standing body sprite. In a manga portrait, use the
+  // matching suited Dev expression instead: talking or quietly listening.
+  // Explicit devAngry/devBlushing/devNervous/devSad are kept unchanged.
+  return resolveArkonSuitedMangaPose(characterId,pose,page?.speaker===side);
 }
 
 function desiredDimmed(speaker, side) {
@@ -921,7 +924,7 @@ function renderPage(controller, pageIndex, firstPage = false) {
     const token = pageCharacterToken(definition, page, side);
     const characterId = resolveCharacterToken(token, context);
     const rivalContext = tokenUsesPlayerSubstitute(token, context);
-    const pose = desiredPose(page, side, current?.pose || 'idle');
+    const pose = desiredPose(page, side, current?.pose || 'idle', characterId);
     const dimmed = desiredDimmed(page.speaker, side);
     replaceActorProfile(
       controller,
