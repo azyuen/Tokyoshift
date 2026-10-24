@@ -6,7 +6,7 @@ import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER,
   getDrivetrainTuning,getChassisTuning,getExhaustNosTuning} from './secondaryTuning.js?v=20261008-r428';
 import {getArkonCustomerJob} from './arkonChapter03Jobs.js?v=20261023-r660';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261024-r675';
-import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js?v=20261015-r521';
+import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js?v=20261025-r684';
 
 export const CH7_HERO_ID='arkonLibertyWalk240z';
 export const CH7_JOB_FEES=Object.freeze([1100000,1300000,1500000]);
