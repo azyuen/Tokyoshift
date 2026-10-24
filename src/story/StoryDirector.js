@@ -34,7 +34,8 @@ import {startArkonCh9Race,finishArkonCh9Race,recordArkonCh9Refusal}
   from '../data/arkonChapter09Races.js?v=20261023-r673';
 import {recordArkonCh10Project,startArkonCh10Race,finishArkonCh10Race,
   openArkonCh10Ginza,recordArkonCh10Investment,prepareArkonCh10Yokohama,
-  settleArkonCh10Dispute,sellArkonCh10LibertyWalk} from '../data/arkonChapter10Work.js?v=20261024-r679';
+  settleArkonCh10Dispute,sellArkonCh10LibertyWalk,
+  startArkonCh10PorscheCruise,finishArkonCh10PorscheCruise} from '../data/arkonChapter10Work.js?v=20261024-r679';
 import {ARKON_CH10_PROJECTS} from '../data/arkonChapter10Work.js?v=20261024-r679';
 import {showArkonCh10Restoration} from '../ui/ArkonChapter10Restoration.js?v=20261023-r674';
 import {showArkonChapter10Finale} from '../ui/ArkonChapter10Finale.js?v=20261023-r674';
@@ -205,6 +206,17 @@ export class StoryDirector {
        !scene._pendingSafeSceneStart){
       queueSafeSceneStart(scene,'RaceScene');
       return false;
+    }
+    if(checkpoint.id==='arkonChapter10' &&
+       scene.registry?.get?.('arkonStoryChapter10Cruise')?.active &&
+       !scene.registry.get('arkonStoryChapter10Cruise')?.completed &&
+       sceneName(scene)!=='RaceScene' && !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'RaceScene');return false;
+    }
+    if(checkpoint.id==='arkonChapter10' &&
+       scene.registry?.get?.('arkonStoryChapter10Cruise')?.completed &&
+       sceneName(scene)!=='MeetScene' && !scene._pendingSafeSceneStart){
+      queueSafeSceneStart(scene,'MeetScene');return false;
     }
     if(checkpoint.id==='arkonChapter10' &&
        scene.registry?.get?.('arkonStoryChapter10Race')?.active &&
@@ -780,6 +792,25 @@ export class StoryDirector {
              sceneName(scene)!=='MeetScene' ||
              !finishArkonCh10Race(scene.registry)){
             this.error='CHAPTER 10 FRIENDLY RACE RESULT NOT RECORDED';return;
+          }
+          saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH10_DRIVE'){
+          if(this.session.id!=='arkonChapter10' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             !startArkonCh10PorscheCruise(scene.registry)){
+            this.error='CHAPTER 10 PORSCHE NIGHT DRIVE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='CHAPTER 10 PORSCHE TRANSITION FAILED';return;
+          }
+          this.advance();this.wait={kind:'transition',target:'RaceScene',origin:scene};return;
+        }
+        if(type==='ARKON_CH10_DRIVE_RETURN'){
+          if(sceneName(scene)!=='MeetScene'||
+             !finishArkonCh10PorscheCruise(scene.registry)){
+            this.error='CHAPTER 10 PORSCHE NIGHT DRIVE NOT FINISHED';return;
           }
           saveSessionState(scene.registry);this.advance();continue;
         }

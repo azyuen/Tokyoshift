@@ -207,3 +207,52 @@ export function sellArkonCh10LibertyWalk(s){
     'resolved-with-advisers; Z-sold; workshop-retained');
   return true;
 }
+
+
+// Temporarily drive Sayaka's gifted Porsche as a scenic, non-race chapter
+// vehicle. Never grant it to Aruken's garage or the Career player.
+export function startArkonCh10PorscheCruise(s){
+  const gifted=read(s,'arkonStoryRwbProject');
+  if(!eligible(s)||!read(s,'arkonStoryCareerSeed')||
+      !read(s,'arkonStoryGinzaPartnership')||
+      read(s,'arkonStoryChapter10ZSale')?.status!=='sold' ||
+      !gifted?.gifted||!gifted.roadworthy||!cars.rwbStellaPorsche||
+      read(s,'arkonStoryChapter10Cruise')?.active||
+      read(s,'arkonStoryChapter10CruiseFinished'))return false;
+  const prior=Object.fromEntries(FIELDS.map(k=>[k,read(s,k)??null]));
+  write(s,'arkonStoryChapter10Cruise',{
+    active:true,completed:false,prior,
+    previousSelected:read(s,'selectedCarId'),
+    previousPreferred:read(s,'preferredCarId'),
+  });
+  write(s,'selectedCarId','rwbStellaPorsche');
+  write(s,'preferredCarId','rwbStellaPorsche');
+  for(const [k,v] of Object.entries({
+    selectedRaceCategory:'ARKON_CH10_RWB_CRUISE',
+    selectedRaceType:'Roll Race',selectedRaceDistanceM:804.672,
+    selectedRaceDeal:'STORY',selectedRaceStake:0,
+    selectedRaceSpecialChallenge:false,selectedRaceMeetOffer:null,
+    selectedOpponentCarId:'ae86',
+    selectedOpponentCharacterId:'storyDaigoKirishima',
+    selectedOpponentEncounterRating:1,selectedOpponentEncounterAi:null,
+    selectedOpponentBuildState:null,selectedOpponentBuildRating:1,
+    selectedOpponentDifficulty:'STANDARD',selectedOpponentPaintColor:null,
+    selectedRacePlayerCharacterId:'arkonDen',raceReturnScene:'MeetScene',
+    raceTimeOfDay:'night',raceDistrict:'YOKOHAMA',
+    raceLocationLabel:'CHAPTER 10 // SAYAKA DRIVING // NO RACE',
+  }))write(s,k,v);
+  return true;
+}
+export function finishArkonCh10PorscheCruise(s){
+  const cruise=read(s,'arkonStoryChapter10Cruise');
+  if(!eligible(s)||!cruise?.active||!cruise.completed)return false;
+  const owned=read(s,'ownedCarIds')||[];
+  const selected=[cruise.previousSelected,cruise.previousPreferred,...owned]
+    .find(id=>owned.includes(id)&&cars[id])||null;
+  FIELDS.forEach(k=>write(s,k,cruise.prior?.[k]??null));
+  write(s,'selectedCarId',selected);
+  write(s,'preferredCarId',selected);
+  write(s,'arkonStoryChapter10Cruise',null);
+  write(s,'arkonStoryChapter10CruiseFinished',true);
+  return true;
+}
