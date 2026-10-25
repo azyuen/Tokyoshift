@@ -127,7 +127,7 @@
         </div>
       </div>
     </div>
-    <div id="build-stamp">ENGINEERING PREVIEW</div>
+    <div id="build-stamp">ENGINEERING PREVIEW 3</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -186,11 +186,12 @@
   </script>
   <script src="/Tokyoshift/engineering-preview/isolation.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+  <script type="importmap">{"imports":{"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js":"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js?regional=3","/Tokyoshift/engineering-preview/src/data/tunerShops.js":"/Tokyoshift/engineering-preview/src/data/tunerShops.js?regional=3","/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js":"/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js?regional=3","/Tokyoshift/engineering-preview/src/vehicles/Engine.js":"/Tokyoshift/engineering-preview/src/vehicles/Engine.js?regional=3"}}</script>
   <script type="module">
     const entry = new URL('/Tokyoshift/engineering-preview/src/main.js', location.origin);
-    entry.searchParams.set('preview', '2');
+    entry.searchParams.set('preview', '3');
     import(entry.href).catch(e => window.TOKYO_SHIFT_SHOW_BOOT_ERROR(
-      'PREVIEW 2 ENTRY FAILED\n' + entry.href + '\n' + (e.message || e)
+      'PREVIEW 3 ENTRY FAILED\n' + entry.href + '\n' + (e.message || e)
     ));
   </script>
 </body></html>

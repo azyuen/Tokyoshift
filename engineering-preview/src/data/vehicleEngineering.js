@@ -648,6 +648,7 @@ export function applyEngineeringTuning(car,engine,tuning,state) {
     torqueHeadroom:Math.max(20,torqueCapacity*(.56+.44*n/3)-p.factoryTorqueNm)};
  }
  car.engineering={family:p.family,requestedBoost:hasBoost?requested:0,availableBoost:car.maximumBoost,
+   supportedBoost:hasBoost?limit:0,
    limitingHardware:hasBoost&&requested>limit?(limit===internal?'engine internals':limit===fuel?'fuel / ECU':'charge cooling'):'none'};
  return {car,engine,tuning,mechanicalScale:breathing,boostOutputScale:1};
 }
