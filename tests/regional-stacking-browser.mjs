@@ -12,7 +12,8 @@ try{
   const rel=new URL(route.request().url()).pathname.split('/engineering-preview/')[1];
   await route.fulfill({path:path.resolve(rel),contentType:'application/javascript'});
  });
- await page.goto(base+'?regional=1',{waitUntil:'domcontentloaded',timeout:90000});
+ if(process.env.LOCAL_INDEX)await page.route('**/engineering-preview/?*',route=>route.fulfill({path:process.env.LOCAL_INDEX,contentType:'text/html'}));
+ await page.goto(base+'?regional=3',{waitUntil:'domcontentloaded',timeout:90000});
  await page.waitForFunction(()=>window.TOKYO_SHIFT?.scene?.isActive('CharacterSelectScene'),{},{timeout:90000});
  const initial=await page.evaluate(async()=>{
   const root=location.origin+'/Tokyoshift/engineering-preview/src/';
