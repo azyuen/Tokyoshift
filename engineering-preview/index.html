@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<base href="../">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#070914" />
+  <meta name="application-name" content="Tokyo SHIFT" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Tokyo SHIFT" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180-r491.png?v=20261012-r491" />
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./app-icon-180-r491.png?v=20261012-r491" />
+  <link rel="icon" sizes="192x192" href="./app-icon-192-r491.png?v=20261012-r491" type="image/png" />
+  <link data-preview-disabled="manifest" href="./manifest.webmanifest?v=20261012-r491" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Tokyo SHIFT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,900&family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=20261009-r449" />
+  <style>
+    #boot-diagnostic[hidden] { display: none !important; }
+    #arkon-pin-row[hidden] { display: none !important; }
+    #driver-name-overlay.is-visible.needs-owner-pin { top: 43.5%; }
+    #boot-diagnostic {
+      position: absolute;
+      z-index: 3;
+      top: max(8px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(750px, 90vw);
+      max-height: 65%;
+      overflow: auto;
+      padding: 14px 18px;
+      background: rgba(3, 10, 20, .96);
+      border: 2px solid #f16d79;
+      color: #fff;
+      font: 600 13px/1.4 ui-monospace, monospace;
+      pointer-events: auto;
+      touch-action: pan-y;
+    }
+    #boot-diagnostic-title { color: #ffabb2; }
+    #boot-diagnostic-message {
+      margin: 8px 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: inherit;
+      font-weight: 400;
+      max-height: 20vh;
+      overflow: auto;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    #boot-retry-files {
+      display: block;
+      margin: 10px 0 6px;
+      padding: 10px 12px;
+      background: #164c62;
+      border: 1px solid #55d9ee;
+      color: #fff;
+      font: 700 12px/1.4 ui-monospace, monospace;
+      touch-action: manipulation;
+    }
+    #boot-diagnostic small { display: block; color: #b6c9d0; }
+  </style>
+</head>
+<body>
+  <div id="game-shell">
+    <div id="loading-screen" role="status" aria-live="polite" aria-label="Tokyo SHIFT loading">
+      <div class="loading-panel">
+        <div class="loading-track" aria-hidden="true">
+          <div id="loading-bar"></div>
+        </div>
+        <div class="loading-meta">
+          <span id="loading-label">INITIALISING</span>
+          <span id="loading-percent">3%</span>
+        </div>
+      </div>
+      <section id="boot-diagnostic" aria-live="assertive" hidden>
+        <strong id="boot-diagnostic-title">BOOT ERROR</strong>
+        <pre id="boot-diagnostic-message"></pre>
+        <button id="boot-retry-files" type="button">REFRESH GAME FILES — SAVES KEPT</button>
+        <small>This only refreshes cached game files. It does not delete driver profiles.</small>
+      </section>
+    </div>
+    <div id="game">
+      <div id="driver-name-overlay" aria-hidden="true">
+        <input
+          id="driverFirstName"
+          class="driver-name-input"
+          maxlength="16"
+          autocomplete="given-name"
+          inputmode="text"
+          autocapitalize="words"
+          spellcheck="false"
+          placeholder="First name"
+          aria-label="First name"
+        />
+        <input
+          id="driverLastName"
+          class="driver-name-input"
+          maxlength="16"
+          autocomplete="family-name"
+          inputmode="text"
+          autocapitalize="words"
+          spellcheck="false"
+          placeholder="Last name"
+          aria-label="Last name"
+        />
+        <div id="arkon-pin-row" hidden>
+          <label for="arkonCreationPin" style="display:block;color:#86cce6;font:700 12px 'Rajdhani',sans-serif;letter-spacing:1px;margin-bottom:5px;">ARKON DEN // OWNER PIN</label>
+          <input
+            id="arkonCreationPin"
+            class="driver-name-input"
+            type="password"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]{4}"
+            autocomplete="off"
+            placeholder="4-digit PIN"
+            aria-label="Arkon Den owner PIN"
+          />
+        </div>
+      </div>
+    </div>
+    <div id="build-stamp">ENGINEERING PREVIEW</div>
+    <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
+  </div>
+  <script>
+    let landscapeLocked = false;
+
+    window.TOKYO_SHIFT_SET_LOADING = (value = 0, label = '') => {
+      const clamped = Math.max(0, Math.min(1, Number(value) || 0));
+      const bar = document.getElementById('loading-bar');
+      const percent = document.getElementById('loading-percent');
+      const status = document.getElementById('loading-label');
+
+      if (bar) bar.style.width = Math.max(3, Math.round(clamped * 100)) + '%';
+      if (percent) percent.textContent = Math.round(clamped * 100) + '%';
+      if (status && label) status.textContent = String(label).toUpperCase();
+    };
+
+    window.TOKYO_SHIFT_SHOW_SPLASH = (label = 'LOADING') => {
+      const splash = document.getElementById('loading-screen');
+      if (!splash) return;
+      splash.classList.remove('is-hidden');
+      splash.removeAttribute('aria-hidden');
+      window.TOKYO_SHIFT_SET_LOADING?.(0.03, label);
+    };
+
+    window.TOKYO_SHIFT_HIDE_SPLASH = () => {
+      const splash = document.getElementById('loading-screen');
+      if (!splash || splash.classList.contains('is-hidden')) return;
+      splash.classList.add('is-hidden');
+      window.setTimeout(() => splash.setAttribute('aria-hidden', 'true'), 520);
+    };
+
+    // Display actionable, copyable startup diagnostics on real devices. A
+    // data-boot-error set by main.js or a scene is observed automatically.
+    window.TOKYO_SHIFT_SHOW_BOOT_ERROR = (error, heading = 'BOOT ERROR') => {
+      const message = String(error?.stack || error?.message || error || 'Unknown startup failure');
+      const splash = document.getElementById('loading-screen');
+      const panel = document.getElementById('boot-diagnostic');
+      if (splash) splash.classList.remove('is-hidden');
+      if (splash) splash.setAttribute('data-boot-error', message.slice(0, 500));
+      if (panel) panel.hidden = false;
+      const title = document.getElementById('boot-diagnostic-title');
+      const details = document.getElementById('boot-diagnostic-message');
+      if (title) title.textContent = heading;
+      if (details) details.textContent = message.slice(0, 500);
+      window.TOKYO_SHIFT_SET_LOADING?.(1, heading);
+      const percent = document.getElementById('loading-percent');
+      if (percent) percent.textContent = 'ERROR';
+    };
+
+    window.TOKYO_SHIFT_REFRESH_FILES = () => location.reload();
+  </script>
+  <script src="./engineering-preview/isolation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+  <script type="module">
+    import('./engineering-preview/src/main.js').catch(e => window.TOKYO_SHIFT_SHOW_BOOT_ERROR(e));
+  </script>
+</body></html>

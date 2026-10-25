@@ -1,0 +1,660 @@
+import { restoreStoredKitParts } from './partUninstall.js';
+import { restorePerformanceParts } from './factorySetup.js';
+import { getBaseCarId } from './carOwnership.js';
+import {
+  ENGINE_PART_ORDER,
+  ENGINE_TUNING_PARTS,
+  getEngineTuning,
+} from './tuning.js';
+import {
+  DRIVETRAIN_PART_ORDER,
+  CHASSIS_PART_ORDER,
+  EXHAUST_NOS_PART_ORDER,
+  DRIVETRAIN_TUNING_PARTS,
+  CHASSIS_TUNING_PARTS,
+  EXHAUST_NOS_TUNING_PARTS,
+  getDrivetrainTuning,
+  getChassisTuning,
+  getExhaustNosTuning,
+} from './secondaryTuning.js';
+import {
+  getRegionalChampionshipCount,
+} from './careerProgression.js';
+import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount, getCrewBattleWinCount } from './crewSystem.js';
+
+export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
+
+export const CENTRAL_TOKYO_LOCATIONS = {
+  autoMarket: {
+    id: 'tokyoAutoMarket',
+    label: 'TOKYO AUTO MARKET',
+    shortLabel: 'AUTO MARKET',
+    kind: 'autoMarket',
+    // Used is the default so existing saves land in the closest equivalent to
+    // the original pre-modified Auto Market. Each room is loaded lazily.
+    backgroundKey: 'centralTokyoAutoMarketUsedBg',
+    backgroundPath: 'assets/CentralTokyo/tokyo_auto_market_used.png',
+    marketBackgrounds: {
+      new: {
+        key: 'centralTokyoAutoMarketNewBg',
+        path: 'assets/CentralTokyo/tokyo_auto_market_new.png',
+        phases: {
+          day: { key: 'centralTokyoAutoMarketNewDayBg', path: 'assets/CentralTokyo/tokyo_new_day.png' },
+          night: { key: 'centralTokyoAutoMarketNewNightBg', path: 'assets/CentralTokyo/tokyo_new_night.png' },
+        },
+      },
+      used: {
+        key: 'centralTokyoAutoMarketUsedBg',
+        path: 'assets/CentralTokyo/tokyo_auto_market_used.png',
+        phases: {
+          day: { key: 'centralTokyoAutoMarketUsedDayBg', path: 'assets/CentralTokyo/tokyo_used_day.png' },
+          night: { key: 'centralTokyoAutoMarketUsedNightBg', path: 'assets/CentralTokyo/tokyo_used_night.png' },
+        },
+      },
+    },
+    winsRequired: 9,
+    championshipsRequired: 0,
+    garageTierRequired: 0,
+  },
+  ginza: {
+    id: 'ginzaMotorGallery',
+    label: 'GINZA MOTOR GALLERY',
+    shortLabel: 'GINZA GALLERY',
+    kind: 'showroom',
+    backgroundKey: 'centralTokyoGinzaBg',
+    backgroundPath: 'assets/CentralTokyo/ginza_motor_gallery_at_night.png',
+    phaseBackgrounds: {
+      day: { key: 'centralTokyoGinzaDayBg', path: 'assets/CentralTokyo/tokyo_ginza_day.png' },
+      night: { key: 'centralTokyoGinzaNightBg', path: 'assets/CentralTokyo/tokyo_ginza_night.png' },
+    },
+    winsRequired: 0,
+    championshipsRequired: 0,
+    garageTierRequired: 0,
+  },
+  drag: {
+    id: 'tokyoDragComplex',
+    label: 'TOKYO DRAG COMPLEX',
+    shortLabel: 'DRAG COMPLEX',
+    kind: 'proDrag',
+    backgroundKey: 'centralTokyoDragBg',
+    backgroundPath: 'assets/CentralTokyo/tokyo_drag_strip_at_night.png',
+    phaseBackgrounds: {
+      day: { key: 'centralTokyoDragDayBg', path: 'assets/CentralTokyo/tokyo_dragstrip_day.png' },
+      night: { key: 'centralTokyoDragNightBg', path: 'assets/CentralTokyo/tokyo_dragstrip_night.png' },
+    },
+    winsRequired: 0,
+    championshipsRequired: 0,
+    garageTierRequired: 0,
+  },
+};
+
+export const CENTRAL_TOKYO_LOCATION_ORDER = [
+  'tokyoAutoMarket',
+  'ginzaMotorGallery',
+  'tokyoDragComplex',
+];
+
+export const MARKET_BASE_PRICES = {
+  gf8: 3500000,
+  gdb: 3900000,
+  s15: 3100000,
+  starion: 1800000,
+  fto: 1650000,
+  mx5: 1350000,
+  sa22c: 2000000,
+  mx6: 1500000,
+  prelude: 2200000,
+  sw20: 3000000,
+  soarer: 2600000,
+  forester: 2000000,
+  svx: 2350000,
+  xt: 1250000,
+
+  'z32': 3500000,
+  'z33': 2900000,
+  '240z': 2200000,
+  'crx': 1550000,
+  'dc2': 2800000,
+  'eclipse': 2300000,
+  'familia': 2000000,
+  '180sx': 2400000,
+  'st205': 3200000,
+  'jzx100': 3600000,
+  'b4rsk': 2600000,
+  ae86: 950000,
+  ef: 1150000,
+  ek9: 1450000,
+  s2000: 3600000,
+  fc3s: 1850000,
+  rx8: 2050000,
+  rx7fd: 4200000,
+  galant: 2800000,
+  evo5: 3900000,
+  evo6: 4500000,
+  gc8: 6200000,
+  r32: 7200000,
+  a60: 2100000,
+  jza80: 6800000,
+  nsx: 9000000,
+  r34: 8500000,
+  '3000gt': 4900000,
+};
+
+const MARKET_BUILDS = {
+  ae86: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 0, intercooler: 0, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 0, differential: 0, suspension: 1, launchSetup: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+  ek9: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 0, intercooler: 0, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 0, differential: 1, suspension: 1, launchSetup: 0 },
+    exhaustNosTuning: { headers: 1, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+  fc3s: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 1, intercooler: 1, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 0, differential: 1, suspension: 1, launchSetup: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+  galant: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 1, intercooler: 1, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 1, differential: 1, suspension: 1, launchSetup: 1 },
+    exhaustNosTuning: { headers: 1, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+  gc8: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 1, intercooler: 1, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 1, differential: 1, suspension: 1, launchSetup: 1 },
+    exhaustNosTuning: { headers: 1, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+  r32: {
+    stock: false,
+    acquiredVia: 'tokyoAutoMarket',
+    tuning: { engine: 0, intake: 1, ecu: 1, turbo: 1, intercooler: 1, exhaust: 1 },
+    drivetrainTuning: { clutch: 1, gearbox: 1, differential: 1, suspension: 1, launchSetup: 1 },
+    exhaustNosTuning: { headers: 1, exhaust: 1, muffler: 1, nosKit: 0, nitrousShot: 0 },
+  },
+};
+
+// New dealership entries use the matching drivetrain's street build recipe.
+Object.assign(MARKET_BUILDS, {
+  gf8: MARKET_BUILDS.galant,
+  gdb: MARKET_BUILDS.galant,
+  s15: MARKET_BUILDS.fc3s,
+  starion: MARKET_BUILDS.fc3s,
+  fto: MARKET_BUILDS.ek9,
+  mx5: MARKET_BUILDS.ae86,
+  sa22c: MARKET_BUILDS.fc3s,
+  mx6: MARKET_BUILDS.ek9,
+  prelude: MARKET_BUILDS.ek9,
+  sw20: MARKET_BUILDS.fc3s,
+  soarer: MARKET_BUILDS.fc3s,
+  forester: MARKET_BUILDS.galant,
+  svx: MARKET_BUILDS.galant,
+  xt: MARKET_BUILDS.galant,
+
+  'z32': MARKET_BUILDS.fc3s,
+  'z33': MARKET_BUILDS.ae86,
+  '240z': MARKET_BUILDS.ae86,
+  'crx': MARKET_BUILDS.ek9,
+  'dc2': MARKET_BUILDS.ek9,
+  'eclipse': MARKET_BUILDS.galant,
+  'familia': MARKET_BUILDS.galant,
+  '180sx': MARKET_BUILDS.fc3s,
+  'st205': MARKET_BUILDS.galant,
+  'jzx100': MARKET_BUILDS.fc3s,
+  'b4rsk': MARKET_BUILDS.galant,
+  ef: MARKET_BUILDS.ek9,
+  s2000: MARKET_BUILDS.ek9,
+  rx7fd: MARKET_BUILDS.fc3s,
+  rx8: MARKET_BUILDS.fc3s,
+  evo5: MARKET_BUILDS.galant,
+  evo6: MARKET_BUILDS.galant,
+  a60: MARKET_BUILDS.ae86,
+  jza80: MARKET_BUILDS.r32,
+  nsx: MARKET_BUILDS.ae86,
+  r34: MARKET_BUILDS.r32,
+  '3000gt': MARKET_BUILDS.r32,
+});
+
+export const AUTO_MARKET_LISTINGS = [
+  { carId: 'gf8', price: 4200000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'gdb', price: 4680000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 's15', price: 3720000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'starion', price: 2160000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'fto', price: 1980000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'mx5', price: 1620000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'sa22c', price: 2400000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'mx6', price: 1800000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'prelude', price: 2640000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'sw20', price: 3600000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'soarer', price: 3120000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'forester', price: 2400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'svx', price: 2820000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'xt', price: 1500000, buildLabel: 'AWD STREET BUILD' },
+
+  { carId: 'z32', price: 4200000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'z33', price: 3480000, buildLabel: 'RWD STREET BUILD' },
+  { carId: '240z', price: 2640000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'crx', price: 1860000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'dc2', price: 3360000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'eclipse', price: 2760000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'familia', price: 2400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: '180sx', price: 2880000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'st205', price: 3840000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'jzx100', price: 4320000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'b4rsk', price: 3120000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'ae86', price: 1150000, buildLabel: 'LIGHT STREET BUILD' },
+  { carId: 'ef', price: 1400000, buildLabel: 'VTEC STREET BUILD' },
+  { carId: 'ek9', price: 1750000, buildLabel: 'STAGE 1 STREET BUILD' },
+  { carId: 's2000', price: 4300000, buildLabel: 'VTEC ROADSTER BUILD' },
+  { carId: 'fc3s', price: 2350000, buildLabel: 'TURBO STREET BUILD' },
+  { carId: 'rx8', price: 2600000, buildLabel: 'ROTARY STREET BUILD' },
+  { carId: 'galant', price: 3450000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'rx7fd', price: 4900000, buildLabel: 'TWIN TURBO BUILD' },
+  { carId: 'evo5', price: 4700000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'evo6', price: 5400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'gc8', price: 7200000, buildLabel: 'PERFORMANCE BUILD' },
+  { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
+  { carId: 'a60', price: 2550000, buildLabel: 'CLASSIC FR BUILD' },
+  { carId: 'jza80', price: 8100000, buildLabel: 'TWIN TURBO BUILD' },
+  { carId: 'nsx', price: 10800000, buildLabel: 'MID-ENGINE BUILD' },
+  { carId: 'r34', price: 10200000, buildLabel: 'GT-R STREET BUILD' },
+  { carId: '3000gt', price: 5900000, buildLabel: 'TWIN TURBO AWD BUILD' },
+];
+
+export const GINZA_LISTINGS = [
+  { carId: 'essoToyotaGtOne', price: 240000000, collectionLabel: 'ESSO GT-ONE', rarity: 'LEGENDARY' },
+  { carId: 'cleanToyotaGtOne', price: 240000000, collectionLabel: 'GT-ONE CLEAN BODY', rarity: 'LEGENDARY' },
+  { carId: 'calsonicR390', price: 230000000, collectionLabel: 'CALSONIC R390 GT1', rarity: 'LEGENDARY' },
+  { carId: 'cleanR390', price: 230000000, collectionLabel: 'R390 CLEAN BODY', rarity: 'LEGENDARY' },
+  { carId: 'mcrae22B', price: 30000000, collectionLabel: '22B RALLY TRIBUTE', rarity: 'COLLECTOR' },
+  { carId: 'zeroSportsGc8', price: 38000000, collectionLabel: 'ZERO/SPORTS GC8', rarity: 'RARE' },
+  { carId: 'tommiEvo6', price: 65000000, collectionLabel: 'MÄKINEN GROUP A', rarity: 'ULTRA RARE' },
+  { carId: 'castrolMugenNsx', price: 160000000, collectionLabel: 'CASTROL MUGEN GT500', rarity: 'LEGENDARY' },
+  { carId: 'cleanMazda787B', price: 220000000, collectionLabel: '787B CLEAN BODY', rarity: 'LEGENDARY' },
+  {
+    carId: 'spoonEk9',
+    price: 28000000,
+    collectionLabel: 'SPOON RACE EK9',
+    rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'amuseS2000Gt1',
+    price: 32000000,
+    collectionLabel: 'TUNER ICON',
+    rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'reAmemiyaRx7',
+    price: 48000000,
+    collectionLabel: 'RE AMEMIYA TIME ATTACK',
+    rarity: 'RARE',
+  },
+  {
+    carId: 'veilsideFortuneRx7',
+    price: 45000000,
+    collectionLabel: 'FORTUNE HERO CAR',
+    rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'minesR34',
+    price: 52000000,
+    collectionLabel: "MINE'S COMPLETE CAR",
+    rarity: 'RARE',
+  },
+  {
+    carId: 'topSecretSupra',
+    price: 58000000,
+    collectionLabel: 'TOP SECRET GT-300',
+    rarity: 'RARE',
+  },
+  {
+    carId: 'libertyWalkR35',
+    price: 68000000,
+    collectionLabel: 'LB-WORKS HERO CAR',
+    rarity: 'RARE',
+  },
+  {
+    carId: 'junHyperLemonEvo5',
+    price: 76000000,
+    collectionLabel: 'HYPER LEMON EVO V',
+    rarity: 'ULTRA RARE',
+  },
+  {
+    carId: 'rwbStellaPorsche',
+    price: 82000000,
+    collectionLabel: 'RWB ONE-OFF',
+    rarity: 'ULTRA RARE',
+  },
+  {
+    carId: 'espritNsx',
+    price: 145000000,
+    collectionLabel: 'ESPRIT TIME ATTACK NSX',
+    rarity: 'LEGENDARY',
+  },
+  {
+    carId: 'renownMazda787B',
+    price: 220000000,
+    collectionLabel: 'LE MANS LEGEND',
+    rarity: 'LEGENDARY',
+  },
+];
+
+export function getGinzaCollectorState(carId) {
+  return {
+    stock: false,
+    acquiredVia: 'ginzaMotorGallery',
+    collector: true,
+    immutable: true,
+    tuningLocked: true,
+    nosInstalled: false,
+    tuneLevel: 0,
+    tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
+    drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },
+    chassisTuning: { tyres: 0, weightReduction: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 0, muffler: 0, nosKit: 0, nitrousShot: 0 },
+  };
+}
+
+export const PRO_DRAG_EVENTS = [
+  {
+    id: 'streetShootout',
+    label: 'STREET SHOOTOUT',
+    subtitle: 'PROVING GROUNDS',
+    entryFee: 55000,
+    prizeCash: 95000,
+    maxPowerKW: 260,
+    noNos: true,
+    requiredWins: 40,
+    opponentRatings: [4, 5, 5],
+    opponentCars: ['galant', 'gc8', 'r32'],
+  },
+  {
+    id: 'midnightCup',
+    label: 'MIDNIGHT CUP',
+    subtitle: 'PRO STREET',
+    entryFee: 65000,
+    prizeCash: 135000,
+    maxPowerKW: 380,
+    noNos: true,
+    requiredWins: 45,
+    opponentRatings: [5, 5, 5],
+    opponentCars: ['gc8', 'r32', 'galant'],
+  },
+  {
+    id: 'tokyoInvitational',
+    label: 'TOKYO INVITATIONAL',
+    subtitle: 'OPEN PRO',
+    entryFee: 80000,
+    prizeCash: 190000,
+    maxPowerKW: 600,
+    noNos: false,
+    requiredWins: 55,
+    opponentRatings: [5, 5, 5],
+    opponentCars: ['r32', 'gc8', 'r32'],
+  },
+];
+
+function value(source, key, fallback = null) {
+  if (source && typeof source.get === 'function') {
+    const result = source.get(key);
+    return result == null ? fallback : result;
+  }
+  const result = source?.[key];
+  return result == null ? fallback : result;
+}
+
+export function isArkonDen(source) {
+  if (value(source, 'gameMode', 'career') === 'arkonStory') return false;
+  const devMode = Boolean(value(source, 'devMode', false));
+  const first = String(value(source, 'firstName', '')).trim().toLowerCase();
+  const last = String(value(source, 'lastName', '')).trim().toLowerCase();
+  const joined = (first + last).replace(/[^a-z0-9]/g, '');
+  const legacyDevCash = Number(value(source, 'cash', 0) || 0) >= 900000000;
+
+  // Accept the canonical split name, combined display-name variants, and old
+  // dev saves that were created before the explicit devMode flag was stored.
+  return devMode || joined === 'arkonden' || legacyDevCash;
+}
+
+export function getCentralTokyoEligibility(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
+  if (isArkonDen(source)) {
+    return { autoMarket: true, ginza: true, drag: true };
+  }
+
+  const wins = Number(value(source, 'wins', 0) || 0);
+  const garageTier = Number(value(source, 'garageTier', 0) || 0);
+  const championships = getRegionalChampionshipCount(source);
+
+  return {
+    autoMarket:
+      wins >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.winsRequired || 0) &&
+      championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
+      garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
+    ginza: areAllCrewBattlesComplete(source),
+    drag: areAllCrewBattlesComplete(source),
+  };
+}
+
+export function getCentralTokyoAccess(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
+  if (isArkonDen(source)) {
+    return { autoMarket: true, ginza: true, drag: true };
+  }
+
+  const unlocked = value(source, 'centralTokyoUnlocks', {}) || {};
+  const eligible = getCentralTokyoEligibility(source);
+  return {
+    autoMarket: Boolean(unlocked.autoMarket && eligible.autoMarket),
+    ginza: Boolean(unlocked.ginza && eligible.ginza),
+    // The Ginza invitation grants both endgame venues together.
+    drag: Boolean((unlocked.drag || unlocked.ginza) && eligible.drag),
+  };
+}
+
+export function getCentralTokyoAccessKey(locationId) {
+  if (locationId === CENTRAL_TOKYO_LOCATIONS.autoMarket.id) return 'autoMarket';
+  if (locationId === CENTRAL_TOKYO_LOCATIONS.ginza.id) return 'ginza';
+  if (locationId === CENTRAL_TOKYO_LOCATIONS.drag.id) return 'drag';
+  return null;
+}
+
+export function isCentralTokyoLocationUnlocked(source, locationId) {
+  const key = getCentralTokyoAccessKey(locationId);
+  if (!key) return true;
+  return Boolean(getCentralTokyoAccess(source)[key]);
+}
+
+export function markCentralTokyoUnlocked(registry, key) {
+  if (!registry || typeof registry.set !== 'function') return false;
+  if (!['autoMarket', 'ginza', 'drag'].includes(String(key))) return false;
+
+  const unlocks = {
+    ...(registry.get('centralTokyoUnlocks') || {}),
+    [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
+  };
+  const seen = {
+    ...(registry.get('tokyoInvitesSeen') || {}),
+    [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
+  };
+
+  registry.set('centralTokyoUnlocks', unlocks);
+  registry.set('tokyoInvitesSeen', seen);
+  return true;
+}
+
+export function getCentralTokyoUnlockLabel(source, locationId) {
+  const key = getCentralTokyoAccessKey(locationId);
+  if (!key) return 'LOCKED';
+  if (isCentralTokyoLocationUnlocked(source, locationId)) return 'OPEN';
+  if (key === 'ginza') return 'BY INVITATION ONLY';
+  if (key === 'drag' && !isCrewComplete(source)) {
+    return 'RECRUIT FULL CREW (' + getCrewCount(source) + '/7)';
+  }
+  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
+    return 'WIN 7 REGIONAL CREW BATTLES (' + getCrewBattleWinCount(source) + '/7)';
+  }
+  if (key === 'drag') return 'PRO INVITATION PENDING';
+
+  const cfg = CENTRAL_TOKYO_LOCATIONS[key];
+  const wins = Number(value(source, 'wins', 0) || 0);
+  const garageTier = Number(value(source, 'garageTier', 0) || 0);
+  const championships = getRegionalChampionshipCount(source);
+  const championshipsRequired = Number(cfg.championshipsRequired || 0);
+
+  if (championships < championshipsRequired) {
+    return championshipsRequired === 1
+      ? 'WIN A REGIONAL CHAMPIONSHIP'
+      : championshipsRequired + ' REGIONAL CHAMPIONSHIPS REQUIRED';
+  }
+
+  if (wins < cfg.winsRequired) {
+    return cfg.winsRequired + ' WINS REQUIRED';
+  }
+
+  if (garageTier < cfg.garageTierRequired) {
+    return cfg.garageTierRequired >= 2 ? 'WAREHOUSE HQ REQUIRED' : 'CANAL YARD REQUIRED';
+  }
+
+  return 'INVITATION REQUIRED';
+}
+
+export function getPendingCentralTokyoInvite(source) {
+  if (isArkonDen(source)) return null;
+
+  const eligible = getCentralTokyoEligibility(source);
+  const access = getCentralTokyoAccess(source);
+
+  if (eligible.autoMarket && !access.autoMarket) return 'autoMarket';
+  if (eligible.ginza && !access.ginza) return 'ginza';
+  return null;
+}
+
+export const CAR_COUPON_REQUIREMENTS = {
+  ae86: 5,
+  ef: 5,
+  ek9: 5,
+  s2000: 5,
+  fc3s: 5,
+  rx8: 5,
+  rx7fd: 7,
+  galant: 5,
+  evo5: 7,
+  evo6: 7,
+  gc8: 5,
+  r32: 7,
+  a60: 5,
+  jza80: 7,
+  nsx: 7,
+  r34: 7,
+  '3000gt': 7,
+};
+
+export function getCarCouponRequirement(carId) {
+  // Unlisted models do not issue coupons; keep the minimum meaningful target
+  // aligned with the entry-tier five-coupon economy.
+  return Math.max(5, Number(CAR_COUPON_REQUIREMENTS[String(carId)] || 5));
+}
+
+export function getCarCouponCount(source, carId) {
+  const coupons = value(source, 'carCoupons', {}) || {};
+  return Math.max(0, Math.floor(Number(coupons[String(carId)] || 0)));
+}
+
+export function canRedeemCarCoupon(source, carId) {
+  return getCarCouponCount(source, carId) >= getCarCouponRequirement(carId);
+}
+
+export function getAutoMarketBuild(carId) {
+  const baseCarId = getBaseCarId(carId);
+  return JSON.parse(JSON.stringify(MARKET_BUILDS[baseCarId] || {
+    stock: true,
+    acquiredVia: 'tokyoAutoMarket',
+  }));
+}
+
+export function getAutoMarketBasePrice(carId) {
+  return Math.max(100000, Number(MARKET_BASE_PRICES[getBaseCarId(carId)] || 1000000));
+}
+
+export function getNewCarState(carId, paintColor = 0xffffff) {
+  return {
+    stock: true,
+    paintColor,
+    nosInstalled: false,
+    tuneLevel: 0,
+    tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
+    drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },
+    chassisTuning: { tyres: 0, weightReduction: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 0, muffler: 0, nosKit: 0, nitrousShot: 0 },
+    visualMods: {},
+    acquiredVia: 'tokyoAutoMarketNew',
+  };
+}
+
+function installedPartsCost(order, catalog, levels = {}) {
+  return order.reduce((total, partId) => {
+    const installed = Math.max(0, Math.min(3, Math.floor(Number(levels?.[partId] || 0))));
+    const part = catalog[partId];
+    if (!part || installed <= 0) return total;
+
+    let partTotal = 0;
+    for (let level = 1; level <= installed; level++) {
+      partTotal += Number(part.levels?.[level]?.cost || 0);
+    }
+    return total + partTotal;
+  }, 0);
+}
+
+function getInstalledPerformanceInvestment(carState = {}) {
+  return (
+    installedPartsCost(
+      ENGINE_PART_ORDER,
+      ENGINE_TUNING_PARTS,
+      getEngineTuning(carState)
+    ) +
+    installedPartsCost(
+      DRIVETRAIN_PART_ORDER,
+      DRIVETRAIN_TUNING_PARTS,
+      getDrivetrainTuning(carState)
+    ) +
+    installedPartsCost(
+      CHASSIS_PART_ORDER,
+      CHASSIS_TUNING_PARTS,
+      getChassisTuning(carState)
+    ) +
+    installedPartsCost(
+      EXHAUST_NOS_PART_ORDER,
+      EXHAUST_NOS_TUNING_PARTS,
+      getExhaustNosTuning(carState)
+    )
+  );
+}
+
+export function getAutoMarketSellPrice(carId, carState = {}) {
+  const base = Number(MARKET_BASE_PRICES[getBaseCarId(carId)] || 1000000);
+
+  // The dealership pays wholesale for the shell, then only a fraction of the
+  // money sunk into performance parts. This prevents a cheap cosmetic flag or
+  // one small modification from magically increasing the value by 5% of the
+  // whole car, while still rewarding a genuinely developed build.
+  const baseResale = base * 0.50;
+  // Parked parts remain owned by this car and transfer with its sale.
+  const partsInvestment = getInstalledPerformanceInvestment(restorePerformanceParts(restoreStoredKitParts(carState) || carState));
+  const partsRecovery = Math.min(base * 0.05, partsInvestment * 0.25);
+
+  return Math.round((baseResale + partsRecovery) / 10000) * 10000;
+}

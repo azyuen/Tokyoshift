@@ -1,0 +1,182 @@
+// Tokyo SHIFT standard-car reference geometry.
+// Calibrated in GIMP against AE86 and validated in the nine-car reference screen.
+// Source pixels use bottom-right PNG origin (Phaser setOrigin(1, 1));
+// PNG bottom is the contact/ground line. Never auto-fit individual car widths.
+//
+// Every standard car shares masterScale for a given scene display multiplier.
+// Axle X values are negative source-pixel offsets from the PNG RIGHT EDGE.
+// Source sizes: S=small, L=medium (legacy name), XL=large.
+// Do not change this authored geometry when migrating scene renderers.
+export const STANDARD_CAR_REFERENCE = {
+  note: 'Source pixels. Common bottom-right origin. Global scale from AE86.',
+  masterScale: 0.32,
+  wheelDiameters: {
+    S: 182,
+    L: 194, // legacy label for Medium
+  },
+  cars: {
+    // Measured from the uploaded 1300x440 GF8 silhouette, right-origin coordinates.
+    wrxgf8: { rearX: -991, frontX: -247, size: 'L' },
+    "WRXGDB": {"rearX": -983, "frontX": -256, "size": "L"},
+    "s15": {"rearX": -991, "frontX": -265, "size": "S"},
+    "starion": {"rearX": -958, "frontX": -248, "size": "S"},
+    "fto": {"rearX": -933, "frontX": -250, "size": "S"},
+    "mx5": {"rearX": -892, "frontX": -222, "size": "L"},
+    "sa22c": {"rearX": -936, "frontX": -238, "size": "S"},
+    "mx6": {"rearX": -966, "frontX": -253, "size": "S"},
+    "prelude": {"rearX": -944, "frontX": -255, "size": "S"},
+    "sw20": {"rearX": -911, "frontX": -241, "size": "S"},
+    "soarer": {"rearX": -964, "frontX": -258, "size": "S"},
+    "forester": {"rearX": -951, "frontX": -251, "size": "L"},
+    "svx": {"rearX": -981, "frontX": -274, "size": "S"},
+    "XT": {"rearX": -926, "frontX": -277, "size": "S"},
+    "magna": {"rearX": -970, "frontX": -205, "size": "L"},
+
+    r34: { rearX: -987, frontX: -243, size: 'L' },
+    '180sx': { rearX: -932, frontX: -248, size: 'L' },
+    '240z': { rearX: -887, frontX: -224, size: 'S', bodyRenderOffsetY: -3 },
+    '3000gt': { rearX: -947, frontX: -258, size: 'L', bodyRenderOffsetY: -23 },
+    '300zx': { rearX: -964, frontX: -252, size: 'S' },
+    '350Z': { rearX: -944, frontX: -196, size: 'L' },
+    'B4RSK': { rearX: -974, frontX: -248, size: 'L' },
+    'a60': { rearX: -988, frontX: -258, size: 'S' },
+    'celicaGT4': { rearX: -926, frontX: -244, size: 'S' },
+    'chaser': { rearX: -962, frontX: -248, size: 'S', bodyRenderOffsetY: 15 },
+    'crx': { rearX: -908, frontX: -222, size: 'S' },
+    'dc2': { rearX: -943, frontX: -254, size: 'S' },
+    'eclipse': { rearX: -980, frontX: -244, size: 'L' },
+    'evo5': { rearX: -950, frontX: -252, size: 'S', bodyRenderOffsetY: 6 },
+    'familia': { rearX: -946, frontX: -244, size: 'L', bodyRenderOffsetY: 3 },
+    'jza80': { rearX: -972, frontX: -260, size: 'S' },
+    'nsx': { rearX: -968, frontX: -258, size: 'L' },
+    's2000': { rearX: -919, frontX: -229, size: 'S' },
+    ae86: { rearX: -921, frontX: -247, size: 'S' },
+    ef: { rearX: -877, frontX: -195, size: 'S' },
+    ek9: { rearX: -931, frontX: -231, size: 'S' },
+    gc8: { rearX: -901, frontX: -253, size: 'S' },
+    // Galant VR-4 source alignment and its original stock canvas.
+    galant: { rearX: -998, frontX: -255, size: 'S' },
+    evo6: { rearX: -972, frontX: -280, size: 'S', bodyRenderOffsetY: 1 },
+    r32: { rearX: -988, frontX: -268, size: 'L' },
+    rx7fc: { rearX: -936, frontX: -260, size: 'L' },
+    rx7fd: { rearX: -922, frontX: -218, size: 'L' },
+    rx8: { rearX: -986, frontX: -246, size: 'L' },
+  },
+};
+
+// All standard cars live in one stock directory, including future imports.
+// New models also need source axle geometry, canvas dimensions and a game ID.
+export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/stock';
+export function getReferenceAssetRoot(_stem) {
+  return STANDARD_CAR_REFERENCE_ROOT;
+}
+export const REFERENCE_CAR_GAME_IDS = Object.freeze({
+  gf8: 'wrxgf8',
+  "gdb": "WRXGDB",
+  "s15": "s15",
+  "starion": "starion",
+  "fto": "fto",
+  "mx5": "mx5",
+  "sa22c": "sa22c",
+  "mx6": "mx6",
+  "prelude": "prelude",
+  "sw20": "sw20",
+  "soarer": "soarer",
+  "forester": "forester",
+  "svx": "svx",
+  "xt": "XT",
+  "magna": "magna",
+
+  r34: 'r34',
+  'z32': '300zx',
+  'z33': '350Z',
+  '240z': '240z',
+  'crx': 'crx',
+  'dc2': 'dc2',
+  'eclipse': 'eclipse',
+  'familia': 'familia',
+  '180sx': '180sx',
+  'st205': 'celicaGT4',
+  'jzx100': 'chaser',
+  'b4rsk': 'B4RSK',
+  '3000gt': '3000gt',
+  'a60': 'a60',
+  'evo5': 'evo5',
+  'jza80': 'jza80',
+  'nsx': 'nsx',
+  's2000': 's2000',
+  ae86: 'ae86',
+  ef: 'ef',
+  ek9: 'ek9',
+  gc8: 'gc8',
+  // Canonical ID. Historical Evo III saves migrate to galant on load.
+  galant: 'galant',
+  evo6: 'evo6',
+  r32: 'r32',
+  fc3s: 'rx7fc',
+  rx7fd: 'rx7fd',
+  rx8: 'rx8',
+});
+
+// Source canvas dimensions measured from authored GIMP PNGs.
+export const REFERENCE_CAR_CANVAS = Object.freeze({
+  wrxgf8: [1300, 440],
+  "WRXGDB": [1300, 440],
+  "s15": [1300, 440],
+  "starion": [1300, 440],
+  "fto": [1300, 440],
+  "mx5": [1300, 440],
+  "sa22c": [1300, 440],
+  "mx6": [1300, 440],
+  "prelude": [1300, 440],
+  "sw20": [1300, 440],
+  "soarer": [1300, 440],
+  "forester": [1300, 440],
+  "svx": [1300, 440],
+  "XT": [1300, 440],
+  "magna": [1300, 440],
+
+  r34: [1300, 440],
+  '180sx': [1300, 440],
+  '240z': [1300, 440],
+  '3000gt': [1300, 440],
+  '300zx': [1300, 440],
+  '350Z': [1300, 440],
+  'B4RSK': [1300, 440],
+  'a60': [1300, 440],
+  'celicaGT4': [1300, 440],
+  'chaser': [1300, 440],
+  'crx': [1300, 440],
+  'dc2': [1300, 440],
+  'eclipse': [1300, 440],
+  'evo5': [1300, 440],
+  'familia': [1300, 440],
+  'jza80': [1300, 440],
+  'nsx': [1300, 440],
+  's2000': [1300, 440],
+  ae86: [1166, 420],
+  ef: [1166, 420],
+  ek9: [1166, 420],
+  gc8: [1166, 420],
+  galant: [1300, 440], // Standard stock PNG reference pair
+  evo6: [1250, 440],
+  r32: [1300, 440],
+  rx7fc: [1300, 440],
+  rx7fd: [1300, 440],
+  rx8: [1300, 440],
+});
+
+// Scene-based zoom uses the AE86 source width rather than each car's width.
+// Thus targetWidth=900 means AE86=900 and R32=1003, with shared pixel scale.
+export const REFERENCE_AE86_SOURCE_WIDTH = 1166;
+
+export function getReferenceCarVisual(visualOrCar = {}) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
+  return visual.referenceStandard ? visual : null;
+}
+
+export function getReferenceRightX(visualOrCar, virtualX, renderScale) {
+  return getReferenceCarVisual(visualOrCar)
+    ? virtualX + (REFERENCE_AE86_SOURCE_WIDTH * renderScale * 0.5)
+    : virtualX;
+}

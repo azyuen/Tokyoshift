@@ -1,0 +1,165 @@
+// Tokyo SHIFT boot recovery: load scene modules dynamically so a broken import
+// cannot strand the splash at the initial 3% with no diagnostic.
+const GAME_WIDTH = 1560;
+const GAME_HEIGHT = 840;
+
+window.TOKYO_SHIFT_SET_LOADING?.(0.05, 'STARTING ENGINE');
+
+function showBootError(error) {
+  const message = String(error?.stack || error?.message || error || 'Unknown startup error');
+  console.error('[Tokyo SHIFT] boot failure', error);
+  window.TOKYO_SHIFT_SET_LOADING?.(1, 'BOOT ERROR');
+  const splash = document.getElementById('loading-screen');
+  const label = document.getElementById('loading-label');
+  const percent = document.getElementById('loading-percent');
+  if (label) label.textContent = 'BOOT ERROR';
+  if (percent) percent.textContent = 'ERROR';
+  if (splash) {
+    splash.classList.remove('is-hidden');
+    splash.setAttribute('data-boot-error', message.slice(0, 500));
+  }
+}
+
+async function waitForTokyoShiftFonts() {
+  if (!document.fonts?.load) return;
+  const fontLoad = Promise.all([
+    document.fonts.load('400 16px "Silkscreen"'),
+    document.fonts.load('700 16px "Silkscreen"'),
+    document.fonts.load('500 16px "Rajdhani"'),
+    document.fonts.load('600 16px "Rajdhani"'),
+    document.fonts.load('600 16px "Teko"'),
+    document.fonts.load('italic 900 16px "Exo 2"'),
+  ]).then(() => document.fonts.ready);
+  const timeout = new Promise(resolve => window.setTimeout(resolve, 2200));
+  try { await Promise.race([fontLoad, timeout]); } catch (e) {}
+}
+
+async function startTokyoShift() {
+  try {
+    window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING');
+
+    const MenuNavigation = (
+      await import('./input/MenuNavigation.js')
+    ).default;
+
+    const loadScene = async (name, path) => {
+      try {
+        const module = await import(path);
+        return module.default;
+      } catch (error) {
+        error.message = name + ' IMPORT FAILED: ' + (error.message || error);
+        throw error;
+      }
+    };
+
+    const [
+      BootScene,
+      CharacterSelectScene,
+      ProfileSelectScene,
+      TrainStationScene,
+      GarageScene,
+      CrewSpaceScene,
+      CrewScene,
+      DynoScene,
+      CentralTokyoScene,
+      OshiageScene,
+      MeetScene,
+      RaceScene,
+      DevVaultStoryScene,
+      FourLaneTestScene,
+      RunOverScene,
+      ResultScene,
+      TunerShopScene,
+      WheelCalibrationScene,
+    ] = await Promise.all([
+      loadScene('BOOT SCENE', './scenes/BootScene.js'),
+      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js'),
+      loadScene('TRAIN STATION', './scenes/TrainStationScene.js'),
+      loadScene('GARAGE', './scenes/GarageScene.js'),
+      loadScene('CREW SPACE', './scenes/CrewSpaceScene.js'),
+      loadScene('CREW BRIDGE', './scenes/CrewScene.js'),
+      loadScene('DYNO', './scenes/DynoScene.js'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js'),
+      loadScene('OSHIAGE', './scenes/OshiageScene.js'),
+      loadScene('MEET', './scenes/MeetScene.js'),
+      loadScene('RACE', './scenes/RaceScene.js'),
+      loadScene('DEV VAULT STORY', './scenes/DevVaultStoryScene.js'),
+      loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js'),
+      loadScene('RUN OVER', './scenes/RunOverScene.js'),
+      loadScene('RESULT', './scenes/ResultScene.js'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js'),
+      loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js'),
+    ]);
+
+    // Debug-only opt-in screen. No profile state or production car renderer changes.
+    const useCarReference = new URLSearchParams(window.location.search).get('carref') === '1';
+    const CarReferenceCalibrationScene = useCarReference
+      ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js')
+      : null;
+
+
+    window.TOKYO_SHIFT_SET_LOADING?.(0.10, 'LOADING');
+
+    // Keep the existing phone readability pass.
+    const originalTextFactory = Phaser.GameObjects.GameObjectFactory.prototype.text;
+    Phaser.GameObjects.GameObjectFactory.prototype.text = function(x, y, text, style = {}) {
+      const next = { ...(style || {}) };
+      const raw = next.fontSize;
+      if (raw != null) {
+        const numeric = typeof raw === 'number' ? raw : parseFloat(raw);
+        if (Number.isFinite(numeric)) {
+          const boosted = Math.max(14, Math.round(numeric * 1.60));
+          next.fontSize = typeof raw === 'number' ? boosted : boosted + 'px';
+        }
+      }
+      return originalTextFactory.call(this, x, y, text, next);
+    };
+
+    await waitForTokyoShiftFonts();
+
+    const allScenes = [
+      BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene,
+      CrewSpaceScene, CrewScene, DynoScene, CentralTokyoScene, OshiageScene, MeetScene, RaceScene,
+      DevVaultStoryScene, FourLaneTestScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene,
+    ];
+    // Phaser starts its first scene. Put the test scene first only when asked.
+    if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
+
+    const config = {
+      type: Phaser.AUTO,
+      parent: 'game',
+      width: GAME_WIDTH,
+      height: GAME_HEIGHT,
+      backgroundColor: '#070914',
+      dom: { createContainer: true },
+      input: { gamepad: true },
+      pixelArt: true,
+      roundPixels: true,
+      antialias: false,
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
+      },
+      scene: allScenes,
+    };
+
+    window.TOKYO_SHIFT = new Phaser.Game(config);
+    // Optional Story Director is installed after boot. A narrative module error
+    // must never prevent a player reaching their profile on mobile/iPad.
+    import('./story/StoryDirector.js')
+      .then(({ installStoryDirector }) => installStoryDirector(window.TOKYO_SHIFT))
+      .catch(error => console.error('[Tokyo SHIFT] Story Director unavailable', error));
+    try { window.TOKYO_SHIFT_MENU_NAV?.destroy?.(); } catch (e) {}
+    window.TOKYO_SHIFT_MENU_NAV = new MenuNavigation(window.TOKYO_SHIFT);
+  } catch (error) {
+    showBootError(error);
+  }
+}
+
+startTokyoShift();
+
+

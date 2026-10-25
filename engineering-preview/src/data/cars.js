@@ -1,0 +1,2350 @@
+import {STOCK_CLASS_DATA} from './stockClasses.js';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js';
+import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
+import { addCollectorExpansion } from './collectorExpansion.js';
+import { applyHeroCarAssets } from './heroCarAssets.js';
+
+const base = {
+  wheelRadius: 0.305,
+  dragCoefficient: 0.34,
+  frontalAreaM2: 1.85,
+  rollingResistance: 0.014,
+  drivenAxleWeightFraction: 0.54,
+  launchLoadMultiplier: 1.0,
+  engineIdleRPM: 900,
+  engineRedlineRPM: 7600,
+  engineLimiterRPM: 7800,
+  engineInertia: 0.22,
+  gearRatios: [3.18, 1.94, 1.31, 1.00, 0.82],
+  finalDriveRatio: 4.10,
+  drivetrainEfficiency: 0.88,
+  tyreGrip: 1.00,
+  clutchStrength: 450,
+  turboSize: 0,
+  turboSpoolRate: 1.5,
+  maximumBoost: 0,
+  nosPower: 45,
+  nosCapacitySeconds: 5.0,
+};
+
+export const cars = {
+  ae86: {
+    ...base,
+    id: 'ae86',
+    shortName: 'AE86',
+    name: 'Toyota Sprinter Trueno AE86',
+    description: 'Light, revvy and momentum-focused.',
+    engine: '4age',
+    engineModel: '4A-GE',
+    powerKW: 96,
+    torqueNm: 149,
+    vehicleMassKg: 940,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 7600,
+    engineLimiterRPM: 7900,
+    engineInertia: 0.17,
+    gearRatios: [3.587, 2.022, 1.384, 1.000, 0.861],
+    finalDriveRatio: 4.30,
+    drivetrainEfficiency: 0.89,
+    drivenAxleWeightFraction: 0.48,
+    launchLoadMultiplier: 1.22,
+    tyreGrip: 1.00,
+    clutchStrength: 330,
+    dragCoefficient: 0.34,
+    frontalAreaM2: 1.72,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 4800,
+    visual: {
+      engineKey: 'stockEngine4AGE',
+      wheelKey: 'wheel8Spoke',
+
+      bodyScale: 0.36,
+      wheelScale: 0.039,
+      rearOffsetX: -365,
+      frontOffsetX: 583,
+      wheelOffsetY: 246,
+      rearWheelOffsetX: -365,
+      frontWheelOffsetX: 583,
+      rearWheelOffsetY: 244,
+      frontWheelOffsetY: 247,
+      rearWheelScale: 0.04524,
+      frontWheelScale: 0.04524,
+      rearWheelBackingRadius: 126,
+      frontWheelBackingRadius: 129,
+      exhaustOffsetX: -650,
+      exhaustOffsetY: 244,
+
+    },
+  },
+
+  r32: {
+    ...base,
+    id: 'r32',
+    shortName: 'R32',
+    name: 'Nissan Skyline GT-R R32',
+    description: 'Heavy, powerful and brutally effective from a launch.',
+    engine: 'rb26dett',
+    engineModel: 'RB26DETT',
+    powerKW: 206,
+    torqueNm: 353,
+    vehicleMassKg: 1430,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 8000,
+    engineLimiterRPM: 8200,
+    engineInertia: 0.24,
+    gearRatios: [3.214, 1.925, 1.302, 1.000, 0.752],
+    finalDriveRatio: 4.111,
+    drivetrainEfficiency: 0.84,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.02,
+    clutchStrength: 520,
+    dragCoefficient: 0.40,
+    frontalAreaM2: 1.95,
+    turboSize: 0.68,
+    turboSpoolRate: 1.52,
+    maximumBoost: 0.75,
+    launchRPM: 5000,
+    visual: {
+      engineKey: 'stockEngineRB26DETT',
+      wheelKey: 'wheel5Spoke',
+      bodyScale: 0.165,
+      wheelScale: 0.039,
+      rearOffsetX: -619,
+      frontOffsetX: 594,
+      wheelOffsetY: 183,
+      // Explicit axle fit. 0.04524 preserves the legacy 0.039 × 1.16 look.
+      rearWheelOffsetX: -619,
+      frontWheelOffsetX: 594,
+      rearWheelOffsetY: 183,
+      frontWheelOffsetY: 183,
+      rearWheelScale: 0.04524,
+      frontWheelScale: 0.04524,
+      exhaustOffsetX: -955,
+      exhaustOffsetY: 165,
+    },
+  },
+
+  // Canonical Galant VR-4 model. Old Evo III save identifiers migrate on load.
+  galant: {
+    ...base,
+    id: 'galant',
+    shortName: 'GALANT VR-4',
+    name: 'Mitsubishi Galant VR-4',
+    description: 'Rally-bred AWD Galant with a responsive 2.0L 4G63 turbo. The pre-Lancer Mitsubishi hero.',
+    engine: '4g63t_galant_vr4',
+    engineModel: '4G63T',
+    powerKW: 176,
+    torqueNm: 304,
+    vehicleMassKg: 1380,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 7000,
+    engineLimiterRPM: 7200,
+    engineInertia: 0.23,
+    gearRatios: [2.846, 1.581, 1.160, 0.862, 0.617],
+    finalDriveRatio: 4.929,
+    drivetrainEfficiency: 0.84,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.02,
+    clutchStrength: 485,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 2.09,
+    turboSize: 0.55,
+    turboSpoolRate: 1.62,
+    maximumBoost: 0.78,
+    launchRPM: 5100,
+    visual: {
+      assetStem: 'galant',
+      engineKey: 'stockEngine4G63T',
+      wheelKey: 'wheelMesh',
+    },
+  },
+
+  fc3s: {
+    ...base,
+    id: 'fc3s',
+    shortName: 'FC3S',
+    name: 'Mazda RX-7 FC3S',
+    description: 'Smooth, light-feeling turbo rotary with strong top-end pace.',
+    engine: '13bt',
+    engineModel: '13B-T',
+    powerKW: 136,
+    torqueNm: 245,
+    vehicleMassKg: 1250,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 7000,
+    engineLimiterRPM: 7200,
+    engineInertia: 0.15,
+    gearRatios: [3.483, 2.015, 1.391, 1.000, 0.762],
+    finalDriveRatio: 4.10,
+    drivetrainEfficiency: 0.88,
+    drivenAxleWeightFraction: 0.49,
+    launchLoadMultiplier: 1.20,
+    tyreGrip: 1.00,
+    clutchStrength: 400,
+    dragCoefficient: 0.31,
+    frontalAreaM2: 1.78,
+    turboSize: 0.55,
+    turboSpoolRate: 1.60,
+    maximumBoost: 0.70,
+    launchRPM: 4300,
+    visual: {
+      engineKey: 'stockEngine13BT',
+      wheelKey: 'wheelDeepDish',
+      bodyScale: 0.198,
+      wheelScale: 0.039,
+      rearOffsetX: -495,
+      frontOffsetX: 474,
+      wheelOffsetY: 165,
+      // Explicit axle fit. 0.04524 preserves the legacy 0.039 × 1.16 look.
+      rearWheelOffsetX: -495,
+      frontWheelOffsetX: 474,
+      rearWheelOffsetY: 165,
+      frontWheelOffsetY: 165,
+      rearWheelScale: 0.04524,
+      frontWheelScale: 0.04524,
+      driverSeat: { x: 48, y: -18, height: 212, alpha: 0.50 },
+      exhaustOffsetX: -730,
+      exhaustOffsetY: 210,
+    },
+  },
+
+  gc8: {
+    ...base,
+    id: 'gc8',
+    shortName: 'GC8 STI',
+    name: 'Subaru Impreza WRX STI GC8',
+    description: 'Classic GC8 WRX STI sedan with its own 2.0L EJ207 turbo response and AWD grip.',
+    engine: 'ej207_gc8',
+    engineModel: 'EJ207',
+    powerKW: 206,
+    torqueNm: 353,
+    vehicleMassKg: 1260,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 7000,
+    engineLimiterRPM: 7200,
+    engineInertia: 0.21,
+    gearRatios: [3.166, 1.882, 1.296, 0.972, 0.738],
+    finalDriveRatio: 4.444,
+    drivetrainEfficiency: 0.84,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.03,
+    clutchStrength: 510,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 2.00,
+    turboSize: 0.62,
+    turboSpoolRate: 1.60,
+    maximumBoost: 0.80,
+    launchRPM: 5200,
+    visual: {
+      assetStem: 'gc8',
+      engineKey: 'stockEngineEJ207',
+      wheelKey: 'wheel5Spoke',
+      bodyScale: 0.198,
+      wheelScale: 0.039,
+      rearOffsetX: -488,
+      frontOffsetX: 481,
+      wheelOffsetY: 153,
+      // Explicit axle fit. 0.04524 preserves the legacy 0.039 × 1.16 look.
+      rearWheelOffsetX: -488,
+      frontWheelOffsetX: 481,
+      rearWheelOffsetY: 153,
+      frontWheelOffsetY: 153,
+      rearWheelScale: 0.04524,
+      frontWheelScale: 0.04524,
+      exhaustOffsetX: -735,
+      exhaustOffsetY: 210,
+    },
+  },
+
+  ek9: {
+    ...base,
+    id: 'ek9',
+    shortName: 'EK9',
+    name: 'Honda Civic Type R EK9',
+    description: 'Light, high-revving and quick once VTEC is in its stride.',
+    engine: 'b16b',
+    engineModel: 'B16B',
+    powerKW: 136,
+    torqueNm: 160,
+    vehicleMassKg: 1090,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 8400,
+    engineLimiterRPM: 8600,
+    engineInertia: 0.16,
+    gearRatios: [3.230, 2.105, 1.458, 1.107, 0.848],
+    finalDriveRatio: 4.40,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.61,
+    launchLoadMultiplier: 0.88,
+    tyreGrip: 1.01,
+    clutchStrength: 340,
+    dragCoefficient: 0.34,
+    frontalAreaM2: 1.88,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 6000,
+    visual: {
+      assetStem: 'civic_ek9',
+      engineKey: 'stockEngineB16B',
+      wheelKey: 'wheel8Spoke',
+      bodyScale: 0.198,
+      wheelScale: 0.039,
+      rearOffsetX: -563,
+      frontOffsetX: 496,
+      wheelOffsetY: 178,
+      // Explicit axle fit. 0.04524 preserves the legacy 0.039 × 1.16 look.
+      rearWheelOffsetX: -563,
+      frontWheelOffsetX: 496,
+      rearWheelOffsetY: 178,
+      frontWheelOffsetY: 178,
+      rearWheelScale: 0.04524,
+      frontWheelScale: 0.04524,
+      exhaustOffsetX: -735,
+      exhaustOffsetY: 214,
+    },
+  },
+
+
+  s2000: {
+    ...base,
+    id: 's2000',
+    shortName: 'S2000',
+    name: 'Honda S2000 AP1',
+    description: 'A razor-sharp rear-drive roadster built around Honda\'s 9000 rpm F20C.',
+    engine: 'f20c',
+    engineModel: 'F20C',
+    powerKW: 184,
+    torqueNm: 218,
+    vehicleMassKg: 1240,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 9000,
+    engineLimiterRPM: 9200,
+    engineInertia: 0.14,
+    gearRatios: [3.133, 2.045, 1.481, 1.161, 0.970, 0.810],
+    // Honda AP1 April 1999 specification: primary reduction precedes final drive.
+    primaryReductionRatio: 1.160,
+    finalDriveRatio: 4.100,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.50,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.05,
+    clutchStrength: 380,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 1.80,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 6200,
+    visual: {
+      assetStem: 's2000',
+      engineKey: 'stockEngineB16B',
+      wheelKey: 'wheel5Spoke',
+      bodyScale: 0.238,
+      wheelScale: 0.04524,
+      rearOffsetX: -522,
+      frontOffsetX: 590,
+      wheelOffsetY: 207,
+      rearWheelOffsetX: -522,
+      frontWheelOffsetX: 590,
+      rearWheelOffsetY: 207,
+      frontWheelOffsetY: 207,
+      rearWheelWellRadius: 151,
+      frontWheelWellRadius: 151,
+      exhaustOffsetX: -885,
+      exhaustOffsetY: 216,
+    },
+  },
+
+  minesR34: {
+    ...base,
+    id: 'minesR34',
+    shortName: "MINE'S R34",
+    name: "Mine's Skyline GT-R R34",
+    description: 'A sealed Mine\'s-built BNR34 collector car with devastating all-round pace.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: 'rb26_mines',
+    engineModel: "RB26DETT // MINE'S SPEC",
+    powerKW: 441,
+    torqueNm: 610,
+    vehicleMassKg: 1560,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 8000,
+    engineLimiterRPM: 8200,
+    engineInertia: 0.22,
+    gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793],
+    finalDriveRatio: 3.545,
+    drivetrainEfficiency: 0.86,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.05,
+    tyreGrip: 1.12,
+    clutchStrength: 760,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 2.02,
+    turboSize: 0.72,
+    turboSpoolRate: 1.58,
+    maximumBoost: 1.30,
+    launchRPM: 5600,
+    visual: {
+      assetStem: 'mines_r34_hero',
+      singleBody: true,
+      engineKey: 'stockEngineRB26DETT',
+
+      // R154 template-compatible Mine's asset pair.
+      // These paths intentionally match the uppercase .PNG files uploaded to
+      // GitHub. GitHub Pages is case-sensitive.
+      bodyPath: 'assets/Cars/hero/mines_r34_hero_body.png',
+      wheelKey: 'heroWheelMinesR34',
+      wheelPath: 'assets/wheels/mines_r34_hero_wheel.PNG',
+
+      // Same authored scale convention as the working normal-car templates.
+      bodyScale: 0.198,
+
+      // Presentation-only vertical correction for the regenerated template asset.
+      // Source pixels, multiplied by the live body render scale.
+      renderOffsetY: 24,
+
+      // Independent measured axle centres in body-source pixels.
+      rearOffsetX: -484,
+      frontOffsetX: 500,
+      wheelOffsetY: 195,
+      rearWheelOffsetX: -484,
+      frontWheelOffsetX: 500,
+      rearWheelOffsetY: 192,
+      frontWheelOffsetY: 197,
+
+      // Explicit scale for the newly generated 1254×1254 wheel canvas.
+      // No hero auto-fit / PNG-canvas inference is used for this car.
+      wheelScale: 0.0483,
+      rearWheelScale: 0.0481,
+      frontWheelScale: 0.0486,
+
+      // Dark backing follows the measured arch cavity only.
+      rearWheelWellRadius: 130,
+      frontWheelWellRadius: 131,
+
+      exhaustOffsetX: -820,
+      exhaustOffsetY: 205,
+    }
+  },
+
+  topSecretSupra: {
+    ...base,
+    id: 'topSecretSupra',
+    shortName: 'TOP SECRET SUPRA',
+    name: 'Top Secret Toyota Supra GT-300',
+    description: 'A legendary high-output Top Secret JZA80 built for outrageous top-end speed.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: '2jz_topsecret',
+    engineModel: '2JZ-GTE // TOP SECRET',
+    powerKW: 588,
+    torqueNm: 800,
+    vehicleMassKg: 1500,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 8000,
+    engineLimiterRPM: 8200,
+    engineInertia: 0.24,
+    gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793],
+    finalDriveRatio: 3.133,
+    drivetrainEfficiency: 0.88,
+    drivenAxleWeightFraction: 0.50,
+    launchLoadMultiplier: 1.25,
+    tyreGrip: 1.10,
+    clutchStrength: 900,
+    dragCoefficient: 0.34,
+    frontalAreaM2: 1.92,
+    turboSize: 0.82,
+    turboSpoolRate: 1.38,
+    maximumBoost: 1.45,
+    launchRPM: 5000,
+    visual: {
+      assetStem: 'top_secret_supra_hero',
+      singleBody: true,
+      engineKey: 'stockEngineRB26DETT',
+      bodyPath: 'assets/Cars/hero/top_secret_supra_hero_body.png',
+      wheelKey: 'heroWheelTopSecretSupra',
+      wheelPath: 'assets/wheels/top_secret_supra_hero_wheel.png',
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.198,
+      renderOffsetY: 63,
+
+      rearOffsetX: -489,
+      frontOffsetX: 505,
+      wheelOffsetY: 147,
+      rearWheelOffsetX: -489,
+      frontWheelOffsetX: 505,
+      rearWheelOffsetY: 148,
+      frontWheelOffsetY: 145,
+
+      wheelScale: 0.04992,
+      rearWheelScale: 0.05205,
+      frontWheelScale: 0.04780,
+
+      rearWheelWellRadius: 136,
+      frontWheelWellRadius: 125,
+
+      exhaustOffsetX: -955,
+      exhaustOffsetY: 190,
+    }
+  },
+
+  libertyWalkR35: {
+    ...base,
+    id: 'libertyWalkR35',
+    shortName: 'LB R35',
+    name: 'Liberty Walk Nissan GT-R R35',
+    description: 'A widebody R35 showpiece with supercar launch traction and huge turbo torque.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: true,
+    engine: 'vr38_lb',
+    engineModel: 'VR38DETT // LB SPEC',
+    powerKW: 588,
+    torqueNm: 900,
+    vehicleMassKg: 1740,
+    engineIdleRPM: 850,
+    engineRedlineRPM: 7200,
+    engineLimiterRPM: 7400,
+    engineInertia: 0.25,
+    gearRatios: [4.056, 2.301, 1.595, 1.248, 1.001, 0.796],
+    finalDriveRatio: 3.700,
+    drivetrainEfficiency: 0.85,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.16,
+    clutchStrength: 1050,
+    dragCoefficient: 0.38,
+    frontalAreaM2: 2.18,
+    turboSize: 0.76,
+    turboSpoolRate: 1.72,
+    maximumBoost: 1.20,
+    launchRPM: 4300,
+    shiftTimeScale: 0.72,
+    visual: {
+      assetStem: 'liberty_walk_r35_hero',
+      singleBody: true,
+      engineKey: 'stockEngineRB26DETT',
+      bodyPath: 'assets/Cars/hero/liberty_walk_r35_hero_body.png',
+      wheelKey: 'heroWheelLibertyWalkR35',
+      wheelPath: 'assets/wheels/liberty_walk_r35_hero_wheel.png',
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.198,
+      renderOffsetY: 26,
+
+      rearOffsetX: -488,
+      frontOffsetX: 539,
+      wheelOffsetY: 176,
+      rearWheelOffsetX: -488,
+      frontWheelOffsetX: 539,
+      rearWheelOffsetY: 174,
+      frontWheelOffsetY: 178,
+
+      wheelScale: 0.05399,
+      rearWheelScale: 0.05559,
+      frontWheelScale: 0.05239,
+
+      rearWheelWellRadius: 147,
+      frontWheelWellRadius: 139,
+
+      exhaustOffsetX: -955,
+      exhaustOffsetY: 190,
+    }
+  },
+
+  veilsideFortuneRx7: {
+    ...base,
+    id: 'veilsideFortuneRx7',
+    shortName: 'VEILSIDE RX-7',
+    name: 'VeilSide Fortune Mazda RX-7',
+    description: 'A dramatic Fortune-bodied FD with a responsive high-revving turbo rotary.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: true,
+    engine: '13brew_veilside',
+    engineModel: '13B-REW // VEILSIDE',
+    powerKW: 335,
+    torqueNm: 480,
+    vehicleMassKg: 1330,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 8200,
+    engineLimiterRPM: 8400,
+    engineInertia: 0.15,
+    gearRatios: [3.483, 2.015, 1.391, 1.000, 0.762],
+    finalDriveRatio: 4.100,
+    drivetrainEfficiency: 0.88,
+    drivenAxleWeightFraction: 0.49,
+    launchLoadMultiplier: 1.22,
+    tyreGrip: 1.11,
+    clutchStrength: 620,
+    dragCoefficient: 0.32,
+    frontalAreaM2: 1.82,
+    turboSize: 0.62,
+    turboSpoolRate: 1.72,
+    maximumBoost: 1.00,
+    launchRPM: 5200,
+    visual: {
+      assetStem: 'veilside_fortune_rx7_hero',
+      singleBody: true,
+      engineKey: 'stockEngine13BT',
+      bodyPath: 'assets/Cars/hero/veilside_fortune_rx7_hero_body.png',
+      wheelKey: 'heroWheelVeilsideFortuneRx7',
+      wheelPath: 'assets/wheels/veilside_fortune_rx7_hero_wheel.png',
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.198,
+      renderOffsetY: 48,
+
+      rearOffsetX: -489,
+      frontOffsetX: 519,
+      wheelOffsetY: 151,
+      rearWheelOffsetX: -489,
+      frontWheelOffsetX: 519,
+      rearWheelOffsetY: 137,
+      frontWheelOffsetY: 165,
+
+      wheelScale: 0.05070,
+      rearWheelScale: 0.05056,
+      frontWheelScale: 0.05083,
+
+      rearWheelWellRadius: 134,
+      frontWheelWellRadius: 135,
+
+      exhaustOffsetX: -960,
+      exhaustOffsetY: 190,
+    }
+  },
+
+  rwbStellaPorsche: {
+    ...base,
+    id: 'rwbStellaPorsche',
+    shortName: 'RWB STELLA',
+    name: 'RWB Porsche 911 Stella Artois',
+    description: 'A one-off RWB air-cooled Porsche: light, raw and built around mechanical grip.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: true,
+    engine: 'flat6_rwb',
+    engineModel: '3.6L FLAT-SIX // RWB',
+    powerKW: 294,
+    torqueNm: 420,
+    vehicleMassKg: 1180,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 7200,
+    engineLimiterRPM: 7400,
+    engineInertia: 0.19,
+    gearRatios: [3.500, 2.118, 1.429, 1.086, 0.868],
+    finalDriveRatio: 3.444,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.62,
+    launchLoadMultiplier: 1.28,
+    tyreGrip: 1.16,
+    clutchStrength: 560,
+    dragCoefficient: 0.36,
+    frontalAreaM2: 1.80,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 4700,
+    visual: {
+      assetStem: 'rwb_stella_artois_porsche_hero',
+      singleBody: true,
+      engineKey: 'stockEngine4AGE',
+      bodyPath: 'assets/Cars/hero/rwb_stella_artois_porsche_hero_body.png',
+      wheelKey: 'heroWheelRwbStella',
+      wheelPath: 'assets/wheels/rwb_stella_artois_porsche_hero_wheel.png',
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.198,
+      renderOffsetY: 70,
+
+      rearOffsetX: -462,
+      frontOffsetX: 504,
+      wheelOffsetY: 145,
+      rearWheelOffsetX: -462,
+      frontWheelOffsetX: 504,
+      rearWheelOffsetY: 136,
+      frontWheelOffsetY: 154,
+
+      wheelScale: 0.04395,
+      rearWheelScale: 0.04363,
+      frontWheelScale: 0.04427,
+
+      rearWheelWellRadius: 121,
+      frontWheelWellRadius: 123,
+
+      exhaustOffsetX: -960,
+      exhaustOffsetY: 195,
+    }
+  },
+
+  renownMazda787B: {
+    ...base,
+    id: 'renownMazda787B',
+    shortName: '787B #55',
+    name: 'Renown Mazda 787B #55',
+    description: 'Le Mans royalty: featherweight, enormous grip and a screaming four-rotor powerband.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: true,
+    engine: 'r26b_787b',
+    engineModel: 'R26B 4-ROTOR',
+    powerKW: 515,
+    torqueNm: 608,
+    vehicleMassKg: 830,
+    engineIdleRPM: 1200,
+    engineRedlineRPM: 9000,
+    engineLimiterRPM: 9200,
+    engineInertia: 0.11,
+    gearRatios: [2.846, 1.850, 1.333, 1.036, 0.812],
+    finalDriveRatio: 3.625,
+    drivetrainEfficiency: 0.91,
+    drivenAxleWeightFraction: 0.56,
+    launchLoadMultiplier: 1.18,
+    tyreGrip: 1.30,
+    clutchStrength: 820,
+    dragCoefficient: 0.34,
+    frontalAreaM2: 1.62,
+    rollingResistance: 0.012,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 6500,
+    visual: {
+      assetStem: 'renown_mazda_787b_hero',
+      singleBody: true,
+      engineKey: 'stockEngine13BT',
+      bodyPath: 'assets/Cars/hero/renown787B_hero_body.png',
+      wheelKey: 'heroWheelRenown787B',
+      wheelPath: 'assets/wheels/renown_mazda_787b_hero_wheel.png',
+
+      // R165: recalibrated directly from the regenerated, right-facing
+      // 1736x906 Renown body shell. The rear wheel opening is intentionally
+      // larger than the front, matching the new artwork.
+      bodyScale: 0.198,
+      renderOffsetY: 54,
+
+      rearOffsetX: -521,
+      frontOffsetX: 497,
+      wheelOffsetY: 129,
+      rearWheelOffsetX: -521,
+      frontWheelOffsetX: 497,
+      rearWheelOffsetY: 137,
+      frontWheelOffsetY: 121,
+
+      wheelScale: 0.04815,
+      rearWheelScale: 0.05082,
+      frontWheelScale: 0.04547,
+
+      rearWheelWellRadius: 133,
+      frontWheelWellRadius: 119,
+
+      exhaustOffsetX: -815,
+      exhaustOffsetY: 205,
+    }
+  },
+
+  amuseS2000Gt1: {
+    ...base,
+    id: 'amuseS2000Gt1',
+    shortName: 'AMUSE S2000',
+    name: 'Amuse S2000 GT1',
+    description: 'A lightweight GT1-style S2000 with huge turbo power and razor-sharp rear-drive response.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: 'f20c_amuse',
+    engineModel: 'F20C TURBO // AMUSE',
+    powerKW: 390,
+    torqueNm: 480,
+    vehicleMassKg: 1120,
+    engineIdleRPM: 950,
+    engineRedlineRPM: 8500,
+    engineLimiterRPM: 8700,
+    engineInertia: 0.14,
+    gearRatios: [3.133, 2.045, 1.481, 1.161, 0.943, 0.763],
+    finalDriveRatio: 4.100,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.50,
+    launchLoadMultiplier: 1.24,
+    tyreGrip: 1.18,
+    clutchStrength: 650,
+    dragCoefficient: 0.32,
+    frontalAreaM2: 1.76,
+    turboSize: 0.60,
+    turboSpoolRate: 1.68,
+    maximumBoost: 1.05,
+    launchRPM: 5600,
+    visual: {
+      assetStem: 'amuse_s2000_gt1_hero',
+      singleBody: true,
+      engineKey: 'stockEngineB16B',
+      bodyPath: 'assets/Cars/hero/amuse_s2000_gt1_hero_body.png',
+      wheelKey: 'heroWheelAmuseS2000Gt1',
+      wheelPath: 'assets/wheels/amuse_s2000_gt1_hero_wheel.png',
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 445 / 1729,
+      renderOffsetY: 32,
+
+      rearOffsetX: -468,
+      frontOffsetX: 526,
+      wheelOffsetY: 177,
+      rearWheelOffsetX: -468,
+      frontWheelOffsetX: 526,
+      rearWheelOffsetY: 179,
+      frontWheelOffsetY: 175,
+
+      wheelScale: 0.05116,
+      rearWheelScale: 0.05253,
+      frontWheelScale: 0.04979,
+
+      rearWheelWellRadius: 144,
+      frontWheelWellRadius: 136,
+
+      driverSeat: { x: 104, y: -44, height: 248, alpha: 0.50 },
+      exhaustOffsetX: -955,
+      exhaustOffsetY: 190,
+    }
+  },
+  spoonEk9: {
+    ...base,
+    id: 'spoonEk9',
+    shortName: 'SPOON EK9',
+    name: 'Spoon Honda Civic Type R EK9',
+    description: 'A lightweight Spoon-built EK9 with a high-revving naturally aspirated VTEC race engine.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: 'b18c_spoon',
+    engineModel: 'B18C 1.8 VTEC // SPOON',
+    powerKW: 191,
+    torqueNm: 220,
+    vehicleMassKg: 900,
+    engineIdleRPM: 950,
+    engineRedlineRPM: 9000,
+    engineLimiterRPM: 9200,
+    engineInertia: 0.13,
+    gearRatios: [3.230, 2.105, 1.458, 1.107, 0.848],
+    finalDriveRatio: 4.785,
+    drivetrainEfficiency: 0.91,
+    drivenAxleWeightFraction: 0.62,
+    launchLoadMultiplier: 0.86,
+    tyreGrip: 1.15,
+    clutchStrength: 430,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 1.82,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 6500,
+    shiftTimeScale: 0.88,
+    visual: {
+      assetStem: 'spoon_ek9_hero',
+      singleBody: true,
+      engineKey: 'stockEngineB16B',
+      bodyPath: 'assets/Cars/hero/spoon_ek9_hero_body.png',
+      wheelKey: 'heroWheelSpoonEk9',
+      wheelPath: 'assets/wheels/spoon_ek9_hero_wheel.png',
+
+      bodyScale: 420 / 1704,
+      renderOffsetY: 5,
+
+      rearOffsetX: -581,
+      frontOffsetX: 523,
+      wheelOffsetY: 206,
+      rearWheelOffsetX: -581,
+      frontWheelOffsetX: 523,
+      rearWheelOffsetY: 200,
+      frontWheelOffsetY: 212,
+
+      wheelScale: 0.04864,
+      rearWheelScale: 0.04694,
+      frontWheelScale: 0.05034,
+
+      rearWheelWellRadius: 132,
+      frontWheelWellRadius: 142,
+
+      exhaustOffsetX: -810,
+      exhaustOffsetY: 220,
+    },
+  },
+
+  reAmemiyaRx7: {
+    ...base,
+    id: 'reAmemiyaRx7',
+    shortName: 'RE RX-7',
+    name: 'RE Amemiya Mazda RX-7 FD3S',
+    description: 'A stripped, aero-heavy RE Amemiya FD built around a responsive high-output rotary and circuit grip.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: '13brew_amemiya',
+    engineModel: '13B-REW // RE AMEMIYA',
+    powerKW: 368,
+    torqueNm: 500,
+    vehicleMassKg: 1050,
+    engineIdleRPM: 950,
+    engineRedlineRPM: 8500,
+    engineLimiterRPM: 8700,
+    engineInertia: 0.13,
+    gearRatios: [3.483, 2.015, 1.391, 1.000, 0.806, 0.650],
+    finalDriveRatio: 4.100,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.50,
+    launchLoadMultiplier: 1.24,
+    tyreGrip: 1.22,
+    clutchStrength: 720,
+    dragCoefficient: 0.38,
+    frontalAreaM2: 1.88,
+    rollingResistance: 0.012,
+    turboSize: 0.68,
+    turboSpoolRate: 1.55,
+    maximumBoost: 1.30,
+    launchRPM: 5500,
+    shiftTimeScale: 0.80,
+    visual: {
+      assetStem: 're_amemiya_rx7_hero',
+      singleBody: true,
+      engineKey: 'stockEngine13BT',
+      bodyPath: 'assets/Cars/hero/re_amemiya_rx7_hero_body.png',
+      wheelKey: 'heroWheelReAmemiyaRx7',
+      wheelPath: 'assets/wheels/re_amemiya_rx7_hero_wheel.png',
+
+      bodyScale: 0.198,
+      renderOffsetY: 33,
+
+      rearOffsetX: -481,
+      frontOffsetX: 513,
+      wheelOffsetY: 176,
+      rearWheelOffsetX: -481,
+      frontWheelOffsetX: 513,
+      rearWheelOffsetY: 173,
+      frontWheelOffsetY: 178,
+
+      wheelScale: 0.04970,
+      rearWheelScale: 0.04905,
+      frontWheelScale: 0.05035,
+
+      rearWheelWellRadius: 138,
+      frontWheelWellRadius: 142,
+
+      exhaustOffsetX: -820,
+      exhaustOffsetY: 215,
+    },
+  },
+
+  junHyperLemonEvo5: {
+    ...base,
+    id: 'junHyperLemonEvo5',
+    shortName: 'JUN EVO V',
+    name: 'JUN Hyper Lemon Mitsubishi Lancer Evolution V',
+    description: 'JUN Auto Mechanic\'s famous Hyper Lemon Evo V: a lightweight AWD Tsukuba time-attack weapon.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: '4g63_jun_hyper_lemon',
+    engineModel: '4G63 2.2L // JUN',
+    powerKW: 423,
+    torqueNm: 632,
+    vehicleMassKg: 1180,
+    engineIdleRPM: 950,
+    engineRedlineRPM: 7800,
+    engineLimiterRPM: 8000,
+    engineInertia: 0.18,
+    gearRatios: [2.785, 1.950, 1.444, 1.096, 0.857],
+    finalDriveRatio: 4.529,
+    drivetrainEfficiency: 0.86,
+    drivenAxleWeightFraction: 1.00,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.25,
+    clutchStrength: 880,
+    dragCoefficient: 0.38,
+    frontalAreaM2: 2.00,
+    rollingResistance: 0.012,
+    turboSize: 0.78,
+    turboSpoolRate: 1.45,
+    maximumBoost: 1.90,
+    launchRPM: 6000,
+    shiftTimeScale: 0.82,
+    visual: {
+      assetStem: 'jun_hyper_lemon_evo5_hero',
+      singleBody: true,
+      engineKey: 'stockEngine4G63T',
+      bodyPath: 'assets/Cars/hero/jun_hyper_lemon_evo5_hero_body.png',
+      wheelKey: 'heroWheelJunHyperLemonEvo5',
+      wheelPath: 'assets/wheels/jun_hyper_lemon_evo5_hero_wheel.png',
+
+      bodyScale: 0.198,
+      renderOffsetY: 16,
+
+      rearOffsetX: -470,
+      frontOffsetX: 490,
+      wheelOffsetY: 201,
+      rearWheelOffsetX: -470,
+      frontWheelOffsetX: 490,
+      rearWheelOffsetY: 201,
+      frontWheelOffsetY: 200,
+
+      wheelScale: 0.04458,
+      rearWheelScale: 0.04453,
+      frontWheelScale: 0.04463,
+
+      rearWheelWellRadius: 132,
+      frontWheelWellRadius: 133,
+
+      exhaustOffsetX: -825,
+      exhaustOffsetY: 215,
+    },
+  },
+
+  espritNsx: {
+    ...base,
+    id: 'espritNsx',
+    shortName: 'ESPRIT NSX',
+    name: 'ESPRIT Honda NSX',
+    description: 'A full-aero twin-turbo ESPRIT NA1 time-attack car with huge power and mid-engine traction.',
+    collector: true,
+    tuningLocked: true,
+    ginzaExclusive: false,
+    engine: 'c30a_esprit',
+    engineModel: 'C30A 3.2 TT // ESPRIT',
+    powerKW: 625,
+    torqueNm: 850,
+    vehicleMassKg: 1280,
+    engineIdleRPM: 1000,
+    engineRedlineRPM: 8200,
+    engineLimiterRPM: 8400,
+    engineInertia: 0.18,
+    gearRatios: [2.800, 1.900, 1.450, 1.170, 0.980, 0.840],
+    finalDriveRatio: 3.700,
+    drivetrainEfficiency: 0.91,
+    drivenAxleWeightFraction: 0.64,
+    launchLoadMultiplier: 1.24,
+    tyreGrip: 1.30,
+    clutchStrength: 1120,
+    dragCoefficient: 0.45,
+    frontalAreaM2: 1.95,
+    rollingResistance: 0.012,
+    turboSize: 0.88,
+    turboSpoolRate: 1.35,
+    maximumBoost: 1.60,
+    launchRPM: 5200,
+    shiftTimeScale: 0.65,
+    visual: {
+      assetStem: 'esprit_nsx_hero',
+      singleBody: true,
+      engineKey: 'stockEngineB16B',
+      bodyPath: 'assets/Cars/hero/esprit_nsx_hero_body.png',
+      wheelKey: 'heroWheelEspritNsx',
+      wheelPath: 'assets/wheels/esprit_nsx_hero_wheel.png',
+
+      bodyScale: 0.198,
+      renderOffsetY: 58,
+
+      rearOffsetX: -438,
+      frontOffsetX: 424,
+      wheelOffsetY: 179,
+      rearWheelOffsetX: -438,
+      frontWheelOffsetX: 424,
+      rearWheelOffsetY: 179,
+      frontWheelOffsetY: 179,
+
+      wheelScale: 0.03971,
+      rearWheelScale: 0.03966,
+      frontWheelScale: 0.03976,
+
+      rearWheelWellRadius: 112,
+      frontWheelWellRadius: 112,
+
+      exhaustOffsetX: -790,
+      exhaustOffsetY: 205,
+    },
+  },
+
+
+};
+
+// Extend the regular roster without changing existing IDs or saved ownership.
+// Physics starts from the closest existing drivetrain; each model then supplies
+// its own mass, engine curve and factory outputs below.
+function addRegularCar(id, templateId, spec) {
+  const template = cars[templateId];
+  cars[id] = {
+    ...template,
+    ...spec,
+    id,
+    visual: { ...template.visual, ...spec.visual },
+  };
+}
+
+addRegularCar('rx7fd', 'fc3s', {
+  shortName: 'RX-7 FD', name: 'Mazda RX-7 FD3S', description: 'Twin turbo rotary with a sharp, light chassis.',
+  engine: '13brew', engineModel: '13B-REW', powerKW: 206, torqueNm: 314, vehicleMassKg: 1280,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, maximumBoost: 0.85,
+  launchRPM: 5100, visual: { wheelKey: 'wheelDeepDish' },
+});
+addRegularCar('ef', 'ek9', {
+  shortName: 'CIVIC EF', name: 'Honda Civic SiR EF', description: 'A featherweight VTEC hatch for close racing.',
+  engine: 'b16a', engineModel: 'B16A', powerKW: 118, torqueNm: 150, vehicleMassKg: 1010,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5700,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+for (const [id, numeral, powerKW, torqueNm, mass, engine, boost, finalDrive, spool] of [
+  ['evo5', 'V', 206, 373, 1360, '4g63t_evo5', 0.92, 4.529, 1.68],
+  ['evo6', 'VI', 206, 373, 1360, '4g63t_evo6', 0.96, 4.529, 1.74],
+]) {
+  addRegularCar(id, 'galant', {
+    shortName: 'EVO ' + numeral,
+    name: 'Mitsubishi Lancer Evolution ' + numeral,
+    description: 'Later generation 4G63T AWD grip and turbo punch.',
+    powerKW, torqueNm, vehicleMassKg: mass,
+    engine, engineModel: '4G63T',
+    maximumBoost: boost, finalDriveRatio: finalDrive, turboSpoolRate: spool,
+    gearRatios: [2.785, 1.950, 1.407, 1.031, 0.761],
+    dragCoefficient: 0.36,
+    visual: { wheelKey: 'wheelMesh' },
+  });
+}
+addRegularCar('rx8', 'fc3s', {
+  shortName: 'RX-8', name: 'Mazda RX-8', description: 'High revving RENESIS rotary with a broad chassis.',
+  engine: '13b_msp', engineModel: '13B-MSP', powerKW: 170, torqueNm: 211, vehicleMassKg: 1370,
+  engineRedlineRPM: 9000, engineLimiterRPM: 9200, turboSize: 0,
+  turboSpoolRate: 0, maximumBoost: 0, launchRPM: 5600,
+  gearRatios: [3.760, 2.269, 1.645, 1.187, 1.000, 0.843],
+  finalDriveRatio: 4.444, engineInertia: 0.14,
+  drivenAxleWeightFraction: 0.51, tyreGrip: 1.02,
+  clutchStrength: 380, dragCoefficient: 0.31, frontalAreaM2: 1.93,
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+
+addRegularCar('a60', 'ae86', {
+  shortName: 'SUPRA A60', name: 'Toyota Celica Supra A60', description: 'Classic straight-six grand tourer with rear-drive balance.',
+  engine: '5mge', engineModel: '5M-GE', powerKW: 118, torqueNm: 221, vehicleMassKg: 1360,
+  engineRedlineRPM: 6500, engineLimiterRPM: 6800, launchRPM: 4300,
+  gearRatios: [3.285, 1.894, 1.275, 1.000, 0.783], finalDriveRatio: 4.10,
+  engineIdleRPM: 800, engineInertia: 0.27, drivetrainEfficiency: 0.87,
+  drivenAxleWeightFraction: 0.49, tyreGrip: 0.98, clutchStrength: 390,
+  dragCoefficient: 0.38, frontalAreaM2: 1.91, turboSize: 0,
+  turboSpoolRate: 0, maximumBoost: 0,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+addRegularCar('jza80', 'r32', {
+  shortName: 'SUPRA JZA80', name: 'Toyota Supra JZA80', description: 'Twin-turbo straight-six coupe with enormous tuning headroom.',
+  engine: '2jzgte', engineModel: '2JZ-GTE', powerKW: 206, torqueNm: 435, vehicleMassKg: 1510,
+  engineRedlineRPM: 6800, engineLimiterRPM: 7200, maximumBoost: 0.80, launchRPM: 4700,
+  gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793], finalDriveRatio: 3.27,
+  engineIdleRPM: 800, engineInertia: 0.27, drivetrainEfficiency: 0.87,
+  drivenAxleWeightFraction: 0.48, launchLoadMultiplier: 1.22,
+  tyreGrip: 1.03, clutchStrength: 590, dragCoefficient: 0.31,
+  frontalAreaM2: 1.93, turboSize: 0.67, turboSpoolRate: 1.42,
+  visual: { wheelKey: 'wheelDeepDish' },
+});
+addRegularCar('nsx', 'ae86', {
+  shortName: 'NSX', name: 'Honda NSX NA1', description: 'Mid-engine aluminium sports car with precise naturally aspirated response.',
+  engine: 'c30a', engineModel: 'C30A', powerKW: 206, torqueNm: 294, vehicleMassKg: 1350,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5000,
+  gearRatios: [3.071, 1.727, 1.230, 0.967, 0.771], finalDriveRatio: 4.06,
+  engineInertia: 0.19, drivetrainEfficiency: 0.90,
+  drivenAxleWeightFraction: 0.62, launchLoadMultiplier: 1.18,
+  tyreGrip: 1.08, clutchStrength: 440, dragCoefficient: 0.32,
+  frontalAreaM2: 1.79, visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('3000gt', 'r32', {
+  shortName: '3000GT VR-4', name: 'Mitsubishi 3000GT VR-4',
+  description: 'Heavy twin-turbo V6 grand tourer with full-time AWD traction.',
+  engine: '6g72tt', engineModel: '6G72TT', powerKW: 235, torqueNm: 427,
+  vehicleMassKg: 1710, engineIdleRPM: 800, engineRedlineRPM: 7000,
+  engineLimiterRPM: 7200, engineInertia: 0.28,
+  gearRatios: [3.083, 1.684, 1.115, 0.833, 0.666, 0.536],
+  finalDriveRatio: 4.153, drivetrainEfficiency: 0.82,
+  drivenAxleWeightFraction: 1, launchLoadMultiplier: 1.04,
+  tyreGrip: 1.03, clutchStrength: 620, dragCoefficient: 0.33,
+  frontalAreaM2: 2.03, turboSize: 0.63, turboSpoolRate: 1.48,
+  maximumBoost: 0.75, launchRPM: 4300,
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('r34', 'r32', {
+  shortName: 'R34', name: 'Nissan Skyline GT-R R34',
+  description: 'RB26 twin-turbo AWD coupe with a long-legged six-speed gearbox.',
+  engine: 'rb26dett_r34', engineModel: 'RB26DETT', powerKW: 206,
+  torqueNm: 392, vehicleMassKg: 1560, engineIdleRPM: 850,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200,
+  gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793],
+  finalDriveRatio: 3.545, drivetrainEfficiency: 0.84,
+  drivenAxleWeightFraction: 1, tyreGrip: 1.05,
+  clutchStrength: 580, dragCoefficient: 0.35, frontalAreaM2: 2.02,
+  turboSize: 0.68, turboSpoolRate: 1.58, maximumBoost: 0.82,
+  launchRPM: 5000, visual: { wheelKey: 'wheel5Spoke' },
+});
+
+// Ref2 roster: independent engines/gearing; compatible with existing ownership IDs.
+addRegularCar('z32', 'jza80', {
+  "shortName": "300ZX Z32",
+  "name": "Nissan 300ZX Z32 Twin Turbo",
+  "description": "VG30DETT power with RWD traction.",
+  "engine": "vg30dett",
+  "engineModel": "VG30DETT",
+  "powerKW": 206,
+  "torqueNm": 388,
+  "vehicleMassKg": 1530,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.214,
+    1.925,
+    1.302,
+    1,
+    0.752
+  ],
+  "finalDriveRatio": 3.692,
+  "maximumBoost": 0.7,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 582,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "300zx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('z33', 'nsx', {
+  "shortName": "350Z Z33",
+  "name": "Nissan 350Z Z33",
+  "description": "VQ35DE power with RWD traction.",
+  "engine": "vq35de",
+  "engineModel": "VQ35DE",
+  "powerKW": 206,
+  "torqueNm": 363,
+  "vehicleMassKg": 1450,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 6600,
+  "engineLimiterRPM": 6800,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.794,
+    2.324,
+    1.624,
+    1.271,
+    1,
+    0.794
+  ],
+  "finalDriveRatio": 3.538,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 544,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "350Z",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('240z', 'a60', {
+  "shortName": "240Z",
+  "name": "Datsun 240Z",
+  "description": "L24 power with RWD traction.",
+  "engine": "l24",
+  "engineModel": "L24",
+  "powerKW": 112,
+  "torqueNm": 198,
+  "vehicleMassKg": 1044,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 6500,
+  "engineLimiterRPM": 6700,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.321,
+    2.077,
+    1.308,
+    1,
+    0.864
+  ],
+  "finalDriveRatio": 3.9,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 297,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "240z",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('crx', 'ef', {
+  "shortName": "CR-X SiR",
+  "name": "Honda CR-X SiR EF8",
+  "description": "B16A power with FWD traction.",
+  "engine": "b16a_ef8",
+  "engineModel": "B16A",
+  "powerKW": 118,
+  "torqueNm": 152,
+  "vehicleMassKg": 1000,
+  "drivetrain": "FWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 8000,
+  "engineLimiterRPM": 8200,
+  "engineInertia": 0.16,
+  "gearRatios": [
+    3.25,
+    2.052,
+    1.416,
+    1.103,
+    0.87
+  ],
+  "finalDriveRatio": 4.4,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 228,
+  "launchRPM": 5500,
+  "visual": {
+    "assetStem": "crx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('dc2', 'ek9', {
+  "shortName": "INTEGRA DC2",
+  "name": "Honda Integra Type R DC2",
+  "description": "B18C power with FWD traction.",
+  "engine": "b18c",
+  "engineModel": "B18C",
+  "powerKW": 147,
+  "torqueNm": 181,
+  "vehicleMassKg": 1060,
+  "drivetrain": "FWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 8400,
+  "engineLimiterRPM": 8600,
+  "engineInertia": 0.16,
+  "gearRatios": [
+    3.23,
+    2.105,
+    1.458,
+    1.107,
+    0.848
+  ],
+  "finalDriveRatio": 4.785,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 272,
+  "launchRPM": 5500,
+  "visual": {
+    "assetStem": "dc2",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('eclipse', 'galant', {
+  "shortName": "ECLIPSE GSX",
+  "name": "Mitsubishi Eclipse GSX",
+  "description": "4G63T power with AWD traction.",
+  "engine": "4g63t_gsx",
+  "engineModel": "4G63T",
+  "powerKW": 157,
+  "torqueNm": 290,
+  "vehicleMassKg": 1480,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.083,
+    1.684,
+    1.115,
+    0.833,
+    0.666
+  ],
+  "finalDriveRatio": 4.929,
+  "maximumBoost": 0.75,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 435,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "eclipse",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('familia', 'galant', {
+  "shortName": "FAMILIA GT-R",
+  "name": "Mazda Familia GT-R",
+  "description": "BPT power with AWD traction.",
+  "engine": "bpt",
+  "engineModel": "BPT",
+  "powerKW": 136,
+  "torqueNm": 235,
+  "vehicleMassKg": 1210,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.454,
+    1.833,
+    1.31,
+    0.97,
+    0.717
+  ],
+  "finalDriveRatio": 4.214,
+  "maximumBoost": 0.65,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 352,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "familia",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('180sx', 'fc3s', {
+  "shortName": "180SX",
+  "name": "Nissan 180SX",
+  "description": "SR20DET power with RWD traction.",
+  "engine": "sr20det",
+  "engineModel": "SR20DET",
+  "powerKW": 151,
+  "torqueNm": 274,
+  "vehicleMassKg": 1220,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7500,
+  "engineLimiterRPM": 7700,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.321,
+    1.902,
+    1.308,
+    1,
+    0.759
+  ],
+  "finalDriveRatio": 4.083,
+  "maximumBoost": 0.7,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 411,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "180sx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('st205', 'galant', {
+  "shortName": "CELICA GT-FOUR",
+  "name": "Toyota Celica GT-Four ST205",
+  "description": "3S-GTE power with AWD traction.",
+  "engine": "3sgte",
+  "engineModel": "3S-GTE",
+  "powerKW": 188,
+  "torqueNm": 304,
+  "vehicleMassKg": 1390,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7200,
+  "engineLimiterRPM": 7400,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.384,
+    1.913,
+    1.258,
+    0.918,
+    0.731
+  ],
+  "finalDriveRatio": 4.285,
+  "maximumBoost": 0.9,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 456,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "celicaGT4",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('jzx100', 'jza80', {
+  "shortName": "CHASER JZX100",
+  "name": "Toyota Chaser JZX100",
+  "description": "1JZ-GTE VVT-i power with RWD traction.",
+  "engine": "1jzgte",
+  "engineModel": "1JZ-GTE VVT-i",
+  "powerKW": 206,
+  "torqueNm": 378,
+  "vehicleMassKg": 1470,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.251,
+    1.955,
+    1.31,
+    1,
+    0.753
+  ],
+  "finalDriveRatio": 3.727,
+  "maximumBoost": 0.75,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 567,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "chaser",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('b4rsk', 'gc8', {
+  "shortName": "LEGACY B4 RSK",
+  "name": "Subaru Legacy B4 RSK",
+  "description": "EJ208 power with AWD traction.",
+  "engine": "ej208",
+  "engineModel": "EJ208",
+  "powerKW": 206,
+  "torqueNm": 343,
+  "vehicleMassKg": 1470,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7500,
+  "engineLimiterRPM": 7700,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.166,
+    1.882,
+    1.296,
+    0.972,
+    0.738
+  ],
+  "finalDriveRatio": 4.444,
+  "maximumBoost": 0.8,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 514,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "B4RSK",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+
+// R517: 1999-2000 GF8 STI Version VI, dedicated 206 kW EJ207 and wagon artwork.
+addRegularCar('gf8', 'gc8', {
+  shortName: 'GF8 WRX STI',
+  name: 'Subaru Impreza WRX STI GF8',
+  description: 'Rally-bred five-door STI with lightweight AWD traction and an eager EJ207 turbo.',
+  engine: 'ej207_gf8', engineModel: 'EJ207',
+  powerKW: 206, torqueNm: 353, vehicleMassKg: 1310,
+  drivetrain: 'AWD', engineLayout: 'front',
+  engineIdleRPM: 850, engineRedlineRPM: 7000, engineLimiterRPM: 7200,
+  engineInertia: 0.20,
+  gearRatios: [3.166, 1.882, 1.296, 0.972, 0.738],
+  finalDriveRatio: 4.444,
+  maximumBoost: 0.80, turboSize: 0.58, turboSpoolRate: 1.65,
+  drivetrainEfficiency: 0.84, drivenAxleWeightFraction: 1,
+  launchLoadMultiplier: 1, tyreGrip: 1.02, clutchStrength: 500,
+  launchRPM: 5000, dragCoefficient: 0.35, frontalAreaM2: 1.95,
+  visual: { assetStem: 'wrxgf8', wheelKey: 'wheel5Spoke', engineKey: 'stockEngineEJ207' },
+});
+
+// R516: dedicated stock models; no shared powertrain maps.
+addRegularCar("gdb", 'ae86', {
+  "shortName": "WRX STI GDB",
+  "name": "Subaru Impreza WRX STI GDB",
+  "description": "EJ207: AWD traction with its own engine and gearing calibration.",
+  "engine": "ej207_gdb",
+  "engineModel": "EJ207",
+  "powerKW": 206,
+  "torqueNm": 373,
+  "vehicleMassKg": 1430,
+  "drivetrain": "AWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 8000,
+  "engineLimiterRPM": 8200,
+  "engineInertia": 0.19,
+  "gearRatios": [3.636, 2.375, 1.761, 1.346, 1.062, 0.842],
+  "finalDriveRatio": 3.9,
+  "maximumBoost": 1.05,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.72,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 560,
+  "launchRPM": 5000,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "WRXGDB",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineEJ207"
+  }
+});
+addRegularCar("s15", 'ae86', {
+  "shortName": "SILVIA S15",
+  "name": "Nissan Silvia S15",
+  "description": "SR20DET S15: RWD traction with its own engine and gearing calibration.",
+  "engine": "sr20det_s15",
+  "engineModel": "SR20DET S15",
+  "powerKW": 184,
+  "torqueNm": 275,
+  "vehicleMassKg": 1240,
+  "drivetrain": "RWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7500,
+  "engineLimiterRPM": 7700,
+  "engineInertia": 0.19,
+  "gearRatios": [3.626, 2.2, 1.541, 1.213, 1, 0.767],
+  "finalDriveRatio": 3.692,
+  "maximumBoost": 0.8,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.72,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 412,
+  "launchRPM": 5000,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "s15",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("starion", 'ae86', {
+  "shortName": "STARION GSR-VR",
+  "name": "Mitsubishi Starion GSR-VR",
+  "description": "G54B Turbo: RWD traction with its own engine and gearing calibration.",
+  "engine": "g54b_starion",
+  "engineModel": "G54B Turbo",
+  "powerKW": 129,
+  "torqueNm": 313,
+  "vehicleMassKg": 1340,
+  "drivetrain": "RWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 6000,
+  "engineLimiterRPM": 6200,
+  "engineInertia": 0.29,
+  "gearRatios": [3.369, 2.035, 1.36, 1, 0.856],
+  "finalDriveRatio": 3.545,
+  "maximumBoost": 0.6,
+  "turboSize": 0.65,
+  "turboSpoolRate": 1.35,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 470,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "starion",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("fto", 'ae86', {
+  "shortName": "FTO GPX",
+  "name": "Mitsubishi FTO GPX",
+  "description": "6A12 MIVEC: FWD traction with its own engine and gearing calibration.",
+  "engine": "6a12_mivec",
+  "engineModel": "6A12 MIVEC",
+  "powerKW": 147,
+  "torqueNm": 200,
+  "vehicleMassKg": 1170,
+  "drivetrain": "FWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 8000,
+  "engineLimiterRPM": 8200,
+  "engineInertia": 0.17,
+  "gearRatios": [3.583, 1.947, 1.343, 0.976, 0.804],
+  "finalDriveRatio": 4.312,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 300,
+  "launchRPM": 5000,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "fto",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineB16B"
+  }
+});
+addRegularCar("mx5", 'ae86', {
+  "shortName": "MX-5 NB",
+  "name": "Mazda MX-5 NB",
+  "description": "BP 1.8 DOHC: RWD traction with its own engine and gearing calibration.",
+  "engine": "bp_nb",
+  "engineModel": "BP 1.8 DOHC",
+  "powerKW": 103,
+  "torqueNm": 162,
+  "vehicleMassKg": 1030,
+  "drivetrain": "RWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.16,
+  "gearRatios": [3.136, 1.888, 1.33, 1, 0.814],
+  "finalDriveRatio": 4.3,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 243,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "mx5",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("sa22c", 'ae86', {
+  "shortName": "RX-7 SA22C TURBO",
+  "name": "Mazda RX-7 SA22C Turbo",
+  "description": "12A Turbo: RWD traction with its own engine and gearing calibration.",
+  "engine": "12at",
+  "engineModel": "12A Turbo",
+  "powerKW": 121,
+  "torqueNm": 226,
+  "vehicleMassKg": 1020,
+  "drivetrain": "RWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 900,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.13,
+  "gearRatios": [3.622, 2.186, 1.419, 1, 0.807],
+  "finalDriveRatio": 3.909,
+  "maximumBoost": 0.55,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.72,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 339,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "sa22c",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine13BT"
+  }
+});
+addRegularCar("mx6", 'ae86', {
+  "shortName": "MX-6",
+  "name": "Mazda MX-6",
+  "description": "KL-ZE 2.5 V6: FWD traction with its own engine and gearing calibration.",
+  "engine": "klze",
+  "engineModel": "KL-ZE 2.5 V6",
+  "powerKW": 147,
+  "torqueNm": 224,
+  "vehicleMassKg": 1210,
+  "drivetrain": "FWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.21,
+  "gearRatios": [3.307, 1.833, 1.31, 1.03, 0.795],
+  "finalDriveRatio": 4.105,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 336,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "mx6",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("prelude", 'ae86', {
+  "shortName": "PRELUDE TYPE S",
+  "name": "Honda Prelude Type S",
+  "description": "H22A Type S: FWD traction with its own engine and gearing calibration.",
+  "engine": "h22a_types",
+  "engineModel": "H22A Type S",
+  "powerKW": 162,
+  "torqueNm": 221,
+  "vehicleMassKg": 1310,
+  "drivetrain": "FWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7800,
+  "engineLimiterRPM": 8000,
+  "engineInertia": 0.19,
+  "gearRatios": [3.285, 1.956, 1.344, 1.034, 0.787],
+  "finalDriveRatio": 4.266,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 332,
+  "launchRPM": 5000,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "prelude",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineB16B"
+  }
+});
+addRegularCar("sw20", 'ae86', {
+  "shortName": "MR2 SW20 TURBO",
+  "name": "Toyota MR2 SW20 Turbo",
+  "description": "3S-GTE Gen III: mid-engine balance and rear-wheel traction.",
+  "engine": "3sgte_sw20",
+  "engineModel": "3S-GTE Gen III",
+  "powerKW": 180,
+  "torqueNm": 304,
+  "vehicleMassKg": 1260,
+  "drivetrain": "RWD",
+  "engineLayout": "mid",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7250,
+  "engineLimiterRPM": 7450,
+  "engineInertia": 0.2,
+  "gearRatios": [3.23, 1.913, 1.258, 0.918, 0.731],
+  "finalDriveRatio": 4.285,
+  "maximumBoost": 0.85,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.72,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.6,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 456,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "sw20",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("soarer", 'ae86', {
+  "shortName": "SOARER JZZ30",
+  "name": "Toyota Soarer JZZ30",
+  "description": "1JZ-GTE Twin Turbo: RWD traction with its own engine and gearing calibration.",
+  "engine": "1jzgte_soarer",
+  "engineModel": "1JZ-GTE Twin Turbo",
+  "powerKW": 206,
+  "torqueNm": 363,
+  "vehicleMassKg": 1560,
+  "drivetrain": "RWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.27,
+  "gearRatios": [3.251, 1.955, 1.31, 1, 0.753],
+  "finalDriveRatio": 4.083,
+  "maximumBoost": 0.7,
+  "turboSize": 0.65,
+  "turboSpoolRate": 1.35,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 544,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "soarer",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  }
+});
+addRegularCar("forester", 'ae86', {
+  "shortName": "FORESTER S/tb",
+  "name": "Subaru Forester SF5 S/tb",
+  "description": "EJ20 Turbo S/tb: AWD traction with its own engine and gearing calibration.",
+  "engine": "ej20_forester",
+  "engineModel": "EJ20 Turbo S/tb",
+  "powerKW": 184,
+  "torqueNm": 306,
+  "vehicleMassKg": 1380,
+  "drivetrain": "AWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.23,
+  "gearRatios": [3.454, 1.947, 1.366, 0.972, 0.738],
+  "finalDriveRatio": 4.444,
+  "maximumBoost": 0.8,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.72,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 459,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.36,
+  "frontalAreaM2": 2.2,
+  "visual": {
+    "assetStem": "forester",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineEJ207"
+  }
+});
+addRegularCar("svx", 'ae86', {
+  "shortName": "SVX",
+  "name": "Subaru SVX",
+  "description": "EG33 Flat-Six: AWD traction with its own engine and gearing calibration.",
+  "engine": "eg33",
+  "engineModel": "EG33 Flat-Six",
+  "powerKW": 169,
+  "torqueNm": 309,
+  "vehicleMassKg": 1590,
+  "drivetrain": "AWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.27,
+  "gearRatios": [2.785, 1.545, 1, 0.694],
+  "finalDriveRatio": 3.545,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 464,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "svx",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineEJ207"
+  }
+});
+addRegularCar("xt", 'ae86', {
+  "shortName": "ALCYONE XT TURBO",
+  "name": "Subaru Alcyone XT Turbo",
+  "description": "EA82T: AWD traction with its own engine and gearing calibration.",
+  "engine": "ea82t",
+  "engineModel": "EA82T",
+  "powerKW": 100,
+  "torqueNm": 196,
+  "vehicleMassKg": 1190,
+  "drivetrain": "AWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 6500,
+  "engineLimiterRPM": 6700,
+  "engineInertia": 0.21,
+  "gearRatios": [3.545, 1.947, 1.366, 0.972, 0.783],
+  "finalDriveRatio": 3.7,
+  "maximumBoost": 0.5,
+  "turboSize": 0.54,
+  "turboSpoolRate": 1.35,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 294,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "XT",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngineEJ207"
+  }
+});
+addRegularCar("magna", 'ae86', {
+  "shortName": "MAGNA SPORTS",
+  "name": "1998 Mitsubishi Magna Sports",
+  "description": "6G72 3.0 V6: FWD traction with its own engine and gearing calibration.",
+  "engine": "6g72_magna",
+  "engineModel": "6G72 3.0 V6",
+  "powerKW": 140,
+  "torqueNm": 255,
+  "vehicleMassKg": 1450,
+  "drivetrain": "FWD",
+  "engineLayout": "front",
+  "engineIdleRPM": 800,
+  "engineRedlineRPM": 6500,
+  "engineLimiterRPM": 6700,
+  "engineInertia": 0.28,
+  "gearRatios": [3.583, 1.947, 1.266, 0.97, 0.767],
+  "finalDriveRatio": 3.736,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 382,
+  "launchRPM": 4300,
+  "dragCoefficient": 0.32,
+  "frontalAreaM2": 1.85,
+  "visual": {
+    "assetStem": "magna",
+    "wheelKey": "wheel5Spoke",
+    "engineKey": "stockEngine4AGE"
+  },
+  "devOnly": true,
+  "uniqueOwned": true
+});
+
+// Stock arch centres and radii measured from the combined paint/body alpha.
+// Visible widths are measured from that pair; target widths keep hatchbacks,
+// coupes and sedans in a consistent relative size in both race and garage views.
+// Kit artwork is registered to these stock arches in visualMods.js.
+const REGULAR_ASSETS = {
+  // id: stem, canvas H, rear X/Y/R, front X/Y/R, visible W, target W
+  //
+  // R230: wheel centres are body-arch coordinates, not "visual right edge"
+  // coordinates. R229 accidentally pushed many front wheels too far right.
+  // Preserve the older measured geometry for unchanged art, and only update
+  // cars whose PNGs were actually re-authored through SpriteR.
+  ae86: ['ae86', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
+  ef: ['ef', 500, 230, 362, 99, 961, 365, 98, 1141, 400],
+  ek9: ['ek9', 500, 194, 368, 97, 932, 371, 100, 1159, 420],
+
+  // Re-authored FC now uses a 1200x500 stock canvas. Its old 600px height
+  // caused both wheels to render too high relative to the new body.
+  fc3s: ['rx7fc', 500, 274, 395, 100, 930, 398, 100, 1162, 430],
+
+  rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
+  rx8: ['rx8', 400, 241, 310, 98, 945, 310, 101, 1165, 440],
+
+  // Re-authored Evo III / V use 500px canvases. X follows the new wheel
+  // openings; Y retains the old axle relationship after the +50px canvas shift.
+  galant: ['galant', 500, 291, 390, 88, 909, 390, 89, 1137, 430],
+  evo5: ['evo5', 500, 268, 389, 88, 931, 389, 90, 1090, 440],
+
+  // New SpriteR cars: model-specific arch centres/radii.
+  a60: ['a60', 500, 273, 370, 96, 945, 370, 96, 1161, 430],
+  jza80: ['jza80', 500, 271, 380, 96, 944, 380, 97, 1161, 450],
+  nsx: ['nsx', 500, 251, 383, 97, 930, 383, 97, 1161, 445],
+
+  evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
+  gc8: ['gc8', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
+  r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
+  '3000gt': ['3000gt', 500, 273, 339, 100, 926, 339, 100, 1165, 455],
+  r34: ['r34', 500, 278, 375, 92, 952, 375, 92, 1168, 455],
+};
+
+Object.entries(REGULAR_ASSETS).forEach(([id, [
+  stem, height,
+  rearX, rearY, rearRadius,
+  frontX, frontY, frontRadius,
+  visibleWidth, targetWidth,
+]]) => {
+  const visual = cars[id].visual;
+  const rearOffsetX = rearX - 600;
+  const frontOffsetX = frontX - 600;
+  const rearWheelOffsetY = rearY - height / 2;
+  const frontWheelOffsetY = frontY - height / 2;
+  const bodyScale = targetWidth / visibleWidth;
+  Object.assign(visual, {
+    assetStem: stem,
+    modularAssetRoot: 'assets/Cars',
+    modularAssetStem: stem,
+    bodyPath: `assets/Cars/${stem}_stock_body.png`,
+    paintPath: `assets/Cars/${stem}_stock_paint.png`,
+    overlayPath: `assets/Cars/${stem}_stock_body.png`,
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: bodyScale / 0.36,
+    bodyScale,
+    wheelFitMode: 'visible-well',
+    // Match the visible tyre to the measured opening exactly.
+    wheelFill: 1.0,
+
+    // Preserve the authored wheel centres. Flattening rear/front tyre contact
+    // by moving each axle independently makes a correctly measured wheel look
+    // vertically off-centre inside its arch. The whole car is already placed
+    // against the shared AE86 floor baseline by Garage/Race staging.
+    levelWheelContact: false,
+    rearOffsetX, frontOffsetX,
+    wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
+    rearWheelOffsetX: rearOffsetX,
+    frontWheelOffsetX: frontOffsetX,
+    rearWheelOffsetY,
+    frontWheelOffsetY,
+    rearWheelWellRadius: rearRadius,
+    frontWheelWellRadius: frontRadius,
+    rearWheelBackingRadius: rearRadius,
+    frontWheelBackingRadius: frontRadius,
+    exhaustOffsetX: -540,
+    exhaustOffsetY: rearWheelOffsetY + rearRadius * 0.75,
+  });
+});
+
+
+// The current S2000 art is deliberately higher-resolution than the older
+// 1200x500 regular-car template. Keep its measured source geometry explicit
+// instead of forcing it through REGULAR_ASSETS' 600px centre assumption.
+const S2000_CANVAS = {
+  width: 1942,
+  height: 809,
+  visibleWidth: 1868,
+  targetWidth: 445,
+  rear: { x: 449, y: 612, radius: 151 },
+  front: { x: 1561, y: 612, radius: 151 },
+};
+
+{
+  const visual = cars.s2000.visual;
+  const bodyScale = S2000_CANVAS.targetWidth / S2000_CANVAS.visibleWidth;
+  const rearWheelOffsetX = S2000_CANVAS.rear.x - S2000_CANVAS.width / 2;
+  const frontWheelOffsetX = S2000_CANVAS.front.x - S2000_CANVAS.width / 2;
+  const rearWheelOffsetY = S2000_CANVAS.rear.y - S2000_CANVAS.height / 2;
+  const frontWheelOffsetY = S2000_CANVAS.front.y - S2000_CANVAS.height / 2;
+
+  Object.assign(visual, {
+    assetStem: 's2000',
+    modularAssetRoot: 'assets/Cars',
+    modularAssetStem: 's2000',
+    bodyPath: 'assets/Cars/s2000_stock_body.png',
+    paintPath: 'assets/Cars/s2000_stock_paint.png',
+    overlayPath: 'assets/Cars/s2000_stock_body.png',
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: S2000_CANVAS.width / S2000_CANVAS.visibleWidth,
+    bodyScale,
+    wheelFitMode: 'visible-well',
+    wheelFill: 1.0,
+    levelWheelContact: false,
+    rearOffsetX: rearWheelOffsetX,
+    frontOffsetX: frontWheelOffsetX,
+    wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
+    rearWheelOffsetX,
+    frontWheelOffsetX,
+    rearWheelOffsetY,
+    frontWheelOffsetY,
+    rearWheelWellRadius: S2000_CANVAS.rear.radius,
+    frontWheelWellRadius: S2000_CANVAS.front.radius,
+    rearWheelBackingRadius: S2000_CANVAS.rear.radius,
+    frontWheelBackingRadius: S2000_CANVAS.front.radius,
+    exhaustOffsetX: -885,
+    exhaustOffsetY: 216,
+  });
+}
+
+// Shared bottom-right reference rollout; legacy art keeps its existing fit.
+// Each copied crew car inherits this base model's reference visual parameters.
+for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
+  const visual = cars[gameId]?.visual;
+  const geometry = STANDARD_CAR_REFERENCE.cars[fileStem];
+  const canvas = REFERENCE_CAR_CANVAS[fileStem];
+  if (!visual || !geometry || !canvas) continue;
+  const diameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.size];
+  // XL is a new calibration-only choice; keep the two historical S/L values
+  // in the base reference table so all existing car geometry remains stable.
+  const chooseDiameter = size => size === 'XL' ? 210
+    : STANDARD_CAR_REFERENCE.wheelDiameters[size] || diameter;
+  const rearDiameter = chooseDiameter(geometry.rearSize || geometry.size);
+  const frontDiameter = chooseDiameter(geometry.frontSize || geometry.size);
+  const assetRoot = getReferenceAssetRoot(fileStem);
+
+  Object.assign(visual, {
+    referenceStandard: true,
+    referenceGeometry: { ...geometry },
+    referenceCanvasWidth: canvas[0],
+    referenceCanvasHeight: canvas[1],
+    referenceWheelDiameter: diameter,
+    referenceWheelSize: geometry.size,
+    referenceRearWheelDiameter: rearDiameter,
+    referenceFrontWheelDiameter: frontDiameter,
+    referenceRearWheelYOffset: Number(geometry.rearYOffset || 0),
+    referenceFrontWheelYOffset: Number(geometry.frontYOffset || 0),
+    // Shift only the car art, not its tyre-ground/wheel registration.
+    bodyRenderOffsetY: Number(geometry.bodyRenderOffsetY || 0),
+    modularAssetRoot: assetRoot,
+    modularAssetStem: fileStem,
+    bodyPath: assetRoot + '/' + fileStem + '_stock_body.png',
+    paintPath: assetRoot + '/' + fileStem + '_stock_paint.png',
+    overlayPath: null,
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: 1,
+    bodyScale: STANDARD_CAR_REFERENCE.masterScale,
+    wheelFitMode: 'reference-standard',
+    wheelFill: 1,
+    levelWheelContact: false,
+    rearOffsetX: geometry.rearX,
+    frontOffsetX: geometry.frontX,
+    rearWheelOffsetX: geometry.rearX,
+    frontWheelOffsetX: geometry.frontX,
+    wheelOffsetY: -diameter / 2,
+    rearWheelOffsetY: -diameter / 2,
+    frontWheelOffsetY: -diameter / 2,
+    rearWheelWellRadius: diameter / 2,
+    frontWheelWellRadius: diameter / 2,
+    rearWheelBackingRadius: diameter / 2,
+    frontWheelBackingRadius: diameter / 2,
+    exhaustOffsetX: -canvas[0] + 35,
+    exhaustOffsetY: -diameter / 2,
+  });
+}
+
+// Keep existing IDs, tuner-conversion contracts and bespoke wheel textures.
+addCollectorExpansion(cars);
+applyHeroCarAssets(cars);
+
+// Aruken Story Chapter 07: the same personally owned 240Z gets bespoke body
+// art after a real maximum build. Separate ID avoids altering Career's 240Z.
+// No power/mass/grip bonuses: identical underlying engineering and saved tune.
+cars.arkonLibertyWalk240z={
+  ...cars['240z'],
+  id:'arkonLibertyWalk240z',
+  name:'Liberty Walk Datsun 240Z // Aruken Denzaki',
+  shortName:'LB 240Z',
+  storyBodyConversion:true,
+  visual:{
+    ...cars['240z'].visual,
+    assetStem:'liberty_walk_240z_hero',
+    bodyPath:'assets/Cars/hero/liberty_walk_240z_hero_body.png',
+    paintPath:null,overlayPath:null,singleBody:true,
+    stockBodyKit:false,stockSpoiler:false,
+    modularAssetRoot:null,singleLayerModular:false,
+    deriveModularFromPreview:false,
+  },
+};
+
+// Unique collector cars retain fixed liveries (no paint mask).
+Object.values(cars).forEach(car => {
+  car.visual = {
+    ...(car.visual || {}),
+    assetStem: car.visual?.assetStem || car.id,
+  };
+});
+
+export const carOrder = [
+  'gdb', 'gf8', 's15', 'starion', 'fto', 'mx5', 'sa22c', 'mx6', 'prelude', 'sw20', 'soarer', 'forester', 'svx', 'xt',
+  'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
+  'galant', 'evo5', 'evo6', 'gc8', 'r32', 'r34',
+  '3000gt', 'a60', 'jza80', 'nsx',
+  'z32', 'z33', '240z', 'crx', 'dc2', 'eclipse', 'familia', '180sx', 'st205', 'jzx100', 'b4rsk',
+];
+
+
+Object.entries(STOCK_CLASS_DATA).forEach(([id,data])=>Object.assign(cars[id],data));
+// Ginza vault demonstration aliases reuse the authentic mechanical build and
+// visuals without turning the test vehicle into a sellable collector. The
+// separate IDs prevent an owned car with the same model being overwritten.
+for (const id of ['calsonicR390','cleanR390','essoToyotaGtOne',
+  'cleanToyotaGtOne','renownMazda787B','cleanMazda787B']) {
+  const base = cars[id];
+  if (!base) continue;
+  cars['ginzaDemo_' + id] = {
+    ...base, id: 'ginzaDemo_' + id, ginzaDemo: true,
+    crewLoan: true, collector: true, tuningLocked: true, ginzaExclusive: false,
+    visual: { ...(base.visual || {}) },
+  };
+}
+
+// Register per-character crew loan aliases after all regular visual geometry has
+// been finalised. Crew cars are independent tuneable instances that reuse the
+// current base model art/physics; this lets multiple crew members temporarily
+// share a model while keeping separate upgrades.
+Object.entries(CREW_CHARACTER_CARS).forEach(([characterId, baseCarId]) => {
+  const baseCar = cars[baseCarId];
+  if (!baseCar) return;
+
+  const loanId = getCrewLoanCarId(characterId);
+  cars[loanId] = {
+    ...baseCar,
+    id: loanId,
+    name: baseCar.name + ' // CREW LOAN',
+    shortName: baseCar.shortName,
+    crewLoan: true,
+    crewOwnerCharacterId: characterId,
+    crewBaseCarId: baseCarId,
+    collector: false,
+    tuningLocked: false,
+    ginzaExclusive: false,
+    visual: { ...(baseCar.visual || {}) },
+  };
+});

@@ -1,0 +1,1453 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
+import {
+  MEET_LOCATIONS,
+  getMeetLocation,
+} from '../data/meetAssets.js';
+import {
+  getWorkshopByLocationId,
+  getGarageCapacity,
+  isWorkshopUnlocked,
+  getWorkshopRegionalWinRequirement,
+  getTotalRegionalWins,
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js';
+import {
+  HOME_REGION_ID,
+  HOME_RETURN_COST,
+  TRAVEL_REGIONS,
+  TRAVEL_REGION_ORDER,
+  getTravelLocation,
+  regionIdForMeetLocation,
+  getRegionTravelCost,
+  isTravelRegionUnlocked,
+  getTravelRegionUnlockLabel,
+  isTravelLocationUnlocked,
+  getTravelLocationUnlockLabel,
+} from '../data/travelRegions.js';
+import {
+  isCentralTokyoLocationUnlocked,
+  getCentralTokyoUnlockLabel,
+} from '../data/centralTokyo.js';
+import {
+  getTunerShopForRegion,
+  isTunerShopUnlocked,
+} from '../data/tunerShops.js';
+import {
+  getTunerTeamChallengeState,
+} from '../data/tunerChallenges.js';
+import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js';
+import {
+  getWorldPhase,
+  toggleWorldPhaseOverride,
+} from '../environment/WorldClock.js';
+
+const PIXEL_FONT = '"Silkscreen", monospace';
+const BODY_FONT = '"Rajdhani", monospace';
+
+const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
+
+const REGION_MAP_ASSETS = {
+  night: {
+    key: 'travelMapTokyoRegionNight',
+    path: 'assets/Ui/tokyo_region_map_base.png?v=20260928-r245',
+  },
+  day: {
+    key: 'travelMapTokyoRegionDay',
+    // Placeholder is a copy of the current night map. Replace this file with
+    // daytime art later; the selector already points at it.
+    path: 'assets/Ui/tokyo_region_map_day.png?v=20260928-r245',
+  },
+};
+const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
+const FALLBACK_MAP_ASSET = {
+  key: FALLBACK_MAP_TEXTURE,
+  path: 'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77',
+};
+
+// The map now owns the whole framed popup. Everything else floats over it.
+const MAP = { x: 26, y: 25, w: 1508, h: 790 };
+const INFO = { x: 874, y: 418, w: 634, h: 374 };
+const TUNER_BADGE = { x: 1174, y: 330, w: 334, h: 76 };
+const MAP_SOURCE = { w: 1672, h: 941 };
+
+function getMapArtBounds(scene, textureKey) {
+  const source = textureKey && scene.textures.exists(textureKey)
+    ? scene.textures.get(textureKey).getSourceImage()
+    : null;
+  const sourceW = Number(source?.width || MAP_SOURCE.w);
+  const sourceH = Number(source?.height || MAP_SOURCE.h);
+  const scale = Math.max(MAP.w / sourceW, MAP.h / sourceH);
+  const w = sourceW * scale;
+  const h = sourceH * scale;
+  return {
+    x: MAP.x + (MAP.w - w) / 2,
+    y: MAP.y + (MAP.h - h) / 2,
+    w,
+    h,
+  };
+}
+
+function currentRegionFromLocation(locationId, fromWorkshop) {
+  if (fromWorkshop) return HOME_REGION_ID;
+  if (MEET_LOCATIONS[locationId]) {
+    return getMeetLocation(locationId).district;
+  }
+  return regionIdForMeetLocation(locationId, 'ODAIBA');
+}
+
+function locationTimeLabel(location, worldPhase) {
+  if (location?.kind === 'home' || location?.kind === 'garageUpgrade') return 'ANY';
+  return worldPhase === 'day' ? 'DAY' : 'NIGHT';
+}
+
+import { isGinzaLoanActive, canVisitDuringGinzaLoan, GINZA_LOAN_BLOCK_LABEL } from '../data/ginzaLoanAccess.js';
+
+export function showTravelMap(scene, options = {}) {
+  const {
+    currentLocationId,
+    onTravel,
+    onHome = null,
+    onExit = null,
+    onWorkshopUpgrade = null,
+    title = 'TOKYO REGION MAP',
+    fromWorkshop = false,
+    allowCurrentAction = false,
+    actionVerb = 'DRIVE',
+    homeCost = HOME_RETURN_COST,
+    travelMode = 'default',
+  } = options;
+
+  const crewTravelMode = travelMode === 'crew';
+  const openingTrainMode = travelMode === 'openingTrain';
+  const chapter08GinzaMode = travelMode === 'chapter08Ginza';
+
+  const worldPhase = getStoryWorldPhase(scene.registry);
+  const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
+  const mapAttemptKey = '_travelMapAssetAttempted_' + worldPhase;
+
+  const mapTextureReady =
+    scene.textures.exists(preferredMapAsset.key) ||
+    scene.textures.exists(FALLBACK_MAP_TEXTURE);
+
+  // A second tap/callback can arrive while Phaser is still decoding the map.
+  // Do not construct a texture-less popup during that window.
+  if (scene._travelMapAssetLoading && !mapTextureReady) {
+    return null;
+  }
+
+  // If an earlier load attempt ended without producing either texture, allow
+  // the next real open to retry instead of permanently trusting a stale flag.
+  if (!mapTextureReady && scene[mapAttemptKey] && !scene._travelMapAssetLoading) {
+    scene[mapAttemptKey] = false;
+  }
+
+  // Load only the active map phase plus the existing fallback so day/night
+  // support does not double the GPS loading cost.
+  if (!scene.textures.exists(preferredMapAsset.key) && !scene[mapAttemptKey]) {
+    let queued = 0;
+    [preferredMapAsset, FALLBACK_MAP_ASSET].forEach(asset => {
+      if (scene.textures.exists(asset.key)) return;
+      scene.load.image(asset.key, asset.path);
+      queued += 1;
+    });
+
+    scene[mapAttemptKey] = true;
+    if (queued > 0) {
+      startSceneLoading(scene, 'LOADING TOKYO MAP', queued);
+      scene.load.once('complete', () => {
+        scene._travelMapAssetLoading = false;
+        showTravelMap(scene, options);
+        finishSceneLoading('MAP READY');
+      });
+      scene._travelMapAssetLoading = true;
+      if (!scene.load.isLoading()) scene.load.start();
+      return null;
+    }
+  }
+  if (scene.travelMapPopup?.active) return scene.travelMapPopup;
+
+  const depth = 120;
+  const objects = [];
+  const tweens = [];
+  const regionUi = {};
+  const locationUi = [];
+  const panelObjects = [];
+
+  const currentRegionId = currentRegionFromLocation(currentLocationId, fromWorkshop);
+  let selectedRegionId = null;
+  let selectedLocationId = null;
+  const garageTier = () => Number(scene.registry.get('garageTier') || 0);
+  const ginzaLoanBlocked = location => Boolean(location) && !canVisitDuringGinzaLoan(scene.registry, location.id);
+  const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+
+  const crewBlockedLocation = location => {
+    if (!crewTravelMode || !location) return false;
+
+    const target = getTravelLocation(location.id);
+    if (location.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') return true;
+    // Allow crew drivers to visit Oshiage School and Custom Works, but not
+    // the standalone Elite/Skytree competitive event.
+    if (target?.regionId === 'OSHIAGE' && location.id === 'oshiageSkytreeMeet') return true;
+
+    // Crew Space is physically attached to Warehouse HQ. The crew map can
+    // launch street travel, but it cannot move the player between Shinonome
+    // properties or purchase a different workshop.
+    if (location.kind === 'home' || location.kind === 'garageUpgrade') {
+      return location.id !== activeWorkshopId();
+    }
+
+    return false;
+  };
+
+  const crewBlockedLabel = location => {
+    const target = location ? getTravelLocation(location.id) : null;
+    if (location?.id === 'oshiageSkytreeMeet') return 'CREW CAR // ELITE SHOWDOWN UNAVAILABLE';
+    if (location?.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+      return 'CREW CAR // CENTRAL TOKYO UNAVAILABLE';
+    }
+    return 'CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE';
+  };
+
+  const locationAvailable = location => {
+    if (!location || ginzaLoanBlocked(location)) return false;
+    if (crewBlockedLocation(location)) return false;
+    if (location.centralTokyoUnlock) {
+      return isCentralTokyoLocationUnlocked(scene.registry, location.id);
+    }
+
+    if (location.kind === 'home' || location.kind === 'garageUpgrade') {
+      return true;
+    }
+
+    const target = getTravelLocation(location.id);
+    const currentRegionException = target?.regionId === currentRegionId;
+    const regionOpen = currentRegionException ||
+      (target?.regionId ? isTravelRegionUnlocked(scene.registry, target.regionId) : true);
+
+    return Boolean(location.available) &&
+      regionOpen &&
+      isTravelLocationUnlocked(scene.registry, location.id);
+  };
+
+  const visibleLocationsForRegion = region => {
+    if (!region) return [];
+    if (chapter08GinzaMode) {
+      return region.id === 'CENTRAL_TOKYO'
+        ? region.locations.filter(item => item.id === 'ginzaMotorGallery') : [];
+    }
+    if (openingTrainMode) {
+      return region.id === HOME_REGION_ID
+        ? region.locations.filter(item => item.id === 'shinonomeWorkshop')
+        : [];
+    }
+    if (region.id !== HOME_REGION_ID) return region.locations;
+
+    // A recruited driver is only borrowing the street map to test their car.
+    // Keep Shinonome anchored to Warehouse HQ and do not expose the player's
+    // Workshop or Canal Yard garage from this mode.
+    if (crewTravelMode) {
+      return region.locations.filter(item => item.id === activeWorkshopId());
+    }
+
+    const tier = garageTier();
+
+    // Workshop map rule: show everything already owned plus exactly the next
+    // purchasable workshop. Do not tease later workshop tiers that cannot yet
+    // be reached. This is identical whether the map was opened from Garage,
+    // a meet, or Central Tokyo.
+    return region.locations.filter(item => {
+      if (item.kind === 'home') return true;
+      if (item.kind !== 'garageUpgrade') return true;
+
+      const targetTier = Number(
+        item.garageTier || getWorkshopByLocationId(item.id).tier || 0
+      );
+      // Story players see only chapter-unlocked properties; money and
+      // regional championships never reveal a purchasable future garage.
+      return targetTier <= tier + (scene.registry.get('gameMode')==='arkonStory'?0:1);
+    });
+  };
+
+  const add = obj => {
+    objects.push(obj);
+    return obj;
+  };
+
+  const addPanel = obj => {
+    objects.push(obj);
+    panelObjects.push(obj);
+    return obj;
+  };
+
+  const setPanelVisible = visible => {
+    panelObjects.forEach(obj => obj?.setVisible?.(visible));
+  };
+
+  const dismiss = () => {
+    tweens.forEach(tween => tween?.remove?.());
+    objects.forEach(obj => obj?.destroy?.());
+    scene.travelMapPopup = null;
+  };
+
+  // Workshop switching changes the active GarageScene. Do not destroy the GPS
+  // button/popup from inside its own pointerdown event before that transition.
+  // On iOS Phaser can stall the input loop when the object currently
+  // dispatching pointerdown is destroyed and the scene changes in the same
+  // stack. Leave the map intact for a frame; the scene transition will clean
+  // it up naturally.
+  let workshopActionPending = false;
+  const runWorkshopAction = (location, cost, unlocked) => {
+    if (workshopActionPending) return;
+    workshopActionPending = true;
+    travelLabel.setColor('#7fcfe8').setText('OPENING WORKSHOP...');
+
+    window.setTimeout(() => {
+      try {
+        onWorkshopUpgrade?.(location, cost, unlocked);
+      } catch (error) {
+        console.error('Workshop switch failed', error);
+        workshopActionPending = false;
+        refreshAction(location);
+      }
+    }, 0);
+  };
+
+  // Returning from a meet changes scene too. Keep the map alive through the
+  // pointer event and defer the GarageScene transition by one task, matching
+  // the stable workshop-switch path used on iOS/PWA.
+  let homeActionPending = false;
+  const runHomeAction = (location, cost) => {
+    if (homeActionPending) return;
+    homeActionPending = true;
+    travelLabel.setColor('#7fcfe8').setText('RETURNING HOME...');
+
+    window.setTimeout(() => {
+      try {
+        onHome?.(location?.id || 'shinonomeWorkshop', cost);
+      } catch (error) {
+        console.error('Return home failed', error);
+        homeActionPending = false;
+        refreshAction(location);
+      }
+    }, 0);
+  };
+
+  const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+    .setDepth(depth)
+    .setInteractive());
+
+  const frame = add(scene.add.rectangle(
+    MAP.x + MAP.w / 2,
+    MAP.y + MAP.h / 2,
+    MAP.w,
+    MAP.h,
+    0x06101b,
+    1
+  ).setStrokeStyle(2, 0x46d7ff, 0.92)
+    .setInteractive()
+    .setDepth(depth + 1));
+
+  const alternateMapAsset = worldPhase === 'day'
+    ? REGION_MAP_ASSETS.night
+    : REGION_MAP_ASSETS.day;
+  const mapTexture = scene.textures.exists(preferredMapAsset.key)
+    ? preferredMapAsset.key
+    : scene.textures.exists(alternateMapAsset.key)
+      ? alternateMapAsset.key
+      : scene.textures.exists(FALLBACK_MAP_TEXTURE)
+        ? FALLBACK_MAP_TEXTURE
+        : null;
+
+  const art = getMapArtBounds(scene, mapTexture);
+  const mapPoint = region => ({
+    x: art.x + art.w * region.mapX,
+    y: art.y + art.h * region.mapY,
+  });
+
+  if (mapTexture) {
+    const mapImage = add(scene.add.image(
+      art.x + art.w / 2,
+      art.y + art.h / 2,
+      mapTexture
+    ).setDisplaySize(art.w, art.h).setDepth(depth + 2));
+
+    const maskShape = scene.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
+    mapImage.setMask(maskShape.createGeometryMask());
+    objects.push(maskShape);
+
+
+  } else {
+    add(scene.add.rectangle(
+      MAP.x + MAP.w / 2,
+      MAP.y + MAP.h / 2,
+      MAP.w,
+      MAP.h,
+      0x07111d,
+      1
+    ).setDepth(depth + 2));
+
+    add(scene.add.text(
+      MAP.x + MAP.w / 2,
+      MAP.y + MAP.h / 2,
+      'UPLOAD assets/Ui/tokyo_region_map.png',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#6d8797',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+  }
+
+  // Only a tiny tint: the new artwork should be the screen, not a small inset.
+  add(scene.add.rectangle(
+    MAP.x + MAP.w / 2,
+    MAP.y + MAP.h / 2,
+    MAP.w,
+    MAP.h,
+    0x020812,
+    0.035
+  ).setDepth(depth + 2.25));
+
+  // Stack the title vertically so it stays clear of Shinjuku.
+  const stackedTitle = String(title || 'TOKYO REGION MAP')
+    .trim()
+    .split(/\s+/)
+    .join('\n');
+
+  add(scene.add.rectangle(
+    MAP.x + 96,
+    MAP.y + 82,
+    148,
+    126,
+    0x030811,
+    0.82
+  ).setStrokeStyle(1, 0x315470, 0.78).setDepth(depth + 9));
+
+  add(scene.add.text(MAP.x + 38, MAP.y + 34, stackedTitle, {
+    fontFamily: PIXEL_FONT,
+    fontSize: '13px',
+    color: '#eefaff',
+    lineSpacing: 6,
+  }).setOrigin(0, 0).setDepth(depth + 10));
+
+  // Arkon Den / dev profiles can flip the global world phase instantly so
+  // day/night art can be checked without waiting for the normal 15-min cycle.
+  if (scene.registry.get('devMode')) {
+    const nextPhase = worldPhase === 'day' ? 'NIGHT' : 'DAY';
+    const devPhaseX = MAP.x + 142;
+    const devPhaseY = MAP.y + MAP.h - 42;
+    const devPhaseButton = add(scene.add.rectangle(
+      devPhaseX,
+      devPhaseY,
+      220,
+      42,
+      0x321523,
+      0.96
+    ).setStrokeStyle(1, 0xff72a6, 0.95)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 10));
+
+    add(scene.add.text(
+      devPhaseX,
+      devPhaseY,
+      'D) ' + worldPhase.toUpperCase() + ' → ' + nextPhase,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#ffd1e1',
+      }
+    ).setOrigin(0.5).setDepth(depth + 11));
+
+    devPhaseButton.on('pointerdown', (_pointer, _lx, _ly, event) => {
+      event?.stopPropagation?.();
+      toggleWorldPhaseOverride();
+      dismiss();
+      window.setTimeout(() => showTravelMap(scene, options), 0);
+    });
+  }
+
+  const closeButton = add(scene.add.rectangle(
+    MAP.x + MAP.w - 48,
+    MAP.y + 42,
+    64,
+    42,
+    0x07111d,
+    0.90
+  ).setStrokeStyle(1, 0x547489, 0.95)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(depth + 10));
+
+  add(scene.add.text(
+    MAP.x + MAP.w - 48,
+    MAP.y + 42,
+    'X',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#d8e7ef',
+    }
+  ).setOrigin(0.5).setDepth(depth + 11));
+
+  // Compact lower-right region/location panel.
+  const infoPanel = addPanel(scene.add.rectangle(
+    INFO.x + INFO.w / 2,
+    INFO.y + INFO.h / 2,
+    INFO.w,
+    INFO.h,
+    0x06101b,
+    0.94
+  ).setStrokeStyle(2, 0x46d7ff, 0.92).setDepth(depth + 10));
+
+  const regionNameText = addPanel(scene.add.text(INFO.x + 28, INFO.y + 22, '', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '15px',
+    color: '#ffffff',
+  }).setDepth(depth + 12));
+
+  const regionLockText = addPanel(scene.add.text(
+    INFO.x + INFO.w - 28,
+    INFO.y + 27,
+    '',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#87939b',
+      align: 'right',
+    }
+  ).setOrigin(1, 0.5).setDepth(depth + 12));
+
+  const regionLineText = addPanel(scene.add.text(INFO.x + 28, INFO.y + 62, '', {
+    fontFamily: BODY_FONT,
+    fontSize: '11px',
+    color: '#a7c0ce',
+    fontStyle: '600',
+    wordWrap: { width: INFO.w - 56 },
+  }).setDepth(depth + 12));
+
+  // Regional tuner shops are deliberately kept outside the normal three-row
+  // destination list. They only appear once discovered, in a compact badge
+  // above the region panel so the map does not become another cluster of pins.
+  const tunerBadge = addPanel(scene.add.rectangle(
+    TUNER_BADGE.x + TUNER_BADGE.w / 2,
+    TUNER_BADGE.y + TUNER_BADGE.h / 2,
+    TUNER_BADGE.w,
+    TUNER_BADGE.h,
+    0x16120d,
+    0.97
+  ).setStrokeStyle(2, 0xe4b660, 0.98).setDepth(depth + 11));
+
+  const tunerKicker = addPanel(scene.add.text(
+    TUNER_BADGE.x + 20,
+    TUNER_BADGE.y + 17,
+    'TUNER SHOP',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c99a4e',
+    }
+  ).setDepth(depth + 12));
+
+  const tunerName = addPanel(scene.add.text(
+    TUNER_BADGE.x + 20,
+    TUNER_BADGE.y + 43,
+    '',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#fff1d3',
+    }
+  ).setOrigin(0, 0.5).setDepth(depth + 12));
+
+  const tunerSpecialty = addPanel(scene.add.text(
+    TUNER_BADGE.x + TUNER_BADGE.w - 22,
+    TUNER_BADGE.y + 43,
+    '',
+    {
+      fontFamily: BODY_FONT,
+      fontSize: '9px',
+      color: '#c8b58e',
+      fontStyle: '700',
+    }
+  ).setOrigin(1, 0.5).setDepth(depth + 12));
+
+  const tunerArrow = addPanel(scene.add.text(
+    TUNER_BADGE.x + TUNER_BADGE.w - 18,
+    TUNER_BADGE.y + 17,
+    '>',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#e9bd6d',
+    }
+  ).setOrigin(1, 0).setDepth(depth + 12));
+
+  const tunerPanelObjects = [
+    tunerBadge,
+    tunerKicker,
+    tunerName,
+    tunerSpecialty,
+    tunerArrow,
+  ];
+
+  const rowStartY = INFO.y + 126;
+  for (let i = 0; i < 3; i++) {
+    const y = rowStartY + i * 58;
+
+    const box = addPanel(scene.add.rectangle(
+      INFO.x + INFO.w / 2,
+      y,
+      INFO.w - 40,
+      50,
+      0x0b1724,
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(depth + 11));
+
+    const label = addPanel(scene.add.text(INFO.x + 28, y, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#e4f5ff',
+    }).setOrigin(0, 0.5).setDepth(depth + 12));
+
+    const meta = addPanel(scene.add.text(INFO.x + INFO.w - 28, y, '', {
+      fontFamily: BODY_FONT,
+      fontSize: '10px',
+      color: '#8fa8b8',
+      fontStyle: '600',
+    }).setOrigin(1, 0.5).setDepth(depth + 12));
+
+    locationUi.push({ box, label, meta, location: null });
+  }
+
+  const travelButton = addPanel(scene.add.rectangle(
+    INFO.x + INFO.w / 2,
+    INFO.y + INFO.h - 48,
+    INFO.w - 40,
+    52,
+    0x0d2b29,
+    1
+  ).setStrokeStyle(2, 0x62e8c7, 1).setDepth(depth + 11));
+
+  const travelLabel = addPanel(scene.add.text(
+    INFO.x + INFO.w / 2,
+    INFO.y + INFO.h - 48,
+    '',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#f1fffb',
+    }
+  ).setOrigin(0.5).setDepth(depth + 12));
+
+  const getTargetCost = location => {
+    if (!location || chapter08GinzaMode) return 0;
+    // Never strand a borrower who spends their last yen at a street meet.
+    // The return trip to Ginza is always free until the car is handed back.
+    if (isGinzaLoanActive(scene.registry) && location.id === 'ginzaMotorGallery') return 0;
+
+    if (location.kind === 'home') {
+      return fromWorkshop ? 0 : Number(homeCost ?? HOME_RETURN_COST);
+    }
+
+    if (location.kind === 'garageUpgrade') {
+      const unlocked = isWorkshopUnlocked(location.id, garageTier());
+      if (!fromWorkshop && unlocked) {
+        return Number(homeCost ?? HOME_RETURN_COST);
+      }
+      return unlocked ? 0 : Number(location.unlockCost || getWorkshopByLocationId(location.id).unlockCost || 0);
+    }
+
+    return getRegionTravelCost({
+      fromWorkshop,
+      currentLocationId,
+      targetLocationId: location.id,
+    });
+  };
+
+  const drawRegionLabel = (item, {
+    unlocked,
+    active,
+    specialColor = null,
+  } = {}) => {
+    item.labelBg.clear();
+    item.labelText
+      .setVisible(true)
+      .setScale(active ? 1.14 : 1);
+
+    const regularPink = 0xff57bd;
+    const accent = specialColor ?? (unlocked ? regularPink : 0x9ca8b0);
+    const textColor = specialColor === 0xffd600
+      ? '#ffe55c'
+      : specialColor === 0x35dfff
+        ? '#7cefff'
+        : unlocked
+          ? '#ff8bd5'
+          : '#aab4bb';
+
+    const fill = specialColor === 0xffd600
+      ? 0x2d2804
+      : specialColor === 0x35dfff
+        ? 0x062731
+        : unlocked
+          ? 0x2a1022
+          : 0x141b21;
+
+    item.labelText.setColor(textColor);
+
+    // The global phone-readability pass enlarges all Phaser text, so measure
+    // the final rendered text first and build the rounded box around that.
+    const w = Math.max(
+      specialColor ? 116 : 92,
+      item.labelText.displayWidth + (active ? 34 : 28)
+    );
+    const h = Math.max(
+      active ? 40 : 34,
+      item.labelText.displayHeight + (active ? 18 : 14)
+    );
+    const edge = 10;
+
+    // Prefer labels above their dial. For the two northern nodes (and any
+    // future edge node), automatically flip below the dial rather than clipping
+    // the label out of the map.
+    const forceBelow = item.regionId === 'SHIBUYA' || item.regionId === 'OSHIAGE';
+    const forceRight = false;
+    let centerY = forceBelow
+      ? item.pt.y + 42 + h / 2
+      : item.pt.y - 42 - h / 2;
+
+    if (!forceBelow && centerY - h / 2 < MAP.y + edge) {
+      centerY = item.pt.y + 42 + h / 2;
+    }
+    if (centerY + h / 2 > MAP.y + MAP.h - edge) {
+      centerY = item.pt.y - 42 - h / 2;
+    }
+
+    // Clamp horizontally so future regions can sit near either map edge without
+    // their name spilling off-screen.
+    const minCenterX = MAP.x + edge + w / 2;
+    const maxCenterX = MAP.x + MAP.w - edge - w / 2;
+    const centerX = Phaser.Math.Clamp(
+      forceRight ? item.pt.x + 41 + w / 2 : item.pt.x,
+      minCenterX, maxCenterX
+    );
+    if (forceRight) centerY = Phaser.Math.Clamp(item.pt.y, MAP.y + edge + h / 2, MAP.y + MAP.h - edge - h / 2);
+    const x = centerX - w / 2;
+    const y = centerY - h / 2;
+
+    item.labelBg
+      .fillStyle(fill, unlocked || specialColor ? 0.94 : 0.88)
+      .fillRoundedRect(x, y, w, h, 9)
+      .lineStyle(
+        active ? 3 : specialColor ? 2 : unlocked ? 2 : 1,
+        accent,
+        unlocked || specialColor ? 0.96 : 0.82
+      )
+      .strokeRoundedRect(x, y, w, h, 9)
+      .setVisible(true);
+
+    // Centre the actual text inside the rounded rectangle. Previously its
+    // baseline was anchored to the region point, which made the text appear
+    // noticeably high/left inside the box.
+    item.labelText
+      .setPosition(centerX, centerY)
+      .setOrigin(0.5, 0.5);
+  };
+
+  const setSelectionPulse = (item, active, color) => {
+    if (active) {
+      item.pulse
+        .setVisible(true)
+        .setStrokeStyle(3, color, 0.95)
+        .setScale(1)
+        .setAlpha(0.92);
+
+      if (!item.pulseActive) {
+        item.pulseActive = true;
+        item.pulseTween.restart();
+      }
+      return;
+    }
+
+    item.pulseActive = false;
+    item.pulseTween.pause();
+    item.pulse.setVisible(false).setScale(1).setAlpha(0);
+  };
+
+  const updateRegionNodes = () => {
+    Object.entries(regionUi).forEach(([regionId, item]) => {
+      const active = regionId === selectedRegionId;
+      const home = regionId === HOME_REGION_ID;
+      const centralTokyo = regionId === 'CENTRAL_TOKYO';
+      const specialColor = (centralTokyo || regionId === 'OSHIAGE') ? 0xffd600 : home ? 0x35dfff : null;
+      const regularPink = 0xff57bd;
+      const accent = specialColor ?? regularPink;
+
+      if (!item.unlocked) {
+        if (item.crewBlocked) item.hit.disableInteractive();
+        else item.hit.setInteractive({ useHandCursor: true });
+
+        // Locked places are visible discoveries, but clearly unavailable:
+        // stronger grey dial + grey name, with no hover/click target.
+        item.glow
+          .setVisible(true)
+          .setRadius(18)
+          .setFillStyle(0x73808a, 0.06)
+          .setStrokeStyle(2, 0x8f9aa2, 0.48);
+        item.ring
+          .setVisible(true)
+          .setRadius(13)
+          .setFillStyle(0x263039, 0.88)
+          .setStrokeStyle(2, 0xa1abb2, 0.92);
+        item.core
+          .setVisible(true)
+          .setRadius(5)
+          .setFillStyle(0x9aa4ab, 0.94);
+
+        drawRegionLabel(item, { unlocked: false, active: false });
+        setSelectionPulse(item, false, 0x9aa4ab);
+        return;
+      }
+
+      item.hit.setInteractive({ useHandCursor: true });
+      item.glow.setVisible(true);
+      item.ring.setVisible(true);
+      item.core.setVisible(true);
+
+      // All unlocked regular areas are pink all the time. Central Tokyo and
+      // Shinonome retain their special yellow/blue identities.
+      item.glow
+        .setRadius(
+          active
+            ? (specialColor ? 34 : 30)
+            : (specialColor ? 23 : 20)
+        )
+        .setFillStyle(accent, active ? 0.20 : 0.055)
+        .setStrokeStyle(active ? 4 : 2, accent, active ? 1 : 0.64);
+      item.ring
+        .setRadius(
+          active
+            ? (specialColor ? 21 : 19)
+            : (specialColor ? 16 : 14)
+        )
+        .setFillStyle(0x07111d, 0.38)
+        .setStrokeStyle(active ? 5 : 3, accent, 1);
+      item.core
+        .setRadius(
+          active
+            ? (specialColor ? 9 : 8)
+            : (specialColor ? 6 : 5)
+        )
+        .setFillStyle(accent, 1);
+
+      item.pulse.setRadius(active ? (specialColor ? 28 : 25) : 20);
+
+      drawRegionLabel(item, {
+        unlocked: true,
+        active,
+        specialColor,
+      });
+
+      // Selection is communicated by an animated outer dial rather than
+      // changing the unlocked colour scheme.
+      setSelectionPulse(item, active, accent);
+    });
+  };
+
+  const refreshAction = location => {
+    const currentCash = Number(scene.registry.get('cash') || 0);
+    const cost = getTargetCost(location);
+    const isCurrent = !fromWorkshop && location?.id === currentLocationId;
+    const isHome = location?.kind === 'home';
+    const available = locationAvailable(location);
+    const enough = currentCash >= cost;
+
+    travelButton.removeAllListeners('pointerdown');
+
+    if (!location) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#72838f').setText('SELECT A LOCATION');
+      return;
+    }
+
+    if (ginzaLoanBlocked(location)) {
+      travelButton.disableInteractive().setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#83939c').setText(GINZA_LOAN_BLOCK_LABEL);
+      return;
+    }
+
+    // This is the first ride home by train, not workshop management.
+    // The button becomes HOME, rather than "return to your workshop".
+    if (openingTrainMode) {
+      if (location.id !== 'shinonomeWorkshop') return;
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102838, 1)
+        .setStrokeStyle(2, 0x55dfff, 1);
+      travelLabel.setColor('#f1fffb').setText('HOME');
+      travelButton.on('pointerdown', () => runHomeAction(location, 0));
+      return;
+    }
+
+    if (crewBlockedLocation(location)) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#72838f').setText(crewBlockedLabel(location));
+      return;
+    }
+
+    if (location.kind === 'garageUpgrade') {
+      const tier = garageTier();
+      const targetTier = Number(location.garageTier || getWorkshopByLocationId(location.id).tier || 0);
+      const unlocked = targetTier <= tier;
+      const active = fromWorkshop && activeWorkshopId() === location.id;
+      const prerequisite = Number(location.requiresTier || Math.max(0, targetTier - 1));
+      const upgradeCost = Number(location.unlockCost || getWorkshopByLocationId(location.id).unlockCost || 0);
+
+      travelButton.removeAllListeners('pointerdown');
+
+      if (!unlocked && tier < prerequisite) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x111820, 1)
+          .setStrokeStyle(1, 0x40515d, 1);
+        travelLabel.setColor('#72838f').setText('UNLOCK PREVIOUS WORKSHOP FIRST');
+        return;
+      }
+
+      // The map remains the universal upgrade surface, but the next property
+      // only becomes purchasable after the required regional championships.
+      if (!unlocked) {
+        if (!isWorkshopProgressionReady(scene.registry, targetTier)) {
+          const wins = getTotalRegionalWins(scene.registry);
+          const requiredWins = getWorkshopRegionalWinRequirement(targetTier);
+          travelButton.disableInteractive()
+            .setFillStyle(0x25151a, 1)
+            .setStrokeStyle(2, 0x8b4f5c, 1);
+          travelLabel
+            .setColor('#c99aa4')
+            .setText(scene.registry.get('gameMode')==='arkonStory'
+              ? 'UNLOCKED THROUGH STORY'
+              : 'REGIONAL WINS ' + wins + '/' + requiredWins);
+          return;
+        }
+
+        if (!onWorkshopUpgrade) {
+          travelButton.disableInteractive()
+            .setFillStyle(0x111820, 1)
+            .setStrokeStyle(1, 0x40515d, 1);
+          travelLabel.setColor('#72838f').setText('UPGRADE UNAVAILABLE');
+          return;
+        }
+
+        if (currentCash < upgradeCost) {
+          travelButton.disableInteractive()
+            .setFillStyle(0x25151a, 1)
+            .setStrokeStyle(2, 0x8b4f5c, 1);
+          travelLabel.setColor('#c99aa4').setText('NEED ' + MONEY(upgradeCost));
+          return;
+        }
+
+        travelButton
+          .setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0d2b29, 1)
+          .setStrokeStyle(2, 0x62e8c7, 1);
+        travelLabel.setColor('#f1fffb').setText('UPGRADE WORKSHOP // ' + MONEY(upgradeCost));
+        travelButton.on('pointerdown', () => {
+          runWorkshopAction(location, upgradeCost, false);
+        });
+        return;
+      }
+
+      if (!fromWorkshop) {
+        const returnCost = Number(homeCost ?? HOME_RETURN_COST);
+        if (currentCash < returnCost) {
+          travelButton.disableInteractive()
+            .setFillStyle(0x25151a, 1)
+            .setStrokeStyle(2, 0x8b4f5c, 1);
+          travelLabel.setColor('#c99aa4').setText('NEED ' + MONEY(returnCost));
+          return;
+        }
+
+        travelButton
+          .setInteractive({ useHandCursor: true })
+          .setFillStyle(0x102838, 1)
+          .setStrokeStyle(2, 0x55dfff, 1);
+        travelLabel.setColor('#f1fffb').setText(
+          'RETURN TO ' + getWorkshopByLocationId(location.id).shortLabel + ' // ' + MONEY(returnCost)
+        );
+        travelButton.on('pointerdown', () => {
+          runHomeAction(location, returnCost);
+        });
+        return;
+      }
+
+      if (active) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x10202a, 1)
+          .setStrokeStyle(1, 0x4f788b, 1);
+        travelLabel.setColor('#7fcfe8').setText('ACTIVE WORKSHOP');
+        return;
+      }
+
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102838, 1)
+        .setStrokeStyle(2, 0x55dfff, 1);
+      travelLabel.setColor('#f1fffb').setText('USE THIS WORKSHOP');
+      travelButton.on('pointerdown', () => {
+        runWorkshopAction(location, 0, true);
+      });
+      return;
+    }
+
+    if (!available) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#72838f').setText(
+        location?.id === 'ginzaMotorGallery'
+          ? 'BY INVITATION ONLY'
+          : location?.centralTokyoUnlock
+            ? getCentralTokyoUnlockLabel(scene.registry, location.id)
+            : getTravelLocationUnlockLabel(scene.registry, location.id)
+      );
+      return;
+    }
+
+    if (isHome && fromWorkshop) {
+      const active = activeWorkshopId() === location.id;
+
+      if (active) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x10202a, 1)
+          .setStrokeStyle(1, 0x4f788b, 1);
+        travelLabel.setColor('#7fcfe8').setText('ACTIVE WORKSHOP');
+        return;
+      }
+
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102838, 1)
+        .setStrokeStyle(2, 0x55dfff, 1);
+      travelLabel.setColor('#f1fffb').setText('USE HOME WORKSHOP');
+      travelButton.on('pointerdown', () => {
+        runWorkshopAction(location, 0, true);
+      });
+      return;
+    }
+
+    if (isCurrent && !allowCurrentAction) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#72838f').setText('CURRENT LOCATION');
+      return;
+    }
+
+    if (!enough) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x25151a, 1)
+        .setStrokeStyle(2, 0x8b4f5c, 1);
+      travelLabel.setColor('#c99aa4').setText('NEED ' + MONEY(cost));
+      return;
+    }
+
+    travelButton
+      .setInteractive({ useHandCursor: true })
+      .setFillStyle(isHome ? 0x102838 : 0x0d2b29, 1)
+      .setStrokeStyle(2, isHome ? 0x55dfff : 0x62e8c7, 1);
+
+    travelLabel.setColor('#f1fffb').setText(
+      isHome
+        ? 'RETURN HOME // ' + MONEY(cost)
+        : actionVerb + ' // ' + MONEY(cost)
+    );
+
+    travelButton.on('pointerdown', () => {
+      if (isHome) {
+        runHomeAction(location, cost);
+        return;
+      }
+      if (workshopActionPending) return;
+      workshopActionPending = true;
+      travelButton.disableInteractive();
+      travelLabel.setText('TRAVELLING...');
+      // Dismissing this input-owning map and changing the Phaser Scene within
+      // the SAME pointerdown can hang iPad Safari. Do both next event loop.
+      window.setTimeout(() => {
+        try {
+          dismiss();
+          onTravel?.(location.id, cost);
+        } catch(error) {
+          console.error('[TOKYO SHIFT] map journey failed',error);
+          workshopActionPending = false;
+          scene.showWorkshopToast?.('TRAVEL COULD NOT START // TRY AGAIN');
+        }
+      }, 0);
+    });
+  };
+
+  const refreshPanel = () => {
+    const region = TRAVEL_REGIONS[selectedRegionId] || TRAVEL_REGIONS.ODAIBA;
+    const visibleLocations = visibleLocationsForRegion(region);
+
+    if (!visibleLocations.some(item => item.id === selectedLocationId)) {
+      selectedLocationId = null;
+    }
+
+    let location = visibleLocations.find(item => item.id === selectedLocationId);
+
+    if (!location) {
+      if (!fromWorkshop && selectedRegionId === currentRegionId) {
+        location = visibleLocations.find(item => item.id === currentLocationId);
+      }
+
+      location = location
+        || visibleLocations.find(item => item.id === activeWorkshopId())
+        || visibleLocations.find(item => locationAvailable(item))
+        || visibleLocations[0];
+
+      selectedLocationId = location?.id || null;
+    }
+
+    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
+    const regionOpen = openingTrainMode || (!crewRegionBlocked && (
+      selectedRegionId === currentRegionId ||
+      isTravelRegionUnlocked(scene.registry, selectedRegionId)
+    ));
+
+    regionNameText.setText(openingTrainMode ? 'SHINONOME' : region.label);
+    // Show the journey's single regional fare in the main region header.
+    const regionEntryCost = location ? getTargetCost(location) : Number(region.baseCost || 0);
+    regionLockText
+      .setText(openingTrainMode
+        ? ''
+        : isGinzaLoanActive(scene.registry) &&
+          selectedRegionId === 'CENTRAL_TOKYO' &&
+          location?.id === 'ginzaMotorGallery'
+          ? 'RETURN TO GINZA // FREE'
+        : !regionOpen
+          ? crewRegionBlocked
+            ? 'CREW CAR // UNAVAILABLE'
+            : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
+          : selectedRegionId === HOME_REGION_ID
+            ? 'RETURN // ' + MONEY(regionEntryCost)
+            : selectedRegionId === currentRegionId && !fromWorkshop
+              ? 'LOCAL TRAVEL // FREE'
+              : 'ENTRY // ' + MONEY(region.baseCost || 0))
+      .setVisible(!openingTrainMode);
+    regionLineText.setText(openingTrainMode
+      ? 'Only Shinonome is available on your first train ride home.'
+      : region.description);
+
+    const tunerShop = getTunerShopForRegion(selectedRegionId);
+    const loanTunerBlocked = isGinzaLoanActive(scene.registry) && Boolean(tunerShop);
+    const tunerUnlocked = Boolean(
+      tunerShop && isTunerShopUnlocked(scene.registry, selectedRegionId)
+    );
+    const tunerChallenge = getTunerTeamChallengeState(scene.registry, selectedRegionId);
+    const challengeVisible = Boolean(
+      tunerShop &&
+      !tunerUnlocked &&
+      (tunerChallenge.invited || tunerChallenge.stage > 0)
+    );
+    const showTunerPanel = loanTunerBlocked || tunerUnlocked || challengeVisible;
+
+    tunerPanelObjects.forEach(obj => obj.setVisible(showTunerPanel));
+    tunerBadge.removeAllListeners('pointerdown');
+
+    if (loanTunerBlocked) {
+      tunerKicker.setText('TUNER SHOP // LOCKED').setColor('#84909a');
+      tunerName.setText('').setColor('#8b99a3');
+      tunerSpecialty.setText('').setColor('#71808b');
+      tunerArrow.setText('').setVisible(false);
+      tunerBadge.disableInteractive().setFillStyle(0x111820, 0.97)
+        .setStrokeStyle(1, 0x40515d, 1);
+    } else if (tunerUnlocked) {
+      // Once unlocked, the map is navigation only. Championship/perfect-sweep
+      // progression is surfaced through Meet/result flows instead.
+      tunerKicker
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 17)
+        .setText('TUNER SHOP')
+        .setColor('#c99a4e');
+      tunerName
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 43)
+        .setText(tunerShop.label)
+        .setColor('#fff1d3');
+      tunerSpecialty
+        .setPosition(TUNER_BADGE.x + TUNER_BADGE.w - 22, TUNER_BADGE.y + 43)
+        .setOrigin(1, 0.5)
+        .setText(tunerShop.specialty)
+        .setColor('#c8b58e');
+      tunerArrow.setText('>').setVisible(true);
+      tunerBadge
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x17130d, 0.97)
+        .setStrokeStyle(2, 0xe4b660, 0.98);
+
+      tunerBadge.on('pointerdown', () => {
+        const returnScene = scene.sys?.settings?.key || 'GarageScene';
+        const regionId = selectedRegionId;
+        tunerBadge.disableInteractive();
+        window.setTimeout(() => {
+          dismiss();
+          scene.scene.start('TunerShopScene', {
+            regionId,
+            returnScene,
+            returnLocationId: currentLocationId,
+            fromWorkshop,
+          });
+        }, 0);
+      });
+    } else if (challengeVisible) {
+      tunerKicker
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 7)
+        .setText(tunerChallenge.paused ? 'TEAM CHALLENGE // PAUSED' : 'TEAM CHALLENGE')
+        .setColor('#ff91b6');
+      tunerName
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 39)
+        .setText(tunerChallenge.stage + ' / 7 DEFEATED')
+        .setColor('#fff2f7');
+      tunerSpecialty
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 60)
+        .setOrigin(0, 0.5)
+        .setText(
+          tunerChallenge.paused
+            ? 'RETURN TO THE REGION MEET TO RESUME'
+            : 'RACE MORE FOR A CHANCE TO CONTINUE'
+        )
+        .setColor('#b4c7d1');
+      tunerArrow.setText('').setVisible(false);
+      tunerBadge
+        .disableInteractive()
+        .setFillStyle(0x21121a, 0.97)
+        .setStrokeStyle(2, 0xff5f93, 0.96);
+    } else {
+      tunerBadge.disableInteractive();
+    }
+
+    locationUi.forEach((row, i) => {
+      const item = visibleLocations[i] || null;
+      row.location = item;
+
+      if (!item) {
+        row.box.removeAllListeners('pointerdown');
+        row.box.disableInteractive().setVisible(false);
+        row.label.setText('').setVisible(false);
+        row.meta.setText('').setVisible(false);
+        return;
+      }
+
+      row.box.setVisible(true);
+      row.label.setVisible(true);
+      row.meta.setVisible(true);
+
+      const selected = selectedLocationId === item.id;
+      const isCurrent = !fromWorkshop && currentLocationId === item.id;
+      const cost = getTargetCost(item);
+      const available = locationAvailable(item);
+      row.label.setText(openingTrainMode ? 'HOME' : item.label);
+      if (ginzaLoanBlocked(item)) {
+        row.meta.setText(GINZA_LOAN_BLOCK_LABEL);
+      } else if (crewBlockedLocation(item)) {
+        row.meta.setText('CREW CAR // UNAVAILABLE');
+      } else if (item.kind === 'garageUpgrade') {
+        const unlocked = isWorkshopUnlocked(item.id, garageTier());
+        const totalCapacity = getGarageCapacity(Number(item.garageTier || 0));
+        row.meta.setText(
+          (unlocked ? 'OWNED' : 'UPGRADE') + '  •  +' +
+          Number(item.capacity || 0) + ' SLOTS / ' + totalCapacity + ' TOTAL  •  ' +
+          (unlocked
+            ? (!fromWorkshop ? MONEY(cost) : 'AVAILABLE')
+            : MONEY(cost))
+        );
+      } else if (item.kind === 'home') {
+        row.meta.setText(openingTrainMode ? 'SHINONOME  •  FREE TRAIN RIDE' :
+          'HOME  •  4 SLOTS  •  ' +
+          (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost))
+        );
+      } else if (item.centralTokyoUnlock && !available) {
+        row.meta.setText(
+          item.difficulty + '  •  ' + getCentralTokyoUnlockLabel(scene.registry, item.id)
+        );
+      } else if (!available) {
+        row.meta.setText(
+          item.difficulty + '  •  ' + getTravelLocationUnlockLabel(scene.registry, item.id)
+        );
+      } else {
+        row.meta.setText(
+          item.difficulty + '  •  ' + (isCurrent ? 'HERE' : 'AVAILABLE')
+        );
+      }
+
+      row.box.removeAllListeners('pointerdown');
+
+      if (!ginzaLoanBlocked(item) &&
+          (available || item.centralTokyoUnlock || item.available !== false)) {
+        row.box.setInteractive({ useHandCursor: true });
+        row.box.on('pointerdown', () => {
+          selectedLocationId = item.id;
+          refreshPanel();
+        });
+      } else {
+        row.box.disableInteractive();
+      }
+
+      row.box
+        .setFillStyle(selected ? 0x14263a : available ? 0x0b1724 : 0x0a1017, 0.96)
+        .setStrokeStyle(
+          selected ? 2 : 1,
+          selected ? 0x43dfff : available ? 0x315470 : 0x29343d,
+          1
+        );
+
+      row.label.setColor(selected ? '#ffffff' : available ? '#dff3ff' : '#65737d');
+      row.meta.setColor(available ? '#8fa8b8' : '#53616b');
+    });
+
+    const selectedLocation = visibleLocations.find(item => item.id === selectedLocationId) || null;
+    refreshAction(selectedLocation);
+    updateRegionNodes();
+  };
+
+  TRAVEL_REGION_ORDER.forEach(regionId => {
+    if (openingTrainMode && regionId !== HOME_REGION_ID) return;
+    if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
+    const region = TRAVEL_REGIONS[regionId];
+    const pt = mapPoint(region);
+    const home = regionId === HOME_REGION_ID;
+    const centralTokyo = regionId === 'CENTRAL_TOKYO';
+    const crewRegionBlocked = crewTravelMode && regionId === 'CENTRAL_TOKYO';
+    const unlocked = openingTrainMode || chapter08GinzaMode || (!crewRegionBlocked && (
+      regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
+    ));
+
+    const glow = add(scene.add.circle(pt.x, pt.y, 20, 0x82909a, 0.04)
+      .setStrokeStyle(2, 0x9aa9b4, 0.42)
+      .setDepth(depth + 5));
+
+    const ring = add(scene.add.circle(pt.x, pt.y, 13, 0x111820, 0.45)
+      .setStrokeStyle(2, 0x9aa9b4, 0.82)
+      .setDepth(depth + 6));
+
+    const core = add(scene.add.circle(pt.x, pt.y, 4, 0xc0c9cf, 0.92)
+      .setDepth(depth + 7));
+
+    const labelBg = add(scene.add.graphics().setDepth(depth + 6.6));
+    const labelText = add(scene.add.text(
+      pt.x,
+      pt.y - 54,
+      region.label,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: home || centralTokyo ? '9px' : '8px',
+        color: '#c7d1d7',
+        align: 'center',
+      }
+    ).setOrigin(0.5).setDepth(depth + 6.8));
+
+    const pulse = add(scene.add.circle(
+      pt.x,
+      pt.y,
+      home || centralTokyo ? 23 : 20,
+      0x000000,
+      0
+    ).setStrokeStyle(3, 0xff57bd, 0.95)
+      .setVisible(false)
+      .setDepth(depth + 7.4));
+
+    const pulseTween = scene.tweens.add({
+      targets: pulse,
+      scaleX: 1.72,
+      scaleY: 1.72,
+      alpha: { from: 1, to: 0 },
+      duration: 720,
+      repeat: -1,
+      ease: 'Sine.easeOut',
+      paused: true,
+    });
+    tweens.push(pulseTween);
+
+    const hit = add(scene.add.circle(
+      pt.x,
+      pt.y,
+      home || centralTokyo ? 48 : 38,
+      0x000000,
+      0.001
+    ).setDepth(depth + 8));
+
+    hit.on('pointerdown', () => {
+      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
+      if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
+      selectedRegionId = regionId;
+
+      if (regionId === currentRegionId && !fromWorkshop) {
+        selectedLocationId = currentLocationId;
+      } else if (regionId === HOME_REGION_ID) {
+        const visibleHomeLocations = visibleLocationsForRegion(region);
+        selectedLocationId = fromWorkshop
+          ? activeWorkshopId()
+          : visibleHomeLocations.some(item => item.id === activeWorkshopId())
+            ? activeWorkshopId()
+            : visibleHomeLocations[0]?.id || 'shinonomeWorkshop';
+      } else {
+        selectedLocationId = region.locations.find(item => locationAvailable(item))?.id
+          || region.locations[0]?.id
+          || null;
+      }
+
+      setPanelVisible(true);
+      refreshPanel();
+    });
+
+    regionUi[regionId] = {
+      glow,
+      ring,
+      core,
+      pulse,
+      pulseTween,
+      pulseActive: false,
+      hit,
+      pt,
+      regionId,
+      unlocked,
+      labelBg,
+      labelText,
+      crewBlocked: crewRegionBlocked,
+    };
+  });
+
+  if (!chapter08GinzaMode) {
+    blocker.on('pointerdown', dismiss);
+    closeButton.on('pointerdown', dismiss);
+  } else {
+    // Story-only destination. During a developer rehearsal, X exits the
+    // sandbox and restores their original career; the real chapter keeps
+    // map travel directed exclusively towards the scripted Ginza run.
+    if (typeof onExit === 'function') {
+      closeButton.setAlpha(1).setInteractive({useHandCursor:true});
+      closeButton.on('pointerdown', () => {
+        dismiss();
+        onExit();
+      });
+    } else {
+      closeButton.setAlpha(.25).disableInteractive();
+    }
+    blocker.on('pointerdown', () => {});
+  }
+  frame.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
+  infoPanel.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
+
+  scene.travelMapPopup = frame;
+
+  // Start with the map completely unobstructed. The compact panel appears
+  // only after the player taps a region.
+  setPanelVisible(false);
+  updateRegionNodes();
+
+  return frame;
+}

@@ -1,0 +1,8307 @@
+import { boostSupportMessage } from '../data/engineeringFeedback.js';
+import {engineeringLabel,tuningPotentialSummary} from '../data/stockClasses.js';
+import {restorePerformanceParts} from '../data/factorySetup.js';
+import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js';
+import {
+  ARKON_STORY_MECHANIC_ASSETS, isArkonStoryWorkshop,
+  resolveWorkshopMechanicTexture,
+} from '../data/arkonStoryWorkshopMechanic.js';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
+import { cars, carOrder } from '../data/cars.js';
+import { garageAssets } from '../data/garageAssets.js';
+import { engines } from '../data/engines.js';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js';
+import {
+  ENGINE_PART_ORDER,
+  ENGINE_TUNING_PARTS,
+  normaliseEngineTuning,
+  getEngineTuning,
+  getEngineTuningCartCost,
+  getUpgradePathCost,
+  getEngineTuningCount,
+  applyEngineTuning,
+} from '../data/tuning.js';
+import {
+  DRIVETRAIN_PART_ORDER,
+  CHASSIS_PART_ORDER,
+  EXHAUST_NOS_PART_ORDER,
+  DRIVETRAIN_TUNING_PARTS,
+  CHASSIS_TUNING_PARTS,
+  EXHAUST_NOS_TUNING_PARTS,
+  normaliseDrivetrainTuning,
+  normaliseChassisTuning,
+  normaliseExhaustNosTuning,
+  getDrivetrainTuning,
+  getChassisTuning,
+  getExhaustNosTuning,
+  getDrivetrainUpgradePathCost,
+  getChassisUpgradePathCost,
+  getExhaustNosUpgradePathCost,
+  getDrivetrainCartCost,
+  getChassisCartCost,
+  getExhaustNosCartCost,
+  applySecondaryTuning,
+} from '../data/secondaryTuning.js';
+import {
+  getPartRemovalQuote,
+  removeTuningPartFromState,
+  listStorableKitParts,
+  storeSelectedKitParts,
+  restoreStoredKitParts,
+  STORE_KIT_REMOVE_FEE,
+  STORE_KIT_RESTORE_FEE,
+} from '../data/partUninstall.js';
+import {
+  getStockTuneServiceAction, applyStockTuneService, hasStockTuneService,
+} from '../data/stockTuneService.js';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js';
+import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
+import {
+  grantEthanCompensationOnce, ethanCompensationCutscene,
+  ETHAN_GIFT_PENDING_KEY, isEthanName,
+} from '../data/specialProfileRewards.js';
+import { playCanalYardStory } from '../ui/CanalYardStory.js';
+import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js';
+import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js';
+import { markCutsceneSeen } from '../data/cutscenes.js';
+import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js';
+import { getMeetLocation } from '../data/meetAssets.js';
+import { getTravelLocation } from '../data/travelRegions.js';
+import { showTravelMap } from '../ui/TravelMap.js';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js';
+import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js';
+import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
+import {
+  CENTRAL_TOKYO_LOCATIONS,
+  getCarCouponRequirement,
+  getPendingCentralTokyoInvite,
+  markCentralTokyoUnlocked,
+  isArkonDen,
+} from '../data/centralTokyo.js';
+import { playMusic } from '../audio/MusicManager.js';
+import { createCrewPlaybookCutscene, getCrewWhiteboardMode } from '../data/crewBattlePlaybook.js';
+import {
+  isCrewUnlocked,
+  getCrewMembers,
+  getCrewCount,
+  isCrewComplete,
+  removeCrewMember,
+  removeAllCrewMembers,
+  recruitRandomDevCrew,
+} from '../data/crewSystem.js';
+import {
+  WORKSHOP_TIERS,
+  getGarageCapacity,
+  getWorkshopByLocationId,
+  getWorkshopPhaseBackground,
+  getWorkshopStorageCapacity,
+  getUnlockedWorkshops,
+  getCarsInWorkshop,
+  getWorkshopUsage,
+  getWorkshopTransferCost,
+  normaliseCarGarageLocations,
+  applyWorkshopServiceCost,
+  canInstallTuningLevel,
+  getTuningRequirementLabel,
+  getTotalRegionalWins,
+  getWorkshopRegionalWinRequirement,
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js';
+import { getPowerTorqueDisplay } from '../data/carRatings.js';
+import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js';
+import {
+  DYNO_WAREHOUSE_ID,
+  DYNO_RENTAL_SESSION_COST,
+  getDynoStage,
+  buildDynoCar,
+} from '../data/dyno.js';
+import {
+  getCarPaintColor,
+  normalisePaintColor,
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+  getCarDecalAnchor,
+  setCarBodyPaint,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
+} from '../vehicles/CarAppearance.js';
+import {
+  normaliseVisualMods,
+  createVisualModLayers,
+  getVisualModWheelVisual,
+  preloadVisualModAssets,
+  preloadVisualModSelectionAssets,
+} from '../data/visualMods.js';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
+import {
+  startSceneLoading,
+  finishSceneLoading,
+  cancelSceneLoading,
+} from '../ui/LoadingScreen.js';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js';
+import { showOfficePanel } from '../ui/OfficePanel.js';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js';
+import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js';
+import { getActiveMagazineIssue } from '../data/carMagazine.js';
+
+const PIXEL_FONT = '"Silkscreen", monospace';
+const BODY_FONT = '"Rajdhani", monospace';
+const HERO_CFG = WORKSHOP_PRESENTATION.heroCar;
+const THUMB_CFG = WORKSHOP_PRESENTATION.thumbnail;
+const PLAYER_CFG = WORKSHOP_PRESENTATION.player;
+const DAICHI_CFG = WORKSHOP_PRESENTATION.daichi;
+
+// Selected crew garages use the same normal workshop geometry, with one
+// deliberate camera/composition offset so the scene sits further left/lower.
+// The wide Crew Space overview is unaffected.
+const CREW_GARAGE_PRESENTATION = Object.freeze({
+  offsetX: -78,
+  offsetY: 32,
+  backgroundScale: 1.12,
+});
+
+const TUNING_CATEGORY_LOGO_Y_OFFSET = 94;
+const TUNING_CATEGORY_LOGO_MAX_HEIGHT = 164;
+const TUNING_CATEGORY_ROW_START_OFFSET = 214;
+const TUNING_CATEGORY_ROW_GAP = 56;
+
+const SAFE = 24;
+const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
+const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
+const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
+
+const CREW_MEMBER_LAYOUT = Object.freeze([
+  // Four on the workshop floor. The two right-side recruits are pulled inward
+  // so the lower group reads as a looser cluster rather than a wide line.
+  { x: 145, feetY: 482, h: 158, zone: 'floor', scale: 1.00 },
+  { x: 345, feetY: 447, h: 158, zone: 'floor', scale: 0.90 },
+  { x: 520, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
+  { x: 690, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
+
+  // Upper level: one shared rendered height, reduced 5% from R417.
+  // Visually ordered left -> centre -> right, with the centre shadow lifted
+  // slightly and the right figure opened out a little farther.
+  { x: 245, feetY: 184, h: 140.6, zone: 'balcony', scale: 1.15 },
+  { x: 535, feetY: 185, h: 140.6, zone: 'balcony', scale: 1.15 },
+  { x: 372, feetY: 190, h: 140.6, zone: 'balcony', scale: 1.15, shadowLift: 4 },
+]);
+
+// The player sits just left of centre on the whiteboard, at the same visual
+// scale as the full-size floor recruits.
+const CREW_PLAYER_OVERVIEW_LAYOUT = Object.freeze({
+  x: 950,
+  feetY: 473,
+  h: 160,
+});
+
+export default class GarageScene extends Phaser.Scene {
+  constructor(sceneKey = 'GarageScene') { super(sceneKey); }
+
+  init(data = {}) {
+    // Crew Space is a workshop-mode presentation of GarageScene so all tuning,
+    // visual-mod and dyno behaviour stays on the same battle-tested code path.
+    const explicitCrewMode = Object.prototype.hasOwnProperty.call(data || {}, 'crewMode')
+      ? Boolean(data.crewMode)
+      : null;
+    this.crewMode = explicitCrewMode == null
+      ? Boolean(this.registry.get('crewSpaceActive'))
+      : explicitCrewMode;
+    this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
+    this.storyArchiveChapter = data?.storyArchiveChapter || null;
+    this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
+    this._warehousePresentationTransitioning = false;
+
+    if (this.crewMode) {
+      this.registry.set('crewSpaceActive', true);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    } else if (explicitCrewMode === false) {
+      this.registry.set('crewSpaceActive', false);
+    }
+
+    // Pass the workshop explicitly when changing properties. This avoids
+    // depending on a re-entrant scene restart to preserve the new location.
+    if (data?.workshopLocationId) {
+      this.registry.set('workshopLocationId', data.workshopLocationId);
+    }
+  }
+
+  preload() {
+    let queued = 0;
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    // Settings > Controls uses the real race-control artwork in its live
+    // layout mock-up, so keep these lightweight UI textures available here.
+    [
+      ['hudCluster', 'assets/Ui/hud_cluster.png'],
+      ['clutchPedal', 'assets/Controls/clutch_pedal.png'],
+      ['throttlePedal', 'assets/Controls/throttle_pedal.png'],
+      ['nosButton', 'assets/Controls/nos_button.png'],
+      ['shifterNeutral', 'assets/Controls/shifter_neutral.png'],
+    ].forEach(([key, path]) => queueImage(key, path));
+
+    const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    const activeWorkshopId = this.crewMode
+      ? 'shinonomeWarehouseStrip'
+      : (this.registry.get('workshopLocationId') || 'shinonomeWorkshop');
+    const assignments = normaliseCarGarageLocations(
+      ownedCarIds,
+      this.registry.get('carGarageLocations') || {},
+      Number(this.registry.get('garageTier') || 0)
+    );
+    const members = getCrewMembers(this.registry);
+    const crewCars = Object.values(members)
+      .map(member => member.loanCarId)
+      .filter(id => cars[id]);
+    const localCars = this.crewMode
+      ? crewCars
+      : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
+          .filter(id => !cars[id]?.crewLoan);
+    const carStates = this.registry.get('carStates') || {};
+
+    // Crew Space has its own authored day/night room. Normal workshops keep
+    // using their phase-aware workshop backgrounds.
+    const activeWorkshop = getWorkshopByLocationId(activeWorkshopId);
+    if (this.crewMode) {
+      queueImage(
+        'crewSpaceDayBg',
+        'assets/Garage/shinonome_crewspace_day.png?v=20261005-r349'
+      );
+      queueImage(
+        'crewSpaceNightBg',
+        'assets/Garage/shinonome_crewspace_night.png?v=20261005-r349'
+      );
+      queueImage('crewBattlePlaybookBoard',
+        'assets/Garage/whiteboard_crewbattle.png?v=20261020-r625');
+      queueImage('crewRecruitWhiteboard',
+        'assets/Garage/whiteboard_crewrecruit.png?v=20261021-r627');
+    } else {
+      ['day', 'night'].forEach(phase => {
+        const background = getWorkshopPhaseBackground(activeWorkshop, phase);
+        if (background?.key && background?.path) {
+          queueImage(background.key, background.path + '?v=20261022-r645');
+        }
+      });
+
+      // Keep the legacy active texture and home texture available as hard
+      // fallbacks for old saves or a missing uploaded phase file.
+      [activeWorkshop.textureKey, 'garageWorkshopBg'].forEach(key => {
+        const asset = garageAssets.find(item => item.key === key);
+        if (asset) queueImage(asset.key, asset.path);
+      });
+    }
+
+    // Warehouse HQ is the doorway to Crew Space. Warm the alternate room and
+    // its current roster while the Warehouse itself is loading so the room
+    // buttons can switch presentation without exposing a black loading frame.
+    const shouldWarmCrewSpace = (
+      !this.crewMode &&
+      activeWorkshopId === 'shinonomeWarehouseStrip' &&
+      isCrewUnlocked(this.registry)
+    );
+    if (shouldWarmCrewSpace) {
+      queueImage(
+        'crewSpaceDayBg',
+        'assets/Garage/shinonome_crewspace_day.png?v=20261005-r349'
+      );
+      queueImage(
+        'crewSpaceNightBg',
+        'assets/Garage/shinonome_crewspace_night.png?v=20261005-r349'
+      );
+    }
+
+    const mapPhase = getStoryWorldPhase(this.registry) === 'day' ? 'day' : 'night';
+    const workshopMapAsset = mapPhase === 'day'
+      ? {
+          key: 'travelMapTokyoRegionDay',
+          path: 'assets/Ui/tokyo_region_map_day.png?v=20260928-r245',
+        }
+      : {
+          key: 'travelMapTokyoRegionNight',
+          path: 'assets/Ui/tokyo_region_map_base.png?v=20260928-r245',
+        };
+    queueImage(workshopMapAsset.key, workshopMapAsset.path);
+
+
+    if (!this.crewMode) {
+      const officeBackgrounds = {
+        shinonomeWorkshop: {
+          key: 'officeWorkshopBg',
+          path: 'assets/Garage/shinonome_workshop_office.png?v=20261005-r362',
+        },
+        shinonomeCanalYard: {
+          key: 'officeCanalYardBg',
+          path: 'assets/Garage/shinonome_canalyard_office.png?v=20261005-r362',
+        },
+        shinonomeWarehouseStrip: {
+          key: 'officeWarehouseBg',
+          path: 'assets/Garage/shinonome_warehouse_office.png?v=20261005-r362',
+        },
+      };
+      const officeBackground =
+        officeBackgrounds[activeWorkshopId] ||
+        officeBackgrounds.shinonomeWorkshop;
+      queueImage(officeBackground.key, officeBackground.path);
+
+      [
+        ['officeFlagOdaiba', 'assets/Garage/flag_odaiba.png?v=20261005-r362'],
+        ['officeFlagShinagawa', 'assets/Garage/flag_shinagawa.png?v=20261005-r362'],
+        ['officeFlagTatsumi', 'assets/Garage/flag_tatsumi.png?v=20261005-r362'],
+        ['officeFlagShibuya', 'assets/Garage/flag_shibuya.png?v=20261005-r362'],
+        ['officeFlagYokohama', 'assets/Garage/flag_yokohama.png?v=20261005-r362'],
+        ['officeFlagDaikoku', 'assets/Garage/flag_daikoku.png?v=20261005-r362'],
+        ['officeFlagShinjuku', 'assets/Garage/flag_shinjuku.png?v=20261005-r362'],
+        ['officeBadgeCrown', 'assets/Garage/badge_crown.png?v=20261005-r362'],
+        ['officeBadgeStar', 'assets/Garage/badge_star.png?v=20261005-r362'],
+        ['officeBadgeCrew', 'assets/Garage/badge_crew.png?v=20261005-r362'],
+      ].forEach(([key, path]) => queueImage(key, path));
+    }
+
+    // Street File belongs to the ordinary workshop. Crew Space uses the same
+    // three-panel layout but keeps the room focused on the team.
+    if (!this.crewMode) {
+      // Actual caller silhouette asset. Respect the repository's 'Ui' case.
+      queueImage('openingIncomingPhone', 'assets/Ui/phone.png?v=20261011-r475');
+      const magazineIssue = getActiveMagazineIssue(this.registry);
+      queueImage(
+        magazineIssue?.coverKey,
+        magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20261011-r472' : null
+      );
+      queueImage(
+        magazineIssue?.adKey,
+        magazineIssue?.adPath ? magazineIssue.adPath + '?v=20261011-r472' : null
+      );
+      queueImage(
+        magazineIssue?.insetKey,
+        magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20261011-r472' : null
+      );
+    }
+
+    // Garage / Crew Space characters shown immediately.
+    const characterIds = this.crewMode
+      ? [
+          this.registry.get('playerCharacterId') || 'renMizuno',
+          ...Object.values(members).map(member => member.characterId),
+        ]
+      : [
+          this.registry.get('playerCharacterId') || 'renMizuno',
+          'daichiSakamoto',
+          ...(['home', 'magazine', 'delivery', 'tutorial', 'daichi'].includes(this.registry.get('openingChapter'))
+            ? ['sayakaFujieda'] : []),
+          ...(shouldWarmCrewSpace
+            ? Object.values(members).map(member => member.characterId)
+            : []),
+        ];
+    // A full crew opens Scene 07 in the crew room. Preload Daichi and
+    // Sayaka's home poses here so their surprise appearance isn't delayed.
+    if (this.crewMode && isCrewComplete(this.registry) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('fullCrewTogether')) {
+      characterIds.push('daichiSakamoto', 'sayakaFujieda');
+    }
+    [...new Set(characterIds)].forEach(id => {
+      const visual = characters[id]?.visual;
+      if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+    });
+    // Story Arkon's casual pose is the workshop idle. His mechanic poses
+    // load only when entering actual tuning modes below.
+    if (isArkonStoryWorkshop(this.registry,this.crewMode)) {
+      const idle=characters.arkonDen?.visual?.poseAssets?.storyIdle;
+      if(idle)queueImage(idle.key,getCharacterAssetUrl(idle.path));
+    }
+
+    // Crew Space does not normally load office flags. The new transparent
+    // Scene 07 portrait gallery still uses the same flags as Scene 06.
+    if (this.crewMode && isCrewComplete(this.registry) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('fullCrewTogether')) {
+      for (const region of ['odaiba', 'shinagawa', 'tatsumi',
+          'shibuya', 'yokohama', 'daikoku', 'shinjuku']) {
+        const key = 'officeFlag' + region[0].toUpperCase() + region.slice(1);
+        queueImage(key, 'assets/Garage/flag_' + region + '.png?v=20261005-r362');
+      }
+    }
+
+    // Scene 06 reuses the ACTUAL seven rival portraits (or the canonical
+    // substitute if the selected avatar is the same person) and the office
+    // flags already queued above. Nothing here creates a recruit or rival.
+    const sevenBadges = getRegionalChampionshipCount(this.registry) >= 7;
+    if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
+        (sevenBadges || isArkonDen(this.registry)) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('sevenRegionsConquered')) {
+      const ids = [
+        'emiKanzaki', 'renMizuno', 'kaitoFujimori', 'ayaKurose',
+        'haruTachibana', 'reinaShibata', 'rikuAkamine',
+      ];
+      const playerId = this.registry.get('playerCharacterId');
+      ids.forEach(id => {
+        const asset = getCharacterVisualAsset(id, 'idle', {
+          rivalContext: true, playerCharacterId: playerId,
+        });
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      });
+    }
+
+    if (isEthanName(this.registry.get('firstName'), this.registry.get('lastName')) &&
+        (!this.registry.get('ethanYuenCompensationR638') ||
+          this.registry.get(ETHAN_GIFT_PENDING_KEY))) {
+      for (const pose of ['devTalking', 'devLaughing']) {
+        const asset = characters.arkonDen?.visual?.poseAssets?.[pose];
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      }
+    }
+
+    // First Sayaka manga dialogue used to queue every alternate Sayaka outfit
+    // just as she finished fading into the garage. Warm only the two actual
+    // FIRST KEYS poses with the workshop; farewell poses load on the tutorial
+    // return to GarageScene. No giant first-spoken-line load or lag spike.
+    const openingPhase = String(this.registry.get('openingChapter') || '');
+    if (['home', 'magazine', 'delivery', 'tutorial'].includes(openingPhase)) {
+      const poses = openingPhase === 'tutorial'
+        ? ['homeNormal', 'homeSad', 'homeHappy', 'homeBlushing', 'homeSerious']
+        : ['homeNormal', 'homeSad'];
+      const assets = characters.sayakaFujieda?.visual?.poseAssets || {};
+      poses.forEach(pose => {
+        const asset = assets[pose];
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      });
+    }
+
+    // A workshop can show and switch between its local cars without another
+    // network round trip. At Warehouse HQ also warm the crew loan cars so the
+    // Crew Space doorway can be an instant in-scene presentation switch.
+    const preloadCarIds = [
+      ...new Set([
+        ...localCars,
+        ...(['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))
+          ? ['ae86', 'ef'] : []),
+        ...(shouldWarmCrewSpace ? crewCars : []),
+      ]),
+    ];
+    // Chapter 04's RWB is a story restoration liability, NEVER a drivable
+    // player-owned vehicle. Warm the same modular asset for its private
+    // Canal Yard cinematic using the existing workshop hero renderer.
+    if (!this.crewMode && this.registry.get('gameMode')==='arkonStory' &&
+        (this.registry.get('arkonStoryChapter03Done') ||
+         this.registry.get('storyDirectorProgress')?.id==='arkonChapter04')) {
+      preloadCarIds.push('rwbStellaPorsche');
+    }
+    // Scene 05 reuses the black RWB collector asset solely as a visiting
+    // cinematic car. It is never added to the player's owned-car registry.
+    if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
+        (!((this.registry.get('cutscenesSeen') || []).includes('warehouseHqUnlocked')) ||
+          this.registry.get('devMode') || isStoryArchiveSceneReplay(this.registry))) {
+      preloadCarIds.push('rwbStellaPorsche');
+    }
+    preloadCarIds.forEach(id => {
+      const car = cars[id];
+      if (!car) return;
+      queued += preloadCarAppearanceAssets(this, { [id]: car }, '20260928-r242');
+      queued += preloadCarWheel(this, car, carStates[id] || {});
+      queued += preloadVisualModSelectionAssets(this, id, carStates[id] || {}, '20260928-r242');
+      queued += preloadTunerDecalAssets(this, carStates[id] || {}, '20260928-r242');
+    });
+
+    // Returning from Crew Space is a same-property presentation change.
+    // Warehouse textures are normally already resident, and showing a second
+    // global splash here was the path that could stick at 98% on iOS/PWA.
+    if (!this.returningFromCrewSpace) {
+      startSceneLoading(
+        this,
+        this.crewMode ? 'LOADING CREW SPACE' : 'LOADING WORKSHOP',
+        queued
+      );
+    }
+  }
+
+  create() {
+    document.body.dataset.scene = 'garage';
+    this.scale.resize(1560, 840);
+
+    // Defensive reset for profile switches. GarageScene is a reused Phaser
+    // scene instance, so never inherit a disabled input state.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
+
+    // A workshop switch used to restart the scene from inside a completed
+    // camera fade. On some mobile/PWA runs the restarted camera inherited the
+    // fully black fade overlay. Always begin GarageScene with camera FX reset.
+    this.cameras.main.resetFX?.();
+    this.cameras.main.setAlpha(1);
+
+    playMusic('workshop');
+
+    // Promote legacy Arkon Den saves immediately on GarageScene entry so every
+    // workshop-side system sees the same dev flags as MeetScene.
+    if (isArkonDen(this.registry)) {
+      this.registry.set('devMode', true);
+      saveSessionState(this.registry);
+    }
+    // Apply Ethan's compensation BEFORE rendering cash, then persist the paid
+    // marker before opening the manga. Re-entering Garage cannot pay again.
+    if (grantEthanCompensationOnce(this.registry)) saveSessionState(this.registry);
+
+    this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    this.activeWorkshopId = this.crewMode
+      ? 'shinonomeWarehouseStrip'
+      : (this.registry.get('workshopLocationId') || 'shinonomeWorkshop');
+    if (this.crewMode) {
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    }
+    this.carGarageLocations = normaliseCarGarageLocations(
+      this.ownedCarIds,
+      this.registry.get('carGarageLocations') || {},
+      Number(this.registry.get('garageTier') || 0)
+    );
+    this.registry.set('carGarageLocations', this.carGarageLocations);
+
+    const localCars = this.getCurrentWorkshopCars();
+    const requestedCarId = this.registry.get('selectedCarId');
+    const preferredCarId = getPreferredCarId(this.registry);
+    this.selectedCarId = this.crewMode
+      ? null
+      : localCars.includes(preferredCarId) ? preferredCarId
+        : localCars.includes(requestedCarId) ? requestedCarId
+          : localCars[0] || null;
+
+    this.registry.set('ownedCarIds', this.ownedCarIds);
+    this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('meetStranded', false);
+
+    // New-player car advertisements and first-car arrival share the same
+    // modular textures as normal cars, even though this garage starts empty.
+    const introCarIds = ['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))
+      ? ['ae86', 'ef'] : [];
+    ensureDerivedModularCarTextures(
+      this,
+      Object.fromEntries(
+        [...new Set([...localCars, ...introCarIds])]
+          .filter(id => cars[id]).map(id => [id, cars[id]])
+      )
+    );
+
+    // This Phaser Scene instance is recycled when a chapter replay restarts
+    // Warehouse HQ. Old GameObject references remain on 'this' even though
+    // Phaser destroys their input and canvas on shutdown. Clear all controls
+    // that are rebuilt later in create() BEFORE the garage strip first calls
+    // updateGarageNavState(); otherwise setColor/disableInteractive on a
+    // destroyed object throws and aborts the entire chapter.
+    this.moveCarButton = null;
+    this.moveCarLabel = null;
+    this.garagePrevButton = null;
+    this.garagePrevLabel = null;
+    this.garageNextButton = null;
+    this.garageNextLabel = null;
+
+    this.selectedDisplay = [];
+    this.crewStageObjects = [];
+    this.crewBattleWhiteboardOverlay = null;
+    this._crewWhiteboardOpeningBriefing = false;
+    this.crewFocusedCharacterId = null;
+    this._devCrewChanging = false;
+    this.thumbButtons = [];
+    this.upgradeButtons = [];
+    this.selectedUpgrade = null;
+    this.engineMode = false;
+    this._arkonWorkingHidden = null;
+    this.engineModeObjects = [];
+    this.engineModalObjects = [];
+    this.engineHotspotObjects = [];
+    this.engineHelperObjects = [];
+    this.secondaryMode = null;
+    this.secondaryModeObjects = [];
+    this.secondaryModalObjects = [];
+    this.secondaryHelperObjects = [];
+    this.secondaryHotspotObjects = [];
+
+    this.chassisMode = false;
+    this.chassisModeObjects = [];
+    this.workshopHomeHotspotObjects = [];
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.currentPaintColor = 0xffffff;
+    this.pendingPaintColor = 0xffffff;
+
+    this.garagePageSize = 4;
+    this.garagePageObjects = [];
+    const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
+    this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
+    this.worldPhase = getStoryWorldPhase(this.registry);
+    this.workshopBackgroundImage = null;
+    this.workshopBackgroundWorkshop = null;
+
+    this.drawScene();
+    if (!this.crewMode && this.registry.get('openingChapter') === 'tutorial') {
+      this.spawnOpeningCompanion('sayakaFujieda', false);
+    }
+    // The Daichi chapter uses the full chassis-tuning pose, placed only
+    // through startDaichiWorkshopArrival — never the tiny generic NPC.
+
+    this.time.addEvent({
+      delay: 5000,
+      loop: true,
+      callback: () => this.syncWorldPhaseBackground(),
+    });
+    this.buildHeader();
+    this.buildSpecsAndUpgrades();
+    this.buildGarageStrip();
+    if (this.crewMode) {
+      this.buildCrewSpaceNavigation();
+      this.buildStoreRestoreKitButton();
+      this.refreshCrewSpaceNavigationState();
+    } else {
+      this.buildStoreRestoreKitButton();
+      this.buildWorkshopJumpButton();
+      this.buildOfficeHotspot();
+      this.buildWarehouseSpaceHotspots();
+      this.buildDynoButton();
+      this.buildMeetButton();
+    }
+
+    if (this.selectedCarId) {
+      this.selectCar(this.selectedCarId, { remember: false });
+      this.renderGaragePage();
+      this.selectUpgrade(null);
+    } else if (this.crewMode) {
+      this.showCrewOverviewState();
+    } else {
+      this.showEmptyGarageState();
+    }
+
+    if (this.crewMode) {
+      // A same-scene Warehouse -> Crew restart can finish object teardown a
+      // frame after create(). Reassert the Crew Space nav after state drawing.
+      this.refreshCrewSpaceNavigationState();
+      this.time.delayedCall(0, () => this.refreshCrewSpaceNavigationState());
+    }
+
+    finishSceneLoading('READY');
+
+    // After the normal Crew Space overview exists, celebrate seven REAL
+    // recruited drivers once per save. No premature unlock of crew battles.
+    if (this.crewMode && !this.storyArchiveChapter) {
+      this.time.delayedCall(420, () => this.showFullCrewStoryIfNeeded());
+    }
+
+    // Replay loads cutscene character textures immediately. Competing with
+    // the silent tuning preloader can strand Phaser's Loader COMPLETE listener
+    // and leave an empty Warehouse or Crew Space on mobile browsers.
+    const replayStarting=Boolean(this.storyArchiveChapter ||
+      isChapter08DevReplay(this.registry));
+    if (!replayStarting) {
+      this.time.delayedCall(140, () => {
+        this.ensureGarageTuningAssets(null, {
+          includeVisualMods: true,
+          silent: true,
+        });
+      });
+    }
+
+    let reopenSettings = false;
+    let tutorialJustCompleted = false;
+    try {
+      reopenSettings = sessionStorage.getItem('tokyoShiftOpenSettingsAfterReload') === '1';
+      tutorialJustCompleted = sessionStorage.getItem('tokyoShiftTutorialComplete') === '1';
+      if (reopenSettings) sessionStorage.removeItem('tokyoShiftOpenSettingsAfterReload');
+      if (tutorialJustCompleted) sessionStorage.removeItem('tokyoShiftTutorialComplete');
+    } catch (e) {}
+
+    if(this.storyArchiveChapter && isStoryArchiveSceneReplay(this.registry)) {
+      // The normal manga component pauses Phaser's Clock. A recycled Garage
+      // scene can inherit that paused state on Safari. Use wall-clock
+      // scheduling for only the FIRST replay beat; afterwards normal dialogue
+      // timing works as before. This also works in the real CrewSpaceScene.
+      this.time.paused=false;
+      window.setTimeout(()=>{
+        if(!this.sys.isActive())return;
+        try {
+          const started=playStoryArchiveChapter(this,this.storyArchiveChapter);
+          if(!started)this.showReplayStartupError('CHAPTER COULD NOT START',false);
+        } catch(error) {
+          console.error('[TOKYO SHIFT] Story Archive playback exception',error);
+          this.showReplayStartupError('CHAPTER FAILED TO LOAD',false);
+        }
+      },300);
+    } else if(this.openStoryArchiveOnReturn) {
+      this.time.delayedCall(280,()=>{
+        showOfficePanel(this);
+        if(this.registry.get('gameMode')==='arkonStory') showArkonStoryArchivePanel(this);
+        else showStoryArchivePanel(this);
+      });
+    } else if (reopenSettings) {
+      this.time.delayedCall(80, () => showSettingsPanel(this));
+    } else if (tutorialJustCompleted) {
+      this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
+    } else if (!this.crewMode) {
+      if (isChapter08DevReplay(this.registry)) {
+        // The replay already has its own ordered Warehouse story; bypass
+        // normal career unlocks/pending events and any paused Phaser Clock.
+        this.time.paused=false;
+        window.setTimeout(()=>{
+          if(!this.sys.isActive())return;
+          try {
+            if(!startChapter08Warehouse(this)) {
+              this.showReplayStartupError('CHAPTER 08 COULD NOT START',true);
+            }
+          } catch(error) {
+            console.error('[TOKYO SHIFT] Chapter 08 replay exception',error);
+            this.showReplayStartupError('CHAPTER 08 FAILED TO LOAD',true);
+          }
+        },300);
+      } else this.time.delayedCall(260, () => {
+        if (this.registry.get(ETHAN_GIFT_PENDING_KEY)) {
+          const finishGift = () => {
+            this.registry.set(ETHAN_GIFT_PENDING_KEY, false);
+            saveSessionState(this.registry);
+            this.continueGarageStoryFlow();
+          };
+          const scene = playMangaCutscene(this, ethanCompensationCutscene(), {
+            backgroundStyle: 'wash',
+            onComplete: finishGift,
+          });
+          if (scene?.played) return;
+        }
+        if (!this.showPendingWorkshopCutscene()) {
+          const chapter = this.registry.get('openingChapter');
+          if (chapter === 'home' || chapter === 'magazine') {
+            this.promptOpeningOffice();
+          } else if (chapter === 'delivery') {
+            // An interrupted call resumes inside the same office, not
+            // inexplicably against the garage background.
+            if (!this._officeOverlay?.length) showOfficePanel(this);
+            this.showOpeningPhoneCall();
+          } else {
+            this.continueGarageStoryFlow();
+          }
+        }
+      });
+    }
+  }
+
+  showReplayStartupError(message, chapter08=false) {
+    console.error('[TOKYO SHIFT] '+message,{
+      scene:this.sys?.settings?.key,
+      storyArchiveChapter:this.storyArchiveChapter,
+      chapter08:isChapter08DevReplay(this.registry),
+      clockPaused:this.time?.paused,
+      cutsceneActive:sceneCutsceneActive(this),
+    });
+    // Never strand the driver on a blank scene without a way back.
+    const depth=1600;
+    const bg=this.add.rectangle(780,420,750,180,0x091827,.96)
+      .setDepth(depth).setStrokeStyle(2,0xff9bbb);
+    const label=this.add.text(780,378,message,{
+      fontFamily:PIXEL_FONT,fontSize:'12px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+1);
+    const button=this.add.rectangle(780,461,320,54,0x1a3d4f,.98)
+      .setDepth(depth+1).setStrokeStyle(2,0x72def6)
+      .setInteractive({useHandCursor:true});
+    const buttonLabel=this.add.text(780,461,'RETURN TO OFFICE',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+2);
+    button.once('pointerdown',()=>{
+      button.disableInteractive();
+      // Deferred restoration prevents a second scene stop during pointerdown.
+      window.setTimeout(()=>{
+        [bg,label,button,buttonLabel].forEach(obj=>obj?.destroy?.());
+        if(chapter08)finishInteractiveChapter08Replay(this);
+        else endStoryArchiveSceneReplay(this);
+      },0);
+    });
+  }
+
+  applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+    const naturalCoverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const isUpgradedWorkshop = Number(activeWorkshop?.tier || 0) > 0;
+
+    // Preserve the exact R262 geometry: the home workshop keeps its 1.12 crop,
+    // while Canal Yard / Warehouse retain their bottom-anchored native cover.
+    const workshopScale = naturalCoverScale * (isUpgradedWorkshop ? 1 : 1.12);
+    image
+      .setScale(workshopScale)
+      .setPosition(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2);
+
+    if (isUpgradedWorkshop) {
+      const scaledHeight = source.height * workshopScale;
+      image.setPosition(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h - scaledHeight / 2
+      );
+    }
+
+    return true;
+  }
+
+  syncWorldPhaseBackground() {
+    const nextPhase = getStoryWorldPhase(this.registry);
+    if (nextPhase === this.worldPhase) return;
+    this.worldPhase = nextPhase;
+    if (this.crewMode && this.crewOverviewBackground?.active) this.drawCrewOverview();
+
+    const image = this.workshopBackgroundImage;
+    if (!image?.active) return;
+
+    const activeWorkshop = getWorkshopByLocationId(
+      this.registry.get('workshopLocationId') || this.activeWorkshopId || 'shinonomeWorkshop'
+    );
+    const textureKey = this.crewMode
+      ? (nextPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : getWorkshopPhaseBackground(activeWorkshop, nextPhase)?.key;
+
+    if (!textureKey || !this.textures.exists(textureKey)) return;
+
+    this.tweens.killTweensOf(image);
+    this.tweens.add({
+      targets: image,
+      alpha: 0,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (!image?.active) return;
+        if (this.crewMode) this.applyCrewSpaceBackgroundTexture(image, textureKey);
+        else this.applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop);
+        this.workshopBackgroundWorkshop = activeWorkshop;
+        this.tweens.add({
+          targets: image,
+          alpha: 1,
+          duration: 260,
+          ease: 'Quad.easeOut',
+        });
+      },
+    });
+  }
+
+  applyCrewSpaceBackgroundTexture(image, textureKey) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+    const naturalScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const focusedGarage = Boolean(this.crewFocusedCharacterId);
+    const scale = naturalScale * (
+      focusedGarage ? CREW_GARAGE_PRESENTATION.backgroundScale : 1
+    );
+
+    if (focusedGarage) {
+      // Crew Garage framing is authored from the source image's bottom-left:
+      // align that exact corner with the stage window's bottom-left corner.
+      // With the existing zoom retained, this naturally shifts the artwork
+      // right and down compared with the old centred/lifted framing.
+      image
+        .setOrigin(0, 1)
+        .setScale(scale)
+        .setPosition(STAGE.x, STAGE.y + STAGE.h);
+    } else {
+      image
+        .setOrigin(0.5, 1)
+        .setScale(scale)
+        .setPosition(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h);
+    }
+    return true;
+  }
+
+  clearCrewStageObjects() {
+    (this.crewStageObjects || []).forEach(obj => {
+      try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (e) {}
+    });
+    this.crewStageObjects = [];
+    this.crewOverviewBackground = null;
+  }
+
+  getCrewMemberForLoanCar(carId) {
+    return Object.values(getCrewMembers(this.registry))
+      .find(member => member?.loanCarId === carId) || null;
+  }
+
+  syncSelectedRaceDriver() {
+    const member = this.getCrewMemberForLoanCar(this.selectedCarId);
+    this.registry.set(
+      'selectedRacePlayerCharacterId',
+      member?.characterId || null
+    );
+    return member;
+  }
+
+  drawCrewOverview() {
+    if (!this.crewMode) return;
+    this.clearCrewStageObjects();
+    this.crewFocusedCharacterId = null;
+    this.headerTitleText?.setText('CREW SPACE');
+
+    // The overview is a full-screen room, above the tuning UI. Its blocker
+    // prevents hidden garage controls from receiving taps between members.
+    const key = this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg';
+    const source = this.textures.get(key).getSourceImage();
+    const roomScale = Math.max(1560 / source.width, 840 / source.height);
+    const room = this.add.image(780, 840, key).setOrigin(0.5, 1)
+      .setScale(roomScale).setDepth(100).setInteractive();
+    this.crewOverviewBackground = room;
+    this.crewStageObjects.push(room);
+
+    const members = Object.values(getCrewMembers(this.registry));
+    members.slice(0, CREW_MEMBER_LAYOUT.length).forEach((member, index) => {
+      const character = characters[member.characterId];
+      const layout = CREW_MEMBER_LAYOUT[index];
+      if (!character?.visual?.spriteKey || !this.textures.exists(character.visual.spriteKey)) return;
+
+      const x = layout.x / STAGE.w * 1560;
+      const feetY = layout.feetY / STAGE.h * 840;
+      const shadowLift = Number(layout.shadowLift || 0);
+      const shadow = this.add.ellipse(
+        x,
+        feetY - 12 - shadowLift,
+        176,
+        23,
+        0x000000,
+        0.38
+      ).setDepth(102);
+
+      const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+        .setOrigin(0.5, 1)
+        .setDepth(104)
+        .setInteractive({ useHandCursor: true });
+
+      const spriteSource = this.textures.get(character.visual.spriteKey).getSourceImage();
+      const perspectiveBoost = layout.zone === 'floor' ? 1.94 : 1.45;
+      const organicScale = Number(layout.scale ?? 1);
+      sprite.setScale(
+        (layout.h * perspectiveBoost * organicScale) /
+        Math.max(1, spriteSource.height)
+      );
+
+      const name = this.add.text(
+        x,
+        feetY + 9,
+        String(character.name || member.characterId).toUpperCase(),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#dff7ff',
+          backgroundColor: '#06111dcc',
+          padding: { x: 5, y: 3 },
+        }
+      ).setOrigin(0.5, 0).setDepth(106).setAlpha(0);
+
+      sprite.on('pointerover', () => name.setAlpha(1));
+      sprite.on('pointerout', () => name.setAlpha(0));
+      sprite.on('pointerdown', () => this.selectCar(member.loanCarId));
+
+      this.crewStageObjects.push(shadow, sprite, name);
+    });
+
+    // The player is part of the crew composition, not a selectable crew-car
+    // slot. Keep them present even when members[] is empty.
+    const playerCharacter =
+      characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
+    if (
+      playerCharacter?.visual?.spriteKey &&
+      this.textures.exists(playerCharacter.visual.spriteKey)
+    ) {
+      const layout = CREW_PLAYER_OVERVIEW_LAYOUT;
+      const x = layout.x / STAGE.w * 1560;
+      const feetY = layout.feetY / STAGE.h * 840;
+      const shadow = this.add.ellipse(
+        x,
+        feetY - 12,
+        188,
+        24,
+        0x000000,
+        0.38
+      ).setDepth(102);
+      const sprite = this.add.image(x, feetY, playerCharacter.visual.spriteKey)
+        .setOrigin(0.5, 1)
+        .setDepth(104);
+      const spriteSource = this.textures.get(playerCharacter.visual.spriteKey).getSourceImage();
+      // Match the visual height of the full-size floor recruits so the player
+      // reads as part of the same crew rather than a smaller background figure.
+      sprite.setScale((layout.h * 1.94) / Math.max(1, spriteSource.height));
+      this.crewStageObjects.push(shadow, sprite);
+    }
+
+    const title = this.add.text(
+      32,
+      28,
+      'CREW SPACE // TAP A MEMBER',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#e8faff',
+        backgroundColor: '#06111dcc',
+        padding: { x: 8, y: 6 },
+      }
+    ).setDepth(106);
+    this.crewStageObjects.push(title);
+    this.buildCrewPlaybookHotspot();
+
+    if (isArkonDen(this.registry)) {
+      const fullCrew = getCrewCount(this.registry) >= 7;
+      const devBox = this.add.rectangle(
+        1300,
+        34,
+        410,
+        38,
+        fullCrew ? 0x2b1520 : 0x10251f,
+        0.96
+      ).setStrokeStyle(2, fullCrew ? 0xff6f9e : 0x62e8c7, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(110);
+
+      const devLabel = this.add.text(
+        1300,
+        34,
+        fullCrew ? 'D) REMOVE CREW' : 'D) RANDOM CREW',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: fullCrew ? '#ffd3e1' : '#d9fff4',
+        }
+      ).setOrigin(0.5).setDepth(111);
+
+      devBox.on('pointerdown', () => this.toggleDevRandomCrew(devBox, devLabel));
+      this.crewStageObjects.push(devBox, devLabel);
+    }
+  }
+
+  // The floor-standing whiteboard on the right of Crew Space now has the
+  // same breathing cyan activation style as Office / Crew / Dyno. This button
+  // belongs to the full-room overview, not an individual recruit's garage.
+  getCrewWhiteboardMode() {
+    return getCrewWhiteboardMode(this.registry, {
+      // Dev-only preview: Arkon Den can inspect either board without changing a story save.
+      developerPreview: isArkonDen(this.registry),
+    });
+  }
+
+  refreshCrewPlaybookHotspot() {
+    const hotspot = this.crewPlaybookHotspot;
+    if (!hotspot?.glow?.active) return;
+    const mode = this.getCrewWhiteboardMode();
+    hotspot.glow.setVisible(Boolean(mode));
+    hotspot.pad.setVisible(Boolean(mode));
+    hotspot.label.setVisible(Boolean(mode));
+    hotspot.label.setText(mode === 'playbook'
+      ? 'REGIONAL PLAYBOOK  >' : 'HOW TO RECRUIT  >');
+    if (mode) hotspot.glow.setInteractive({ useHandCursor: true });
+    else hotspot.glow.disableInteractive();
+  }
+
+  buildCrewPlaybookHotspot() {
+    if (!this.crewMode) return;
+    const x = 1322, y = 705;
+    const glow = this.add.rectangle(x, y, 302, 47, 0x4ee8ff, 0.035)
+      .setStrokeStyle(2, 0x65eaff, 0.88).setDepth(113)
+      .setInteractive({ useHandCursor: true });
+    const pad = this.add.rectangle(x, y, 290, 37, 0x061723, 0.74)
+      .setDepth(114);
+    const label = this.add.text(x, y, 'HOW TO RECRUIT  >', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#d5faff',
+    }).setOrigin(0.5).setDepth(115);
+    this.tweens.add({
+      targets: glow, alpha: { from: 0.18, to: 1 },
+      duration: 1300, repeat: -1, yoyo: true, ease: 'Sine.easeInOut',
+    });
+    this.tweens.add({
+      targets: pad, alpha: { from: 0.45, to: 0.92 },
+      duration: 1300, repeat: -1, yoyo: true, ease: 'Sine.easeInOut',
+    });
+    glow.on('pointerover', () => glow
+      .setStrokeStyle(3, 0xa0faff, 1).setFillStyle(0x4ee8ff, 0.11));
+    glow.on('pointerout', () => glow
+      .setStrokeStyle(2, 0x65eaff, 0.88).setFillStyle(0x4ee8ff, 0.035));
+    glow.on('pointerdown', () => {
+      if (!this.crewMode || this.crewFocusedCharacterId ||
+          sceneCutsceneActive(this) || this._portraitGallery?.active) return;
+      const mode = this.getCrewWhiteboardMode();
+      if (mode === 'recruit') this.showCrewRecruitWhiteboard();
+      else if (mode === 'playbook') this.showCrewBattleWhiteboard();
+    });
+    this.crewPlaybookHotspot = { glow, pad, label };
+    this.crewStageObjects.push(glow, pad, label);
+    this.refreshCrewPlaybookHotspot();
+  }
+
+  // Daichi's Chapter 06 board is a full-screen reference, not an interactive
+  // regional battle board. Reuse the image scaling and modal close affordance.
+  showCrewRecruitWhiteboard() {
+    if (!this.crewMode || this.crewFocusedCharacterId ||
+        this.getCrewWhiteboardMode() !== 'recruit' ||
+        this.crewBattleWhiteboardOverlay?.active || sceneCutsceneActive(this) ||
+        !this.textures.exists('crewRecruitWhiteboard')) return false;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 500;
+    const viewportW = Number(this.scale.width || 1560);
+    const viewportH = Number(this.scale.height || 840);
+    const backdrop = add(this.add.rectangle(
+      viewportW / 2, viewportH / 2, viewportW, viewportH, 0x02070e, 1
+    ).setDepth(depth).setInteractive());
+    const source = this.textures.get('crewRecruitWhiteboard').getSourceImage();
+    const scale = Math.min(viewportW / source.width, viewportH / source.height);
+    add(this.add.image(viewportW / 2, viewportH / 2, 'crewRecruitWhiteboard')
+      .setScale(scale).setDepth(depth + 1));
+    const close = () => {
+      if (!this.crewBattleWhiteboardOverlay?.active) return;
+      this.crewBattleWhiteboardOverlay.active = false;
+      objects.forEach(obj => {
+        try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (_) {}
+      });
+      this.crewBattleWhiteboardOverlay = null;
+    };
+    const closeBox = add(this.add.rectangle(
+      viewportW - 96, 48, 158, 46, 0x07141d, 0.95
+    ).setStrokeStyle(2, 0xb7edfc).setDepth(depth + 7)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(viewportW - 96, 48, 'CLOSE  X', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    closeBox.on('pointerdown', close);
+    this.crewBattleWhiteboardOverlay = { active: true, objects, close, backdrop };
+    return true;
+  }
+
+  // Seven transparent hit areas follow the 3+4 panels in the authored PNG.
+  // Coordinates are proportions of the FITTED IMAGE (not the device screen),
+  // so touch targets remain aligned on iPad, phone and desktop.
+  showCrewBattleWhiteboard() {
+    if (!this.crewMode || this.crewFocusedCharacterId ||
+        this.getCrewWhiteboardMode() !== 'playbook' ||
+        this.crewBattleWhiteboardOverlay?.active || sceneCutsceneActive(this) ||
+        !this.textures.exists('crewBattlePlaybookBoard')) return false;
+
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 500;
+    const viewportW = Number(this.scale.width || 1560);
+    const viewportH = Number(this.scale.height || 840);
+    const backdrop = add(this.add.rectangle(
+      viewportW / 2, viewportH / 2, viewportW, viewportH, 0x02070e, 1
+    ).setDepth(depth).setInteractive());
+    const source = this.textures.get('crewBattlePlaybookBoard').getSourceImage();
+    const scale = Math.min(viewportW / source.width, viewportH / source.height);
+    const boardW = source.width * scale;
+    const boardH = source.height * scale;
+    const left = (viewportW - boardW) / 2;
+    const top = (viewportH - boardH) / 2;
+    add(this.add.image(viewportW / 2, viewportH / 2, 'crewBattlePlaybookBoard')
+      .setScale(scale).setDepth(depth + 1));
+
+    const notePad = add(this.add.rectangle(
+      viewportW / 2, viewportH - 27, 880, 36, 0x06131d, 0.90
+    ).setStrokeStyle(1, 0x54bdd0, 0.7).setDepth(depth + 5));
+    const note = add(this.add.text(viewportW / 2, viewportH - 27,
+      'TAP A REGION // YOUR RECRUIT WILL SHARE THEIR BATTLE PLAN', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#d4f7ff',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(depth + 6));
+
+    const close = () => {
+      if (!this.crewBattleWhiteboardOverlay?.active) return;
+      this.crewBattleWhiteboardOverlay.active = false;
+      for (const obj of objects) {
+        try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (_) {}
+      }
+      this.crewBattleWhiteboardOverlay = null;
+      this._crewWhiteboardOpeningBriefing = false;
+    };
+    const closeBox = add(this.add.rectangle(
+      viewportW - 96, 48, 158, 46, 0x07141d, 0.95
+    ).setStrokeStyle(2, 0xb7edfc).setDepth(depth + 7)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(viewportW - 96, 48, 'CLOSE  X', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    closeBox.on('pointerdown', close);
+
+    // Source artwork: three large regions above, four smaller below.
+    // The transparent cards are intentionally almost invisible until hovered.
+    const targets = [
+      ['ODAIBA',    0.096, 0.199, 0.268, 0.350],
+      ['SHINAGAWA', 0.368, 0.199, 0.270, 0.350],
+      ['TATSUMI',   0.641, 0.199, 0.270, 0.350],
+      ['SHIBUYA',   0.096, 0.553, 0.205, 0.354],
+      ['YOKOHAMA',  0.305, 0.553, 0.199, 0.354],
+      ['DAIKOKU',   0.509, 0.553, 0.198, 0.354],
+      ['SHINJUKU',  0.712, 0.553, 0.200, 0.354],
+    ];
+    const members = getCrewMembers(this.registry);
+    const openBriefing = regionId => {
+      if (this._crewWhiteboardOpeningBriefing || sceneCutsceneActive(this)) return;
+      const member = members[regionId];
+      if (!member?.characterId || !characters[member.characterId]) {
+        note.setText(regionId + ' // RECRUIT A DRIVER FROM HERE TO GET THE INSIDE STORY');
+        note.setColor('#ffcf99');
+        return;
+      }
+      const plan = createCrewPlaybookCutscene(
+        regionId, member.characterId, this.registry
+      );
+      if (!plan) {
+        note.setText(regionId + ' // BRIEFING IS NOT AVAILABLE');
+        note.setColor('#ffcf99');
+        return;
+      }
+      this._crewWhiteboardOpeningBriefing = true;
+      const finish = () => { this._crewWhiteboardOpeningBriefing = false; };
+      const result = playMangaCutscene(this, plan.definition, {
+        backgroundStyle: 'wash',
+        infoPanel: plan.infoPanel,
+        onComplete: finish,
+        onCancel: finish,
+      });
+      if (!result?.played) {
+        finish();
+        note.setText(regionId + ' // FINISH THE CURRENT SCENE FIRST');
+        note.setColor('#ffcf99');
+      } else {
+        note.setText(regionId + ' // ' +
+          String(characters[member.characterId]?.name || 'CREW MEMBER').toUpperCase());
+        note.setColor('#d4f7ff');
+      }
+    };
+
+    targets.forEach(([regionId, nx, ny, nw, nh]) => {
+      const unlocked = Boolean(members[regionId]?.characterId);
+      const x = left + (nx + nw / 2) * boardW;
+      const y = top + (ny + nh / 2) * boardH;
+      const target = add(this.add.rectangle(
+        x, y, nw * boardW - 8, nh * boardH - 8, 0x59dff4, 0.001
+      ).setStrokeStyle(2, unlocked ? 0x7beeff : 0x7193a1,
+        unlocked ? 0.20 : 0.10)
+        .setDepth(depth + 3).setInteractive({ useHandCursor: true }));
+      target.on('pointerover', () => target
+        .setFillStyle(0x59dff4, unlocked ? 0.16 : 0.07)
+        .setStrokeStyle(3, unlocked ? 0xa2f5ff : 0xffcf99, 0.9));
+      target.on('pointerout', () => target
+        .setFillStyle(0x59dff4, 0.001)
+        .setStrokeStyle(2, unlocked ? 0x7beeff : 0x7193a1,
+          unlocked ? 0.20 : 0.10));
+      target.on('pointerdown', () => openBriefing(regionId));
+    });
+    this.crewBattleWhiteboardOverlay = { active: true, objects, close, backdrop, notePad };
+    return true;
+  }
+
+  toggleDevRandomCrew(button = null, label = null) {
+    if (!this.crewMode || !isArkonDen(this.registry) || this._devCrewChanging) return;
+
+    this.registry.set('devMode', true);
+    const fullCrew = getCrewCount(this.registry) >= 7;
+
+    if (fullCrew) {
+      removeAllCrewMembers(this.registry);
+      this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+      this.carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+      saveSessionState(this.registry);
+      this.showCrewOverviewState();
+      return;
+    }
+
+    this._devCrewChanging = true;
+    button?.disableInteractive?.();
+    label?.setText?.('D) BUILDING CREW...');
+
+    const recruited = recruitRandomDevCrew(this.registry);
+    this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    this.carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+    saveSessionState(this.registry);
+
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return 0;
+      this.load.image(key, path);
+      return 1;
+    };
+
+    let queued = 0;
+    const carStates = this.registry.get('carStates') || {};
+    const recruitedCars = {};
+
+    recruited.forEach(member => {
+      const visual = characters[member.characterId]?.visual;
+      if (visual) {
+        queued += queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+      }
+
+      const car = cars[member.loanCarId];
+      if (!car) return;
+      recruitedCars[member.loanCarId] = car;
+      queued += preloadCarAppearanceAssets(
+        this,
+        { [member.loanCarId]: car },
+        '20261007-r413'
+      );
+      queued += preloadCarWheel(this, car, carStates[member.loanCarId] || {});
+      queued += preloadVisualModSelectionAssets(
+        this,
+        member.loanCarId,
+        carStates[member.loanCarId] || {},
+        '20261007-r413'
+      );
+      queued += preloadTunerDecalAssets(
+        this,
+        carStates[member.loanCarId] || {},
+        '20261007-r413'
+      );
+    });
+
+    const finish = () => {
+      ensureDerivedModularCarTextures(this, recruitedCars);
+      this._devCrewChanging = false;
+      this.showCrewOverviewState();
+      finishSceneLoading('DEV CREW READY');
+    };
+
+    if (queued > 0) {
+      startSceneLoading(this, 'LOADING DEV CREW', queued);
+      this.load.once('complete', finish);
+      if (!this.load.isLoading()) this.load.start();
+      return;
+    }
+
+    finish();
+  }
+
+  focusCrewMember(member) {
+    if (!this.crewMode || !member) return;
+    this.clearCrewStageObjects();
+    this.crewFocusedCharacterId = member.characterId;
+    this.headerTitleText?.setText('CREW GARAGE');
+
+    const crewBackgroundKey =
+      this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg';
+    if (this.workshopBackgroundImage?.active) {
+      this.applyCrewSpaceBackgroundTexture(
+        this.workshopBackgroundImage,
+        crewBackgroundKey
+      );
+    }
+
+    const character = characters[member.characterId];
+    if (character?.visual?.spriteKey && this.textures.exists(character.visual.spriteKey)) {
+      // Match the normal garage foreground exactly: crew driver occupies the
+      // player's authored left-hand anchor and uses the same target height.
+      const x = PLAYER_CFG.x + CREW_GARAGE_PRESENTATION.offsetX;
+      const feetY = PLAYER_CFG.feetY + CREW_GARAGE_PRESENTATION.offsetY;
+      const targetHeight = PLAYER_CFG.targetHeight;
+      const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+        .setOrigin(0.5, 1)
+        .setDepth(14);
+      const spriteSource = this.textures.get(character.visual.spriteKey).getSourceImage();
+      sprite.setScale(targetHeight / Math.max(1, spriteSource.height));
+
+      const shadowSoft = this.add.ellipse(
+        x + 12,
+        feetY - 16,
+        Math.max(60, sprite.displayWidth * 0.80),
+        30,
+        0x000000,
+        0.58
+      ).setDepth(13.88);
+      const shadowHard = this.add.ellipse(
+        x + 9,
+        feetY - 11,
+        Math.max(44, sprite.displayWidth * 0.60),
+        18,
+        0x000000,
+        0.84
+      ).setDepth(13.92);
+
+      this.crewStageObjects.push(shadowSoft, shadowHard, sprite);
+    }
+
+    const remove = this.add.text(
+      STAGE.x + STAGE.w - 24,
+      STAGE.y + 24,
+      'REMOVE MEMBER',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#ffc0d7',
+        backgroundColor: '#241018dd',
+        padding: { x: 10, y: 7 },
+      }
+    ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
+    remove.on('pointerdown', () => this.confirmRemoveCrewMember(member));
+    this.crewStageObjects.push(remove);
+  }
+
+  confirmRemoveCrewMember(member) {
+    if (!this.crewMode || !member) return;
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 350, 0x09131d, 1)
+      .setStrokeStyle(2, 0xff7cac, 1).setDepth(depth + 1));
+
+    add(this.add.text(780, 330, 'REMOVE CREW MEMBER?', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      397,
+      'This removes the driver from your crew and all crew lineups.\nTheir signature loan car leaves with them; any upgrades on it are permanently lost.\nYour crew will have an empty slot until you recruit another driver from this region.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#c5d2da',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const keep = add(this.add.rectangle(650, 505, 220, 48, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 505, 'KEEP MEMBER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d2dce2',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const removeButton = add(this.add.rectangle(910, 505, 220, 48, 0x351820, 1)
+      .setStrokeStyle(2, 0xff7cac, 1).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(910, 505, 'CONFIRM REMOVE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffd1e0',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    keep.on('pointerdown', close);
+    removeButton.on('pointerdown', () => {
+      removeCrewMember(this.registry, member.regionId);
+      this.selectedCarId = null;
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      close();
+      this.showCrewOverviewState();
+      this.refreshDynoButton?.();
+      saveSessionState(this.registry);
+    });
+  }
+
+  drawScene() {
+    this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
+
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x08121d,
+      1
+    ).setStrokeStyle(2, 0x24475f, 1).setDepth(-12);
+
+    const activeWorkshop = getWorkshopByLocationId(
+      this.registry.get('workshopLocationId') || 'shinonomeWorkshop'
+    );
+    const workshopTexture = this.crewMode
+      ? (this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : (() => {
+          const phaseBackground = getWorkshopPhaseBackground(
+            activeWorkshop,
+            this.worldPhase || getStoryWorldPhase(this.registry)
+          );
+          return phaseBackground?.key && this.textures.exists(phaseBackground.key)
+            ? phaseBackground.key
+            : this.textures.exists(activeWorkshop.textureKey)
+              ? activeWorkshop.textureKey
+              : 'garageWorkshopBg';
+        })();
+
+    const workshop = this.add.image(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      workshopTexture
+    ).setDepth(-10);
+
+    if (this.crewMode) this.applyCrewSpaceBackgroundTexture(workshop, workshopTexture);
+    else this.applyWorkshopBackgroundTexture(workshop, workshopTexture, activeWorkshop);
+    this.workshopBackgroundImage = workshop;
+    this.workshopBackgroundWorkshop = activeWorkshop;
+
+    const maskShape = this.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
+    workshop.setMask(maskShape.createGeometryMask());
+
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x03101b,
+      this.crewMode ? 0.02 : 0.06
+    ).setDepth(-9);
+
+    if (this.crewMode) {
+      this.drawCrewOverview();
+      return;
+    }
+
+    if (activeWorkshop.tier > 0) {
+      this.add.rectangle(STAGE.x + 142, STAGE.y + 30, 238, 34, 0x06101b, 0.82)
+        .setStrokeStyle(1, 0x43dfff, 0.62)
+        .setDepth(18);
+      this.add.text(STAGE.x + 28, STAGE.y + 30, activeWorkshop.shortLabel, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#cbefff',
+      }).setOrigin(0, 0.5).setDepth(19);
+    }
+
+    const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
+    const storyIdle = isArkonStoryWorkshop(this.registry,this.crewMode)
+      ? characters.arkonDen?.visual?.poseAssets?.storyIdle : null;
+    const workshopActor = storyIdle && this.textures.exists(storyIdle.key)
+      ? { ...playerCharacter, visual:{ ...playerCharacter.visual, spriteKey:storyIdle.key } }
+      : playerCharacter;
+    this.workshopPlayerSprite = this.addGarageCharacter(
+      workshopActor,
+      PLAYER_CFG.x,
+      PLAYER_CFG.feetY,
+      PLAYER_CFG.targetHeight,
+      14
+    );
+  }
+
+  addGarageCharacter(character, x, feetY, targetHeight, depth) {
+    const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+      .setOrigin(0.5, 1)
+      .setDepth(depth);
+
+    const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+    sprite.setScale(targetHeight / source.height);
+
+    const shadows = [
+      this.add.ellipse(
+        x + 12,
+        feetY - 16,
+        Math.max(60, sprite.displayWidth * 0.80),
+        30,
+        0x000000,
+        0.58
+      ).setDepth(depth - 0.12),
+      this.add.ellipse(
+        x + 9,
+        feetY - 11,
+        Math.max(44, sprite.displayWidth * 0.60),
+        18,
+        0x000000,
+        0.84
+      ).setDepth(depth - 0.08),
+    ];
+    // Companion shadows must disappear when the character leaves.
+    sprite.once('destroy', () => shadows.forEach(shadow => shadow?.destroy?.()));
+    sprite.stageShadows = shadows;
+    return sprite;
+  }
+
+  buildMagazineProp() {
+    const issue = getActiveMagazineIssue(this.registry);
+    if (!issue?.coverKey || !this.textures.exists(issue.coverKey)) return;
+
+    // Physical magazine lives on the lower-left of the workshop scene. Keep it
+    // separate from the garage strip so it reads as an object inside the room.
+    const x = STAGE.x + 82;
+    const y = STAGE.y + STAGE.h - 98;
+    const angle = -9;
+    const displayW = 92;
+    const displayH = 122;
+
+    this.add.rectangle(
+      x + 7,
+      y + 9,
+      displayW + 6,
+      displayH + 6,
+      0x000000,
+      0.46
+    ).setAngle(angle).setDepth(23);
+
+    const cover = this.add.image(x, y, issue.coverKey)
+      .setDisplaySize(displayW, displayH)
+      .setAngle(angle)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(25);
+
+    const baseScaleX = cover.scaleX;
+    const baseScaleY = cover.scaleY;
+
+    cover.on('pointerover', () => {
+      cover.setScale(baseScaleX * 1.045, baseScaleY * 1.045);
+    });
+    cover.on('pointerout', () => {
+      cover.setScale(baseScaleX, baseScaleY);
+    });
+    cover.on('pointerdown', () => {
+      if (this.registry.get('openingChapter') === 'magazine') showOfficePanel(this);
+      else showMagazinePanel(this);
+    });
+  }
+
+  buildHeader() {
+    this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
+      .setStrokeStyle(2, 0x173249, 1)
+      .setDepth(40);
+
+    this.headerTitleText = this.add.text(
+      52,
+      35,
+      this.crewMode ? 'CREW SPACE' : 'WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
+      }
+    ).setOrigin(0, 0.5).setDepth(42);
+
+    this.headerCarText = this.add.text(
+      this.crewMode ? 370 : 305,
+      35,
+      this.crewMode ? 'CREW ' + (getCrewCount(this.registry) + 1) + '/8' : '',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
+      }
+    ).setOrigin(0, 0.5).setDepth(42);
+
+    const wins = this.registry.get('wins') ?? 0;
+    const losses = this.registry.get('losses') ?? 0;
+    const cash = this.registry.get('cash') ?? 5000;
+
+    this.add.text(1250, 25, 'WINS  ' + wins, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
+    }).setOrigin(1, 0.5).setDepth(42);
+    this.add.text(1250, 47, 'LOSSES  ' + losses, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
+    }).setOrigin(1, 0.5).setDepth(42);
+
+    // Keep utility buttons clear of the enlarged W/L record on phone layouts.
+    addSettingsButton(this, 925, 35);
+    // SettingsButton owns the single Story Objective; no duplicate '?' here.
+
+
+    this.cashText = this.add.text(1512, 23, '¥ ' + Number(cash).toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
+    }).setOrigin(1, 0.5).setDepth(42);
+    this.refreshArkonRwbLoanHud();
+  }
+
+  refreshArkonRwbLoanHud() {
+    const value=getArkonRwbLoan(this.registry);
+    if(!this.arkonRwbLoanText?.active){
+      this.arkonRwbLoanText=this.add.text(1512,47,'',{
+        fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ff8189'
+      }).setOrigin(1,.5).setDepth(42);
+    }
+    this.arkonRwbLoanText.setText(value?'(LOAN  ¥ '+value.toLocaleString('en-US')+')':'');
+  }
+
+  showCouponsPopup() {
+    const coupons = this.registry.get('carCoupons') || {};
+    const entries = carOrder
+      .filter(carId => cars[carId] && Number(coupons[carId] || 0) > 0)
+      .map(carId => ({
+        carId,
+        count: Math.max(0, Math.floor(Number(coupons[carId] || 0))),
+        required: Math.max(1, Number(getCarCouponRequirement(carId) || 2)),
+      }));
+
+    const depth = 270;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 700, 570, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(470, 170, 'CAR COUPONS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(470, 212, 'Only coupon cars you have discovered are shown here.', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#a7bdca',
+      fontStyle: '600',
+    }).setDepth(depth + 2));
+
+    if (!entries.length) {
+      add(this.add.text(780, 390, 'NO CAR COUPONS YET', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#708694',
+      }).setOrigin(0.5).setDepth(depth + 2));
+    } else {
+      entries.slice(0, 7).forEach((entry, index) => {
+        const y = 275 + index * 48;
+        const complete = entry.count >= entry.required;
+
+        add(this.add.rectangle(
+          780,
+          y,
+          610,
+          38,
+          complete ? 0x112a26 : 0x0d1b29,
+          1
+        ).setStrokeStyle(1, complete ? 0x62e8c7 : 0x315470, 1)
+          .setDepth(depth + 2));
+
+        add(this.add.text(500, y, cars[entry.carId].shortName, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#eef8ff',
+        }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+        add(this.add.text(
+          1060,
+          y,
+          entry.count + ' / ' + entry.required + (complete ? '  //  READY' : ''),
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '7px',
+            color: complete ? '#86efd7' : '#a7c6d8',
+          }
+        ).setOrigin(1, 0.5).setDepth(depth + 3));
+      });
+    }
+
+    const closeButton = add(this.add.rectangle(780, 650, 190, 46, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 650, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    closeButton.on('pointerdown', close);
+    blocker.on('pointerdown', close);
+  }
+
+  buildCarLabel() {
+    this.add.rectangle(206, 566, 330, 72, 0x07111d, 0.94)
+      .setStrokeStyle(1, 0x26465e, 1)
+      .setDepth(31);
+
+    this.carNameText = this.add.text(52, 542, '', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#ffffff'
+    }).setDepth(32);
+
+    this.carSubText = this.add.text(52, 575, '', {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#79bce3', fontStyle: '600'
+    }).setDepth(32);
+  }
+
+  buildSpecsAndUpgrades() {
+    this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      0.98
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
+
+    this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 18,
+      this.crewMode ? 'CREW CAR SPECS' : 'CAR SPECS',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
+      }
+    ).setDepth(37);
+
+    this.engineeringLabelText=this.add.text(SIDE.x+20,SIDE.y+44,'',{fontFamily:BODY_FONT,fontSize:'11px',color:'#91cbdc'}).setDepth(37);
+    this.engineeringLabelText.setInteractive({useHandCursor:true}).on('pointerdown',()=>this.showWorkshopToast(tuningPotentialSummary(cars[this.selectedCarId]),{height:112,duration:8000,fontSize:'10px',wrap:530}));
+    this.factorySetupButton=this.add.text(SIDE.x+20,SIDE.y+202,'PARK PARTS / FACTORY SETUP',{fontFamily:BODY_FONT,fontSize:'11px',color:'#7cf0d5',backgroundColor:'#102b32',padding:{x:7,y:4}}).setDepth(38).setInteractive({useHandCursor:true});
+    this.factorySetupButton.on('pointerdown',()=>{
+      if(this.isSelectedCarTuningLocked())return;
+      const states=this.registry.get('carStates')||{},state=states[this.selectedCarId]||{};
+      if(!state.parkedPerformanceParts)return;
+      states[this.selectedCarId]=restorePerformanceParts(state);
+      this.registry.set('carStates',states);saveSessionState(this.registry);this.selectCar(this.selectedCarId);
+    });
+    const rows = [
+      ['ENGINE', 'engine'],
+      ['POWER', 'power'],
+      ['TORQUE', 'torque'],
+      ['WEIGHT', 'weight'],
+    ];
+
+    this.specValueTexts = {};
+    rows.forEach((row, i) => {
+      const y = SIDE.y + 76 + i * 32;
+      this.add.line(
+        SIDE.x + SIDE.w / 2,
+        y + 16,
+        SIDE.x + 20,
+        0,
+        SIDE.x + SIDE.w - 20,
+        0,
+        0x27465d,
+        0.75
+      ).setDepth(36);
+
+      this.add.text(SIDE.x + 20, y, row[0], {
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#9cc6df'
+      }).setOrigin(0, 0.5).setDepth(37);
+
+      this.specValueTexts[row[1]] = this.add.text(SIDE.x + SIDE.w - 20, y, '', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
+      }).setOrigin(1, 0.5).setDepth(37);
+    });
+
+    this.tuningStatusText = this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 230,
+      this.crewMode
+        ? 'CREW TUNING // WAREHOUSE HQ'
+        : 'TUNING // ' + this.getActiveWorkshop().shortLabel,
+      {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
+      }
+    ).setDepth(37);
+
+    const categories = ['ENGINE', 'DRIVETRAIN', 'EXHAUST / NOS', 'CHASSIS'];
+
+    categories.forEach((name, i) => {
+      const y = SIDE.y + 285 + i * 48;
+      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
+        .setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(37);
+
+      const label = this.add.text(SIDE.x + 30, y, name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '11px',
+        color: '#a9c7da'
+      }).setOrigin(0, 0.5).setDepth(38);
+
+      const arrow = this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
+        fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cb6cf'
+      }).setOrigin(0.5).setDepth(38);
+
+      box.on('pointerdown', () => {
+        if (!this.selectedCarId) return;
+        if (this.isSelectedCarTuningLocked()) {
+          this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
+          return;
+        }
+        this.selectUpgrade(name);
+        if (name === 'ENGINE') {
+          this.enterEngineMode();
+          return;
+        }
+        if (name === 'DRIVETRAIN') {
+          this.enterSecondaryTuningMode('drivetrain');
+          return;
+        }
+        if (name === 'CHASSIS') {
+          this.enterChassisMode();
+          return;
+        }
+        if (name === 'EXHAUST / NOS') {
+          this.enterSecondaryTuningMode('exhaustNos');
+          return;
+        }
+        this.selectUpgrade(name);
+      });
+
+      this.upgradeButtons.push({ name, box, label, arrow });
+    });
+
+  }
+
+  isSelectedCarTuningLocked() {
+    const car = cars[this.selectedCarId];
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    return Boolean(isArkonRwbRestoration(this.registry,this.selectedCarId) ||
+      car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
+  }
+
+  refreshTuningCategoryAvailability() {
+    const locked = Boolean(this.selectedCarId && this.isSelectedCarTuningLocked());
+
+    if (this.tuningStatusText) {
+      this.tuningStatusText
+        .setText(
+          locked
+            ? (isArkonRwbRestoration(this.registry,this.selectedCarId)
+                ? ((this.registry.get('arkonStoryRwbProject')?.roadworthy)
+                    ? 'RESTORATION COMPLETE':'MAJOR REPAIRS REQUIRED')
+                : 'COLLECTOR SPEC (TUNING SEALED)')
+            : 'TUNING // ' + this.getActiveWorkshop().shortLabel
+        )
+        .setColor(locked ? '#d7a0b8' : '#8cc8ec');
+    }
+
+    this.upgradeButtons.forEach(item => {
+      if (locked || !this.selectedCarId) {
+        item.box.disableInteractive()
+          .setFillStyle(0x111318, 1)
+          .setStrokeStyle(1, 0x4e4149, 1);
+        item.label.setColor('#756873');
+        item.arrow.setText('—').setColor('#655965');
+      } else {
+        item.box.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0b1724, 1)
+          .setStrokeStyle(1, 0x315470, 1);
+        item.label.setColor('#a9c7da');
+        item.arrow.setText('>').setColor('#8cb6cf');
+      }
+    });
+  }
+
+  getActiveWorkshop() {
+    return getWorkshopByLocationId(
+      this.registry.get('workshopLocationId') || this.activeWorkshopId || 'shinonomeWorkshop'
+    );
+  }
+
+  syncGarageAssignments() {
+    this.activeWorkshopId = this.getActiveWorkshop().id;
+    this.carGarageLocations = normaliseCarGarageLocations(
+      this.ownedCarIds,
+      this.registry.get('carGarageLocations') || this.carGarageLocations || {},
+      Number(this.registry.get('garageTier') || 0)
+    );
+    this.registry.set('carGarageLocations', this.carGarageLocations);
+    return this.carGarageLocations;
+  }
+
+  getCurrentWorkshopCars() {
+    if (this.crewMode) {
+      return Object.values(getCrewMembers(this.registry))
+        .map(member => member.loanCarId)
+        .filter(id => cars[id] && this.ownedCarIds.includes(id));
+    }
+
+    const assignments = this.syncGarageAssignments();
+    return getCarsInWorkshop(
+      this.ownedCarIds,
+      assignments,
+      this.getActiveWorkshop().id
+    ).filter(id => !cars[id]?.crewLoan);
+  }
+
+  getWorkshopAdjustedCost(baseCost) {
+    return applyWorkshopServiceCost(baseCost, this.getActiveWorkshop().id);
+  }
+
+  canInstallCurrentUpgrade(category, partId, level) {
+    return canInstallTuningLevel(
+      category,
+      partId,
+      level,
+      this.getActiveWorkshop().id,
+      Number(this.registry.get('wins') || 0),
+      Boolean(this.registry.get('devMode'))
+    );
+  }
+
+  getCurrentUpgradeRequirement(category, partId, level) {
+    return getTuningRequirementLabel(
+      category,
+      partId,
+      level,
+      this.getActiveWorkshop().id,
+      Number(this.registry.get('wins') || 0),
+      Boolean(this.registry.get('devMode'))
+    );
+  }
+
+  buildGarageStrip() {
+    this.garageStripPanel = this.add.rectangle(
+      STRIP.x + STRIP.w / 2,
+      STRIP.y + STRIP.h / 2,
+      STRIP.w,
+      STRIP.h,
+      0x07111d,
+      0.99
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
+
+    this.add.text(
+      STRIP.x + 18,
+      STRIP.y + 7,
+      this.crewMode ? 'CREW LOAN GARAGE' : 'MY GARAGE',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
+      }
+    ).setDepth(32);
+
+    this.garageCountText = this.add.text(STRIP.x + STRIP.w - 18, STRIP.y + 14, '', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#7fa6bd'
+    }).setOrigin(1, 0).setDepth(32);
+
+    const navY = STRIP.y + 100;
+    this.garagePrevButton = this.add.rectangle(
+      STRIP.x + 28,
+      navY,
+      38,
+      112,
+      0x0a1521,
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
+
+    this.garagePrevLabel = this.add.text(STRIP.x + 28, navY, '<', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#9edcf7',
+    }).setOrigin(0.5).setDepth(36);
+
+    this.garageNextButton = this.add.rectangle(
+      STRIP.x + STRIP.w - 28,
+      navY,
+      38,
+      112,
+      0x0a1521,
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
+
+    this.garageNextLabel = this.add.text(STRIP.x + STRIP.w - 28, navY, '>', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#9edcf7',
+    }).setOrigin(0.5).setDepth(36);
+
+    this.garagePageText = this.add.text(
+      STRIP.x + STRIP.w / 2,
+      STRIP.y + 16,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#607f92',
+      }
+    ).setOrigin(0.5, 0).setDepth(32);
+
+    this.garagePrevButton.on('pointerdown', () => this.changeGaragePage(-1));
+    this.garageNextButton.on('pointerdown', () => this.changeGaragePage(1));
+
+    // Swipe anywhere across the garage strip to reveal the next four local slots.
+    this.input.on('pointerup', pointer => {
+      if (sceneCutsceneActive(this) || this._portraitGallery?.active ||
+          this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+      const downInside = pointer.downY >= STRIP.y && pointer.downY <= STRIP.y + STRIP.h;
+      const upInside = pointer.y >= STRIP.y && pointer.y <= STRIP.y + STRIP.h;
+      if (!downInside || !upInside) return;
+
+      const dx = pointer.x - pointer.downX;
+      const dy = pointer.y - pointer.downY;
+      if (Math.abs(dx) < 72 || Math.abs(dy) > 64) return;
+
+      this.changeGaragePage(dx < 0 ? 1 : -1);
+    });
+
+    this.renderGaragePage();
+  }
+
+  renderGaragePage() {
+    this.garagePageObjects.forEach(obj => obj?.destroy?.());
+    this.garagePageObjects = [];
+    this.thumbButtons = [];
+
+    const add = obj => {
+      this.garagePageObjects.push(obj);
+      return obj;
+    };
+
+    const activeWorkshop = this.getActiveWorkshop();
+    const localCars = this.getCurrentWorkshopCars();
+    const capacity = this.crewMode ? 7 : getWorkshopStorageCapacity(activeWorkshop.id);
+    const totalCapacity = this.crewMode
+      ? 7
+      : getGarageCapacity(this.registry.get('garageTier') || 0);
+    const pageSize = this.garagePageSize || 4;
+    const totalPages = Math.max(1, Math.ceil(capacity / pageSize));
+    this.garagePage = Phaser.Math.Clamp(Number(this.garagePage || 0), 0, totalPages - 1);
+
+    const startIndex = this.garagePage * pageSize;
+    const gap = 12;
+    const usableLeft = STRIP.x + 58;
+    const usableRight = STRIP.x + STRIP.w - 58;
+    const usableWidth = usableRight - usableLeft;
+    const cardW = (usableWidth - gap * (pageSize - 1)) / pageSize;
+    const startX = usableLeft + cardW / 2;
+    const y = STRIP.y + 100;
+
+    for (let localIndex = 0; localIndex < pageSize; localIndex++) {
+      const slotIndex = startIndex + localIndex;
+      if (slotIndex >= capacity) break;
+
+      const id = localCars[slotIndex] || null;
+      const x = startX + localIndex * (cardW + gap);
+      const active = id === this.selectedCarId;
+
+      const box = add(this.add.rectangle(
+        x,
+        y,
+        cardW,
+        112,
+        id ? (active ? 0x10263a : 0x0b1724) : 0x050a10,
+        id ? 1 : 0.56
+      ).setStrokeStyle(
+        active ? 3 : id ? 2 : 1,
+        active ? 0x41dcff : id ? 0x29465c : 0x26333d,
+        id ? 1 : 0.46
+      ).setDepth(32));
+
+      if (!id) {
+        add(this.add.text(x, y - 8, 'EMPTY SLOT', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#40515d'
+        }).setOrigin(0.5).setDepth(34));
+        add(this.add.text(
+          x,
+          y + 24,
+          this.crewMode ? 'RECRUIT A DRIVER' : 'MOVE OR WIN A CAR',
+          {
+            fontFamily: PIXEL_FONT, fontSize: '6px', color: '#31414c'
+          }
+        ).setOrigin(0.5).setDepth(34));
+        continue;
+      }
+
+      box.setInteractive({ useHandCursor: true });
+      const thumbWidth = Math.min(THUMB_CFG.targetWidth, cardW - 30);
+
+      // The new bottom-right Ref PNGs use their BOTTOM edge as tyre contact;
+      // they should sit lower in the card than legacy centre-origin sprites.
+      // Keep the original thumbnail position unchanged for all other cars.
+      const thumbBodyY = y + THUMB_CFG.bodyYOffset +
+        (cars[id]?.visual?.referenceStandard ? 30 : 0);
+      const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 42);
+      display.forEach(obj => {
+        // Do NOT force every returned object visible here. Replacement body
+        // kits intentionally hide the stock body layers inside createCarDisplay.
+        // Re-enabling them produced the doubled/misaligned garage thumbnails.
+        obj?.setAlpha?.(1);
+        add(obj);
+      });
+
+      const crewMember = this.crewMode ? this.getCrewMemberForLoanCar(id) : null;
+      const copyNumber = Math.max(1, Number(cars[id]?.ownedCopyNumber || 1));
+      const cardLabel = crewMember
+        ? String(cars[id].shortName || id).toUpperCase()
+        : String(cars[id].shortName || id) + (copyNumber > 1 ? ' #' + copyNumber : '');
+      const label = add(this.add.text(x, y + 34, cardLabel, {
+        fontFamily: PIXEL_FONT,
+        fontSize: this.crewMode ? '8px' : '9px',
+        color: isArkonRwbRestoration(this.registry,id)?'#ff87b0':
+          active ? '#ffffff' : '#b8cad7',
+        align: 'center',
+        lineSpacing: 0,
+      }).setOrigin(0.5).setDepth(48));
+
+      if(isArkonRwbRestoration(this.registry,id)){
+        // RWB label already turns pink; no second pink warning in the card.
+      }
+      box.on('pointerup', pointer => {
+        const movedX = Math.abs(pointer.x - pointer.downX);
+        const movedY = Math.abs(pointer.y - pointer.downY);
+        if (movedX <= 20 && movedY <= 20) this.selectCar(id);
+      });
+
+      this.thumbButtons.push({ id, box, label, display });
+    }
+
+    this.garageCountText.setText(
+      this.crewMode
+        ? localCars.length + '/7 LOAN CARS'
+        : localCars.length + '/' + capacity + ' HERE  //  ' +
+          this.ownedCarIds.filter(id => !cars[id]?.crewLoan).length +
+          '/' + totalCapacity + ' TOTAL'
+    );
+
+    this.garagePageText.setText(
+      totalPages > 1
+        ? activeWorkshop.shortLabel + '  //  SLOTS ' +
+          (startIndex + 1) + '-' + Math.min(startIndex + pageSize, capacity) +
+          '  //  ' + (this.garagePage + 1) + '/' + totalPages
+        : this.crewMode
+          ? (
+              this.crewFocusedCharacterId
+                ? 'CREW GARAGE // 7 REGIONAL LOAN SLOTS'
+                : 'CREW SPACE // 7 REGIONAL LOAN SLOTS'
+            )
+          : activeWorkshop.shortLabel + '  //  ' + capacity + ' SLOTS'
+    );
+
+    this.updateGarageNavState();
+    this.updateMoveCarButtonState();
+  }
+
+  changeGaragePage(delta) {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+    const capacity = this.crewMode
+      ? 7
+      : getWorkshopStorageCapacity(this.getActiveWorkshop().id);
+    const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
+    const nextPage = Phaser.Math.Clamp(
+      Number(this.garagePage || 0) + Number(delta || 0),
+      0,
+      totalPages - 1
+    );
+
+    if (nextPage === this.garagePage) return;
+    this.garagePage = nextPage;
+    this.renderGaragePage();
+  }
+
+  updateGarageNavState() {
+    const capacity = this.crewMode
+      ? 7
+      : getWorkshopStorageCapacity(this.getActiveWorkshop().id);
+    const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
+    const locked = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
+    const canPrev = !locked && this.garagePage > 0;
+    const canNext = !locked && this.garagePage < totalPages - 1;
+
+    const apply = (button, label, enabled) => {
+      if (!button || !label) return;
+      if (enabled) {
+        button.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0a1521, 0.96)
+          .setStrokeStyle(1, 0x315470, 1);
+        label.setColor('#9edcf7');
+      } else {
+        button.disableInteractive()
+          .setFillStyle(0x080e15, 0.84)
+          .setStrokeStyle(1, 0x263641, 0.70);
+        label.setColor('#465965');
+      }
+    };
+
+    apply(this.garagePrevButton, this.garagePrevLabel, canPrev);
+    apply(this.garageNextButton, this.garageNextLabel, canNext);
+    this.updateMoveCarButtonState();
+    if (this.crewMode) this.refreshCrewSpaceNavigationState?.();
+  }
+
+  updateMoveCarButtonState() {
+    if (!this.moveCarButton?.active || !this.moveCarLabel?.active) return;
+    const warehouse = this.getActiveWorkshop().tier === 2;
+    const eligible = warehouse && Boolean(this.selectedCarId) &&
+      !this.isSelectedCarTuningLocked() &&
+      !this.engineMode && !this.secondaryMode && !this.chassisMode;
+    const validCrewCar = !this.crewMode ||
+      (cars[this.selectedCarId]?.crewLoan &&
+        this.getCurrentWorkshopCars().includes(this.selectedCarId));
+    const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
+    const currentState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    const enabled = eligible && validCrewCar && (stored ||
+      hasStockTuneService(currentState) || listStorableKitParts(currentState).length > 0);
+    this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
+    if (enabled) {
+      this.moveCarButton.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102138).setStrokeStyle(2, 0x55b8ff);
+      this.moveCarLabel.setColor('#eef8ff');
+    } else {
+      // This control is created without an input component in some startup
+      // paths. Phaser's disableInteractive() dereferences input.sys and throws
+      // when called on a non-interactive rectangle, aborting GarageScene
+      // create() before any Chapter 6/8 replay can open.
+      if (this.moveCarButton.input) this.moveCarButton.disableInteractive();
+      this.moveCarButton.setFillStyle(0x17181d)
+        .setStrokeStyle(1, 0x514f55);
+      this.moveCarLabel.setColor('#817d84');
+    }
+  }
+
+  showMoveCarPopup(targetWorkshopId = null) {
+    if (
+      !this.selectedCarId ||
+      cars[this.selectedCarId]?.crewLoan ||
+      this.engineMode ||
+      this.secondaryMode ||
+      this.chassisMode ||
+      isArkonRwbRestoration(this.registry,this.selectedCarId)
+    ) return;
+
+    this.syncGarageAssignments();
+    const currentWorkshop = this.getActiveWorkshop();
+    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
+    const depth = 150;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 840, 570, 0x08131f, 0.99)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(405, 175, 'MOVE ' + cars[this.selectedCarId].shortName, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(405, 220, 'Choose a destination garage. Transport is charged before the car is moved.', {
+      fontFamily: BODY_FONT,
+      fontSize: '12px',
+      color: '#a7bdca',
+      fontStyle: '600',
+      wordWrap: { width: 660 },
+    }).setDepth(depth + 2));
+
+    const performTransfer = (workshop, transferCost, confirmObjects = []) => {
+      const movedCarId = this.selectedCarId;
+      const cash = Number(this.registry.get('cash') || 0);
+
+      this.syncGarageAssignments();
+      const liveSourceId = this.carGarageLocations?.[movedCarId];
+      if (liveSourceId !== currentWorkshop.id) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('CAR LOCATION CHANGED // REOPEN MOVE CAR');
+        return;
+      }
+
+      const destinationUsage = getWorkshopUsage(
+        this.ownedCarIds,
+        this.carGarageLocations || {},
+        workshop.id
+      );
+      if (destinationUsage >= getWorkshopStorageCapacity(workshop.id)) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('DESTINATION GARAGE IS FULL');
+        return;
+      }
+
+      if (cash < transferCost) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('NOT ENOUGH CASH FOR TRANSPORT');
+        return;
+      }
+
+      const requestedLocations = {
+        ...(this.carGarageLocations || {}),
+        [movedCarId]: workshop.id,
+      };
+      const validatedLocations = normaliseCarGarageLocations(
+        this.ownedCarIds,
+        requestedLocations,
+        Number(this.registry.get('garageTier') || 0)
+      );
+
+      if (validatedLocations?.[movedCarId] !== workshop.id) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('TRANSFER FAILED // GARAGE ASSIGNMENT NOT SAVED');
+        return;
+      }
+
+      this.carGarageLocations = validatedLocations;
+      this.registry.set('carGarageLocations', validatedLocations);
+      this.registry.set('cash', cash - transferCost);
+
+      // Moving a car is a storage/logistics action only. Keep the player in the
+      // current workshop and update the assignment in-place.
+      const remainingLocalCars = getCarsInWorkshop(
+        this.ownedCarIds,
+        validatedLocations,
+        currentWorkshop.id
+      );
+      const nextSelectedCarId = remainingLocalCars[0] || null;
+      this.selectedCarId = nextSelectedCarId;
+      this.registry.set('selectedCarId', nextSelectedCarId);
+      saveSessionState(this.registry);
+
+      this.cashText?.setText('¥ ' + Number(cash - transferCost).toLocaleString('en-US'));
+
+      confirmObjects.forEach(obj => obj?.destroy?.());
+      close();
+
+      // iOS/PWA can stall a re-entrant Phaser scene restart after its loader
+      // reaches 97%. Use the same clean reload path as workshop switching.
+      this.registry.set('workshopLocationId', currentWorkshop.id);
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+      window.location.reload();
+    };
+
+    const openConfirmation = (workshop, transferCost) => {
+      const confirmObjects = [];
+      const addConfirm = obj => {
+        confirmObjects.push(obj);
+        return obj;
+      };
+      const closeConfirm = () => confirmObjects.forEach(obj => obj?.destroy?.());
+      const cash = Number(this.registry.get('cash') || 0);
+
+      addConfirm(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.50)
+        .setDepth(depth + 10)
+        .setInteractive());
+
+      addConfirm(this.add.rectangle(780, 420, 660, 360, 0x091520, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1)
+        .setDepth(depth + 11));
+
+      addConfirm(this.add.text(780, 315, 'CONFIRM TRANSFER', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '14px',
+        color: '#f0fbff',
+      }).setOrigin(0.5).setDepth(depth + 12));
+
+      addConfirm(this.add.text(
+        780,
+        382,
+        cars[this.selectedCarId].shortName + '  →  ' + workshop.label,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '10px',
+          color: '#8eeaff',
+          align: 'center',
+        }
+      ).setOrigin(0.5).setDepth(depth + 12));
+
+      addConfirm(this.add.text(
+        780,
+        430,
+        'TRANSPORT  ¥ ' + transferCost.toLocaleString('en-US') +
+          '   //   CASH AFTER  ¥ ' + Math.max(0, cash - transferCost).toLocaleString('en-US'),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '11px',
+          color: '#b8cbd7',
+          fontStyle: '600',
+        }
+      ).setOrigin(0.5).setDepth(depth + 12));
+
+      const cancel = addConfirm(this.add.rectangle(650, 510, 210, 56, 0x151d28, 1)
+        .setStrokeStyle(1, 0x657d8c, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 12));
+      addConfirm(this.add.text(650, 510, 'CANCEL', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#c4d5df',
+      }).setOrigin(0.5).setDepth(depth + 13));
+
+      const confirm = addConfirm(this.add.rectangle(910, 510, 250, 56, 0x0c2827, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 12));
+      addConfirm(this.add.text(910, 510, 'MOVE CAR  //  ¥ ' + transferCost.toLocaleString('en-US'), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#f1fffb',
+      }).setOrigin(0.5).setDepth(depth + 13));
+
+      cancel.on('pointerdown', closeConfirm);
+      confirm.on('pointerdown', () => performTransfer(workshop, transferCost, confirmObjects));
+    };
+
+    unlocked.filter(workshop => !targetWorkshopId || workshop.id === targetWorkshopId).forEach((workshop, index) => {
+      const y = 305 + index * 100;
+      const usage = getWorkshopUsage(
+        this.ownedCarIds,
+        this.carGarageLocations || {},
+        workshop.id
+      );
+      const capacity = getWorkshopStorageCapacity(workshop.id);
+      const isCurrent = workshop.id === currentWorkshop.id;
+      const full = usage >= capacity;
+      const transferCost = getWorkshopTransferCost(currentWorkshop.id, workshop.id);
+      const cash = Number(this.registry.get('cash') || 0);
+      const affordable = cash >= transferCost;
+      const enabled = !isCurrent && !full && affordable;
+
+      const box = add(this.add.rectangle(
+        780,
+        y,
+        700,
+        78,
+        enabled ? 0x0b1724 : 0x090f16,
+        1
+      ).setStrokeStyle(
+        isCurrent ? 2 : 1,
+        isCurrent ? 0x43dfff : full ? 0x5e4247 : affordable ? 0x315470 : 0x65424a,
+        1
+      ).setDepth(depth + 2));
+
+      add(this.add.text(455, y - 16, workshop.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: enabled || isCurrent ? '#eaf8ff' : '#707c84',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(
+        455,
+        y + 18,
+        usage + ' / ' + capacity + ' CARS' +
+          (isCurrent ? '  //  CURRENT GARAGE' : '  //  TRANSPORT ¥ ' + transferCost.toLocaleString('en-US')),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '10px',
+          color: '#91a9b8',
+          fontStyle: '600',
+        }
+      ).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(
+        1110,
+        y,
+        isCurrent ? 'CURRENT' : full ? 'FULL' : !affordable ? 'NEED ¥' + transferCost.toLocaleString('en-US') : 'SELECT  >',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: isCurrent ? '#55e4ff' : full ? '#8f626a' : affordable ? '#62e8c7' : '#c9828d',
+        }
+      ).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (enabled) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => openConfirmation(workshop, transferCost));
+      }
+    });
+
+    const closeButton = add(this.add.rectangle(1025, 645, 170, 48, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(1025, 645, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    closeButton.on('pointerdown', close);
+    blocker.on('pointerdown', close);
+  }
+
+  buildStoreRestoreKitButton() {
+    // Crew Space has its own three stacked navigation actions at 664/718/770.
+    // Put the service above them; Warehouse HQ retains its original slot.
+    const y = this.crewMode ? 608 : 662;
+    this.moveCarButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2, y, SIDE.w - 32, 42, 0x102138, 1
+    ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
+    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, y, 'UNINSTALL / RESTORE PARTS', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+    this.moveCarButton.on('pointerdown', () => this.showStoreRestoreKitPopup());
+    this.updateMoveCarButtonState();
+  }
+
+
+  showWarehouseStockServiceConfirmation(carId = this.selectedCarId) {
+    if (this.crewMode || this.getActiveWorkshop().tier !== 2 ||
+        this.isSelectedCarTuningLocked() || carId !== this.selectedCarId ||
+        !this.getCurrentWorkshopCars().includes(carId)) return;
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = getStockTuneServiceAction(state);
+    if (!quote.action) {
+      this.showWorkshopToast(quote.reason || 'FACTORY SERVICE UNAVAILABLE');
+      return;
+    }
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+    const depth = 175;
+    add(this.add.rectangle(780, 420, 1560, 840, 0x030711, 0.85)
+      .setInteractive().setDepth(depth));
+    add(this.add.rectangle(780, 420, 720, 316, 0x0e1925, 1)
+      .setStrokeStyle(2, 0x67d3d2).setDepth(depth + 1));
+    add(this.add.text(780, 318,
+      quote.action === 'RESTORE' ? 'RESTORE COMPLETE TUNE' : 'PREPARE FACTORY STOCK', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#edffff',
+      }).setOrigin(0.5).setDepth(depth + 2));
+    const info = [
+      cars[carId]?.shortName || carId,
+      quote.action === 'RESTORE'
+        ? 'REINSTALL SAVED PARTS AND TUNING'
+        : 'KEEP ALL PURCHASED PARTS IN STORAGE',
+      'DAICHI LABOUR // ¥' + quote.fee.toLocaleString('en-US'),
+    ].join('\n');
+    add(this.add.text(780, 405, info, {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#d0e6ee',
+      align: 'center', lineSpacing: 7,
+    }).setOrigin(0.5).setDepth(depth + 2));
+    const button = (x, title, cb) => {
+      const box = add(this.add.rectangle(x, 526, 250, 46, 0x18343a, 1)
+        .setStrokeStyle(2, 0x67d3d2).setDepth(depth + 2)
+        .setInteractive({ useHandCursor: true }));
+      add(this.add.text(x, 526, title, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f3ffff',
+      }).setOrigin(0.5).setDepth(depth + 3));
+      box.on('pointerdown', cb);
+    };
+    button(635, 'CANCEL', close);
+    button(925, 'CONFIRM // ¥' + quote.fee.toLocaleString('en-US'), () => {
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const live = states[carId] || {};
+      const recheck = getStockTuneServiceAction(live);
+      const cash = Number(this.registry.get('cash') || 0);
+      if (carId !== this.selectedCarId || this.getActiveWorkshop().tier !== 2 ||
+          !this.getCurrentWorkshopCars().includes(carId) ||
+          this.isSelectedCarTuningLocked() || recheck.action !== quote.action ||
+          cash < recheck.fee) {
+        close();
+        this.showWorkshopToast(cash < recheck.fee ? 'NOT ENOUGH CASH' : 'SERVICE STATUS CHANGED');
+        return;
+      }
+      const updated = applyStockTuneService(live);
+      if (!updated) return;
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - recheck.fee);
+      this.cashText?.setText('¥ ' + (cash - recheck.fee).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+      this.selectCar(carId, { remember: false });
+      this.updateMoveCarButtonState();
+      this.showWorkshopToast(quote.action === 'RESTORE'
+        ? 'ORIGINAL TUNING RESTORED' : 'FACTORY STOCK READY');
+    });
+  }
+
+  showStoreRestoreKitPopup() {
+    if (this.getActiveWorkshop().tier !== 2 ||
+        !this.selectedCarId || this.isSelectedCarTuningLocked() ||
+        (this.crewMode && (!cars[this.selectedCarId]?.crewLoan ||
+          !this.getCurrentWorkshopCars().includes(this.selectedCarId))) ||
+        this.engineMode || this.secondaryMode || this.chassisMode) return;
+    const carId = this.selectedCarId;
+    const initial = (this.registry.get('carStates') || {})[carId] || {};
+    // The same Warehouse HQ button restores a full saved configuration.
+    if (!this.crewMode && hasStockTuneService(initial)) {
+      this.showWarehouseStockServiceConfirmation(carId);
+      return;
+    }
+    const restoring = Boolean(initial.storedKit);
+    const available = restoring ? [] : listStorableKitParts(initial);
+    if (!restoring && !available.length) {
+      this.showWorkshopToast('NO INSTALLED UPGRADES TO STORE');
+      return;
+    }
+    const selected = new Set();
+    const depth = 160;
+    const objects = [];
+    const add = object => { objects.push(object); return object; };
+    const close = () => objects.forEach(object => object?.destroy?.());
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.84)
+      .setInteractive().setDepth(depth));
+    add(this.add.rectangle(780, 420, 960, 710, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff).setDepth(depth + 1));
+    const label = (x, y, value, size = 10, color = '#eefaff') =>
+      add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
+        fontSize: size + 'px', color }).setDepth(depth + 3));
+    label(350, 104, 'UNINSTALL / RESTORE PARTS', 13);
+    add(this.add.text(1210, 105, cars[carId]?.shortName || carId, {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9fc7db',
+    }).setOrigin(1, 0).setDepth(depth + 3));
+    const explanation = restoring
+      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥' +
+        STORE_KIT_RESTORE_FEE.toLocaleString('en-US') + '.\n' +
+        'BETTER PARTS ALREADY INSTALLED WILL BE KEPT. THE KIT IS CONSUMED.'
+      : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\n' +
+        'LABOUR: ¥' + STORE_KIT_REMOVE_FEE.toLocaleString('en-US') +
+        ' TO UNINSTALL, ¥' + STORE_KIT_RESTORE_FEE.toLocaleString('en-US') +
+        ' TO RESTORE LATER.\n' +
+        'ONLY ONE KIT SLOT PER CAR. SELECT THE PARTS TO UNINSTALL.';
+    add(this.add.text(350, 169, explanation, {
+      fontFamily: BODY_FONT, fontSize: '14px', color: '#b8cbd7',
+      lineSpacing: 4, wordWrap: { width: 850 },
+    }).setDepth(depth + 3));
+    const categories = [
+      ['engine', 'ENGINE'],
+      ['drivetrain', 'DRIVETRAIN'],
+      ['chassis', 'CHASSIS'],
+      ['exhaustNos', 'EXHAUST / NOS'],
+    ];
+    const rows = restoring
+      ? Object.entries(initial.storedKit.parts || {}).map(([key, level]) => {
+          const [category, partId] = key.split(':');
+          return { key, category, partId, level, name: partId };
+        })
+      : available;
+    let y = 272;
+    const tileWidth = 212;
+    const tileHeight = 43;
+    const gap = 4;
+    categories.forEach(([category, heading]) => {
+      const parts = rows.filter(part => part.category === category);
+      if (!parts.length) return;
+      label(350, y, heading, 9, '#68dfff');
+      y += 26;
+      parts.forEach((part, i) => {
+        const x = 350 + (i % 4) * (tileWidth + gap);
+        const tileY = y + Math.floor(i / 4) * (tileHeight + gap);
+        const tile = add(this.add.rectangle(
+          x + tileWidth / 2, tileY + tileHeight / 2,
+          tileWidth, tileHeight, 0x123d50, 1
+        ).setStrokeStyle(1, 0x55b8ff).setDepth(depth + 3));
+        const name = String(part.name || part.partId)
+          .replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+        const text = add(this.add.text(x + tileWidth / 2, tileY + tileHeight / 2,
+          name + '  LV.' + part.level, {
+            fontFamily: PIXEL_FONT, fontSize: '7px', color: '#effaff',
+            align: 'center', wordWrap: { width: tileWidth - 8 },
+          }).setOrigin(0.5).setDepth(depth + 4));
+        if (!restoring) {
+          tile.setInteractive({ useHandCursor: true });
+          tile.on('pointerdown', () => {
+            if (selected.has(part.key)) selected.delete(part.key);
+            else selected.add(part.key);
+            const removed = selected.has(part.key);
+            tile.setFillStyle(removed ? 0x353a42 : 0x123d50)
+              .setStrokeStyle(1, removed ? 0x737d88 : 0x55b8ff);
+            text.setColor(removed ? '#aeb6bf' : '#effaff');
+          });
+        }
+      });
+      y += Math.ceil(parts.length / 4) * (tileHeight + gap) + 14;
+    });
+    const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
+    const action = add(this.add.rectangle(807, 708, 220, 48, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    add(this.add.text(807, 708, (restoring ? 'RESTORE FOR ¥' : 'UNINSTALL FOR ¥') +
+      fee.toLocaleString('en-US'), { fontFamily: PIXEL_FONT,
+      fontSize: '8px', color: '#effff9',
+    }).setOrigin(0.5).setDepth(depth + 4));
+    const cancel = add(this.add.rectangle(489, 708, 180, 48, 0x17222e, 1)
+      .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    label(444, 701, 'CANCEL', 9);
+    cancel.on('pointerdown', close);
+    // Reversible full-stock preparation sits beside legacy per-part uninstall.
+    if (!this.crewMode && !restoring) {
+      const factoryQuote = getStockTuneServiceAction(initial);
+      if (factoryQuote.action === 'PREPARE') {
+        const factoryButton = add(this.add.rectangle(1130, 708, 210, 48, 0x10352f, 1)
+          .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
+          .setDepth(depth + 3));
+        add(this.add.text(1130, 708, 'PREPARE STOCK // ¥' +
+          factoryQuote.fee.toLocaleString('en-US'), {
+            fontFamily: PIXEL_FONT, fontSize: '7px', color: '#e6fff8',
+          }).setOrigin(0.5).setDepth(depth + 4));
+        factoryButton.on('pointerdown', () => {
+          close();
+          this.showWarehouseStockServiceConfirmation(carId);
+        });
+      }
+    }
+    const commitKit = () => {
+      if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
+          this.isSelectedCarTuningLocked() ||
+          (this.crewMode && (!cars[carId]?.crewLoan ||
+            !this.getCurrentWorkshopCars().includes(carId)))) { close(); return; }
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const live = states[carId] || {};
+      const cash = Number(this.registry.get('cash') || 0);
+      if (cash < fee) { this.showWorkshopToast('NOT ENOUGH CASH'); return; }
+      if (Boolean(live.storedKit) !== restoring) {
+        close(); this.showWorkshopToast('KIT STATUS CHANGED'); return;
+      }
+      const updated = restoring
+        ? restoreStoredKitParts(live)
+        : storeSelectedKitParts(live, [...selected]);
+      if (!updated) { this.showWorkshopToast('SELECT VALID PARTS'); return; }
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - fee);
+      this.cashText?.setText('¥ ' + (cash - fee).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+      this.selectCar(carId, { remember: false });
+      this.updateMoveCarButtonState();
+      this.showWorkshopToast(restoring ? 'STORED KIT RESTORED' : 'PARTS STORED');
+    };
+    action.on('pointerdown', () => {
+      if (!restoring && !selected.size) {
+        this.showWorkshopToast('SELECT PARTS TO UNINSTALL');
+        return;
+      }
+      const confirmation = [];
+      const addConfirm = obj => { confirmation.push(obj); return obj; };
+      const dismiss = () => confirmation.forEach(obj => obj?.destroy?.());
+      const z = depth + 12;
+      addConfirm(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+        .setInteractive().setDepth(z));
+      addConfirm(this.add.rectangle(780, 420, 650, 250, 0x0b1b29, 1)
+        .setStrokeStyle(2, 0x43dfff).setDepth(z + 1));
+      addConfirm(this.add.text(780, 342, 'CONFIRM PARTS SERVICE', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#eefaff',
+      }).setOrigin(0.5).setDepth(z + 2));
+      addConfirm(this.add.text(780, 405,
+        (restoring ? 'RESTORE THE SAVED KIT' : 'UNINSTALL ' + selected.size + ' PART(S)') +
+        ' FOR ¥' + fee.toLocaleString('en-US') + '?', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#f2d899',
+        }).setOrigin(0.5).setDepth(z + 2));
+      const button = (x, title, handler) => {
+        const rect = addConfirm(this.add.rectangle(x, 477, 220, 48, 0x12352e, 1)
+          .setStrokeStyle(1, 0x62e8c7).setInteractive({ useHandCursor: true })
+          .setDepth(z + 2));
+        addConfirm(this.add.text(x, 477, title, { fontFamily: PIXEL_FONT,
+          fontSize: '9px', color: '#effff9',
+        }).setOrigin(0.5).setDepth(z + 3));
+        rect.on('pointerdown', handler);
+      };
+      button(640, 'CANCEL', dismiss);
+      button(920, 'CONFIRM', () => { dismiss(); commitKit(); });
+    });
+  }
+
+  buildMoveCarButton() {
+    const button = this.moveCarButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      662,
+      SIDE.w - 32,
+      42,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setDepth(40)
+      .setInteractive({useHandCursor:true});
+
+    this.moveCarLabel = this.add.text(
+      SIDE.x + SIDE.w / 2,
+      662,
+      'MOVE CAR  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => this.showMoveCarPopup());
+    this.updateMoveCarButtonState();
+  }
+
+  buildWorkshopJumpButton() {
+    const button = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      716,
+      SIDE.w - 32,
+      40,
+      0x122331,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+
+    this.add.text(SIDE.x + SIDE.w / 2, 716, 'OTHER WORKSHOP  >', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => this.showWorkshopJumpPopup());
+  }
+
+  showWorkshopJumpPopup() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+    this.syncGarageAssignments();
+    const current = this.getActiveWorkshop();
+    const ownedTier = Math.max(0, Number(this.registry.get('garageTier') || 0));
+    const depth = 150;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const reloadIntoWorkshop = workshop => {
+      this.registry.set('workshopLocationId', workshop.id);
+      const localCars = getCarsInWorkshop(
+        this.ownedCarIds,
+        this.registry.get('carGarageLocations') || this.carGarageLocations || {},
+        workshop.id
+      );
+      // Displaying a different workshop's car is not a deliberate choice.
+      const previous = this.registry.get('selectedCarId');
+      this.registry.set('selectedCarId', localCars.includes(previous)
+        ? previous : localCars[0] || null);
+      saveSessionState(this.registry);
+
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+
+      window.location.reload();
+    };
+
+    const unlockWorkshop = workshop => {
+      if(this.registry.get('gameMode')==='arkonStory')return;
+      const liveTier = Math.max(0, Number(this.registry.get('garageTier') || 0));
+      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+      const cost = Math.max(0, Number(workshop.unlockCost || 0));
+
+      if (
+        workshop.tier !== liveTier + 1 ||
+        cash < cost ||
+        !isWorkshopProgressionReady(this.registry, workshop.tier)
+      ) return;
+
+      this.registry.set('garageTier', workshop.tier);
+      this.registry.set('cash', cash - cost);
+      this.registry.set('workshopLocationId', workshop.id);
+
+      const requestedLocations = {
+        ...(this.registry.get('carGarageLocations') || this.carGarageLocations || {}),
+      };
+      if (this.selectedCarId && this.ownedCarIds.includes(this.selectedCarId)) {
+        requestedLocations[this.selectedCarId] = workshop.id;
+      }
+
+      const reassigned = normaliseCarGarageLocations(
+        this.ownedCarIds,
+        requestedLocations,
+        workshop.tier
+      );
+      this.carGarageLocations = reassigned;
+      this.registry.set('carGarageLocations', reassigned);
+
+      const storyId = workshop.tier >= 2
+        ? 'warehouseHqUnlocked'
+        : workshop.tier >= 1
+          ? 'canalYardUnlocked'
+          : null;
+      if (storyId) {
+        if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+        if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
+        try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
+      }
+
+      saveSessionState(this.registry);
+      this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+
+      window.location.reload();
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 500, 0x08131f, 0.99)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(440, 205, 'WORKSHOPS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(
+      440,
+      248,
+      'Visit your workshops or pay to fit out the next space here.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#a7bdca',
+        fontStyle: '600',
+        wordWrap: { width: 650 },
+      }
+    ).setDepth(depth + 2));
+
+    WORKSHOP_TIERS.filter(workshop =>
+      this.registry.get('gameMode')!=='arkonStory' ||
+      workshop.tier<=ownedTier
+    ).forEach((workshop, index) => {
+      const y = 330 + index * 92;
+      const unlocked = workshop.tier <= ownedTier;
+      const here = unlocked && workshop.id === current.id;
+      const next = workshop.tier === ownedTier + 1;
+      const cash = Number(this.registry.get('cash') || 0);
+      const cost = Number(workshop.unlockCost || 0);
+      const ready = isWorkshopProgressionReady(this.registry, workshop.tier);
+      const used = unlocked
+        ? getWorkshopUsage(this.ownedCarIds, this.carGarageLocations || {}, workshop.id) : 0;
+      const capacity = getWorkshopStorageCapacity(workshop.id);
+      const full = used >= capacity;
+      const transport = getWorkshopTransferCost(current.id, workshop.id);
+      const canMove = unlocked && !here && !full &&
+        cash >= transport && Boolean(this.selectedCarId) &&
+        !cars[this.selectedCarId]?.crewLoan &&
+        !isArkonRwbRestoration(this.registry,this.selectedCarId);
+      const canGo = unlocked && !here;
+      add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
+        .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
+      add(this.add.text(450, y - 17, workshop.label, {
+        fontFamily: PIXEL_FONT, fontSize: '9px',
+        color: unlocked ? '#eef8ff' : '#817d84',
+      }).setDepth(depth + 3));
+      add(this.add.text(450, y + 12, unlocked
+        ? used + ' / ' + capacity + ' CARS' + (here ? '  //  HERE' : '')
+        : next ? ready ? 'UNLOCK  ¥ ' + cost.toLocaleString('en-US')
+          : 'REGIONAL WINS  ' + getTotalRegionalWins(this.registry) +
+            '/' + getWorkshopRegionalWinRequirement(workshop.tier)
+          : 'LOCKED', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#9fc7db',
+      }).setDepth(depth + 3));
+      const button = (x, title, active, action) => {
+        const box = add(this.add.rectangle(x, y, 154, 42,
+          active ? 0x0c2827 : 0x17181d, 1)
+          .setStrokeStyle(1, active ? 0x62e8c7 : 0x514f55).setDepth(depth + 3));
+        add(this.add.text(x, y, title, {
+          fontFamily: PIXEL_FONT, fontSize: '7px',
+          color: active ? '#e7fff8' : '#817d84',
+        }).setOrigin(0.5).setDepth(depth + 4));
+        if (active) box.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+      };
+      if (unlocked) {
+        button(830, here ? 'CURRENT' : full ? 'FULL' : 'MOVE CAR HERE', canMove,
+          () => {
+            close();
+            this.showMoveCarPopup(workshop.id);
+          });
+        button(1005, here ? 'YOU ARE HERE' : 'GO HERE', canGo,
+          () => reloadIntoWorkshop(workshop));
+      } else {
+        button(1005, next ? 'UNLOCK' : 'LOCKED',
+          next && ready && cash >= cost, () => unlockWorkshop(workshop));
+      }
+    });
+
+    const closeButton = add(this.add.rectangle(780, 620, 190, 46, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 620, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    closeButton.on('pointerdown', close);
+    blocker.on('pointerdown', close);
+  }
+
+  showCrewOverviewState({ preserveSelection = false } = {}) {
+    if (!this.crewMode) return;
+
+    for (const obj of this.selectedDisplay || []) {
+      try { obj?.destroy?.(); } catch (e) {}
+    }
+    this.selectedDisplay = [];
+    this.heroCarLayout = null;
+
+    if (!preserveSelection) {
+      this.selectedCarId = null;
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+
+      this.headerCarText?.setText(
+        'CREW ' + (getCrewCount(this.registry) + 1) + '/8'
+      );
+      Object.values(this.specValueTexts || {}).forEach(text => text?.setText?.('—'));
+      this.upgradeButtons?.forEach(item => {
+        item.box.disableInteractive()
+          .setFillStyle(0x0a1017, 1)
+          .setStrokeStyle(1, 0x29343d, 1);
+        item.label.setColor('#53626c');
+        item.arrow.setText('—').setColor('#46545e');
+      });
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel?.setText('SELECT A CREW CAR').setColor('#817d84');
+      this.refreshDynoButton?.();
+    }
+
+    this.drawCrewOverview();
+    this.renderGaragePage();
+    this.refreshCrewSpaceNavigationState();
+    saveSessionState(this.registry);
+  }
+
+  restoreWarehouseAfterCrewSpace(selectedCarId = null) {
+    if (this.crewMode) return;
+
+    const localCars = this.getCurrentWorkshopCars();
+    const nextCarId = localCars.includes(selectedCarId)
+      ? selectedCarId
+      : localCars.includes(this.selectedCarId)
+        ? this.selectedCarId
+        : localCars[0] || null;
+
+    this.selectedCarId = nextCarId;
+    this.registry.set('crewSpaceActive', false);
+    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    this.registry.set('selectedCarId', nextCarId);
+    this.registry.set('selectedRacePlayerCharacterId', null);
+    this.registry.set('crewPreviousCarId', null);
+
+    // The Warehouse scene was slept, not rebuilt. Re-enable input/camera and
+    // refresh only data that may have changed while Crew Space was open.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
+    this.cameras.main.resetFX?.();
+    this.cameras.main.setAlpha(1);
+
+    this.cashText?.setText(
+      '¥ ' + Number(this.registry.get('cash') || 0).toLocaleString('en-US')
+    );
+
+    if (nextCarId) {
+      // The hero car and buttons are deliberately left in place; they never
+      // left the sleeping Warehouse scene. Just restore the selected card/UI.
+      this.thumbButtons?.forEach(item => {
+        const active = item.id === nextCarId;
+        item.box
+          ?.setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+          .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+        item.label?.setColor(active ? '#ffffff' : '#b8cad7');
+      });
+      this.refreshWorkshopSpecs();
+    }
+
+    this.updateMoveCarButtonState();
+    this.refreshDynoButton?.();
+    saveSessionState(this.registry);
+  }
+
+  transitionWarehousePresentation(crewMode, selectedCarId = null) {
+    if (this._warehousePresentationTransitioning) return;
+    this._warehousePresentationTransitioning = true;
+
+    const nextCrewMode = Boolean(crewMode);
+    const currentScene = this.sys?.settings?.key;
+
+    if (nextCrewMode && currentScene === 'GarageScene') {
+      this.registry.set('crewSpaceActive', true);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      cancelSceneLoading(this);
+
+      // Keep Warehouse HQ alive exactly as rendered underneath Crew Space.
+      // Sleeping preserves the selected hero car, physical-room hotspots and
+      // all side-panel controls, so returning is an instant reveal rather than
+      // another fragile rebuild of GarageScene.
+      this.scene.launch('CrewSpaceScene', {
+        crewMode: true,
+        returningFromCrewSpace: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+      this.scene.sleep('GarageScene');
+      this._warehousePresentationTransitioning = false;
+      return;
+    }
+
+    if (!nextCrewMode && currentScene === 'CrewSpaceScene') {
+      const warehouse = this.scene.get('GarageScene');
+      const warehouseIsSleeping = this.scene.isSleeping('GarageScene');
+
+      this.registry.set('crewSpaceActive', false);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      this.registry.set('selectedCarId', selectedCarId || null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      cancelSceneLoading(this);
+
+      if (warehouse && warehouseIsSleeping) {
+        // Scene ownership first, cosmetic refresh second. Never let a sleeping
+        // Warehouse refresh prevent Crew Space from closing.
+        this.scene.wake('GarageScene');
+        this.scene.bringToTop?.('GarageScene');
+        this.scene.stop('CrewSpaceScene');
+        try {
+          warehouse.restoreWarehouseAfterCrewSpace?.(selectedCarId || null);
+        } catch (error) {
+          console.error('Warehouse refresh after Crew Space failed', error);
+        }
+        this._warehousePresentationTransitioning = false;
+        return;
+      }
+
+      // Recovery path for a direct Crew Space boot where no sleeping Warehouse
+      // exists. This should be rare, but keeps old saves navigable.
+      this.scene.start('GarageScene', {
+        crewMode: false,
+        returningFromCrewSpace: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+      return;
+    }
+
+    this._warehousePresentationTransitioning = false;
+  }
+
+  buildCrewSpaceNavigation() {
+    if (!this.crewMode) return;
+
+    [
+      this.crewOverviewButton,
+      this.crewOverviewButtonLabel,
+      this.crewBackButton,
+      this.crewBackButtonLabel,
+      this.dynoButton,
+      this.dynoButtonLabel,
+      this.meetButton,
+      this.meetButtonLabel,
+    ].forEach(obj => {
+      if (obj?.active) {
+        try { obj.destroy(); } catch (e) {}
+      }
+    });
+
+    this.crewOverviewButton = null;
+    this.crewOverviewButtonLabel = null;
+    this.crewBackButton = null;
+    this.crewBackButtonLabel = null;
+    this.dynoButton = null;
+    this.dynoButtonLabel = null;
+    this.meetButton = null;
+    this.meetButtonLabel = null;
+
+    this.buildDynoButton();
+    this.buildCrewOverviewButton();
+    this.buildCrewBackButton();
+    this.buildMeetButton();
+    this.refreshCrewSpaceNavigationState();
+  }
+
+  refreshCrewSpaceNavigationState() {
+    if (!this.crewMode) return;
+
+    const hasCrewCar = Boolean(
+      this.selectedCarId &&
+      cars[this.selectedCarId]?.crewLoan
+    );
+    const tuningLocked = Boolean(
+      this.engineMode || this.secondaryMode || this.chassisMode
+    );
+    const overview = !this.crewFocusedCharacterId;
+    const kitVisible = !overview && hasCrewCar && !tuningLocked;
+    this.moveCarButton?.setVisible(kitVisible);
+    this.moveCarLabel?.setVisible(kitVisible);
+    if (kitVisible) this.updateMoveCarButtonState();
+    else if (this.moveCarButton?.input) this.moveCarButton.disableInteractive();
+    const navX = SIDE.x + SIDE.w / 2;
+
+    [
+      this.crewOverviewButton,
+      this.crewOverviewButtonLabel,
+      this.crewBackButton,
+      this.crewBackButtonLabel,
+      this.dynoButton,
+      this.dynoButtonLabel,
+      this.meetButton,
+      this.meetButtonLabel,
+    ].forEach(obj => {
+      if (!obj?.active) return;
+      obj.setAlpha(1);
+    });
+
+    // Wide Crew Space only needs its single exit to the player's Warehouse.
+    if (overview) {
+      this.crewOverviewButton?.setVisible(false);
+      this.crewOverviewButtonLabel?.setVisible(false);
+      this.dynoButton?.setVisible(false);
+      this.dynoButtonLabel?.setVisible(false);
+      this.meetButton?.setVisible(false);
+      this.meetButtonLabel?.setVisible(false);
+
+      this.crewBackButton
+        ?.setVisible(true)
+        .setPosition(1350, 792)
+        .setDepth(110)
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x122331, 1)
+        .setStrokeStyle(2, 0x55b8ff, 1);
+      this.crewBackButtonLabel
+        ?.setVisible(true)
+        .setPosition(1350, 792)
+        .setDepth(111)
+        .setText('BACK  >')
+        .setColor('#eef8ff');
+      return;
+    }
+
+    // Selected crew garage: three stacked actions, matching the requested
+    // hierarchy above the existing map slot.
+    this.crewOverviewButton
+      ?.setPosition(navX, 664)
+      .setDepth(110);
+    this.crewOverviewButtonLabel
+      ?.setPosition(navX, 664)
+      .setDepth(111);
+    this.crewBackButton
+      ?.setPosition(navX, 718)
+      .setDepth(110);
+    this.crewBackButtonLabel
+      ?.setPosition(navX, 718)
+      .setDepth(111);
+    this.meetButton
+      ?.setPosition(navX, 770)
+      .setDepth(110)
+      .setVisible(true);
+    this.meetButtonLabel
+      ?.setPosition(navX, 770)
+      .setDepth(111)
+      .setVisible(true);
+
+    // Tuning categories own the entire sidebar. Hide every Crew Garage
+    // navigation control so none can sit over the tuning controls.
+    if (tuningLocked && hasCrewCar) {
+      this.crewOverviewButton?.setVisible(false).disableInteractive();
+      this.crewOverviewButtonLabel?.setVisible(false);
+      this.crewBackButton?.setVisible(false).disableInteractive();
+      this.crewBackButtonLabel?.setVisible(false);
+      this.dynoButton?.setVisible(false).disableInteractive();
+      this.dynoButtonLabel?.setVisible(false);
+      this.meetButton?.setVisible(false).disableInteractive();
+      this.meetButtonLabel?.setVisible(false);
+      return;
+    }
+
+    this.crewOverviewButton
+      ?.setVisible(true)
+      .setInteractive({ useHandCursor: true })
+      .setFillStyle(0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1);
+    this.crewOverviewButtonLabel
+      ?.setVisible(true)
+      .setText('RETURN TO CREW SPACE  >')
+      .setColor('#eef8ff');
+
+    this.crewBackButton
+      ?.setVisible(true)
+      .setInteractive({ useHandCursor: true })
+      .setFillStyle(0x122331, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1);
+    this.crewBackButtonLabel
+      ?.setVisible(true)
+      .setText('BACK  >')
+      .setColor('#eef8ff');
+
+    this.dynoButton?.setVisible(Boolean(hasCrewCar));
+    this.dynoButtonLabel?.setVisible(Boolean(hasCrewCar));
+    this.refreshDynoButton?.();
+
+    if (!hasCrewCar) {
+      this.meetButton
+        ?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel
+        ?.setText('GO TO MAP // SELECT CAR')
+        .setColor('#817d84');
+      return;
+    }
+
+    this.meetButton
+      ?.setInteractive({ useHandCursor: true })
+      .setFillStyle(0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1);
+    this.meetButtonLabel
+      ?.setText('GO TO MAP  >')
+      .setColor('#f1fffb');
+  }
+
+  exitCrewSpaceToWorkshop() {
+    if (!this.crewMode || this._warehousePresentationTransitioning) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+    this._warehousePresentationTransitioning = true;
+
+    const personalCars = (this.registry.get('ownedCarIds') || [])
+      .filter(id => cars[id] && !cars[id].crewLoan);
+    const previous = this.registry.get('crewPreviousCarId');
+    const warehouseCars = getCarsInWorkshop(
+      personalCars,
+      this.registry.get('carGarageLocations') || {},
+      'shinonomeWarehouseStrip'
+    );
+    const nextCarId = warehouseCars.includes(previous)
+      ? previous
+      : warehouseCars[0] || personalCars[0] || null;
+
+    // Persist an unambiguous ordinary Warehouse state first. This is especially
+    // important for dev profiles, which can have extra scene shortcuts and a
+    // GarageScene object that is not necessarily the sleeping Warehouse
+    // instance that originally launched Crew Space.
+    try { this.tweens.killTweensOf(this.selectedDisplay || []); } catch (e) {}
+    this.crewFocusedCharacterId = null;
+    this.registry.set('crewSpaceActive', false);
+    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    this.registry.set('selectedCarId', nextCarId);
+    this.registry.set('selectedRacePlayerCharacterId', null);
+    this.registry.set('crewPreviousCarId', null);
+    saveSessionState(this.registry);
+    cancelSceneLoading(this);
+
+    this.crewBackButton?.disableInteractive();
+    this.crewBackButtonLabel?.setText('BACK...');
+
+    // Crew Space is a presentation layered on top of Warehouse HQ. Phaser's
+    // sleeping-scene lifecycle can become ambiguous after dev/test shortcuts or
+    // repeated transitions, so do not attempt to infer which GarageScene object
+    // should be woken here. The project already uses controlled internal reloads
+    // for workshop/map transitions because they are deterministic on iOS/PWA.
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 0);
+  }
+
+  buildCrewOverviewButton() {
+    if (!this.crewMode) return;
+
+    const x = SIDE.x + SIDE.w / 2;
+    const y = 664;
+    this.crewOverviewButton = this.add.rectangle(
+      x,
+      y,
+      SIDE.w - 32,
+      40,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(110);
+
+    this.crewOverviewButtonLabel = this.add.text(
+      x,
+      y,
+      'RETURN TO CREW SPACE  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(111);
+
+    this.crewOverviewButton.on('pointerdown', () => {
+      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+      this.showCrewOverviewState();
+    });
+  }
+
+  cancelCrewTuningAndReturnToWorkshop() {
+    if (!this.crewMode) return;
+
+    // These non-animated leave paths discard pending (unapplied) tuning.
+    if (this.engineMode) this.leaveEngineMode(true, false);
+    else if (this.chassisMode) this.leaveChassisMode(false);
+    else if (this.secondaryMode) this.leaveSecondaryTuningMode(false);
+
+    this.time.delayedCall(0, () => this.exitCrewSpaceToWorkshop());
+  }
+
+  buildCrewBackButton() {
+    if (!this.crewMode) return;
+
+    const x = SIDE.x + SIDE.w / 2;
+    const y = 718;
+    this.crewBackButton = this.add.rectangle(x, y, SIDE.w - 32, 40, 0x122331, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(110);
+
+    this.crewBackButtonLabel = this.add.text(x, y, 'BACK  >', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(111);
+
+    this.crewBackButton.on('pointerdown', () => {
+      this.exitCrewSpaceToWorkshop();
+    });
+  }
+
+  setWorkshopHomeHotspotsVisible(visible) {
+    const show = Boolean(visible) && !this.crewMode;
+    (this.workshopHomeHotspotObjects || []).forEach(item => {
+      [item.glow, item.labelPad, item.text].forEach(obj => obj?.setVisible?.(show));
+      if (!item.glow?.active) return;
+      if (show && item.enabled) item.glow.setInteractive({ useHandCursor: true });
+      else item.glow.disableInteractive();
+    });
+  }
+
+  createWarehouseSpaceHotspot({
+    x,
+    y,
+    w = 300,
+    h = 44,
+    label,
+    labelAlign = 'left',
+    labelText = null,
+    onActivate,
+    enabled = true,
+  }) {
+    const labelW = 104;
+    const left = x - w / 2;
+    const right = x + w / 2;
+    const isRight = labelAlign === 'right';
+
+    // Thin outline that wraps the authored room sign instead of becoming a
+    // second sign itself. Text sits in a dark gutter away from background type.
+    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.022)
+      .setStrokeStyle(2, 0x69ecff, 0.72)
+      .setDepth(28);
+
+    const padX = isRight
+      ? right - labelW / 2
+      : left + labelW / 2;
+    const labelPad = this.add.rectangle(
+      padX,
+      y,
+      labelW,
+      h - 8,
+      0x06141d,
+      0.66
+    ).setDepth(29);
+
+    const textX = isRight ? right - 13 : left + 13;
+    const text = this.add.text(
+      textX,
+      y,
+      labelText || (label + (isRight ? '' : '  >')),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: enabled ? '#c9f8ff' : '#72909b',
+        align: isRight ? 'right' : 'left',
+      }
+    ).setOrigin(isRight ? 1 : 0, 0.5).setDepth(30);
+
+    if (enabled) glow.setInteractive({ useHandCursor: true });
+
+    // Strong breathing pulse: almost invisible at the low point.
+    const glowTween = this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.07, to: 1 },
+      duration: 1300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    const padTween = this.tweens.add({
+      targets: labelPad,
+      alpha: { from: 0.14, to: 0.72 },
+      duration: 1300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    this.tweens.add({
+      targets: text,
+      alpha: { from: 0.46, to: 0.96 },
+      duration: 1300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    if (enabled) {
+      glow.on('pointerover', () => {
+        glowTween.pause();
+        padTween.pause();
+        glow.setAlpha(1)
+          .setFillStyle(0x4ee8ff, 0.08)
+          .setStrokeStyle(3, 0x9af6ff, 0.98);
+        labelPad.setAlpha(0.82);
+        text.setAlpha(1).setColor('#ffffff');
+      });
+
+      glow.on('pointerout', () => {
+        glow.setFillStyle(0x4ee8ff, 0.022)
+          .setStrokeStyle(2, 0x69ecff, 0.72);
+        text.setColor('#c9f8ff');
+        glowTween.resume();
+        padTween.resume();
+      });
+
+      glow.on('pointerdown', () => {
+        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+        onActivate?.();
+      });
+    }
+
+    const hotspot = { glow, labelPad, text, enabled };
+    this.workshopHomeHotspotObjects ??= [];
+    this.workshopHomeHotspotObjects.push(hotspot);
+    return hotspot;
+  }
+
+  activateWarehouseDynoSpace() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+    if (this.getActiveWorkshop()?.id !== DYNO_WAREHOUSE_ID) return;
+
+    const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
+    if (tier < 1) {
+      this.showDynoInstallPopup();
+      return;
+    }
+
+    if (!this.selectedCarId) {
+      this.showWorkshopToast('MOVE A CAR TO WAREHOUSE HQ FIRST');
+      return;
+    }
+
+    this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
+    saveSessionState(this.registry);
+    this.scene.start('DynoScene');
+  }
+
+  buildOfficeHotspot() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (!activeWorkshop || activeWorkshop.id === 'shinonomeWarehouseStrip') return;
+
+    let position;
+    let labelAlign = 'right';
+
+    if (activeWorkshop.id === 'shinonomeCanalYard') {
+      // Keep the Canal Yard entry clear of the staircase and move it slightly
+      // left so the label sits more naturally over the office opening.
+      position = {
+        x: 970,
+        y: 142,
+        w: 250,
+        h: 44,
+        labelText: 'OFFICE  >',
+      };
+    } else {
+      // Home Workshop: make the glow exactly the width of its translucent
+      // label pad, then centre it over the door.
+      position = {
+        x: 725,
+        y: 215,
+        w: 104,
+        h: 44,
+        labelText: 'OFFICE  >',
+      };
+      labelAlign = 'left';
+    }
+
+    this.createWarehouseSpaceHotspot({
+      ...position,
+      label: 'OFFICE',
+      labelAlign,
+      onActivate: () => showOfficePanel(this),
+    });
+  }
+
+  buildWarehouseSpaceHotspots() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (activeWorkshop?.id !== 'shinonomeWarehouseStrip') return;
+
+    // Calibrated against the Warehouse HQ artwork:
+    // - all three are thinner;
+    // - Office moves up/left so its label clears the painted sign;
+    // - Crew moves upward above the car roof;
+    // - Dyno keeps the same right edge, shortens from the left to start just
+    //   before the authored DYNO sign, with its call-to-action on the right.
+    this.createWarehouseSpaceHotspot({
+      x: 700,
+      y: 142,
+      w: 300,
+      h: 44,
+      label: 'OFFICE',
+      onActivate: () => showOfficePanel(this),
+    });
+
+    if (isCrewUnlocked(this.registry)) {
+      this.createWarehouseSpaceHotspot({
+        x: 650,
+        y: 234,
+        w: 300,
+        h: 44,
+        label: 'CREW',
+        onActivate: () => {
+          const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
+            ? this.selectedCarId
+            : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
+
+          this.registry.set('crewPreviousCarId', previous);
+          this.transitionWarehousePresentation(true, null);
+        },
+      });
+    }
+
+    this.buildWarehouseDynoHotspot();
+  }
+
+  buildWarehouseDynoHotspot() {
+    const activeWorkshop = this.getActiveWorkshop();
+    const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
+
+    if (activeWorkshop?.id !== DYNO_WAREHOUSE_ID || !installed) {
+      return null;
+    }
+
+    if (this.warehouseDynoHotspot?.glow?.active) {
+      return this.warehouseDynoHotspot;
+    }
+
+    this.warehouseDynoHotspot = this.createWarehouseSpaceHotspot({
+      x: 1025,
+      y: 291,
+      w: 230,
+      h: 44,
+      label: 'DYNO',
+      labelAlign: 'right',
+      labelText: '<  DYNO',
+      onActivate: () => this.activateWarehouseDynoSpace(),
+    });
+
+    return this.warehouseDynoHotspot;
+  }
+
+  clearWarehouseDynoInstallButton() {
+    try { this.dynoButton?.destroy?.(); } catch (e) {}
+    try { this.dynoButtonLabel?.destroy?.(); } catch (e) {}
+    this.dynoButton = null;
+    this.dynoButtonLabel = null;
+  }
+
+  buildDynoButton() {
+    const activeWorkshop = this.getActiveWorkshop();
+
+    if (activeWorkshop.id === DYNO_WAREHOUSE_ID) {
+      const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
+
+      // Before Stage I is installed, Warehouse HQ exposes Dyno only as a
+      // purchase action in the right panel. The in-room glowing hotspot stays
+      // completely hidden/inaccessible until the installation is paid for.
+      if (installed) {
+        this.clearWarehouseDynoInstallButton();
+        this.refreshDynoButton = () => {};
+        return;
+      }
+
+      const stage = getDynoStage(1);
+      const installCost = Math.max(0, Number(stage.installCost || 0));
+      const x = SIDE.x + SIDE.w / 2;
+      const y = 608;
+
+      this.dynoButton = this.add.rectangle(
+        x,
+        y,
+        SIDE.w - 32,
+        44,
+        0x102138,
+        1
+      ).setStrokeStyle(2, 0x55b8ff, 1)
+        .setDepth(40);
+
+      this.dynoButtonLabel = this.add.text(x, y, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#eef8ff',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(41);
+
+      this.refreshDynoButton = () => {
+        if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
+
+        const liveInstalled =
+          Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
+        if (liveInstalled) {
+          this.clearWarehouseDynoInstallButton();
+          this.buildWarehouseDynoHotspot();
+          return;
+        }
+
+        const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+        const affordable = cash >= installCost;
+        const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
+
+        this.dynoButtonLabel
+          .setText(
+            affordable
+              ? 'INSTALL DYNO // ¥' + installCost.toLocaleString('en-US')
+              : 'INSTALL DYNO // NEED ¥' + installCost.toLocaleString('en-US')
+          )
+          .setColor(affordable ? '#f1fffb' : '#c99aa4');
+
+        this.dynoButton
+          .setFillStyle(affordable ? 0x0c2827 : 0x1b1418, 1)
+          .setStrokeStyle(2, affordable ? 0x62e8c7 : 0x79515a, 1);
+
+        if (lockedByTuning) this.dynoButton.disableInteractive();
+        else this.dynoButton.setInteractive({ useHandCursor: true });
+      };
+
+      this.dynoButton.on('pointerdown', () => {
+        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+        this.showDynoInstallPopup();
+      });
+
+      this.refreshDynoButton();
+      return;
+    }
+
+    if (activeWorkshop.id !== DYNO_WAREHOUSE_ID) {
+      if (Number(activeWorkshop.tier || 0) > 1) return;
+
+      const x = SIDE.x + SIDE.w / 2;
+      const y = 608;
+      const rentalCost = DYNO_RENTAL_SESSION_COST;
+
+      this.dynoButton = this.add.rectangle(
+        x,
+        y,
+        SIDE.w - 32,
+        40,
+        0x102138,
+        1
+      ).setStrokeStyle(2, 0x55b8ff, 1)
+        .setDepth(40);
+
+      this.dynoButtonLabel = this.add.text(x, y, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(41);
+
+      this.refreshDynoButton = () => {
+        if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
+        const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+        const hasLocalCar = Boolean(this.selectedCarId);
+        const affordable = cash >= rentalCost;
+        const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
+
+        if (!hasLocalCar) {
+          this.dynoButtonLabel.setText('RENT DYNO // SELECT CAR').setColor('#817d84');
+          this.dynoButton
+            .setFillStyle(0x17181d, 1)
+            .setStrokeStyle(2, 0x514f55, 1);
+        } else {
+          this.dynoButtonLabel
+            .setText(
+              affordable
+                ? 'RENT STAGE I DYNO // ¥100,000'
+                : 'RENT DYNO // NEED ¥100,000'
+            )
+            .setColor(affordable ? '#f1fffb' : '#c99aa4');
+          this.dynoButton
+            .setFillStyle(affordable ? 0x0c2827 : 0x1b1418, 1)
+            .setStrokeStyle(2, affordable ? 0x62e8c7 : 0x79515a, 1);
+        }
+
+        if (lockedByTuning) this.dynoButton.disableInteractive();
+        else this.dynoButton.setInteractive({ useHandCursor: true });
+      };
+
+      this.dynoButton.on('pointerdown', () => {
+        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+        if (!this.selectedCarId) {
+          this.showWorkshopToast('SELECT A CAR BEFORE BOOKING THE DYNO');
+          return;
+        }
+        this.showDynoRentalPopup(activeWorkshop);
+      });
+
+      this.refreshDynoButton();
+      return;
+    }
+
+  }
+
+  showDynoRentalPopup(workshop = this.getActiveWorkshop()) {
+    if (!workshop || Number(workshop.tier || 0) > 1) return;
+    if (!this.selectedCarId) return;
+
+    const cost = DYNO_RENTAL_SESSION_COST;
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    const affordable = cash >= cost;
+    const depth = 160;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 790, 440, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(430, 245, 'BOOK STAGE I DYNO SESSION', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      300,
+      'Rent time on a basic AWD roller dyno. Your booking includes one paid power run, an official power / torque reading, and a saved graph for this car.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#b8cbd7',
+        fontStyle: '600',
+        wordWrap: { width: 700 },
+        lineSpacing: 4,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      405,
+      'RENTAL SESSION  //  ¥ ' + cost.toLocaleString('en-US') +
+        '\n1 POWER RUN  //  STAGE I ONLY',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: affordable ? '#ffe08a' : '#c99aa4',
+        lineSpacing: 8,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      470,
+      'NO DRIVETRAIN TEST  //  NO STAGE III TUNING',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#829aa8',
+      }
+    ).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 555, 220, 54, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 555, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(
+      940,
+      555,
+      300,
+      54,
+      affordable ? 0x0c2827 : 0x2a171b,
+      1
+    ).setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1)
+      .setDepth(depth + 2));
+
+    const confirmText = add(this.add.text(
+      940,
+      555,
+      affordable
+        ? 'BOOK // ¥ ' + cost.toLocaleString('en-US')
+        : 'NOT ENOUGH CASH',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: affordable ? '#f1fffb' : '#ffc0c6',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+    blocker.on('pointerdown', close);
+
+    if (affordable) {
+      confirm.setInteractive({ useHandCursor: true });
+      confirm.on('pointerdown', () => {
+        const liveCash = Math.max(0, Number(this.registry.get('cash') || 0));
+        if (liveCash < cost) {
+          confirm.disableInteractive();
+          confirmText.setText('NOT ENOUGH CASH').setColor('#ffc0c6');
+          return;
+        }
+
+        const carId = this.selectedCarId;
+        const returnWorkshopId = workshop.id;
+        this.registry.set('cash', liveCash - cost);
+        this.registry.set('selectedCarId', carId);
+        this.registry.set('workshopLocationId', returnWorkshopId);
+        this.cashText?.setText('¥ ' + Number(liveCash - cost).toLocaleString('en-US'));
+        saveSessionState(this.registry);
+        close();
+
+        this.scene.start('DynoScene', {
+          rentalSession: true,
+          carId,
+          returnWorkshopId,
+        });
+      });
+    }
+  }
+
+  showDynoInstallPopup() {
+    if (this.getActiveWorkshop().id !== DYNO_WAREHOUSE_ID) return;
+    const stage = getDynoStage(1);
+    const cost = Math.max(0, Number(stage.installCost || 0));
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    const affordable = cash >= cost;
+    const depth = 160;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 430, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(440, 250, 'INSTALL AWD ROLLER DYNO', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(
+      440,
+      302,
+      'Build the Warehouse HQ dyno cell. Stage I maps real power and torque curves, live boost and RPM, and gives you three pulls per session.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#b8cbd7',
+        fontStyle: '600',
+        wordWrap: { width: 670 },
+        lineSpacing: 4,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      440,
+      400,
+      'INSTALLATION  ¥ ' + cost.toLocaleString('en-US') +
+        '\nSESSION  ¥ ' + Number(stage.sessionCost || 0).toLocaleString('en-US') + '  //  3 PULLS',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: affordable ? '#ffe08a' : '#c99aa4',
+        lineSpacing: 8,
+      }
+    ).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 540, 220, 54, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 540, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(
+      920,
+      540,
+      280,
+      54,
+      affordable ? 0x0c2827 : 0x2a171b,
+      1
+    ).setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1)
+      .setDepth(depth + 2));
+    const confirmText = add(this.add.text(
+      920,
+      540,
+      affordable ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US') : 'NOT ENOUGH CASH',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: affordable ? '#f1fffb' : '#ffc0c6',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+
+    if (affordable) {
+      confirm.setInteractive({ useHandCursor: true });
+      confirm.on('pointerdown', () => {
+        const liveCash = Math.max(0, Number(this.registry.get('cash') || 0));
+        if (liveCash < cost) {
+          confirm.disableInteractive();
+          confirmText.setText('NOT ENOUGH CASH').setColor('#ffc0c6');
+          return;
+        }
+        this.registry.set('cash', liveCash - cost);
+        this.registry.set('dynoFacilityTier', 1);
+        this.cashText?.setText('¥ ' + Number(liveCash - cost).toLocaleString('en-US'));
+        saveSessionState(this.registry);
+        close();
+
+        // Swap the purchase CTA for the in-room Dyno hotspot immediately.
+        this.clearWarehouseDynoInstallButton();
+        this.buildWarehouseDynoHotspot();
+        this.refreshDynoButton = () => {};
+        this.showWorkshopToast('AWD ROLLER DYNO INSTALLED // STAGE I READY');
+      });
+    }
+  }
+
+  buildMeetButton() {
+    const button = this.meetButton = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 42, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+
+    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MAP  >', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
+    }).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => {
+      if (
+        this.crewMode &&
+        (this.engineMode || this.secondaryMode || this.chassisMode)
+      ) {
+        this.cancelCrewTuningAndReturnToWorkshop();
+        return;
+      }
+
+      this.registry.set('selectedCarId', this.selectedCarId);
+      if (!this.crewMode && this.selectedCarId) {
+        choosePersonalCar(this.registry, this.selectedCarId);
+      }
+      this.syncSelectedRaceDriver();
+
+      // Old Arkon Den profiles pre-date the persisted devMode flag. Promote the
+      // live registry before the workshop map evaluates unlocks so dev access
+      // is identical whether the map is opened from Garage or Meet.
+      if (isArkonDen(this.registry)) {
+        this.registry.set('devMode', true);
+      }
+
+      this.saveProfile();
+      // Developer cars may be distributed across several workshops. If this
+      // room is empty, let Arkon Den travel using an owned personal car from
+      // another garage rather than silently trapping the developer at HQ.
+      // This does not move cars or override garage assignments.
+      const devTravelCarId = !this.crewMode && isArkonDen(this.registry) &&
+        !this.selectedCarId
+        ? this.ownedCarIds.find(id => cars[id] && !cars[id].crewLoan) || null
+        : null;
+      if (devTravelCarId) this.registry.set('selectedCarId', devTravelCarId);
+
+      showTravelMap(this, {
+        currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
+        title: 'TOKYO REGION MAP',
+        actionVerb: 'DRIVE',
+        fromWorkshop: true,
+        allowCurrentAction: true,
+        travelMode: this.crewMode ? 'crew' : 'default',
+        onWorkshopUpgrade: (location, cost, alreadyUnlocked) => {
+          // Crew loan cars belong to Crew Space at Warehouse HQ. They cannot
+          // be used to switch the player's active Shinonome garage.
+          if (this.crewMode && location?.id !== 'shinonomeWarehouseStrip') {
+            this.showWorkshopToast('CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE');
+            return;
+          }
+
+          if (!alreadyUnlocked && this.registry.get('gameMode')==='arkonStory'){
+            this.showWorkshopToast('STORY CHAPTER UNLOCK REQUIRED');
+            return;
+          }
+          const cash = Number(this.registry.get('cash') || 0);
+          if (!alreadyUnlocked && cash < cost) return;
+
+          const nextCash = alreadyUnlocked ? cash : cash - cost;
+          const targetTier = Number(location.garageTier || 0);
+
+          if (!alreadyUnlocked) {
+            this.registry.set('garageTier', Math.max(
+              Number(this.registry.get('garageTier') || 0),
+              targetTier
+            ));
+            this.registry.set('cash', nextCash);
+
+            const storyId = targetTier >= 2
+              ? 'warehouseHqUnlocked'
+              : targetTier >= 1
+                ? 'canalYardUnlocked'
+                : null;
+            if (storyId) {
+              if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+              if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
+              try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
+            }
+          }
+
+          this.registry.set('workshopLocationId', location.id);
+
+          const requestedLocations = {
+            ...(this.registry.get('carGarageLocations') || {}),
+          };
+
+          // Purchasing a new workshop physically moves the player and their
+          // current car into the new property. Switching between workshops that
+          // are already owned does not silently relocate stored cars.
+          if (
+            !alreadyUnlocked &&
+            this.selectedCarId &&
+            this.ownedCarIds.includes(this.selectedCarId)
+          ) {
+            requestedLocations[this.selectedCarId] = location.id;
+          }
+
+          const reassigned = normaliseCarGarageLocations(
+            this.ownedCarIds,
+            requestedLocations,
+            Number(this.registry.get('garageTier') || 0)
+          );
+          this.registry.set('carGarageLocations', reassigned);
+          saveSessionState(this.registry);
+          this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
+
+          // Workshop changes are rare, high-level actions. On iOS/PWA the
+          // Phaser scene/input lifecycle has repeatedly stalled while switching
+          // from the GPS overlay. Persist the live session and perform a clean
+          // browser reload instead of another Phaser scene transition.
+          try {
+            sessionStorage.setItem('tokyoShiftInternalReload', '1');
+            sessionStorage.removeItem('tokyoShiftBootMessage');
+          } catch (e) {}
+          window.location.reload();
+        },
+        onTravel: (locationId, cost) => {
+          const travelTarget = getTravelLocation(locationId);
+
+          // Crew drivers can now take their own cars to Oshiage for
+          // driving school and Custom Works. Ginza remains player-only.
+          if (this.crewMode && travelTarget?.regionId === 'CENTRAL_TOKYO') {
+            this.showWorkshopToast('CREW CAR // CENTRAL TOKYO UNAVAILABLE');
+            return;
+          }
+
+          // Central Tokyo contains a dealership and showroom, so the player can
+          // visit it even when the current physical workshop has no car stored.
+          // Normal street meets still require a local car to drive out with.
+          if (!this.selectedCarId && !devTravelCarId &&
+              !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
+            this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
+            return;
+          }
+
+          const cash = Number(this.registry.get('cash') || 0);
+          if (cash < cost) return;
+          this.registry.set('cash', cash - cost);
+          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || null);
+          this.registry.set('meetStranded', false);
+
+          if (travelTarget?.regionId === 'CENTRAL_TOKYO') {
+            this.registry.set('centralTokyoLocation', locationId);
+            this.registry.set('district', 'CENTRAL_TOKYO');
+            saveSessionState(this.registry);
+            this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+            this.scene.start('CentralTokyoScene', { locationId });
+            return;
+          }
+
+          if (travelTarget?.regionId === 'OSHIAGE') {
+            if (this.crewMode && locationId === 'oshiageSkytreeMeet') return;
+            this.registry.set('oshiageLocation', locationId);
+            this.registry.set('district', 'OSHIAGE');
+            saveSessionState(this.registry);
+            this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+            this.scene.start('OshiageScene', { locationId });
+            return;
+          }
+
+          const destination = getMeetLocation(locationId);
+          if (!destination) return;
+          this.registry.set('meetLocation', locationId);
+          this.registry.set('district', destination.district);
+          saveSessionState(this.registry);
+
+          this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+          this.scene.start('MeetScene');
+        },
+      });
+    });
+  }
+
+  getWorkshopWheelContactOffset(wheelSource, axleFit) {
+    const authoredRadius = Number(axleFit?.backingRadius || 0);
+    if (authoredRadius > 0) return authoredRadius;
+    return getWheelContactOffsetY(wheelSource, axleFit?.wheelScale);
+  }
+
+  getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
+    if (car?.visual?.referenceStandard) return bodyY;
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
+
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const rearBottom =
+      bodyY + renderOffsetY + fit.rear.offsetY +
+      this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
+    const frontBottom =
+      bodyY + renderOffsetY + fit.front.offsetY +
+      this.getWorkshopWheelContactOffset(wheelSource, fit.front);
+    return Math.max(rearBottom, frontBottom);
+  }
+
+  getBodyYForWheelBottom(car, targetWidth, wheelBottomY, visualModsOverride = null) {
+    if (car?.visual?.referenceStandard) return wheelBottomY;
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
+
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const rearBottomOffset =
+      fit.rear.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
+    const frontBottomOffset =
+      fit.front.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.front);
+
+    // Account for per-asset body trim when solving the body origin. Without
+    // this, hero cars with larger renderOffsetY values sat visibly lower even
+    // though the garage was trying to share one tyre-contact baseline.
+    return wheelBottomY - renderOffsetY - Math.max(rearBottomOffset, frontBottomOffset);
+  }
+
+  createCarDisplay(car, x, y, targetWidth, depth, visualModsOverride = null) {
+    const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const carStates = this.registry.get('carStates') || {};
+    const carState = carStates[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const displayY = y + renderOffsetY;
+    // Legacy scenes pass a centred bay coordinate. Ref cars use one common
+    // AE86-derived right edge, preserving their GIMP-authored relative lengths.
+    const drawX = getReferenceRightX(car, x, bodyScale);
+
+    const rearX = drawX + fit.rear.offsetX;
+    const frontX = drawX + fit.front.offsetX;
+    const rearY = displayY + fit.rear.offsetY;
+    const frontY = displayY + fit.front.offsetY;
+
+    const rearWheel = this.add.image(rearX, rearY, wheelVisual.wheelKey)
+      .setScale(fit.rear.wheelScale)
+      .setDepth(depth);
+    rearWheel.storyRollRadius=fit.rear.backingRadius||Math.max(8,rearWheel.displayWidth/2);
+
+    const frontWheel = this.add.image(frontX, frontY, wheelVisual.wheelKey)
+      .setScale(fit.front.wheelScale)
+      .setDepth(depth);
+    frontWheel.storyRollRadius=fit.front.backingRadius||Math.max(8,frontWheel.displayWidth/2);
+
+    const rearWheelBacking = this.add.circle(
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rearWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.35);
+
+    const frontWheelBacking = this.add.circle(
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, frontWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.35);
+
+    const tyreBottom = Math.max(
+      rearY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear),
+      frontY + this.getWorkshopWheelContactOffset(wheelSource, fit.front)
+    );
+    const shadowHeight = Math.max(
+      20,
+      Math.max(rearWheel.displayHeight, frontWheel.displayHeight) * 0.34
+    );
+    const roadShadow = this.add.ellipse(
+      x,
+      tyreBottom - shadowHeight / 8,
+      Math.max(128, targetWidth * 0.96),
+      shadowHeight,
+      0x000000,
+      0.82
+    ).setDepth(depth - 0.12);
+
+    const paintColor = getCarPaintColor(carState);
+    const bodyLayers = createCarBodyLayers(this, car, {
+      x: drawX,
+      y: displayY,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor,
+    });
+
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      x: drawX,
+      y: displayY,
+      scale: bodyScale,
+      depth: depth + 1.005,
+      paintColor,
+      visualMods: visualModsOverride,
+      bodyLayers,
+    });
+
+    // Correct reference-car centre X, but preserve the shop's saved Y origin.
+    // Both axes follow the car art whenever its height calibration changes.
+    const decalAnchor = getCarDecalAnchor(car, {
+      x: car.visual?.referenceStandard ? drawX : x,
+      y: displayY,
+      scale: bodyScale,
+      sourceWidth: source.width,
+      sourceHeight: source.height,
+    });
+    const decalObjects = createTunerDecalLayers(this, carState, {
+      x: decalAnchor.x,
+      y: decalAnchor.y,
+      displayWidth: bodyLayers.primary.displayWidth,
+      displayHeight: bodyLayers.primary.displayHeight,
+      // Under fixed linework and above the tintable paint layer.
+      depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
+    });
+
+    return [
+      rearWheelBacking,
+      frontWheelBacking,
+      roadShadow,
+      rearWheel,
+      frontWheel,
+      ...bodyLayers.objects,
+      ...visualModObjects,
+      ...decalObjects,
+    ];
+  }
+
+  buildWorkshopHeroLayout(car, visualModsOverride = null) {
+    if (!car) return null;
+
+    const crewOffsetX = this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0;
+    const crewOffsetY = this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0;
+    const heroX = HERO_CFG.x + crewOffsetX;
+    const tyreContactY = Number(HERO_CFG.tyreContactY || 500) + crewOffsetY;
+    const bodyY = this.getBodyYForWheelBottom(
+      car,
+      HERO_CFG.targetWidth,
+      tyreContactY,
+      visualModsOverride
+    );
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(
+      car,
+      visualModsOverride || carState
+    );
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
+    const bodyScale = getCarBodyScaleForWidth(
+      this,
+      car,
+      HERO_CFG.targetWidth
+    );
+    const wheelFit = getWheelPairFit(
+      wheelVisual,
+      bodyScale,
+      false,
+      wheelSource
+    );
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const rightX = getReferenceRightX(car, heroX, bodyScale);
+    const heroSource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const visibleWidth = car.visual?.referenceStandard
+      ? heroSource.width * bodyScale
+      : HERO_CFG.targetWidth;
+
+    return {
+      x: heroX,
+      bodyY,
+      targetWidth: HERO_CFG.targetWidth,
+      bodyScale,
+      tyreContactY,
+      frontWheelX: rightX + wheelFit.front.offsetX,
+      rearWheelX: rightX + wheelFit.rear.offsetX,
+      rearWheelY: bodyY + renderOffsetY + wheelFit.rear.offsetY,
+      frontWheelY: bodyY + renderOffsetY + wheelFit.front.offsetY,
+      wheelY: bodyY + renderOffsetY + (
+        wheelFit.rear.offsetY +
+        wheelFit.front.offsetY
+      ) / 2,
+      left: car.visual?.referenceStandard ? rightX - visibleWidth : heroX - HERO_CFG.targetWidth / 2,
+      right: car.visual?.referenceStandard ? rightX : heroX + HERO_CFG.targetWidth / 2,
+    };
+  }
+
+  selectCar(id, { remember = true } = {}) {
+    if (!cars[id] || !this.ownedCarIds.includes(id)) return;
+    if (
+      !this.crewMode &&
+      this.carGarageLocations?.[id] !== this.getActiveWorkshop().id
+    ) return;
+    if (
+      this.crewMode &&
+      !this.getCurrentWorkshopCars().includes(id)
+    ) return;
+
+    if (this.engineMode || this.secondaryMode || this.chassisMode) {
+      if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
+      return;
+    }
+
+    this.selectedCarId = id;
+    this.registry.set('selectedCarId', id);
+    if (remember && !this.crewMode && !cars[id]?.crewLoan &&
+        !isArkonRwbRestoration(this.registry,id)) {
+      choosePersonalCar(this.registry, id);
+    }
+    const crewMember = this.syncSelectedRaceDriver();
+
+    for (const obj of this.selectedDisplay || []) {
+      try { obj?.destroy?.(); } catch (e) {}
+    }
+
+    if (this.crewMode && crewMember) {
+      this.focusCrewMember(crewMember);
+    }
+
+    this.heroCarLayout = this.buildWorkshopHeroLayout(cars[id]);
+    if (!this.heroCarLayout) return;
+    this.selectedDisplay = this.createCarDisplay(
+      cars[id],
+      this.heroCarLayout.x,
+      this.heroCarLayout.bodyY,
+      this.heroCarLayout.targetWidth,
+      10
+    );
+
+    const car = cars[id];
+    const carStates = this.registry.get('carStates') || {};
+    const carState = carStates[id] || {};
+    const tunedBuild = buildDynoCar(id, carState) || (() => {
+      return buildCarFromState(car,engines[car.engine],carState);
+    })();
+
+    this.headerCarText.setText(
+      this.crewMode && crewMember
+        ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
+          ' // ' + String(crewMember.regionId || '').toUpperCase()
+        : car.name.toUpperCase()
+    );
+
+    const tunedPower = Number(tunedBuild.car.powerKW ?? 0);
+    const tunedTorque = Number(tunedBuild.car.torqueNm ?? 0);
+    const ratingDisplay = getPowerTorqueDisplay(car, carState, tunedBuild.car);
+    const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
+    const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
+
+    const engineLabel = this.isSelectedCarTuningLocked()
+      ? String(car.engineModel || '—').split('//')[0].trim()
+      : (car.engineModel || '—');
+    this.specValueTexts.engine.setText(engineLabel);
+    this.engineeringLabelText?.setText(engineeringLabel(car));
+    if(this.engineeringLabelText)this.engineeringLabelText.setScale(Math.min(1,(SIDE.w-40)/Math.max(1,this.engineeringLabelText.width)));
+    this.factorySetupButton?.setVisible(!this.isSelectedCarTuningLocked()&&Boolean(carState.parkedPerformanceParts)).setText('RESTORE LEGACY PARKED TUNING');
+    this.specValueTexts.power.setText(
+      ratingDisplay.powerLabel +
+      (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')
+    );
+    this.specValueTexts.torque.setText(
+      ratingDisplay.torqueLabel +
+      (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+    );
+    this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
+
+    this.refreshTuningCategoryAvailability();
+
+    for (const item of this.thumbButtons) {
+      const active = item.id === id;
+      item.box.setFillStyle(active ? 0x10263a : 0x0b1724, 1);
+      item.box.setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+    }
+
+    if (this.meetButton) {
+      if(isArkonRwbRestoration(this.registry,id)){
+        this.meetButton.disableInteractive().setFillStyle(0x1a1e24,1)
+          .setStrokeStyle(1,0x715662);
+        this.meetButtonLabel?.setText('RESTORATION ONLY').setColor('#ff98a0');
+      }else{
+        this.meetButton.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0c2827, 1)
+          .setStrokeStyle(2, 0x62e8c7, 1);
+        this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#f1fffb');
+      }
+    }
+
+    this.updateMoveCarButtonState();
+    this.refreshDynoButton?.();
+
+    if (this.crewMode) {
+      const crewCars = this.getCurrentWorkshopCars();
+      const selectedIndex = Math.max(0, crewCars.indexOf(id));
+      this.garagePage = Math.floor(selectedIndex / (this.garagePageSize || 4));
+      this.renderGaragePage();
+      this.refreshCrewSpaceNavigationState();
+    }
+
+    this.saveProfile();
+  }
+
+  showEmptyGarageState() {
+    this.headerCarText.setText(this.registry.get('gameMode')==='arkonStory'
+      ? 'CANAL YARD // WORK IN PROGRESS':'NO CAR');
+    this.specValueTexts.engine.setText('—');
+    this.specValueTexts.power.setText('—');
+    this.specValueTexts.torque.setText('—');
+    this.specValueTexts.weight.setText('—');
+    this.tuningStatusText
+      ?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel)
+      .setColor('#8cc8ec');
+
+    this.upgradeButtons.forEach(item => {
+      item.box.disableInteractive()
+        .setFillStyle(0x0a1017, 1)
+        .setStrokeStyle(1, 0x29343d, 1);
+      item.label.setColor('#53626c');
+      item.arrow.setColor('#46545e');
+    });
+
+    const ownsCarsElsewhere = this.ownedCarIds.length > 0;
+
+    // A driver cannot leave an empty workshop without a car. OTHER WORKSHOP
+    // remains available so cars stored elsewhere can still be retrieved.
+    this.meetButton?.disableInteractive()
+      .setFillStyle(0x17181d, 1)
+      .setStrokeStyle(1, 0x514f55, 1);
+    this.meetButtonLabel
+      ?.setText(this.registry.get('gameMode')==='arkonStory'
+        ? 'WORKSHOP // STORY IN PROGRESS'
+        : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+      .setColor('#817d84');
+    this.updateMoveCarButtonState();
+
+    // The first visit is deliberately empty, not a pink-slip game over.
+    if (['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter')) ||
+        this.registry.get('gameMode')==='arkonStory') return;
+
+    this.add.rectangle(710, 360, 720, 148, 0x050b12, 0.78)
+      .setStrokeStyle(1, 0x315470, 0.64)
+      .setDepth(19);
+
+    this.add.text(710, 326, ownsCarsElsewhere ? 'NO CARS STORED HERE' : 'GARAGE EMPTY', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#edf8ff',
+    }).setOrigin(0.5).setDepth(20);
+
+    this.add.text(
+      710,
+      382,
+      ownsCarsElsewhere
+        ? 'Your cars are stored at another Shinonome workshop. Use OTHER WORKSHOP to switch garages and collect one.'
+        : 'You lost your last car. Restart from SETTINGS when you are ready for another run.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#b8cbd7',
+        align: 'center',
+        wordWrap: { width: 640 },
+      }
+    ).setOrigin(0.5).setDepth(20);
+  }
+
+  recoverTuningTransition(error = null) {
+    if (error) console.error('[Tokyo SHIFT] tuning transition failed', error);
+
+    const lists = [
+      'engineModeObjects',
+      'engineModalObjects',
+      'engineHotspotObjects',
+      'engineHelperObjects',
+      'secondaryModeObjects',
+      'secondaryModalObjects',
+      'secondaryHotspotObjects',
+      'secondaryHelperObjects',
+      'chassisModeObjects',
+    ];
+
+    lists.forEach(key => {
+      (this[key] || []).forEach(obj => {
+        try { obj?.destroy?.(); } catch (e) {}
+      });
+      this[key] = [];
+    });
+
+    this.engineMode = false;
+    this.secondaryMode = null;
+    this.chassisMode = false;
+    this.engineTransitioning = false;
+    // If iOS interrupted a tuning transition, never strand the casual avatar
+    // invisible when the mechanic pose was already destroyed.
+    this.setArkonWorkingAtCar(false);
+
+    try { this.updateGarageNavState(); } catch (e) {}
+    this.upgradeButtons?.forEach(item => {
+      try { item.box.setInteractive({ useHandCursor: true }); } catch (e) {}
+    });
+    this.thumbButtons?.forEach(item => {
+      try { item.box.setInteractive({ useHandCursor: true }); } catch (e) {}
+    });
+    try { this.saveButton?.setInteractive({ useHandCursor: true }); } catch (e) {}
+    try { this.meetButton?.setInteractive({ useHandCursor: true }); } catch (e) {}
+    try { this.selectUpgrade(null); } catch (e) {}
+
+    try {
+      this.showWorkshopToast('TUNING SCREEN RECOVERED // TRY AGAIN');
+    } catch (e) {}
+  }
+
+  ensureGarageTuningAssets(
+    onReady,
+    { includeVisualMods = false, silent = false } = {}
+  ) {
+    this._garageTuningAssetCallbacks = this._garageTuningAssetCallbacks || [];
+    if (typeof onReady === 'function') {
+      this._garageTuningAssetCallbacks.push(onReady);
+    }
+
+    if (this._garageTuningAssetLoading) return;
+
+    let queued = 0;
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    garageAssets
+      .filter(asset =>
+        asset.key.startsWith('stockEngine') ||
+        asset.key.startsWith('tuningCategory') ||
+        asset.key.startsWith('tuningPart')
+      )
+      .forEach(asset => queueImage(asset.key, asset.path));
+
+    if (isArkonStoryWorkshop(this.registry,this.crewMode)) {
+      ARKON_STORY_MECHANIC_ASSETS.forEach(({key,path}) =>
+        queueImage(key,path+'?v=20261023-r654'));
+    } else {
+      [
+        ['daichiEngineInspect', 'assets/Characters/Main/home_daichi_engine_inspect.png?v=20261010-r458'],
+        ['daichiChassisTools', 'assets/Characters/Main/home_daichi_chassis_tools.png?v=20261010-r458'],
+        ['daichiExhaustCrouch', 'assets/Characters/Main/home_daichi_exhaust_crouch.png?v=20261010-r458'],
+      ].forEach(([key, path]) => queueImage(key, path));
+    }
+
+    if (includeVisualMods && this.selectedCarId) {
+      queued += preloadVisualModAssets(
+        this,
+        '20260928-r242',
+        [this.selectedCarId]
+      );
+    }
+
+    const flushCallbacks = () => {
+      const callbacks = [...(this._garageTuningAssetCallbacks || [])];
+      this._garageTuningAssetCallbacks = [];
+      callbacks.forEach(callback => {
+        try { callback?.(); } catch (error) {
+          this.recoverTuningTransition(error);
+        }
+      });
+    };
+
+    if (queued <= 0) {
+      flushCallbacks();
+      return;
+    }
+
+    this._garageTuningAssetLoading = true;
+    if (!silent) {
+      startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    }
+
+    this.load.once('complete', () => {
+      this._garageTuningAssetLoading = false;
+      flushCallbacks();
+      if (!silent) finishSceneLoading('TUNING READY');
+    });
+
+    if (!this.load.isLoading()) this.load.start();
+  }
+
+  runTuningTransition(activate) {
+    if (this.engineTransitioning) return;
+    this.engineTransitioning = true;
+
+    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+      .setDepth(165)
+      .setAlpha(0)
+      .setInteractive();
+
+    let finished = false;
+    const clearVeil = () => {
+      if (finished) return;
+      finished = true;
+
+      const finish = () => {
+        try { veil.destroy(); } catch (e) {}
+        this.engineTransitioning = false;
+      };
+
+      if (!veil?.active) {
+        finish();
+        return;
+      }
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 0,
+        duration: 180,
+        ease: 'Sine.easeOut',
+        onComplete: finish,
+      });
+    };
+
+    // Never go fully black. More importantly, always clear the veil even when
+    // a tuning component throws during activation.
+    this.tweens.add({
+      targets: veil,
+      alpha: 0.72,
+      duration: 120,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        try {
+          activate();
+        } catch (error) {
+          this.recoverTuningTransition(error);
+        } finally {
+          clearVeil();
+        }
+      },
+    });
+
+    // Last-resort guard for interrupted tweens / iOS lifecycle edge cases.
+    this.time.delayedCall(900, clearVeil);
+  }
+
+  enterEngineMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // ENGINE TUNING LOCKED');
+      return;
+    }
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateEngineMode())
+    );
+  }
+
+  activateEngineMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
+    this.engineMode = true;
+    this.setWorkshopHomeHotspotsVisible(false);
+    this.updateGarageNavState();
+
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    this.currentEngineTuning = getEngineTuning(state);
+    this.pendingEngineTuning = { ...this.currentEngineTuning };
+
+    const add = obj => {
+      this.engineModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    // Invisible hit area: the category artwork already supplies its own visual frame.
+    this.engineInset = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 102,
+      SIDE.w - 36,
+      178,
+      0x000000,
+      0
+    ).setInteractive({ useHandCursor: true })
+      .setDepth(74));
+
+    this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
+
+    if (this.textures.exists('tuningCategoryEngine')) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
+        'tuningCategoryEngine'
+      ).setOrigin(0.5).setDepth(73));
+
+      const source = this.textures.get('tuningCategoryEngine').getSourceImage();
+      const fit = Math.min(
+        (SIDE.w - 54) / source.width,
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
+      );
+      logo.setScale(fit);
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, 'ENGINE', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '14px',
+        color: '#e9f8ff'
+      }).setOrigin(0.5).setDepth(73));
+    }
+
+    const listIds = ENGINE_PART_ORDER;
+    this.enginePartRows = {};
+
+    listIds.forEach((partId, i) => {
+      const y = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET + i * TUNING_CATEGORY_ROW_GAP;
+      const part = ENGINE_TUNING_PARTS[partId];
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        44,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff3ff'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+        fontFamily: BODY_FONT, fontSize: '9px', color: '#7d9bad', fontStyle: '600'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8db6cc'
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openEnginePartSelector(partId));
+      this.enginePartRows[partId] = { box, label, detail, level };
+    });
+
+    this.enginePreviewText = add(this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 510,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#91b6ca',
+        lineSpacing: 4,
+      }
+    ).setDepth(73));
+
+    this.engineApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+
+    this.engineApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      'NO PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    const backButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    backButton.on('pointerdown', () => this.leaveEngineMode(true, true));
+
+    this.buildEngineHotspots();
+    this.addDaichiEngineHelper();
+    this.refreshEngineMode();
+  }
+
+  leaveEngineMode(refreshCar = true, animate = true) {
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 190,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveEngineMode(refreshCar, false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 280,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
+    this.closeEnginePartSelector();
+    this.engineModeObjects.forEach(obj => obj?.destroy?.());
+    this.engineHotspotObjects.forEach(obj => obj?.destroy?.());
+    this.engineHelperObjects.forEach(obj => obj?.destroy?.());
+
+    this.engineModeObjects = [];
+    this.engineHotspotObjects = [];
+    this.engineHelperObjects = [];
+    this.engineMode = false;
+    this.setArkonWorkingAtCar(false);
+    this.setWorkshopHomeHotspotsVisible(true);
+    this.updateGarageNavState();
+    this.enginePartRows = {};
+    this.inlineEngineSprite = null;
+    this.inlineEngineMask = null;
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
+
+    if (refreshCar) this.refreshWorkshopSpecs();
+  }
+
+  buildEngineHotspots() {
+    const layout = this.heroCarLayout || {
+      frontWheelX: 930,
+      rearWheelX: 500,
+      wheelY: 430,
+      left: 363,
+      right: 1053,
+    };
+
+    const frontX = layout.frontWheelX;
+    const rearX = layout.rearWheelX;
+    const wheelY = layout.wheelY;
+    const carLeft = layout.left;
+    const carRight = layout.right;
+    const clampX = value => Phaser.Math.Clamp(value, carLeft + 42, carRight - 42);
+
+    // Anchor the mechanical points to the selected car's wheelbase rather than
+    // fixed screen coordinates. This keeps the markers on hatches, coupes and
+    // sedans even when the body proportions change.
+    const hotspots = {
+      ecu: {
+        x: clampX(frontX - 118),
+        y: wheelY - 38,
+        lx: clampX(frontX - 178),
+        ly: wheelY + 30,
+      },
+      intake: {
+        x: clampX(frontX + 78),
+        y: wheelY - 48,
+        lx: clampX(frontX + 112),
+        ly: wheelY - 106,
+      },
+      turbo: {
+        x: clampX(frontX - 48),
+        y: wheelY - 54,
+        lx: clampX(frontX - 74),
+        ly: wheelY - 108,
+      },
+      intercooler: {
+        x: clampX(carRight - 76),
+        y: wheelY - 14,
+        lx: clampX(carRight - 112),
+        ly: wheelY + 30,
+      },
+    };
+
+    Object.entries(hotspots).forEach(([partId, p]) => {
+      const part = ENGINE_TUNING_PARTS[partId];
+      if (!part) return;
+
+      const line = this.add.line(0, 0, p.x, p.y, p.lx, p.ly, 0x43dfff, 0.95)
+        .setOrigin(0, 0)
+        .setLineWidth(2)
+        .setDepth(74);
+
+      const dot = this.add.circle(p.x, p.y, 10, 0x07111d, 1)
+        .setStrokeStyle(3, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(75);
+
+      const width = Math.max(100, part.name.length * 12);
+      const box = this.add.rectangle(p.lx, p.ly, width, 30, 0x07111d, 0.97)
+        .setStrokeStyle(2, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(74);
+
+      const label = this.add.text(p.lx, p.ly, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#e7fbff'
+      }).setOrigin(0.5).setDepth(75);
+
+      const open = () => this.openEnginePartSelector(partId);
+      dot.on('pointerdown', open);
+      box.on('pointerdown', open);
+
+      this.engineHotspotObjects.push(line, dot, box, label);
+    });
+  }
+
+  // Story Mode uses Arkon's own hands-on mechanic artwork. This toggles
+  // the ordinary casual workshop avatar AND both floor shadows together.
+  setArkonWorkingAtCar(working) {
+    if (!isArkonStoryWorkshop(this.registry,this.crewMode)) return;
+    if (working) {
+      if (this._arkonWorkingHidden) return;
+      const actor=this.workshopPlayerSprite;
+      this._arkonWorkingHidden=[actor,...(actor?.stageShadows||[])]
+        .filter(obj=>obj?.active)
+        .map(obj=>({obj,wasVisible:obj.visible}));
+      this._arkonWorkingHidden.forEach(({obj})=>obj.setVisible(false));
+    } else {
+      (this._arkonWorkingHidden||[]).forEach(({obj,wasVisible})=>{
+        if(obj?.active)obj.setVisible(wasVisible);
+      });
+      this._arkonWorkingHidden=null;
+    }
+  }
+
+  addDaichiTuningHelper({
+    textureKey: daichiTextureKey,
+    x,
+    feetY,
+    targetHeight = 282,
+    depth = 8.4,
+    anchorY = 1,
+    shadowWidth = 74,
+    shadowHeight = 22,
+    shadowOffsetX = 6,
+    shadowOffsetY = -8,
+    useGarageCharacterShadow = false,
+    objectList,
+  }) {
+    const textureKey=resolveWorkshopMechanicTexture(this.registry,
+      daichiTextureKey,this.crewMode);
+    if (!textureKey || !this.textures.exists(textureKey) || !objectList) return null;
+
+    const sprite = this.add.image(x, feetY, textureKey)
+      .setOrigin(0.5, anchorY)
+      .setDepth(depth);
+
+    const source = this.textures.get(textureKey).getSourceImage();
+    sprite.setScale(targetHeight / source.height);
+
+    const softShadow = useGarageCharacterShadow
+      ? this.add.ellipse(
+          x + 12,
+          feetY - 16,
+          Math.max(60, sprite.displayWidth * 0.80),
+          30,
+          0x000000,
+          0.58
+        ).setDepth(depth - 0.12)
+      : this.add.ellipse(
+          x + shadowOffsetX,
+          feetY + shadowOffsetY,
+          shadowWidth,
+          shadowHeight,
+          0x000000,
+          0.55
+        ).setDepth(depth - 0.2);
+
+    const contactShadow = useGarageCharacterShadow
+      ? this.add.ellipse(
+          x + 9,
+          feetY - 11,
+          Math.max(44, sprite.displayWidth * 0.60),
+          18,
+          0x000000,
+          0.84
+        ).setDepth(depth - 0.08)
+      : this.add.ellipse(
+          x + Math.round(shadowOffsetX * 0.72),
+          feetY + shadowOffsetY + 3,
+          Math.max(42, Math.round(shadowWidth * 0.70)),
+          Math.max(12, Math.round(shadowHeight * 0.60)),
+          0x000000,
+          0.80
+        ).setDepth(depth - 0.1);
+
+    objectList.push(softShadow, contactShadow, sprite);
+    if (this.engineMode || this.secondaryMode || this.chassisMode) {
+      this.setArkonWorkingAtCar(true);
+    }
+    return sprite;
+  }
+
+  addDaichiEngineHelper() {
+    const layout = this.heroCarLayout;
+    const car = cars[this.selectedCarId];
+    if (!layout || !car) return;
+
+    const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
+    // The older helper offset was authored around the oversized 690px car and
+    // pushed Daichi into the right wall. Keep him beside the engine bay instead.
+    const engineCfg = DAICHI_CFG.engine;
+    const x = Math.min(
+      STAGE.x + STAGE.w - engineCfg.rightInset,
+      layout.frontWheelX + engineCfg.frontWheelOffsetX
+    );
+
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiEngineInspect',
+      x,
+      feetY: wheelBottomY + engineCfg.feetOffsetY,
+      targetHeight: engineCfg.targetHeight,
+      depth: 8.4,
+      // The generated pose uses the shared 1024x1536 canvas but has extra
+      // transparent padding below the shoes. Anchor the visible feet instead.
+      anchorY: 1458 / 1536,
+      shadowWidth: 116,
+      shadowHeight: 25,
+      shadowOffsetX: 13,
+      shadowOffsetY: -7,
+      objectList: this.engineHelperObjects,
+    });
+  }
+
+  drawInlineEngineSchematic(level = 0) {
+    const g = this.engineInsetGraphics;
+    if (!g) return;
+    g.clear();
+
+    if (this.inlineEngineSprite) {
+      this.inlineEngineSprite.destroy();
+      this.inlineEngineSprite = null;
+    }
+    if (this.inlineEngineMask) {
+      this.inlineEngineMask.destroy();
+      this.inlineEngineMask = null;
+    }
+
+    const car = cars[this.selectedCarId];
+    const engineKey = car?.visual?.engineKey;
+    const insetLeft = SIDE.x + 18;
+    const insetTop = SIDE.y + 13;
+    const insetW = SIDE.w - 36;
+    const insetH = 178;
+    const cx = insetLeft + 70;
+    const cy = SIDE.y + 110;
+
+    if (engineKey && this.textures.exists(engineKey)) {
+      this.inlineEngineSprite = this.add.image(cx, cy, engineKey)
+        .setDepth(74)
+        .setOrigin(0.5);
+      this.engineModeObjects.push(this.inlineEngineSprite);
+
+      const source = this.textures.get(engineKey).getSourceImage();
+      const fit = Math.max(220 / source.width, 150 / source.height);
+      this.inlineEngineSprite.setScale(fit * (1 + level * 0.035));
+
+      this.inlineEngineMask = this.make.graphics({ add: false });
+      this.inlineEngineMask.fillStyle(0xffffff, 1);
+      this.inlineEngineMask.fillRect(insetLeft + 2, insetTop + 2, insetW - 4, insetH - 4);
+      this.inlineEngineSprite.setMask(this.inlineEngineMask.createGeometryMask());
+      this.engineModeObjects.push(this.inlineEngineMask);
+      return;
+    }
+
+    const scale = 1.06 + level * 0.04;
+    g.fillStyle(0x02070c, 0.65).fillEllipse(cx, cy + 32, 180 * scale, 22 * scale);
+    g.fillStyle(0x8796a0, 1)
+      .fillRoundedRect(cx - 82 * scale, cy - 24 * scale, 164 * scale, 62 * scale, 7);
+    g.fillStyle(level >= 2 ? 0xbd3d49 : 0x9f2935, 1)
+      .fillRoundedRect(cx - 64 * scale, cy - 39 * scale, 128 * scale, 33 * scale, 5);
+    g.lineStyle(3, 0xd7e4ea, 0.76)
+      .strokeRoundedRect(cx - 82 * scale, cy - 24 * scale, 164 * scale, 62 * scale, 7);
+
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(0x222b34, 1)
+        .fillCircle(cx - 54 * scale + i * 35 * scale, cy + 15 * scale, 10 * scale);
+    }
+  }
+
+  getPendingEngineCost() {
+    if (!this.currentEngineTuning || !this.pendingEngineTuning) return 0;
+    const baseCost = getEngineTuningCartCost(
+      this.currentEngineTuning,
+      this.pendingEngineTuning
+    );
+    return this.getWorkshopAdjustedCost(baseCost);
+  }
+
+  getEnginePreviewBuild() {
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const previewState = {
+      ...state,
+      tuning: this.pendingEngineTuning,
+      engineTuning: this.pendingEngineTuning,
+      stock: false,
+    };
+    const preview=buildCarFromState(car,engines[car.engine],previewState);
+    return {preview, previewState};
+  }
+
+  refreshEngineMode() {
+    if (!this.engineMode || !this.selectedCarId) return;
+    const car = cars[this.selectedCarId];
+    const {preview, previewState} = this.getEnginePreviewBuild();
+    const previewRating = getPowerTorqueDisplay(car, previewState, preview.car);
+
+    Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentEngineTuning[partId];
+      const pending = this.pendingEngineTuning[partId];
+      const spec = ENGINE_TUNING_PARTS[partId].levels[pending];
+
+      row.level.setText(
+        pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending
+      );
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    this.enginePreviewText?.setText(
+      'POWER  ' + previewRating.powerLabel + '\n' +
+      'TORQUE ' + previewRating.torqueLabel + '\n' +
+      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar\n' +
+      boostSupportMessage(preview.car, this.pendingEngineTuning)
+    );
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const cost = this.getPendingEngineCost();
+    this.engineApplyButton?.removeAllListeners('pointerdown');
+
+    if (cost <= 0) {
+      this.engineApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.engineApplyText?.setText('NO PARTS SELECTED').setColor('#758e94');
+      return;
+    }
+
+    const affordable = cash >= cost;
+    this.engineApplyButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+      .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+
+    this.engineApplyText?.setText(
+      affordable
+        ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US')
+        : 'NEED ¥ ' + cost.toLocaleString('en-US')
+    ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+
+    this.engineApplyButton?.on('pointerdown', () => this.applyPendingEngineUpgrades());
+  }
+
+  addModificationModalVisual(add, {
+    textureKey = null,
+    title = '',
+    subtitle = '',
+    partName = '',
+    frameLabel = 'CURRENT SETUP',
+    mode = 'engine',
+    depth = 120,
+  } = {}) {
+    const frameX = 390;
+    const frameY = 420;
+    const frameW = 410;
+    const frameH = 500;
+
+    add(this.add.rectangle(frameX, frameY, frameW, frameH, 0x07111d, 0.98)
+      .setStrokeStyle(2, 0x315470, 1)
+      .setDepth(depth + 2));
+
+    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, frameLabel, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#6f93a8',
+    }).setDepth(depth + 3));
+
+    let renderedSprite = false;
+    if (textureKey && this.textures.exists(textureKey)) {
+      const sprite = add(this.add.image(frameX, frameY - 48, textureKey)
+        .setDepth(depth + 3)
+        .setOrigin(0.5));
+      const source = this.textures.get(textureKey).getSourceImage();
+      const fit = Math.min(350 / source.width, 300 / source.height);
+      sprite.setScale(fit);
+      renderedSprite = true;
+    }
+
+    if (!renderedSprite) {
+      const g = add(this.add.graphics().setDepth(depth + 3));
+      g.lineStyle(5, 0x7f98a8, 0.92);
+
+      if (mode === 'drivetrain') {
+        g.strokeRoundedRect(frameX - 82, frameY - 95, 126, 70, 10);
+        g.lineBetween(frameX - 116, frameY - 60, frameX - 82, frameY - 60);
+        g.lineBetween(frameX + 44, frameY - 60, frameX + 112, frameY - 60);
+        g.strokeCircle(frameX - 120, frameY - 60, 22);
+        g.strokeCircle(frameX + 116, frameY - 60, 22);
+      } else if (mode === 'exhaustNos') {
+        g.lineBetween(frameX - 112, frameY - 48, frameX + 30, frameY - 48);
+        g.strokeRoundedRect(frameX + 30, frameY - 76, 90, 56, 10);
+        g.strokeRoundedRect(frameX - 88, frameY - 128, 38, 80, 10);
+      } else {
+        g.strokeRoundedRect(frameX - 102, frameY - 100, 204, 118, 12);
+        g.lineBetween(frameX - 92, frameY - 8, frameX + 92, frameY - 8);
+        for (let i = 0; i < 4; i++) {
+          g.strokeCircle(frameX - 72 + i * 48, frameY - 46, 14);
+        }
+      }
+
+      add(this.add.text(frameX, frameY + 38, 'SPRITE SLOT', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#526d7e',
+      }).setOrigin(0.5).setDepth(depth + 3));
+    }
+
+    add(this.add.text(frameX, frameY + 142, title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: frameW - 44, useAdvancedWrap: true },
+    }).setOrigin(0.5, 0).setDepth(depth + 3));
+
+    if (subtitle) {
+      add(this.add.text(frameX, frameY + 192, subtitle, {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#8da9ba',
+        align: 'center',
+        fontStyle: '600',
+        wordWrap: { width: frameW - 44, useAdvancedWrap: true },
+      }).setOrigin(0.5, 0).setDepth(depth + 3));
+    }
+
+    if (partName) {
+      add(this.add.text(frameX, frameY + 232, partName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#59dfff',
+        align: 'center',
+      }).setOrigin(0.5, 1).setDepth(depth + 3));
+    }
+  }
+
+  resolveEnginePartSpriteKey(partId, spec, car) {
+    if (partId === 'engine') {
+      return car?.visual?.engineKey || null;
+    }
+
+    if (partId === 'turbo') {
+      const level = Math.max(0, Math.min(3, Number(spec?.level || 0)));
+
+      if (level === 0) {
+        const factoryTurbo = Number(car?.maximumBoost || 0) > 0.01;
+        return factoryTurbo
+          ? 'tuningPartTurboL0Stock'
+          : 'tuningPartTurboL0NA';
+      }
+
+      return 'tuningPartTurboL' + level;
+    }
+
+    return spec?.spriteKey || null;
+  }
+
+  addUpgradeRowSprite(add, spec, x, y, depth = 120, spriteKeyOverride = null) {
+    const well = add(this.add.rectangle(x, y, 88, 74, 0x07111d, 0.96)
+      .setStrokeStyle(1, 0x29465c, 1)
+      .setDepth(depth + 3));
+
+    const spriteKey = spriteKeyOverride || spec?.spriteKey || null;
+
+    if (spriteKey && this.textures.exists(spriteKey)) {
+      const sprite = add(this.add.image(x, y, spriteKey)
+        .setDepth(depth + 4)
+        .setOrigin(0.5));
+      const source = this.textures.get(spriteKey).getSourceImage();
+      sprite.setScale(Math.min(76 / source.width, 62 / source.height));
+    } else {
+      add(this.add.text(x, y, 'LV.' + Number(spec?.level || 0), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#658294',
+      }).setOrigin(0.5).setDepth(depth + 4));
+    }
+
+    return well;
+  }
+
+  // Removing an installed kit is intentionally not a downgrade or a refund.
+  // A confirmation is required because all previously purchased tiers of the
+  // chosen component are discarded, including the NOS shot if its kit is gone.
+  addPartUninstallButton(add, depth, category, partId) {
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    const quote = getPartRemovalQuote(state, category, partId);
+    if (!quote || this.isSelectedCarTuningLocked()) return;
+
+    const x = 965;
+    const box = add(this.add.rectangle(x, 124, 210, 44, 0x35151e, 1)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setDepth(depth + 2)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(x, 124,
+      'UNINSTALL // ¥' + quote.cost.toLocaleString('en-US'), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#ffd5df',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    box.on('pointerdown', () => this.showPartUninstallConfirmation(category, partId));
+  }
+
+  showPartUninstallConfirmation(category, partId) {
+    if (this._partUninstallConfirmObjects?.length || this.isSelectedCarTuningLocked()) return;
+
+    const carId = this.selectedCarId;
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = getPartRemovalQuote(state, category, partId);
+    if (!quote) return;
+
+    const objects = [];
+    this._partUninstallConfirmObjects = objects;
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 155;
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      if (this._partUninstallConfirmObjects === objects) {
+        this._partUninstallConfirmObjects = [];
+      }
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x010309, 0.84)
+      .setInteractive().setDepth(depth));
+
+    add(this.add.rectangle(780, 420, 780, 390, 0x15121b, 0.995)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 284, 'UNINSTALL ' + quote.partName.toUpperCase() + '?', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffe2ea',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 377,
+      'REMOVE LV.' + quote.level + ' // RETURN TO STOCK\n' +
+      'LABOUR  ¥ ' + quote.cost.toLocaleString('en-US') + '\n' +
+      'PART DESTROYED // NO REFUND OR INVENTORY' +
+      (quote.removesShot ? '\nNITROUS SHOT ALSO DESTROYED' : '') +
+      '\nUNPURCHASED CHANGES IN THIS CATEGORY WILL BE CLEARED',
+      {
+        fontFamily: BODY_FONT, fontSize: '15px', color: '#d5c9d2',
+        align: 'center', lineSpacing: 4, wordWrap: { width: 710 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(615, 555, 240, 48, 0x17222e, 1)
+      .setStrokeStyle(1, 0x8091a4, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(615, 555, 'KEEP PART', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e1f0fa',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const uninstall = add(this.add.rectangle(945, 555, 270, 48, 0x411721, 1)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(945, 555, 'PAY & UNINSTALL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe2ea',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+    uninstall.on('pointerdown', () => {
+      // Recheck at commitment; a user can change cars or money while a
+      // modal is open, especially across an interrupted mobile session.
+      if (carId !== this.selectedCarId || this.isSelectedCarTuningLocked()) {
+        close();
+        return;
+      }
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const current = states[carId] || {};
+      const liveQuote = getPartRemovalQuote(current, category, partId);
+      if (!liveQuote || liveQuote.level !== quote.level) {
+        close();
+        this.showWorkshopToast('PARTS CHANGED // REOPEN TUNING');
+        return;
+      }
+
+      const cash = Number(this.registry.get('cash') || 0);
+      if (cash < liveQuote.cost) {
+        close();
+        this.showWorkshopToast('NOT ENOUGH CASH TO UNINSTALL');
+        return;
+      }
+
+      const updated = removeTuningPartFromState(current, category, partId);
+      if (!updated) return;
+      // Perform the state/cash update together, before the next save.
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - liveQuote.cost);
+      this.cashText?.setText('¥ ' + (cash - liveQuote.cost).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+
+      if (category === 'engine') {
+        this.closeEnginePartSelector();
+        this.currentEngineTuning = getEngineTuning(updated);
+        this.pendingEngineTuning = { ...this.currentEngineTuning };
+        this.refreshEngineMode();
+      } else if (category === 'chassis') {
+        this.closeChassisPartSelector();
+        this.currentChassisTuning = getChassisTuning(updated);
+        this.pendingChassisTuning = { ...this.currentChassisTuning };
+        this.refreshChassisMode();
+      } else {
+        this.closeSecondaryPartSelector();
+        this.currentSecondaryTuning = category === 'drivetrain'
+          ? getDrivetrainTuning(updated)
+          : getExhaustNosTuning(updated);
+        this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+        this.refreshSecondaryTuningMode();
+      }
+      this.refreshWorkshopSpecs();
+      this.showWorkshopToast(
+        'PART SCRAPPED // ¥ ' + liveQuote.cost.toLocaleString('en-US')
+      );
+    });
+  }
+
+  openEnginePartSelector(partId, previewLevel = null) {
+    this.closeEnginePartSelector();
+    const part = ENGINE_TUNING_PARTS[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.engineModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+    const car = cars[this.selectedCarId];
+    const installed = Number(this.currentEngineTuning[partId] || 0);
+    const pending = Number(this.pendingEngineTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
+    const currentEngineName =
+      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase();
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    this.addModificationModalVisual(add, {
+      textureKey: this.resolveEnginePartSpriteKey(partId, previewSpec, car) || car?.visual?.engineKey,
+      title:
+        partId === 'engine' && draftLevel === installed && installed === 0
+          ? currentEngineName
+          : previewSpec?.name?.toUpperCase(),
+      subtitle:
+        partId === 'engine' && draftLevel === 0
+          ? 'FACTORY ENGINE // ' + car.shortName
+          : previewSpec?.benefit?.toUpperCase(),
+      partName: part.name,
+      frameLabel: 'PREVIEW',
+      mode: 'engine',
+      depth,
+    });
+
+    part.levels.forEach((spec, index) => {
+      const y = 230 + index * 120;
+      const selected = draftLevel === spec.level;
+      const availableHere =
+        spec.level <= installed ||
+        this.canInstallCurrentUpgrade('engine', partId, spec.level);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        getUpgradePathCost(partId, installed, spec.level)
+      );
+
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
+
+      this.addUpgradeRowSprite(
+        add,
+        spec,
+        745,
+        y,
+        depth,
+        this.resolveEnginePartSpriteKey(partId, spec, car)
+      );
+
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+        wordWrap: { width: 390, useAdvancedWrap: true },
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + this.getCurrentUpgradeRequirement('engine', partId, spec.level);
+      }
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1365, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.openEnginePartSelector(partId, spec.level);
+        });
+      }
+    });
+
+    this.addPartUninstallButton(add, depth, 'engine', partId);
+
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(1160, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1320,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeEnginePartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingEngineTuning[partId] = draftLevel;
+      this.closeEnginePartSelector();
+      this.refreshEngineMode();
+    });
+  }
+
+  closeEnginePartSelector() {
+    this.engineModalObjects.forEach(obj => obj?.destroy?.());
+    this.engineModalObjects = [];
+  }
+
+  applyPendingEngineUpgrades() {
+    const blockedPart = ENGINE_PART_ORDER.find(partId =>
+      Number(this.pendingEngineTuning?.[partId] || 0) >
+        Number(this.currentEngineTuning?.[partId] || 0) &&
+      !this.canInstallCurrentUpgrade(
+        'engine',
+        partId,
+        this.pendingEngineTuning?.[partId] || 0
+      )
+    );
+
+    if (blockedPart) {
+      const targetLevel = this.pendingEngineTuning?.[blockedPart] || 0;
+      this.showWorkshopToast(
+        'NEEDS ' + this.getCurrentUpgradeRequirement('engine', blockedPart, targetLevel)
+      );
+      return;
+    }
+
+    const cost = this.getPendingEngineCost();
+    if (cost <= 0) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const tuning = normaliseEngineTuning(this.pendingEngineTuning);
+
+    carStates[this.selectedCarId] = {
+      stock: false,
+      nosInstalled: Boolean(existing.nosInstalled),
+      tuneLevel: Number(existing.tuneLevel || 0),
+      acquiredVia: existing.acquiredVia || 'garage',
+      ...existing,
+      tuning,
+      stock:
+        getEngineTuningCount(tuning) === 0 &&
+        !existing.nosInstalled &&
+        Object.values(existing.drivetrainTuning || {}).every(value => !Number(value)) &&
+        Object.values(existing.chassisTuning || {}).every(value => !Number(value)) &&
+        Object.values(getExhaustNosTuning(existing)).every(value => !Number(value)),
+    };
+
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentEngineTuning = getEngineTuning(carStates[this.selectedCarId]);
+    this.pendingEngineTuning = { ...this.currentEngineTuning };
+    this.refreshEngineMode();
+    this.showWorkshopToast((isArkonStoryWorkshop(this.registry,this.crewMode)
+      ? 'PARTS INSTALLED // ¥ ' : 'DAICHI INSTALLED THE PARTS // ¥ ') +
+      cost.toLocaleString('en-US'));
+  }
+
+
+  enterChassisMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // CHASSIS TUNING LOCKED');
+      return;
+    }
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateChassisMode()),
+      { includeVisualMods: false }
+    );
+  }
+
+  activateChassisMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
+
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+
+    this.chassisMode = true;
+    this.setWorkshopHomeHotspotsVisible(false);
+    this.currentPaintColor = getCarPaintColor(state);
+    this.pendingPaintColor = this.currentPaintColor;
+    this.currentChassisTuning = getChassisTuning(state);
+    this.pendingChassisTuning = { ...this.currentChassisTuning };
+    this.currentVisualMods = normaliseVisualMods(this.selectedCarId, state);
+    this.pendingVisualMods = { ...this.currentVisualMods };
+    this.chassisModeObjects = [];
+    this.chassisModalObjects = [];
+    this.chassisPaintObjects = [];
+    this.chassisPartRows = {};
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.chassisPaintChannelButtons = [];
+    this.chassisVisualModRows = {};
+    this.chassisPaintPanelOpen = false;
+    this.updateGarageNavState();
+
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
+    const add = obj => {
+      this.chassisModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    if (this.textures.exists('tuningCategoryChassis')) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
+        'tuningCategoryChassis'
+      ).setOrigin(0.5).setDepth(73));
+
+      const source = this.textures.get('tuningCategoryChassis').getSourceImage();
+      logo.setScale(Math.min(
+        (SIDE.w - 54) / source.width,
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
+      ));
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, 'CHASSIS', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '13px',
+        color: '#e9f8ff',
+      }).setOrigin(0.5).setDepth(73));
+    }
+
+    this.chassisPartRows = {};
+    CHASSIS_PART_ORDER.forEach((partId, index) => {
+      const part = CHASSIS_TUNING_PARTS[partId];
+      const y = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET + index * 62;
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        52,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 9, part.name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff3ff',
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 13, '', {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#7d9bad',
+        fontStyle: '600',
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#8db6cc',
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openChassisPartSelector(partId));
+      this.chassisPartRows[partId] = { box, label, detail, level };
+    });
+
+    // Paint and rims now belong exclusively to Oshiage Custom Works.
+    // Retired bodykit assets are hidden across every garage.
+    // Chassis has only two part rows since paint/rims moved to Oshiage.
+    // Use the same bottom action positions as Engine/Drivetrain/NOS in
+    // both player workshops and Crew Space: no crew-specific upward lift.
+    add(this.add.text(SIDE.x + 23, SIDE.y + 382,
+      'EXTERIOR CUSTOMISATION\nNOW AT OSHIAGE CUSTOM WORKS', {
+      fontFamily: BODY_FONT,
+      fontSize: '10px',
+      color: '#89aebf',
+      align: 'left',
+      lineSpacing: 7,
+    }).setDepth(73));
+
+    this.chassisPartsApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 0.7).setDepth(72));
+
+    this.chassisPartsApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      'NO CHASSIS PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    this.chassisMainBackButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    this.chassisMainBackText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    this.chassisMainBackButton.on('pointerdown', () => this.leaveChassisMode(true));
+
+    this.addDaichiChassisHelper();
+    this.refreshChassisMode();
+  }
+
+  rebuildSelectedVisualModPreview() {
+    if (!this.selectedCarId || !this.heroCarLayout) return;
+
+    (this.selectedDisplay || []).forEach(obj => obj?.destroy?.());
+
+    const car = cars[this.selectedCarId];
+    const layout = this.buildWorkshopHeroLayout(car, this.pendingVisualMods);
+    if (!layout) return;
+    this.heroCarLayout = layout;
+    this.selectedDisplay = this.createCarDisplay(
+      car,
+      layout.x,
+      layout.bodyY,
+      layout.targetWidth,
+      10,
+      this.pendingVisualMods
+    );
+
+    setCarBodyPaint(
+      this.selectedDisplay,
+      normalisePaintColor(this.pendingPaintColor ?? this.currentPaintColor)
+    );
+  }
+
+  getPendingChassisCost() {
+    if (!this.currentChassisTuning || !this.pendingChassisTuning) return 0;
+    return this.getWorkshopAdjustedCost(
+      getChassisCartCost(this.currentChassisTuning, this.pendingChassisTuning)
+    );
+  }
+
+  openChassisPartSelector(partId, previewLevel = null) {
+    this.closeChassisPartSelector();
+    const part = CHASSIS_TUNING_PARTS[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.chassisModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+    const installed = Number(this.currentChassisTuning[partId] || 0);
+    const pending = Number(this.pendingChassisTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    this.addModificationModalVisual(add, {
+      textureKey: previewSpec?.spriteKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
+      partName: 'CHASSIS',
+      frameLabel: 'PREVIEW',
+      mode: 'chassis',
+      depth,
+    });
+
+    part.levels.forEach((spec, index) => {
+      const y = 230 + index * 120;
+      const selected = draftLevel === spec.level;
+      const availableHere =
+        spec.level <= installed ||
+        this.canInstallCurrentUpgrade('chassis', partId, spec.level);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        getChassisUpgradePathCost(partId, installed, spec.level)
+      );
+
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
+
+      this.addUpgradeRowSprite(add, spec, 745, y, depth);
+
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+        wordWrap: { width: 390, useAdvancedWrap: true },
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + this.getCurrentUpgradeRequirement('chassis', partId, spec.level);
+      }
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1365, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.openChassisPartSelector(partId, spec.level);
+        });
+      }
+    });
+
+    this.addPartUninstallButton(add, depth, 'chassis', partId);
+
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(1160, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1320,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeChassisPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingChassisTuning[partId] = draftLevel;
+      this.closeChassisPartSelector();
+      this.refreshChassisMode();
+    });
+  }
+
+  closeChassisPartSelector() {
+    (this.chassisModalObjects || []).forEach(obj => obj?.destroy?.());
+    this.chassisModalObjects = [];
+  }
+
+  applyPendingChassisUpgrades() {
+    const blockedPart = CHASSIS_PART_ORDER.find(partId =>
+      Number(this.pendingChassisTuning?.[partId] || 0) >
+        Number(this.currentChassisTuning?.[partId] || 0) &&
+      !this.canInstallCurrentUpgrade(
+        'chassis',
+        partId,
+        this.pendingChassisTuning?.[partId] || 0
+      )
+    );
+
+    if (blockedPart) {
+      this.showWorkshopToast(
+        'NEEDS ' + this.getCurrentUpgradeRequirement(
+          'chassis',
+          blockedPart,
+          this.pendingChassisTuning?.[blockedPart] || 0
+        )
+      );
+      return;
+    }
+
+    const cost = this.getPendingChassisCost();
+    if (cost <= 0) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const chassisTuning = normaliseChassisTuning(this.pendingChassisTuning);
+
+    const updated = {
+      ...existing,
+      stock: false,
+      acquiredVia: existing.acquiredVia || 'garage',
+      chassisTuning,
+    };
+
+    carStates[this.selectedCarId] = updated;
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentChassisTuning = getChassisTuning(updated);
+    this.pendingChassisTuning = { ...this.currentChassisTuning };
+    this.refreshChassisMode();
+    this.refreshWorkshopSpecs();
+    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
+  }
+
+  refreshChassisMode() {
+    if (!this.chassisMode || !this.selectedCarId) return;
+
+    Object.entries(this.chassisPartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentChassisTuning?.[partId] || 0;
+      const pending = this.pendingChassisTuning?.[partId] || 0;
+      const spec = CHASSIS_TUNING_PARTS[partId].levels[pending];
+
+      row.level.setText(pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending);
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    const chassisCost = this.getPendingChassisCost();
+    const cash = Number(this.registry.get('cash') || 0);
+    this.chassisPartsApplyButton?.removeAllListeners('pointerdown');
+
+    if (chassisCost <= 0) {
+      this.chassisPartsApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.chassisPartsApplyText?.setText('NO CHASSIS PARTS SELECTED').setColor('#758e94');
+    } else {
+      const affordable = cash >= chassisCost;
+      this.chassisPartsApplyButton?.setInteractive({ useHandCursor: true })
+        .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+        .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+      this.chassisPartsApplyText?.setText(
+        affordable
+          ? 'INSTALL PARTS // ¥ ' + chassisCost.toLocaleString('en-US')
+          : 'NEED ¥ ' + chassisCost.toLocaleString('en-US')
+      ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+      this.chassisPartsApplyButton?.on('pointerdown', () => this.applyPendingChassisUpgrades());
+    }
+
+  }
+
+  leaveChassisMode(animate = true) {
+    if (!this.chassisMode) return;
+
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 180,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveChassisMode(false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 250,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
+    this.closeChassisPartSelector();
+    this.pendingPaintColor = this.currentPaintColor;
+    this.pendingVisualMods = { ...(this.currentVisualMods || {}) };
+    this.rebuildSelectedVisualModPreview();
+    setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
+    this.chassisModeObjects.forEach(obj => obj?.destroy?.());
+    this.chassisModeObjects = [];
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.chassisPartRows = {};
+    this.chassisVisualModRows = {};
+    this.chassisPaintObjects = [];
+    this.chassisPaintChannelButtons = [];
+    this.chassisPaintPanelOpen = false;
+    this.currentChassisTuning = null;
+    this.pendingChassisTuning = null;
+    this.currentVisualMods = null;
+    this.pendingVisualMods = null;
+    this.visualModsApplyButton = null;
+    this.visualModsApplyText = null;
+    this.chassisMode = false;
+    this.setArkonWorkingAtCar(false);
+    this.setWorkshopHomeHotspotsVisible(true);
+    this.updateGarageNavState();
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
+
+    this.refreshWorkshopSpecs();
+  }
+
+  enterSecondaryTuningMode(mode) {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
+      return;
+    }
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateSecondaryTuningMode(mode))
+    );
+  }
+
+  activateSecondaryTuningMode(mode) {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
+
+    const isDrivetrain = mode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const order = isDrivetrain ? DRIVETRAIN_PART_ORDER : EXHAUST_NOS_PART_ORDER;
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+
+    this.secondaryMode = mode;
+    this.setWorkshopHomeHotspotsVisible(false);
+    this.updateGarageNavState();
+    this.currentSecondaryTuning = isDrivetrain
+      ? getDrivetrainTuning(state)
+      : getExhaustNosTuning(state);
+    this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
+    const add = obj => {
+      this.secondaryModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    const secondaryCategoryKey = isDrivetrain
+      ? 'tuningCategoryDrivetrain'
+      : 'tuningCategoryExhaustNos';
+    const secondaryCategoryName = isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS';
+
+    if (this.textures.exists(secondaryCategoryKey)) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
+        secondaryCategoryKey
+      ).setOrigin(0.5).setDepth(73));
+
+      const source = this.textures.get(secondaryCategoryKey).getSourceImage();
+      logo.setScale(Math.min(
+        (SIDE.w - 54) / source.width,
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
+      ));
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, secondaryCategoryName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '13px',
+        color: '#e9f8ff',
+      }).setOrigin(0.5).setDepth(73));
+    }
+
+    this.secondaryPartRows = {};
+    const rowStartY = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET;
+    const rowGap = TUNING_CATEGORY_ROW_GAP;
+    order.forEach((partId, i) => {
+      const y = rowStartY + i * rowGap;
+      const part = parts[partId];
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        48,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff3ff'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+        fontFamily: BODY_FONT, fontSize: '9px', color: '#7d9bad', fontStyle: '600'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8db6cc'
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openSecondaryPartSelector(partId));
+      this.secondaryPartRows[partId] = { box, label, detail, level };
+    });
+
+    this.secondaryPreviewText = add(this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 510,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#91b6ca',
+        lineSpacing: 4,
+      }
+    ).setDepth(73));
+
+    this.secondaryApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+
+    this.secondaryApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      'NO PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    const backButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    backButton.on('pointerdown', () => this.leaveSecondaryTuningMode(true));
+
+    this.buildSecondaryHotspots(mode);
+    this.addDaichiSecondaryHelper(mode);
+    this.refreshSecondaryTuningMode();
+  }
+
+  leaveSecondaryTuningMode(animate = true) {
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 190,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveSecondaryTuningMode(false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 280,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
+    this.closeSecondaryPartSelector();
+    this.secondaryModeObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryHelperObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryHotspotObjects.forEach(obj => obj?.destroy?.());
+
+    this.secondaryModeObjects = [];
+    this.secondaryHelperObjects = [];
+    this.secondaryHotspotObjects = [];
+    this.secondaryMode = null;
+    this.setArkonWorkingAtCar(false);
+    this.setWorkshopHomeHotspotsVisible(true);
+    this.updateGarageNavState();
+    this.secondaryPartRows = {};
+    this.secondarySpriteImage = null;
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
+
+    this.refreshWorkshopSpecs();
+  }
+
+  refreshWorkshopSpecs() {
+    if (!this.selectedCarId) return;
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const fullBuild = buildDynoCar(this.selectedCarId, state) || (() => {
+      return buildCarFromState(car,engines[car.engine],state);
+    })();
+
+    const tunedPower = Number(fullBuild.car.powerKW ?? 0);
+    const tunedTorque = Number(fullBuild.car.torqueNm ?? 0);
+    const ratingDisplay = getPowerTorqueDisplay(car, state, fullBuild.car);
+    const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
+    const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
+
+    // Match selectCar(): exiting a tuning screen must not silently drop the
+    // visible gain brackets even though the underlying tuned stats are correct.
+    this.specValueTexts.power.setText(
+      ratingDisplay.powerLabel +
+      (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')
+    );
+    this.specValueTexts.torque.setText(
+      ratingDisplay.torqueLabel +
+      (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+    );
+    this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
+  }
+
+  buildSecondaryHotspots(mode) {
+    const isDrivetrain = mode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const layout = this.heroCarLayout || {
+      frontWheelX: 930,
+      rearWheelX: 500,
+      wheelY: 430,
+      left: 363,
+      right: 1053,
+    };
+
+    const frontX = layout.frontWheelX;
+    const rearX = layout.rearWheelX;
+    const wheelY = layout.wheelY;
+    const midX = (frontX + rearX) / 2;
+    const clampX = value => Phaser.Math.Clamp(value, layout.left + 48, layout.right - 48);
+
+    const hotspots = isDrivetrain
+      ? {
+          clutch: {
+            x: clampX(frontX - 64),
+            y: wheelY - 44,
+            lx: clampX(frontX - 94),
+            ly: wheelY - 112,
+          },
+          gearbox: {
+            x: clampX(frontX - 154),
+            y: wheelY - 14,
+            lx: clampX(frontX - 178),
+            ly: wheelY + 48,
+          },
+          differential: {
+            x: clampX(rearX + 42),
+            y: wheelY + 4,
+            lx: clampX(rearX + 34),
+            ly: wheelY + 66,
+          },
+          suspension: {
+            x: clampX(rearX - 34),
+            y: wheelY - 48,
+            lx: clampX(rearX - 94),
+            ly: wheelY - 108,
+          },
+        }
+      : {
+          headers: {
+            x: clampX(frontX - 80),
+            y: wheelY - 58,
+            // Header label takes the former nitrous-shot side to uncross the callouts.
+            lx: clampX(midX + 152),
+            ly: wheelY - 106,
+          },
+          exhaust: {
+            // Pull the mid-pipe marker toward the rear wheel, but keep its
+            // label to the wheel's right so it stays clear of MUFFLER.
+            x: clampX(rearX + 74),
+            y: wheelY + 14,
+            lx: clampX(rearX + 122),
+            ly: wheelY + 74,
+          },
+          muffler: {
+            x: clampX(rearX - 92),
+            y: wheelY + 2,
+            lx: clampX(rearX - 56),
+            ly: wheelY + 58,
+          },
+          nosKit: {
+            // Move the bottle marker distinctly left of its previous position.
+            x: clampX(midX - 132),
+            y: wheelY - 88,
+            lx: clampX(midX - 164),
+            ly: wheelY - 150,
+          },
+          nitrousShot: {
+            x: clampX(midX + 54),
+            y: wheelY - 62,
+            // Swap label side with HEADERS so the two leader lines no longer cross.
+            lx: clampX(frontX - 168),
+            ly: wheelY - 136,
+          },
+        };
+
+    Object.entries(hotspots).forEach(([partId, p]) => {
+      const part = parts[partId];
+      if (!part) return;
+
+      const line = this.add.line(0, 0, p.x, p.y, p.lx, p.ly, 0x43dfff, 0.95)
+        .setOrigin(0, 0)
+        .setLineWidth(2)
+        .setDepth(74);
+
+      const dot = this.add.circle(p.x, p.y, 10, 0x07111d, 1)
+        .setStrokeStyle(3, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(75);
+
+      const width = Math.max(104, part.name.length * 12);
+      const box = this.add.rectangle(p.lx, p.ly, width, 30, 0x07111d, 0.97)
+        .setStrokeStyle(2, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(74);
+
+      const label = this.add.text(p.lx, p.ly, part.name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#e7fbff',
+      }).setOrigin(0.5).setDepth(75);
+
+      const open = () => this.openSecondaryPartSelector(partId);
+      dot.on('pointerdown', open);
+      box.on('pointerdown', open);
+
+      this.secondaryHotspotObjects.push(line, dot, box, label);
+    });
+  }
+
+  addDaichiSecondaryHelper(mode) {
+    const daichi = characters.daichiSakamoto;
+    if (!daichi) return;
+
+    if (mode === 'drivetrain') {
+      // Use the same fixed, original drivetrain standing pose/placement as
+      // the opening appearance. Never substitute the chassis helper artwork.
+      this.addDaichiTuningHelper({
+        textureKey: daichi.visual.spriteKey,
+        ...this.getDaichiDrivetrainPosition(),
+        depth: 8.4,
+        anchorY: 1,
+        shadowWidth: 74,
+        shadowHeight: 22,
+        objectList: this.secondaryHelperObjects,
+      });
+      return;
+    }
+
+    const layout = this.heroCarLayout;
+    const car = cars[this.selectedCarId];
+    if (!layout || !car) return;
+
+    const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
+
+    // Exhaust/NOS uses the crouching inspection pose in front of the side of
+    // the car. It is deliberately layered over the car, with its visible shoes
+    // just below the wheel baseline.
+    const exhaustCfg = DAICHI_CFG.exhaustNos;
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiExhaustCrouch',
+      x: layout.x,
+      feetY: wheelBottomY + exhaustCfg.feetOffsetY,
+      targetHeight: exhaustCfg.targetHeight,
+      depth: 13.4,
+      anchorY: 1365 / 1536,
+      shadowWidth: 112,
+      shadowHeight: 27,
+      shadowOffsetX: 4,
+      shadowOffsetY: -7,
+      objectList: this.secondaryHelperObjects,
+    });
+  }
+
+  getDaichiDrivetrainPosition() {
+    const drivetrainCfg = DAICHI_CFG.drivetrain;
+    return {
+      x: drivetrainCfg.x + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0),
+      feetY: drivetrainCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
+      targetHeight: drivetrainCfg.targetHeight,
+    };
+  }
+
+  getDaichiChassisPosition() {
+    const layout = this.heroCarLayout;
+    if (!layout) return null;
+    const chassisCfg = DAICHI_CFG.chassis;
+    return {
+      x: Phaser.Math.Clamp(
+        layout.frontWheelX + chassisCfg.frontWheelOffsetX,
+        layout.x + chassisCfg.minFromCarCentre,
+        STAGE.x + STAGE.w - chassisCfg.rightInset
+      ),
+      feetY: chassisCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
+      targetHeight: chassisCfg.targetHeight,
+    };
+  }
+
+  addDaichiChassisHelper() {
+    const placement = this.getDaichiChassisPosition();
+    if (!placement) return;
+
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiChassisTools',
+      x: placement.x,
+      // Chassis work reads better with Daichi behind the car rather than
+      // standing over the foreground. Lift and shrink him so the car remains
+      // the main subject while his tools/pose are still visible.
+      feetY: placement.feetY,
+      targetHeight: placement.targetHeight,
+      depth: 9.4,
+      anchorY: 1517 / 1536,
+      useGarageCharacterShadow: false,
+      shadowWidth: 86,
+      shadowHeight: 20,
+      shadowOffsetY: -6,
+      objectList: this.chassisModeObjects,
+    });
+  }
+
+  drawSecondarySchematic(mode) {
+    const g = this.secondarySpriteGraphics;
+    if (!g) return;
+    g.clear();
+
+    if (this.secondarySpriteImage) {
+      this.secondarySpriteImage.destroy();
+      this.secondarySpriteImage = null;
+    }
+
+    const car = cars[this.selectedCarId];
+    const key = mode === 'drivetrain'
+      ? car?.visual?.drivetrainKey
+      : car?.visual?.exhaustNosKey;
+    const cx = SIDE.x + SIDE.w - 92;
+    const cy = SIDE.y + 105;
+
+    if (key && this.textures.exists(key)) {
+      this.secondarySpriteImage = this.add.image(cx, cy, key)
+        .setDepth(74)
+        .setOrigin(0.5);
+      this.secondaryModeObjects.push(this.secondarySpriteImage);
+
+      const source = this.textures.get(key).getSourceImage();
+      const fit = Math.min(150 / source.width, 100 / source.height);
+      this.secondarySpriteImage.setScale(fit);
+      return;
+    }
+
+    if (mode === 'drivetrain') {
+      g.lineStyle(5, 0x93aab8, 1);
+      g.strokeRoundedRect(cx - 62, cy - 26, 92, 52, 8);
+      g.lineBetween(cx - 86, cy, cx - 62, cy);
+      g.lineBetween(cx + 30, cy, cx + 78, cy);
+      g.fillStyle(0x5d6e79, 1).fillCircle(cx - 90, cy, 18);
+      g.fillStyle(0x5d6e79, 1).fillCircle(cx + 82, cy, 18);
+      g.fillStyle(0x263744, 1).fillCircle(cx + 4, cy, 18);
+    } else {
+      g.lineStyle(6, 0x8fa2ad, 1);
+      g.lineBetween(cx - 78, cy + 14, cx + 18, cy + 14);
+      g.strokeRoundedRect(cx + 18, cy - 7, 72, 42, 10);
+      g.lineStyle(3, 0x48bde8, 1);
+      g.strokeRoundedRect(cx - 62, cy - 48, 30, 62, 10);
+      g.fillStyle(0x2d6ea5, 1).fillRoundedRect(cx - 58, cy - 44, 22, 54, 8);
+      g.fillStyle(0xd6eef8, 1).fillRect(cx - 55, cy - 24, 16, 8);
+    }
+  }
+
+  getPendingSecondaryCost() {
+    if (!this.currentSecondaryTuning || !this.pendingSecondaryTuning || !this.secondaryMode) return 0;
+    const baseCost = this.secondaryMode === 'drivetrain'
+      ? getDrivetrainCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning)
+      : getExhaustNosCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning);
+    return this.getWorkshopAdjustedCost(baseCost);
+  }
+
+  refreshSecondaryTuningMode() {
+    if (!this.secondaryMode || !this.selectedCarId) return;
+
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const previewState = {
+      ...state,
+      ...(isDrivetrain
+        ? { drivetrainTuning: this.pendingSecondaryTuning }
+        : { exhaustNosTuning: this.pendingSecondaryTuning }),
+    };
+
+    const preview=buildCarFromState(car,engines[car.engine],previewState);
+    const previewRating = getPowerTorqueDisplay(
+      car,
+      { ...previewState, stock: false },
+      preview.car
+    );
+
+    Object.entries(this.secondaryPartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentSecondaryTuning[partId];
+      const pending = this.pendingSecondaryTuning[partId];
+      const spec = parts[partId].levels[pending];
+
+      row.level.setText(pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending);
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    if (isDrivetrain) {
+      const base = cars[this.selectedCarId];
+      const launchGain = Math.round((preview.car.launchLoadMultiplier / Math.max(0.01, base.launchLoadMultiplier || 1) - 1) * 100);
+      const gripGain = Math.round((preview.car.tyreGrip / Math.max(0.01, base.tyreGrip || 1) - 1) * 100);
+      const clutchGain = Math.round((preview.car.clutchStrength / Math.max(1, base.clutchStrength || 1) - 1) * 100);
+      const shiftGain = Math.round((1 - (preview.car.shiftTimeScale || 1)) * 100);
+      this.secondaryPreviewText?.setText(
+        'LAUNCH   +' + Math.max(0, launchGain) + '%\n' +
+        'SHIFT    ' + Math.max(0, shiftGain) + '% FASTER\n' +
+        'GRIP     +' + Math.max(0, gripGain) + '%\n' +
+        'CLUTCH   +' + Math.max(0, clutchGain) + '%'
+      );
+    } else {
+      this.secondaryPreviewText?.setText(
+        'POWER    ' + previewRating.powerLabel + '\n' +
+        'NITROUS  ' + Number(preview.car.nosPower || 0) + ' hp\n' +
+        'CAPACITY ' + Number(preview.car.nosCapacitySeconds || 0).toFixed(1) + ' sec\n' +
+        'WEIGHT   ' + Math.round(preview.car.vehicleMassKg) + ' kg'
+      );
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const cost = this.getPendingSecondaryCost();
+    this.secondaryApplyButton?.removeAllListeners('pointerdown');
+
+    if (cost <= 0) {
+      this.secondaryApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.secondaryApplyText?.setText('NO PARTS SELECTED').setColor('#758e94');
+      return;
+    }
+
+    const affordable = cash >= cost;
+    this.secondaryApplyButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+      .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+
+    this.secondaryApplyText?.setText(
+      affordable
+        ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US')
+        : 'NEED ¥ ' + cost.toLocaleString('en-US')
+    ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+
+    this.secondaryApplyButton?.on('pointerdown', () => this.applyPendingSecondaryUpgrades());
+  }
+
+  openSecondaryPartSelector(partId, previewLevel = null) {
+    this.closeSecondaryPartSelector();
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const part = parts[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.secondaryModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+    const installed = Number(this.currentSecondaryTuning[partId] || 0);
+    const pending = Number(this.pendingSecondaryTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
+    const car = cars[this.selectedCarId];
+    const contextTextureKey = isDrivetrain
+      ? car?.visual?.drivetrainKey
+      : car?.visual?.exhaustNosKey;
+    const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    this.addModificationModalVisual(add, {
+      textureKey: previewSpec?.spriteKey || contextTextureKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
+      partName: isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS',
+      frameLabel: 'PREVIEW',
+      mode: isDrivetrain ? 'drivetrain' : 'exhaustNos',
+      depth,
+    });
+
+    part.levels.forEach((spec, index) => {
+      const y = 230 + index * 120;
+      const selected = draftLevel === spec.level;
+      const availableHere =
+        spec.level <= installed ||
+        this.canInstallCurrentUpgrade(category, partId, spec.level);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        isDrivetrain
+          ? getDrivetrainUpgradePathCost(partId, installed, spec.level)
+          : getExhaustNosUpgradePathCost(partId, installed, spec.level)
+      );
+
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
+
+      this.addUpgradeRowSprite(add, spec, 745, y, depth);
+
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+        wordWrap: { width: 390, useAdvancedWrap: true },
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + this.getCurrentUpgradeRequirement(category, partId, spec.level);
+      }
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1365, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.openSecondaryPartSelector(partId, spec.level);
+        });
+      }
+    });
+
+    this.addPartUninstallButton(add, depth, category, partId);
+
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(1160, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1320,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeSecondaryPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingSecondaryTuning[partId] = draftLevel;
+      this.closeSecondaryPartSelector();
+      this.refreshSecondaryTuningMode();
+    });
+  }
+
+  closeSecondaryPartSelector() {
+    this.secondaryModalObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryModalObjects = [];
+  }
+
+  applyPendingSecondaryUpgrades() {
+    if (!this.secondaryMode) return;
+
+    const category = this.secondaryMode === 'drivetrain' ? 'drivetrain' : 'exhaustNos';
+    const partOrder = this.secondaryMode === 'drivetrain'
+      ? DRIVETRAIN_PART_ORDER
+      : EXHAUST_NOS_PART_ORDER;
+    const blockedPart = partOrder.find(partId =>
+      Number(this.pendingSecondaryTuning?.[partId] || 0) >
+        Number(this.currentSecondaryTuning?.[partId] || 0) &&
+      !this.canInstallCurrentUpgrade(
+        category,
+        partId,
+        this.pendingSecondaryTuning?.[partId] || 0
+      )
+    );
+
+    if (blockedPart) {
+      const targetLevel = this.pendingSecondaryTuning?.[blockedPart] || 0;
+      this.showWorkshopToast(
+        'NEEDS ' + this.getCurrentUpgradeRequirement(category, blockedPart, targetLevel)
+      );
+      return;
+    }
+
+    const cost = this.getPendingSecondaryCost();
+    if (cost <= 0) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const tuning = isDrivetrain
+      ? normaliseDrivetrainTuning(this.pendingSecondaryTuning)
+      : normaliseExhaustNosTuning(this.pendingSecondaryTuning);
+
+    const updated = {
+      ...existing,
+      stock: false,
+      acquiredVia: existing.acquiredVia || 'garage',
+      ...(isDrivetrain
+        ? { drivetrainTuning: tuning }
+        : { exhaustNosTuning: tuning }),
+    };
+
+    if (!isDrivetrain && tuning.nosKit > 0) {
+      const kit = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[tuning.nosKit];
+      const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[tuning.nitrousShot];
+      updated.nosInstalled = true;
+      updated.nosCapacitySeconds = Number(kit.capacitySeconds || 0);
+      updated.nosPower = Number(shot.powerHp || 0);
+    }
+
+    carStates[this.selectedCarId] = updated;
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentSecondaryTuning = isDrivetrain
+      ? getDrivetrainTuning(updated)
+      : getExhaustNosTuning(updated);
+    this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+    this.refreshSecondaryTuningMode();
+    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
+  }
+
+  showWorkshopToast(message, options = {}) {
+    if (this.workshopToastObjects?.length) {
+      this.workshopToastObjects.forEach(obj => obj?.destroy?.());
+    }
+    this.workshopToastObjects = [];
+
+    const panel = this.add.rectangle(710, 600, 570, options.height || 44, 0x07131e, 0.98)
+      .setStrokeStyle(2, 0x43dfff, 0.92)
+      .setDepth(145);
+
+    const text = this.add.text(710, 600, message, {
+      fontFamily: PIXEL_FONT, fontSize: options.fontSize || '7px', color: '#eefaff',
+      ...(options.wrap ? {wordWrap:{width:options.wrap},align:'center'} : {})
+    }).setOrigin(0.5).setDepth(146);
+
+    this.workshopToastObjects.push(panel, text);
+    const toastObjects = this.workshopToastObjects;
+    this.time.delayedCall(options.duration || 1450, () => {
+      toastObjects.forEach(obj => obj?.destroy?.());
+      if (this.workshopToastObjects === toastObjects) this.workshopToastObjects = [];
+    });
+  }
+
+  // Save checkpoints survive iOS/PWA reloads without awarding a car early.
+  promptOpeningOffice() {
+    if (this.registry.get('openingChapter') === 'home') {
+      this.registry.set('openingChapter', 'magazine');
+      saveSessionState(this.registry);
+    }
+    if (this._openingOfficePrompt) return;
+    this._openingOfficePrompt = true;
+    const promptX = 700;
+    const promptY = 573;
+    const promptW = 805;
+    const panel = this.add.rectangle(promptX, promptY, promptW, 68, 0x071823, 0.96)
+      .setStrokeStyle(2, 0xfbd57d, 0.9).setDepth(78);
+    const line = this.add.text(promptX, promptY,
+      "Still no car. I'll read Daichi's magazine in the office.", {
+        fontFamily: BODY_FONT, fontSize: '14px', color: '#fff0c8',
+        fontStyle: '700', align: 'center', wordWrap: { width: promptW - 48 },
+      }).setOrigin(0.5, 0.5).setDepth(79);
+    const glow = this.add.rectangle(725, 215, 146, 60, 0x000000, 0)
+      .setStrokeStyle(4, 0xfbd57d, 1).setDepth(80);
+    this._openingOfficePromptObjects = [panel, line, glow];
+    this._openingOfficeGlowTween = this.tweens.add({
+      targets: glow, alpha: 0.38, duration: 590, repeat: -1, yoyo: true,
+    });
+  }
+
+  clearOpeningOfficePrompt() {
+    this._openingOfficeGlowTween?.remove?.();
+    this._openingOfficeGlowTween = null;
+    (this._openingOfficePromptObjects || []).forEach(obj => {
+      this.tweens.killTweensOf(obj);
+      obj?.destroy?.();
+    });
+    this._openingOfficePromptObjects = [];
+    this._openingOfficePrompt = false;
+  }
+
+  completeOpeningMagazineChoice(carId) {
+    if (this.registry.get('openingChapter') !== 'magazine' ||
+        !['ae86', 'ef'].includes(carId)) return;
+    this.registry.set('starterCarId', carId);
+    this.registry.set('openingChapter', 'delivery');
+    saveSessionState(this.registry);
+    // Do not dismiss the office here: Sayaka calls while the player is
+    // still standing over the magazine rack.
+    this.showOpeningPhoneCall();
+  }
+
+  showOpeningPhoneCall() {
+    if (this._openingPhoneOpen || this.registry.get('openingChapter') !== 'delivery') return;
+    // Keep the office visible behind the canonical phone-call bubble.
+    if (!this._officeOverlay?.length) showOfficePanel(this);
+    this._openingPhoneOpen = true;
+
+    // Every authored cutscene with presentation: 'phone' routes through the
+    // same caller portrait, rounded speech bubble and paged NEXT controls.
+    const result = playMangaCutscene(this, 'openingSayakaPhoneCall', {
+      onComplete: () => {
+        this._openingPhoneOpen = false;
+        this.closeOpeningOffice?.();
+        this.clearOpeningOfficePrompt();
+        this.deliverOpeningCar();
+      },
+      onCancel: () => { this._openingPhoneOpen = false; },
+    });
+    if (!result.played) this._openingPhoneOpen = false;
+  }
+
+  spawnOpeningCompanion(id, animate = true, onShown = null) {
+    if (this.openingCompanion?.active) this.openingCompanion.destroy();
+    const npc = characters[id];
+    if (!npc?.visual?.spriteKey || !this.textures.exists(npc.visual.spriteKey)) return;
+    const isSayaka = id === 'sayakaFujieda';
+    // Sayaka stands beside the car door, in the foreground, at precisely
+    // the selected driver's full-size presentation height.
+    const targetX = isSayaka ? 548 : 970;
+    const targetHeight = isSayaka ? PLAYER_CFG.targetHeight : 200;
+    const sprite = this.addGarageCharacter(npc, targetX, PLAYER_CFG.feetY, targetHeight, 18);
+    if (isSayaka) sprite.setFlipX(true); // Face toward the player at x=282.
+    this.openingCompanion = sprite;
+
+    if (animate) {
+      sprite.setAlpha(0);
+      (sprite.stageShadows || []).forEach(obj => obj.setAlpha(0));
+      this.tweens.add({
+        targets: [sprite, ...(sprite.stageShadows || [])],
+        alpha: 1,
+        duration: 950,
+        ease: 'Sine.easeInOut',
+        onComplete: () => onShown?.(),
+      });
+    } else {
+      onShown?.();
+    }
+  }
+
+  deliverOpeningCar() {
+    if (this.registry.get('openingChapter') !== 'delivery') return;
+    const carId = this.registry.get('starterCarId') === 'ef' ? 'ef' : 'ae86';
+    if (!cars[carId]) return;
+    this.ownedCarIds = [carId];
+    this.registry.set('ownedCarIds', [carId]);
+    this.registry.set('carStates', { [carId]: createStarterCarState() });
+    this.carGarageLocations = { [carId]: 'shinonomeWorkshop' };
+    this.registry.set('carGarageLocations', this.carGarageLocations);
+    this.registry.set('selectedCarId', carId);
+    this.registry.set('openingChapter', 'tutorial');
+    recordCarAcquisition(this.registry, carId, { acquiredVia: 'starter' });
+    saveSessionState(this.registry);
+    this.selectCar(carId);
+    this.renderGaragePage();
+
+    // A roughly four-second garage arrival instead of the old 1.35s launch.
+    // createCarDisplay returns the real wheel images at indices 3 and 4.
+    // Rotate each wheel by travelled distance / its rendered radius so the
+    // rotation slows naturally with the ease-out rather than spinning forever.
+    const arrival = (this.selectedDisplay || []).filter(obj => obj?.active && Number.isFinite(obj.x));
+    const wheels = [this.selectedDisplay?.[3], this.selectedDisplay?.[4]]
+      .filter(obj => obj?.active && obj.texture);
+    arrival.forEach(obj => { obj.x -= 850; });
+    let lastX = arrival[0]?.x ?? 0;
+
+    if (!arrival.length) {
+      this.spawnOpeningCompanion('sayakaFujieda', true, () =>
+        this.runOpeningStoryIfNeeded());
+      return;
+    }
+
+    this.tweens.add({
+      targets: arrival,
+      x: '+=850',
+      duration: 4300,
+      ease: 'Sine.easeOut',
+      onUpdate: () => {
+        const currentX = arrival[0]?.x ?? lastX;
+        const distance = currentX - lastX;
+        lastX = currentX;
+        wheels.forEach(wheel => {
+          const radius = Math.max(8, wheel.displayWidth * 0.5);
+          wheel.angle += (distance / radius) * (180 / Math.PI);
+        });
+      },
+      onComplete: () => {
+        // Let the engine settle, then reveal Sayaka from the car door.
+        this.time.delayedCall(440, () => {
+          // Her first manga scene begins as soon as her full fade-in ends.
+          this.spawnOpeningCompanion('sayakaFujieda', true, () => {
+            this.runOpeningStoryIfNeeded();
+          });
+        });
+      },
+    });
+  }
+
+  showTutorialCompletionChoice() {
+    if (this.tutorialCompletionPopup?.active) return true;
+
+    const depth = 190;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.70)
+      .setDepth(depth)
+      .setInteractive());
+
+    const panel = add(this.add.rectangle(780, 410, 780, 380, 0xf8f7f2, 1)
+      .setStrokeStyle(3, 0x18222b, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 292, 'YOU\'VE GOT IT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#101820',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      370,
+      'You launched cleanly and shifted through 1st, 2nd and 3rd into 4th gear.\nWould you like to practise the controls again?',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#202a31',
+        fontStyle: '700',
+        align: 'center',
+        lineSpacing: 7,
+        wordWrap: { width: 640 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const again = add(this.add.rectangle(650, 510, 250, 56, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2f8f78, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(650, 510, 'TRY AGAIN', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#15372f',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const continueButton = add(this.add.rectangle(910, 510, 250, 56, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2b7898, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(910, 510,
+      this.registry.get('openingChapter') === 'tutorial' ? 'FINISH WITH SAYAKA' : 'CONTINUE WITH DAICHI', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#173849',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.tutorialCompletionPopup = null;
+    };
+
+    blocker.on('pointerdown', () => {});
+
+    again.on('pointerdown', () => {
+      dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial') {
+        this.registry.set('openingDrivingLessonComplete', false);
+        saveSessionState(this.registry);
+      }
+      this.time.delayedCall(80, () => this.startOpeningDrivingTutorial());
+    });
+
+    continueButton.on('pointerdown', () => {
+      dismiss();
+      this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
+    });
+
+    this.tutorialCompletionPopup = panel;
+    return true;
+  }
+
+  hasSeenStoryCutscene(id) {
+    return (this.registry.get('cutscenesSeen') || []).map(String).includes(String(id));
+  }
+
+  startDaichiWorkshopArrival(resume = false) {
+    const chapter = this.registry.get('openingChapter');
+    if (this._daichiEntryStarted ||
+        (!resume && chapter !== 'awaitDaichi') ||
+        (resume && chapter !== 'daichi')) return;
+    this._daichiEntryStarted = true;
+    this._daichiTapShield?.destroy?.();
+    this._daichiTapShield = null;
+    this.clearOpeningOfficePrompt();
+    // Save the automatic entry before preparing assets so a refresh can resume.
+    this.registry.set('openingChapter', 'daichi');
+    saveSessionState(this.registry);
+
+    // Match drivetrain tuning exactly: Daichi's original workshop sprite,
+    // fixed standing position, feet anchor, scale, depth and floor shadow.
+    this.ensureGarageTuningAssets(() => {
+      if (!this.sys?.isActive?.()) return;
+      const placement = this.getDaichiDrivetrainPosition();
+      const objects = [];
+      let sprite = null;
+      if (placement) {
+        sprite = this.addDaichiTuningHelper({
+          textureKey: characters.daichiSakamoto?.visual?.spriteKey,
+          ...placement,
+          depth: 8.4,
+          anchorY: 1,
+          shadowWidth: 74,
+          shadowHeight: 22,
+          objectList: objects,
+        });
+      }
+      // Graceful fallback for failed tuning-asset loads.
+      if (!sprite && placement) {
+        sprite = this.addGarageCharacter(
+          characters.daichiSakamoto, placement.x, placement.feetY,
+          placement.targetHeight, 8.4
+        );
+        objects.push(sprite, ...(sprite.stageShadows || []));
+      }
+      this._openingDaichiObjects = objects;
+      this.openingCompanion = sprite;
+      if (!objects.length) {
+        this._daichiEntryStarted = false;
+        this.time.delayedCall(220, () => this.runOpeningStoryIfNeeded());
+        return;
+      }
+      objects.forEach(obj => obj.setAlpha(0));
+      this.tweens.add({
+        targets: objects,
+        alpha: 1,
+        duration: 1450,
+        ease: 'Sine.easeInOut',
+        onComplete: () => this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded()),
+      });
+    }, { includeVisualMods: false });
+  }
+
+  restoreNormalWorkshopAfterOpening() {
+    this._daichiTapShield?.destroy?.();
+    this._daichiTapShield = null;
+    this._daichiEntryStarted = false;
+    this.clearOpeningOfficePrompt();
+    this.closeOpeningOffice?.();
+    this.openingCompanion = null;
+    (this._openingDaichiObjects || []).forEach(obj => {
+      this.tweens.killTweensOf(obj);
+      obj?.destroy?.();
+    });
+    this._openingDaichiObjects = [];
+    // Refresh the actual hero car and controls, without rerunning a first-car
+    // choice or adding any special introduction overlay.
+    if (this.selectedCarId && cars[this.selectedCarId]) {
+      this.selectCar(this.selectedCarId);
+      this.renderGaragePage();
+      this.selectUpgrade(null);
+    }
+    this.setWorkshopHomeHotspotsVisible(true);
+  }
+
+  continueGarageStoryFlow() {
+    // Developer's interactive chapter walkthrough takes precedence over all
+    // previously earned unlocks. It follows actual Warehouse/phone/map/race.
+    if (isChapter08DevReplay(this.registry)) return startChapter08Warehouse(this);
+    // Sayaka's exit automatically starts Daichi's arrival. A profile resumed
+    // during this transition can repeat the fade without requiring a tap.
+    const chapter = this.registry.get('openingChapter');
+    if (chapter === 'awaitDaichi') {
+      this.startDaichiWorkshopArrival();
+      return true;
+    }
+    if (chapter === 'daichi') {
+      this.startDaichiWorkshopArrival(true);
+      return true;
+    }
+    if (['home', 'magazine', 'delivery', 'station'].includes(chapter)) return true;
+    if (chapter === 'tutorial')
+      return this.runOpeningStoryIfNeeded();
+    // Completed compensation is no longer offered on future visits.
+    if (this.runOpeningStoryIfNeeded()) return true;
+    // Winning the seventh regional CREW battle brings the captain straight
+    // back to Warehouse HQ. Chapter 08 must run before the legacy Ginza
+    // invitation and cannot reveal Sayaka's Ginza role prematurely.
+    if (startChapter08Warehouse(this)) return true;
+    // Scene 02 (nine wins / market invitation) takes precedence when a save
+    // first returns with both the nine-win and first-champion milestones due.
+    if (this.hasSeenStoryCutscene('chapter08RaceFinished') &&
+        !this.hasSeenStoryCutscene('chapter08Ginza')) {
+      // A profile reloaded after the story race must resume at the showroom,
+      // not be trapped in Warehouse HQ with the invitation already consumed.
+      this.time.delayedCall(80, () => this.scene.start('CentralTokyoScene', {
+        locationId:'ginzaMotorGallery',ginzaRoom:1,chapter08Arrival:true,
+      }));
+      return true;
+    }
+    if (this.showCentralTokyoInvitationIfNeeded()) return true;
+    if (this.showFirstRegionalChampionIfNeeded()) return true;
+    return this.showSevenRegionsStoryIfNeeded();
+  }
+
+  fadeOpeningSayakaFromGarage(onComplete) {
+    const actor = this.openingCompanion;
+    if (!actor?.active) {
+      this.openingCompanion = null;
+      onComplete?.();
+      return;
+    }
+    const targets = [actor, ...(actor.stageShadows || [])]
+      .filter(obj => obj?.active);
+    this.tweens.killTweensOf(targets);
+    this.tweens.add({
+      targets,
+      alpha: 0,
+      duration: 950,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        actor.destroy();
+        if (this.openingCompanion === actor) this.openingCompanion = null;
+        onComplete?.();
+      },
+    });
+  }
+
+  runOpeningStoryIfNeeded() {
+    const chapter = this.registry.get('openingChapter');
+    if (chapter === 'awaitDaichi') return true;
+    if (chapter === 'tutorial') {
+      const finishSayakaFarewell = () => {
+        // The manga portrait has already faded. Now let the Sayaka sprite
+        // standing by the car disappear naturally instead of popping away.
+        this.fadeOpeningSayakaFromGarage(() => {
+          this.registry.set('openingChapter', 'awaitDaichi');
+          saveSessionState(this.registry);
+          this.clearOpeningOfficePrompt();
+          // The player sees Daichi emerge from behind the car immediately.
+          this.startDaichiWorkshopArrival();
+        });
+      };
+      if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
+        const result = playMangaCutscene(this, 'openingSayakaKeys', {
+          preloadPagePosesOnly: true,
+          onComplete: () => this.time.delayedCall(130, () => this.showOpeningTutorialChoice()),
+        });
+        return Boolean(result.played);
+      }
+      if (!this.registry.get('introTutorialChoiceDone')) {
+        this.showOpeningTutorialChoice();
+        return true;
+      }
+      if (!this.registry.get('openingDrivingLessonComplete')) {
+        this.showOpeningTutorialChoice();
+        return true;
+      }
+      if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
+        const result = playMangaCutscene(this, 'openingSayakaFarewell', {
+          preloadPagePosesOnly: true,
+          exitFadeMs: 850,
+          onComplete: finishSayakaFarewell,
+        });
+        return Boolean(result.played);
+      }
+      finishSayakaFarewell();
+      return true;
+    }
+    // Completed modern profiles must never fall into the legacy first-car cutscene.
+    if (chapter === 'done') return false;
+
+    if (chapter === 'daichi') {
+      // The entire introduction is one cutscene. Old three-part Daichi lessons
+      // have been retired; a save resumed after this scene simply completes.
+      const finishDaichiIntroduction = () => {
+        this.registry.set('openingChapter', 'done');
+        saveSessionState(this.registry);
+        this.restoreNormalWorkshopAfterOpening();
+      };
+      if (this.hasSeenStoryCutscene('openingDaichiAfterSayaka')) {
+        finishDaichiIntroduction();
+        return true;
+      }
+      const result = playMangaCutscene(this, 'openingDaichiAfterSayaka', {
+        onComplete: finishDaichiIntroduction,
+      });
+      return Boolean(result.played);
+    }
+
+    // Pre-R467 profiles and Restart Night already have a car. Keep their
+    // progression and do not resurrect retired opening dialogue or tutorials.
+    return false;
+  }
+
+  showOpeningTutorialChoice() {
+    if (this.openingTutorialPopup?.active) return;
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.74)
+      .setDepth(depth).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 420, 800, 360, 0x08131f, 0.995)
+      .setStrokeStyle(3, 0x45d7ff, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 305, 'LEARN THE START?', {
+      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#eefaff'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      375,
+      'Run a consequence-free standing-start practice.\n' + (this.registry.get('openingChapter') === 'tutorial' ? 'Sayaka' : 'Daichi') +
+       ' will guide clutch, first gear, launch RPM and shifting on-screen.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#bcd3df',
+        align: 'center',
+        lineSpacing: 6,
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const practice = add(this.add.rectangle(650, 510, 250, 50, 0x0d2b29, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(650, 510, 'PRACTICE RUN', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#effffb'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const skip = add(this.add.rectangle(910, 510, 250, 50, 0x171c25, 1)
+      .setStrokeStyle(1, 0x61798a, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(910, 510, 'SKIP TUTORIAL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d0dde5'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.openingTutorialPopup = null;
+    };
+
+    practice.on('pointerdown', () => {
+      dismiss();
+      this.registry.set('introTutorialChoiceDone', true);
+      saveSessionState(this.registry);
+      this.startOpeningDrivingTutorial();
+    });
+
+    skip.on('pointerdown', () => {
+      dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial')
+        this.registry.set('openingDrivingLessonComplete', true);
+      this.registry.set('introTutorialChoiceDone', true);
+      saveSessionState(this.registry);
+      this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
+    });
+
+    this.openingTutorialPopup = panel;
+  }
+
+  startOpeningDrivingTutorial() {
+    const playerCarId =
+      this.selectedCarId ||
+      this.registry.get('selectedCarId') ||
+      this.registry.get('starterCarId') ||
+      'ae86';
+
+    this.registry.set('selectedCarId', playerCarId);
+    // Same-model practice is deliberate and also regression-tests that the race
+    // handoff no longer substitutes a random rival car.
+    this.registry.set('selectedOpponentCarId', playerCarId);
+    this.registry.set('selectedOpponentPaintColor', 0xffffff);
+    this.registry.set('selectedOpponentCharacterId', 'emiKanzaki');
+    this.registry.set('selectedOpponentEncounterRating', 2);
+    this.registry.set('selectedOpponentEncounterAi', null);
+    this.registry.set('selectedOpponentDifficulty', 'EASY');
+    this.registry.set('selectedRaceCategory', 'TUTORIAL');
+    this.registry.set('selectedRaceType', 'Standing Start');
+    this.registry.set('selectedRaceDistanceM', 402.336);
+    this.registry.set('selectedRaceDeal', 'TUTORIAL');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'GarageScene');
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
+    this.registry.set('raceDistrict', 'ODAIBA');
+    this.registry.set('raceLocationLabel',
+      this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA DRIVING LESSON' : 'DAICHI PRACTICE RUN');
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
+  // Scene 05's visitor is a cinematic-only overlay, built with the SAME
+  // calibrated body and wheels as the existing Ginza collector car.
+  // Underlying car state/ownership/selection never changes.
+  startWarehouseRwbArrival() {
+    if (this._warehouseRwbCinematic) return true;
+    const guest = cars.rwbStellaPorsche;
+    if (!guest || !this.textures.exists(getCarBodyTextureKey(this, guest)) ||
+        !this.textures.exists(guest.visual.wheelKey)) return false;
+
+    // rwbStellaPorsche already resolves to the corrected
+    // assets/Cars/hero/rwb_stella_artois_porsche_hero_body.png through
+    // applyHeroCarAssets. Use the SAME workshop-wide hero dimensions and
+    // wheel geometry as every other car; no cinematic-specific scale.
+    const width = HERO_CFG.targetWidth;
+    const x = HERO_CFG.x;
+    const y = this.getBodyYForWheelBottom(guest, width, HERO_CFG.tyreContactY);
+    let carObjects;
+    try {
+      // Depth 908–909 sits above the manga shade (901), but under the
+      // standard actors (915) and dialogue (930+).
+      carObjects = this.createCarDisplay(guest, x, y, width, 908);
+    } catch (error) {
+      console.warn('[Tokyo SHIFT] RWB cinematic creation failed', error);
+      carObjects?.forEach(obj => obj?.destroy?.());
+      return false;
+    }
+    const sprites = carObjects.filter(obj => obj?.active);
+    const selected = [
+      ...(this.selectedDisplay || []),
+      this.workshopPlayerSprite,
+      ...(this.workshopPlayerSprite?.stageShadows || []),
+    ].filter(obj => obj?.active);
+    const originals = selected.map(obj => ({ obj, alpha: obj.alpha }));
+    const endpoints = sprites.map(obj => ({
+      obj, x: obj.x, alpha: obj.alpha,
+    }));
+    const animation = { offset: -1170 };
+    const cinematic = { sprites, originals, endpoints, animation, driveTween: null,
+      daichiPortrait: this._mangaCutscene?.actors?.left?.profile?.image || null,
+      restoring: false };
+    this._warehouseRwbCinematic = cinematic;
+
+    // Fade Daichi's manga portrait OUT first: his remark leads the eye to the
+    // incoming Porsche, which enters only after this fade has started.
+    if (cinematic.daichiPortrait?.active) {
+      this.tweens.add({ targets: cinematic.daichiPortrait, alpha: 0,
+        duration: 430, ease: 'Sine.easeInOut' });
+    }
+
+    // Cutscene dialogue is active already; fade the workshop player and
+    // actual selected car out only for the visiting RWB's entrance.
+    const hide = { t: 0 };
+    cinematic.hideTween = this.tweens.add({
+      targets: hide, t: 1, duration: 280, ease: 'Sine.easeInOut',
+      onUpdate: () => originals.forEach(({ obj, alpha }) => {
+        if (obj?.active) obj.setAlpha(alpha * (1 - hide.t));
+      }),
+    });
+
+    const update = () => {
+      endpoints.forEach(({ obj, x }) => {
+        if (obj?.active) obj.setX(x + animation.offset);
+      });
+      const travelled = animation.offset + 1170;
+      // Rear and front wheels rotate as the car actually moves into view.
+      if (sprites[3]?.active) sprites[3].setRotation(travelled / 46);
+      if (sprites[4]?.active) sprites[4].setRotation(travelled / 44);
+    };
+    update();
+    cinematic.driveTween = this.tweens.add({
+      targets: animation, offset: 0, delay: 480, duration: 5200,
+      ease: 'Sine.easeInOut', onUpdate: update,
+    });
+    return true;
+  }
+
+  finishWarehouseRwbArrival(onFinished = null) {
+    const cinematic = this._warehouseRwbCinematic;
+    if (!cinematic || cinematic.restoring) {
+      onFinished?.();
+      return;
+    }
+    cinematic.restoring = true;
+    cinematic.driveTween?.stop?.();
+    cinematic.hideTween?.stop?.();
+    const fade = { t: 0 };
+    this.tweens.add({
+      targets: fade, t: 1, duration: 1800, ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        cinematic.endpoints.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha * (1 - fade.t));
+        });
+        cinematic.originals.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha * fade.t);
+        });
+      },
+      onComplete: () => {
+        cinematic.sprites.forEach(obj => obj?.destroy?.());
+        cinematic.originals.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha);
+        });
+        this._warehouseRwbCinematic = null;
+        onFinished?.();
+      },
+    });
+  }
+
+  playWarehouseHqStory(options = {}) {
+    if (this.crewMode) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'warehouseHqUnlocked', {
+      preview,
+      onPageChange: ({ page, pageIndex }) => {
+        if (page?.cinematicBeat === 'rwbArrival') this.startWarehouseRwbArrival();
+        // Bring Daichi back once the car has finished its cinematic entrance
+        // and his dialogue resumes on the following page.
+        if (pageIndex === 4) {
+          const portrait = this._mangaCutscene?.actors?.left?.profile?.image;
+          if (portrait?.active) this.tweens.add({
+            targets: portrait, alpha: 1, duration: 420, ease: 'Sine.easeInOut',
+          });
+        }
+      },
+      onComplete: () => {
+        // The cutscene's existing once-flag is saved by the manga renderer.
+        // Drop the reload-resume marker only after the full chapter ends.
+        const seen = this.registry.get('cutscenesSeen') || [];
+        this.registry.set('cutscenesSeen',
+          seen.filter(id => id !== 'warehouseHqStoryPending'));
+        saveSessionState(this.registry);
+        this.finishWarehouseRwbArrival(() => {
+          this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+        });
+      },
+      onPreviewComplete: () => this.finishWarehouseRwbArrival(() => options.onPreviewComplete?.()),
+    });
+    return Boolean(result?.played);
+  }
+
+
+  showFullCrewStoryIfNeeded() {
+    if (!this.crewMode || sceneCutsceneActive(this) ||
+        !isCrewComplete(this.registry) ||
+        this.hasSeenStoryCutscene('fullCrewTogether') ||
+        isArkonDen(this.registry)) return false;
+    return this.playFullCrewStory();
+  }
+
+  playFullCrewStory(options = {}) {
+    if (!options.preview && (!this.crewMode ||
+        !isCrewComplete(this.registry) || sceneCutsceneActive(this))) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'fullCrewTogether', {
+      preview,
+      preloadPagePosesOnly: true,
+      onPageChange: ({ page }) => {
+        if (page?.cinematicBeat === 'completeCrewGroup') {
+          showFullCrewCelebration(this, { preview });
+        }
+      },
+      onComplete: () => {
+        this._fullCrewCelebration?.stop?.();
+        // Chapter 07 completion is saved before this callback fires.
+        this.refreshCrewPlaybookHotspot();
+      },
+      onPreviewComplete: () => {this._fullCrewCelebration?.stop?.();options.onPreviewComplete?.();},
+      onCancel: () => this._fullCrewCelebration?.stop?.(),
+    });
+    return Boolean(result?.played);
+  }
+
+  startSevenRivalsMontage() {
+    // Use the same large portrait renderer as Daichi and the protagonist.
+    // Centre rival is in colour; past/future rivals move as grey silhouettes.
+    // Flags hold a fixed position on the LEFT and crossfade with each leader.
+    if (this._sevenRivalsMontage?.active) return;
+    startSevenRivalsPortraitMontage(this);
+  }
+
+  finishSevenRivalsMontage() {
+    this._sevenRivalsMontage?.stop?.();
+  }
+
+  playSevenRegionsStory(options = {}) {
+    if (this.crewMode) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'sevenRegionsConquered', {
+      preview,
+      onPageChange: ({ page }) => {
+        if (page?.cinematicBeat === 'sevenRivalsMontage') this.startSevenRivalsMontage();
+      },
+      onComplete: ({ skipped }) => {
+        this.finishSevenRivalsMontage();
+        if (skipped) return;
+        const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
+          ? this.selectedCarId
+          : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
+        this.registry.set('crewPreviousCarId', previous);
+        // The established HQ -> Crew Space transition is used, not a new
+        // parallel room system. All 7 spaces start empty until recruited.
+        this.time.delayedCall(260, () => this.transitionWarehousePresentation(true, null));
+      },
+      onPreviewComplete: () => {this.finishSevenRivalsMontage();options.onPreviewComplete?.();},
+    });
+    return Boolean(result?.played);
+  }
+
+  showSevenRegionsStoryIfNeeded() {
+    if (this.crewMode || isArkonDen(this.registry) ||
+        this.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip' ||
+        getRegionalChampionshipCount(this.registry) < 7 ||
+        this.hasSeenStoryCutscene('sevenRegionsConquered')) return false;
+    return this.playSevenRegionsStory();
+  }
+
+  playCanalYardStorySequence(options = {}) {
+    const preview = Boolean(options.preview);
+    if (!preview && (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
+        this.hasSeenStoryCutscene('canalYardBiggerDreams'))) return false;
+    if (!preview && (this.crewMode ||
+        this.registry.get('workshopLocationId') !== 'shinonomeCanalYard')) return false;
+    if (sceneCutsceneActive(this)) return true;
+
+    // One chapter, one developer entry, three presentation beats:
+    // Manga -> REAL ringing phone / pickup UI -> Manga, all at Canal Yard.
+    const result = playCanalYardStory(this, {
+      preview,
+      onComplete: () => {
+        if (!preview) this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+      },
+    });
+    return Boolean(result?.played);
+  }
+
+  showPendingWorkshopCutscene() {
+    let cutsceneId = null;
+    try {
+      cutsceneId = sessionStorage.getItem('tokyoShiftPendingCutscene');
+      if (cutsceneId) sessionStorage.removeItem('tokyoShiftPendingCutscene');
+    } catch (e) {}
+
+    if (cutsceneId === 'canalYardUnlocked' ||
+        this.hasSeenStoryCutscene('canalYardStoryPending')) {
+      // Session storage may be cleared by iOS; use the persisted chapter
+      // marker and independently saved scene IDs to resume mid-story.
+      if (this.playCanalYardStorySequence()) return true;
+    }
+
+    if (cutsceneId !== 'warehouseHqUnlocked' &&
+        !this.hasSeenStoryCutscene('warehouseHqStoryPending')) return false;
+    if (this.crewMode || this.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip') return false;
+    if (this.playWarehouseHqStory()) return true;
+    this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+    return false;
+  }
+
+  showFirstRegionalChampionIfNeeded() {
+    // Career chapters belong to the workshop, not the race result or Crew
+    // Space. Developer profiles use the Cutscene Tester instead of replaying
+    // a first-title story against their preloaded all-champion progress.
+    if (this.crewMode || isArkonDen(this.registry) ||
+        this.hasSeenStoryCutscene('firstRegionalChampion')) return false;
+    const regionId = getFirstRegionalChampionRegion(this.registry);
+    if (!regionId) return false;
+
+    const result = playMangaCutscene(this, 'firstRegionalChampion', {
+      variables: { REGION: regionId },
+    });
+    // MangaCutscene saves its once-per-profile flag only when fully completed.
+    return Boolean(result?.played);
+  }
+
+  showCentralTokyoInvitationIfNeeded() {
+    const inviteKey = getPendingCentralTokyoInvite(this.registry);
+    if (!inviteKey) return false;
+
+    const unlockInvite = () => {
+      markCentralTokyoUnlocked(this.registry, inviteKey);
+      saveSessionState(this.registry);
+      if (inviteKey === 'autoMarket') {
+        this.showWorkshopToast('AUTO MARKET / REGIONAL CHAMPIONSHIPS / SHINAGAWA + TATSUMI OPEN');
+      }
+      this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
+    };
+
+    let result = null;
+    if (inviteKey === 'autoMarket') {
+      // Central Tokyo itself is intentionally Workshop-gated: reaching the
+      // win requirement only makes Daichi's conversation eligible.
+      result = playMangaCutscene(this, 'centralTokyoUnlocked', {
+        onComplete: unlockInvite,
+      });
+    } else if (inviteKey === 'ginza') {
+      result = playMangaCutscene(this, 'ginzaInvitation', {
+        characterOverrides: { HOST: 'sayakaFujieda' },
+        variables: { HOST_NAME: 'SAYAKA FUJIEDA' },
+        onComplete: unlockInvite,
+      });
+    } else if (inviteKey === 'drag') {
+      result = playMangaCutscene(this, 'dragComplexInvitation', {
+        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
+        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+        onComplete: unlockInvite,
+      });
+    }
+
+    if (!result?.played && result?.reason === 'seen') {
+      unlockInvite();
+      return false;
+    }
+
+    return Boolean(result?.played);
+  }
+
+  selectUpgrade(name) {
+    this.selectedUpgrade = name;
+
+    if (this.selectedCarId && this.isSelectedCarTuningLocked()) {
+      this.refreshTuningCategoryAvailability();
+      return;
+    }
+
+    for (const item of this.upgradeButtons) {
+      const active = item.name === name;
+      item.box.setFillStyle(active ? 0x10283b : 0x0b1724, 1);
+      item.box.setStrokeStyle(active ? 2 : 1, active ? 0x43dfff : 0x315470, 1);
+      item.label.setColor(active ? '#ffffff' : '#a9c7da');
+      item.arrow.setColor(active ? '#55e4ff' : '#8cb6cf');
+    }
+  }
+
+  saveProfile() {
+    this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('ownedCarIds', this.ownedCarIds);
+    saveSessionState(this.registry);
+
+  }
+}
