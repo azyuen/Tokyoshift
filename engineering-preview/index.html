@@ -177,11 +177,20 @@
       if (percent) percent.textContent = 'ERROR';
     };
 
-    window.TOKYO_SHIFT_REFRESH_FILES = () => location.reload();
+    window.TOKYO_SHIFT_REFRESH_FILES = () => {
+      const url = new URL(location.href);
+      url.searchParams.set('retry', Date.now());
+      location.replace(url.href);
+    };
+    document.getElementById('boot-retry-files').addEventListener('click', window.TOKYO_SHIFT_REFRESH_FILES);
   </script>
-  <script src="./engineering-preview/isolation.js"></script>
+  <script src="/Tokyoshift/engineering-preview/isolation.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
   <script type="module">
-    import('./engineering-preview/src/main.js').catch(e => window.TOKYO_SHIFT_SHOW_BOOT_ERROR(e));
+    const entry = new URL('/Tokyoshift/engineering-preview/src/main.js', location.origin);
+    entry.searchParams.set('preview', '2');
+    import(entry.href).catch(e => window.TOKYO_SHIFT_SHOW_BOOT_ERROR(
+      'PREVIEW 2 ENTRY FAILED\n' + entry.href + '\n' + (e.message || e)
+    ));
   </script>
 </body></html>
