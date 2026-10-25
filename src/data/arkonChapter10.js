@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R674 — THE ROAD AHEAD. Aruken's Story has a complete positive ending.
 // Direct continuation of Chapter 09: debts are handled, not magicked away.
 // Family friend -> restored starter choice -> Daichi support (no racing father).
@@ -267,3 +268,5 @@ export const ARKON_CHAPTER_10={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_10);

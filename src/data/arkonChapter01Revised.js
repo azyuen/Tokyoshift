@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R652 — Aruken Denzaki origin chapter. Independent of Career / Tokyo Championship.
 // Branches are remembered; every playable race uses the production physics.
 const A='arkonDen', S='sayakaFujieda', D='storyDaigoKirishima';
@@ -272,3 +273,5 @@ export const ARKON_CHAPTER_01_REVISED={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_01_REVISED);

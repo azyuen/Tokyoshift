@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R655 — Aruken's second chapter is an independent, save-gated origin story.
 // All ordinary races still use production driving physics. The dockside Forester
 // is a STORY PROP using its stock modular car artwork, not a player reward.
@@ -323,3 +324,5 @@ export const ARKON_CHAPTER_02 = {
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_02);

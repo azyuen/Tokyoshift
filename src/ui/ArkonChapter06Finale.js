@@ -1,3 +1,4 @@
+import {alignArukenActor} from '../story/ArukenStageLayout.js?v=20261026-audit';
 // R671 — the ACTUAL approved Arkon/Sayaka rear-view asset replaces the
 // provisional block silhouettes. No artificial black footer over Yokohama.
 // After a long uninterrupted fade, Chapter 06's conclusion appears.
@@ -53,6 +54,7 @@ export function showArkonChapter06Finale(scene,{onComplete}={}){
     const pair=add(scene.add.image(461,613,WATCH_ASSET.key)
       .setOrigin(.5,1).setDisplaySize(width,height)
       .setDepth(1450).setScrollFactor(0));
+    alignArukenActor(pair,461,612,315);
     pair.setAlpha(0);
     scene.tweens?.add?.({targets:pair,alpha:1,duration:1800,ease:'Sine.InOut'});
   };

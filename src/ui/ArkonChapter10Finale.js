@@ -1,3 +1,4 @@
+import {alignArukenActor} from '../story/ArukenStageLayout.js?v=20261026-audit';
 // R679 — one Porsche, two people. Aruken's own Z was voluntarily sold.
 import {showStoryStage} from './StoryStage.js?v=20261023-r674';
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
@@ -25,6 +26,7 @@ export function showArkonChapter10Finale(scene,{onComplete}={}){
     const height=350,width=height*(src?.width||1024)/Math.max(1,src?.height||1536);
     const pair=add(scene.add.image(545,650,ARKON_CH10_PAIR_ASSET.key)
       .setOrigin(.5,1).setDisplaySize(width,height).setDepth(1450).setScrollFactor(0));
+    alignArukenActor(pair,545,612,315);
     pair.setAlpha(0);
     scene.tweens?.add?.({targets:pair,alpha:1,duration:2400,ease:'Sine.InOut'});
   };

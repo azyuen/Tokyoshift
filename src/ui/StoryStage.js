@@ -10,13 +10,15 @@ import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/B
 import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261025-r685';
 import {getChapter05DuelCar,getChapter05DuelActor} from '../story/Chapter05MeetLayout.js?v=20261023-r670';
 
+import {getArukenGuests,getArukenDisplayCars,getArukenCarBay,getArukenActorPlacement,arukenPoseHeight,alignArukenActor,getArukenEnvironmentTemplate} from '../story/ArukenStageLayout.js?v=20261026-audit';
+
 export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
   characters = [], cars = [], depth = 160,
   backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
   castBehindCar = false, characterScale = 1, onArrivalComplete = null,
   meetDuel = false, fadeInMs = 0,
-  meetCarLayout = null, meetCastLayout = null, workshopRepairPair = false, vipParty = false,
+  meetCarLayout = null, meetCastLayout = null, workshopRepairPair = false, vipParty = false, population = null,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -30,6 +32,8 @@ export function showStoryStage(scene, {
         ':' + String(scene.worldPhase === 'day' ? 'day' : 'night')
       : backgroundId;
   const profile=actualBackgroundId?getStoryBackground(actualBackgroundId):null;
+  const aruken=scene.registry?.get?.('gameMode')==='arkonStory';
+  const guests=aruken?getArukenGuests(population):[];
   if(backgroundId && !profile) {
     console.warn('[TOKYO SHIFT] Story background ID not found',actualBackgroundId);
     return null;
@@ -50,7 +54,7 @@ export function showStoryStage(scene, {
   // scaling vehicles a second time; their coordinates are Garage coordinates.
   const garagePanel=stageMode==='garage-panel' && profile?.frameId==='workshop';
   const template=(stageMode==='story'||garagePanel)
-    ? null : getNativeStoryStageTemplate(profile,scene);
+    ? null : getNativeStoryStageTemplate(profile,scene) || (aruken?getArukenEnvironmentTemplate(profile):null);
   const native=garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const duel=Boolean(meetDuel&&template?.kind==='meet'&&profile?.frameId==='location');
   const frame=native?profile.frame:{x:0,y:0,w,h};
@@ -77,6 +81,8 @@ export function showStoryStage(scene, {
       asset:car.asset || (car.key ? { key:car.key,path:car.path } : null),
     };
   });
+  const displayCars=(aruken?getArukenDisplayCars(population):[]).map(c=>({...c,model:carCatalog[c.carId]})).filter(c=>c.model);
+  guests.forEach(g=>assets.push(g.asset));
   for (const item of [backdrop, ...carProps.map(x => x.asset)]) {
     if (item?.key && item?.path) assets.push(item);
   }
@@ -166,6 +172,7 @@ export function showStoryStage(scene, {
     if (feetAnchored) image.setOrigin(.5,1);
     if (height) image.setDisplaySize(height * (image.width / Math.max(1,image.height)),height);
     else if (width) image.setDisplaySize(width,image.height * width / Math.max(1,image.width));
+    if(aruken&&feetAnchored&&height)alignArukenActor(image,x,y,height);
     if(clipMask)image.setMask(clipMask);
     objects.push(image);
     return image;
@@ -184,7 +191,7 @@ export function showStoryStage(scene, {
     // Do not paint a second, differently cropped workshop or Meet over it.
     // For the dock job the SAME Meet/Showdown car geometry is used, but
     // the location is a separate authored Daikoku backdrop.
-    if(backdrop && (!template || (template.kind==='meet' &&
+    if(backdrop && (aruken || !template || (template.kind==='meet' &&
         backgroundId!=='$CURRENT_MEET'))){
       const src=scene.textures.exists(backdrop.key)
         ? scene.textures.get(backdrop.key).getSourceImage() : null;
@@ -205,6 +212,16 @@ export function showStoryStage(scene, {
           }));
         }
       }
+    }
+    for(const car of displayCars){
+      const parts=renderStoryCar(scene,car.model,{x:frame.x+frame.w*car.x,
+        groundY:frame.y+frame.h*.62,targetWidth:frame.w*.25,depth:depth+1.2,garageGeometry:true});
+      parts.forEach(o=>{if(clipMask)o.setMask?.(clipMask);objects.push(o);});
+    }
+    for(const guest of guests){
+      const sprite=addImage(guest.asset,frame.x+frame.w*guest.x,
+        frame.y+frame.h*guest.ground,null,guest.height,depth+1.8,1,true);
+      sprite?.setTint(0xa1a7b5).setFlipX(guest.flipX);
     }
     // Chapter 08's private Shibuya VIP terrace overlays the actual existing
     // Shibuya night meet art. These decorative lights live only in Story Mode;
@@ -258,15 +275,16 @@ export function showStoryStage(scene, {
         layerBias:carInFront?2:-1,
       }):null;
       const duelCar=duel?getChapter05DuelCar(i):null;
+      const sharedBay=aruken&&!duel&&!meetCarLayout?getArukenCarBay(template,i,carProps.length):null;
       const finaleCar=meetCarLayout==='yokohamaFinale' && template?.kind==='meet'
         ? {x:805,y:412,targetWidth:505,flipX:false}:null;
       const ch6Car=meetCarLayout==='yokohamaGift' &&
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
-      const x=Number(finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
+      const x=Number(sharedBay?.x??finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(sharedBay?.targetWidth??finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(finaleCar?.y??ch6Car?.y??duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
+      const groundY=Number(sharedBay?.groundY??finaleCar?.y??ch6Car?.y??duelCar?.y??template?.car.tyreContactY??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
         (c.depth??(carInFront
@@ -274,12 +292,15 @@ export function showStoryStage(scene, {
           :Math.min(vehicleDepth+i,estimate?.depth??vehicleDepth+i))));
       if(c.model){
         let carObjects=null;
-        if(template?.kind==='workshop' && typeof scene.createCarDisplay==='function'){
+        if(sharedBay){
+          carObjects=renderStoryCar(scene,c.model,{x,groundY,targetWidth,depth:layer,
+            flipX:sharedBay.flipX,garageGeometry:true,paintColor:c.paintColor??0xffffff});
+        }else if(template?.kind==='workshop' && scene.sys.settings.key==='GarageScene' && typeof scene.createCarDisplay==='function'){
           const hero=typeof scene.buildWorkshopHeroLayout==='function'
             ?scene.buildWorkshopHeroLayout(c.model):null;
           if(hero)carObjects=scene.createCarDisplay(c.model,hero.x,hero.bodyY,
             hero.targetWidth,layer);
-        }else if(template?.kind==='meet'&&typeof scene.createCarDisplay==='function'){
+        }else if(template?.kind==='meet'&&scene.sys.settings.key==='MeetScene'&&typeof scene.createCarDisplay==='function'){
           // Meet createCarDisplay owns the original wheel/body centre conversion.
           // Preserve the EXACT previous native single-car geometry for all
           // other chapters. Only Chapter 05's explicit matchup uses two bays.
@@ -293,9 +314,9 @@ export function showStoryStage(scene, {
               (scene.registry.get('carStates')||{})[c.carId]||{}));
         }
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
-          x,groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
+          x,groundY:template?.kind==='meet'?575:groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
-          garageGeometry:garagePanel,
+          garageGeometry:garagePanel||Boolean(template),
         });
         if(duel)carImages.set(i,carObjects);
         carObjects.forEach(obj=>{
@@ -380,7 +401,8 @@ export function showStoryStage(scene, {
             ? {x:template.car.x-335,feetY:template.character.feetY,
                height:278}:null
         :null;
-      const assigned=repairCast??ch6Cast??(duel?getChapter05DuelActor(a.role):
+      const storyCast=aruken?getArukenActorPlacement(template,a,i,actors.length):null;
+      const assigned=repairCast??ch6Cast??(duel?getChapter05DuelActor(a.role):storyCast??
         template?getNativeCastPlacement(template,i,actors.length,a.role):null);
       const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
@@ -395,7 +417,7 @@ export function showStoryStage(scene, {
       const x=Number(assigned?.x??estimate?.x??a.x??anchor.x);
       const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
       const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
-        (Number.isFinite(Number(characterScale))?Number(characterScale):1);
+        (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (aruken?arukenPoseHeight(a.pose):1);
       const layer=Number(template
         ? (a.role==='chapter01RepairSayaka'?portraitDepth-3:portraitDepth+i)
         : (a.depth??(carInFront
@@ -439,7 +461,7 @@ export function showStoryStage(scene, {
       else{veil.destroy();onArrivalComplete?.();}
     } else if(onArrivalComplete && motion!=='roll-in-left')onArrivalComplete();
   };
-  const queuedCars=carProps.reduce((total,c)=>total+(c.model?preloadStoryCar(scene,c.model):0),0);
+  const queuedCars=[...carProps,...displayCars].reduce((total,c)=>total+(c.model?preloadStoryCar(scene,c.model):0),0);
   const pending=[...new Map(assets.filter(a=>a.key&&a.path&&!scene.textures.exists(a.key))
     .map(a=>[a.key,a])).values()];
   if (pending.length || queuedCars) {
