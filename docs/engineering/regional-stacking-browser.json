@@ -1,0 +1,20 @@
+{
+  "mode": "hosted shell with local source overlay",
+  "initial": {
+    "power": 476,
+    "torque": 820,
+    "options": 21,
+    "refinement": {
+      "demand": 0.07786807221309154,
+      "boostGain": 0,
+      "rpmGain": 166,
+      "sharedLimits": true
+    }
+  },
+  "restored": {
+    "name": "Regional",
+    "power": 476,
+    "options": 21
+  },
+  "errors": []
+}

@@ -85,7 +85,7 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
   // Negative = stronger midrange but less top-end; positive = the opposite.
   if (tune.ecuBias !== 0 && engine.torqueCurve.length) {
     const idle = Math.max(500, Number(engine.idleRPM || 850));
-    const redline = Math.max(idle + 1000, Number(engine.redlineRPM || car.engineRedlineRPM || 7600));
+    const redline = Math.max(idle + 1000, Number(engine.specialistRefinement?.calibrationRedlineRPM || engine.redlineRPM || car.engineRedlineRPM || 7600));
     engine.torqueCurve = engine.torqueCurve.map(([rpm, torque]) => {
       const position = clamp((Number(rpm) - idle) / Math.max(1, redline - idle), 0, 1);
       const curveShift = tune.ecuBias * (position - 0.58) * 0.12;

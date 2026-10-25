@@ -1,3 +1,5 @@
+import { ENGINE_ENGINEERING } from './vehicleEngineering.js';
+import { getEngineTuning } from './tuning.js';
 import { getRegionMechanicCharacterId } from './characters.js';
 import {
   getTunerTeamChallengeState,
@@ -142,7 +144,7 @@ export const TUNER_SHOPS = {
           massDelta: -4,
           redlineAdd: 75,
         },
-        benefit: '+2% OUTPUT / -4 KG / +75 RPM',
+        benefit: 'OUTPUT REFINEMENT / -4 KG / REV REFINEMENT',
       },
       {
         id: 'amuseHighRpmBreathing',
@@ -159,7 +161,7 @@ export const TUNER_SHOPS = {
           efficiencyAdd: 0.005,
           redlineAdd: 125,
         },
-        benefit: '+2.5% OUTPUT / +125 RPM',
+        benefit: 'OUTPUT REFINEMENT / REV REFINEMENT',
       },
       {
         id: 'amuseCompleteFlowSetup',
@@ -176,7 +178,7 @@ export const TUNER_SHOPS = {
           massDelta: -3,
           redlineAdd: 75,
         },
-        benefit: '+1.5% OUTPUT / -3 KG / +75 RPM',
+        benefit: 'OUTPUT REFINEMENT / -3 KG / REV REFINEMENT',
       },
     ],
   },
@@ -227,7 +229,7 @@ export const TUNER_SHOPS = {
           spoolScale: 1.03,
           outputScale: 1.015,
         },
-        benefit: '+0.08 BAR / FASTER SPOOL / +1.5% OUTPUT',
+        benefit: 'SUPPORTED BOOST / FASTER SPOOL / OUTPUT REFINEMENT',
       },
       {
         id: 'topSecretChargeFlow',
@@ -244,7 +246,7 @@ export const TUNER_SHOPS = {
           spoolScale: 1.025,
           outputScale: 1.02,
         },
-        benefit: '+0.06 BAR / +2% OUTPUT',
+        benefit: 'SUPPORTED BOOST / OUTPUT REFINEMENT',
       },
       {
         id: 'topSecretVmaxSetup',
@@ -261,7 +263,7 @@ export const TUNER_SHOPS = {
           dragScale: 0.98,
           redlineAdd: 100,
         },
-        benefit: '+1.5% OUTPUT / -2% DRAG / +100 RPM',
+        benefit: 'OUTPUT REFINEMENT / -2% DRAG / REV REFINEMENT',
       },
     ],
   },
@@ -312,7 +314,7 @@ export const TUNER_SHOPS = {
           efficiencyAdd: 0.01,
           redlineAdd: 50,
         },
-        benefit: '+2% OUTPUT / +1% EFF. / +50 RPM',
+        benefit: 'OUTPUT REFINEMENT / +1% EFF. / REV REFINEMENT',
       },
       {
         id: 'minesResponsePackage',
@@ -330,7 +332,7 @@ export const TUNER_SHOPS = {
           efficiencyAdd: 0.005,
           shiftScale: 0.96,
         },
-        benefit: '+1.5% OUTPUT / 4% FASTER SHIFTS',
+        benefit: 'OUTPUT REFINEMENT / 4% FASTER SHIFTS',
       },
       {
         id: 'minesCompleteResponse',
@@ -348,7 +350,7 @@ export const TUNER_SHOPS = {
           shiftScale: 0.97,
           launchScale: 1.01,
         },
-        benefit: '+1% OUTPUT / RESPONSE REFINEMENT',
+        benefit: 'OUTPUT REFINEMENT / RESPONSE REFINEMENT',
       },
     ],
   },
@@ -399,7 +401,7 @@ export const TUNER_SHOPS = {
           efficiencyAdd: 0.005,
           spoolScale: 1.02,
         },
-        benefit: '+1.5% OUTPUT / IMPROVED RESPONSE',
+        benefit: 'OUTPUT REFINEMENT / IMPROVED RESPONSE',
       },
       {
         id: 'reAmemiyaTurboResponse',
@@ -416,7 +418,7 @@ export const TUNER_SHOPS = {
           spoolScale: 1.04,
           outputScale: 1.015,
         },
-        benefit: '+0.05 BAR / FASTER SPOOL / +1.5% OUTPUT',
+        benefit: 'SUPPORTED BOOST / FASTER SPOOL / OUTPUT REFINEMENT',
       },
       {
         id: 'reAmemiyaCircuitRotary',
@@ -433,7 +435,7 @@ export const TUNER_SHOPS = {
           massDelta: -8,
           gripScale: 1.01,
         },
-        benefit: '+1.5% OUTPUT / -8 KG / +1% GRIP',
+        benefit: 'OUTPUT REFINEMENT / -8 KG / +1% GRIP',
       },
     ],
   },
@@ -487,7 +489,7 @@ export const TUNER_SHOPS = {
           spoolScale: 1.04,
           outputScale: 1.01,
         },
-        benefit: '+4% SPOOL / +1% OUTPUT',
+        benefit: '+4% SPOOL / OUTPUT REFINEMENT',
       },
       {
         id: 'zeroSportsAwdLaunch',
@@ -571,7 +573,7 @@ export const TUNER_SHOPS = {
           outputScale: 1.025,
           redlineAdd: 100,
         },
-        benefit: '+2.5% OUTPUT / +100 RPM',
+        benefit: 'OUTPUT REFINEMENT / REV REFINEMENT',
       },
       {
         id: 'junHeadCamPackage',
@@ -587,7 +589,7 @@ export const TUNER_SHOPS = {
           outputScale: 1.035,
           redlineAdd: 150,
         },
-        benefit: '+3.5% OUTPUT / +150 RPM',
+        benefit: 'OUTPUT REFINEMENT / REV REFINEMENT',
       },
       {
         id: 'junCompleteEngineSetup',
@@ -604,7 +606,7 @@ export const TUNER_SHOPS = {
           efficiencyAdd: 0.01,
           redlineAdd: 100,
         },
-        benefit: '+2% OUTPUT / +100 RPM / +1% EFF.',
+        benefit: 'OUTPUT REFINEMENT / REV REFINEMENT / +1% EFF.',
       },
     ],
   },
@@ -619,6 +621,16 @@ export const TUNER_SHOP_ORDER = [
   'SHINAGAWA',
   'TATSUMI',
 ];
+
+// Explain shared limits in the existing purchase confirmation, without a new UI.
+for (const shop of Object.values(TUNER_SHOPS)) {
+  for (const option of shop.tuningOptions || []) {
+    const effect = option.effect || {};
+    if (effect.outputScale || effect.boostAdd || effect.redlineAdd) {
+      option.description += ' Engine refinements share the installed hardware limits; overlapping regional work gives diminishing gains.';
+    }
+  }
+}
 
 export const TUNER_SHOP_BY_ID = Object.fromEntries(
   Object.values(TUNER_SHOPS).flatMap(shop => [
@@ -783,7 +795,11 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
   const engine = engineConfig;
   const installed = getInstalledSpecialistTuning(carState);
 
-  installed.forEach(optionId => {
+  // Aggregate overlapping engine work once. Saved purchase order must not
+  // determine output; chassis/response effects remain separate refinements.
+  const profile = ENGINE_ENGINEERING[car.engine];
+  const requests = { output: 0, boost: 0, rpm: 0 };
+  installed.slice().sort().forEach(optionId => {
     const option = getTunerOption(optionId);
     const effect = option?.effect || {};
     if (!option) return;
@@ -816,7 +832,13 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
       );
     }
 
-    if (effect.outputScale != null) {
+    if (profile) {
+      requests.output += Math.max(0, Number(effect.outputScale || 1) - 1);
+      requests.boost += Math.max(0, Number(effect.boostAdd || 0));
+      requests.rpm += Math.max(0, Number(effect.redlineAdd || 0));
+    }
+
+    if (!profile && effect.outputScale != null) {
       const scale = Number(effect.outputScale || 1);
       car.powerKW = Math.round(Number(car.powerKW || 0) * scale);
       car.torqueNm = Math.round(Number(car.torqueNm || 0) * scale);
@@ -825,7 +847,7 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
       );
     }
 
-    if (effect.redlineAdd != null) {
+    if (!profile && effect.redlineAdd != null) {
       const add = Number(effect.redlineAdd || 0);
       car.engineRedlineRPM = Number(car.engineRedlineRPM || engine.redlineRPM || 7600) + add;
       car.engineLimiterRPM = Number(car.engineLimiterRPM || engine.limiterRPM || car.engineRedlineRPM + 200) + add;
@@ -833,7 +855,7 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
       engine.limiterRPM = Number(engine.limiterRPM || car.engineLimiterRPM || engine.redlineRPM + 200) + add;
     }
 
-    if (effect.boostAdd != null && Number(car.maximumBoost || 0) > 0) {
+    if (!profile && effect.boostAdd != null && Number(car.maximumBoost || 0) > 0) {
       car.maximumBoost =
         Number(car.maximumBoost || 0) + Number(effect.boostAdd || 0);
     }
@@ -849,5 +871,46 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
     }
   });
 
+  if (profile && (requests.output || requests.boost || requests.rpm)) {
+    const levels = getEngineTuning(carState);
+    const level = key => Math.max(0, Math.min(3, Number(levels[key] || 0)));
+    const support = Math.min(level('engine'), level('ecu')) / 3;
+    const cooling = level('intercooler') / 3;
+    const turbo = level('turbo');
+    const boosted = Number(car.maximumBoost || 0) > 0;
+    // Refinement is calibration/finishing work, not another larger turbo or
+    // forged engine. Eight percent is the full-support calibration allowance;
+    // remaining compressor flow and BMEP may permit substantially less.
+    const allowance = .02 + .06 * support;
+    const demand = allowance * (1 - Math.exp(-requests.output / allowance));
+    const displacement = profile.displacementL * (profile.rotary ? 2 : 1);
+    const torqueCapacity = profile.builtBmepBar * 100000 * displacement / 1000 / (4 * Math.PI);
+    const basePeak = Math.max(...engine.torqueCurve.map(point => point[1]));
+    const basePower = Math.max(...engine.torqueCurve.filter(point => point[0] <= engine.redlineRPM)
+      .map(([rpm, torque]) => torque * rpm * Math.PI / 30000));
+    engine.specialistRefinement = {
+      demand,
+      calibrationRedlineRPM: engine.redlineRPM,
+      torqueCapacity: boosted ? torqueCapacity * (.56 + .44 * level('engine') / 3)
+        : basePeak * (1 + allowance),
+      powerCapacity: boosted ? profile.compressorFlowLbMin * 7.1 * (.28 + .24 * turbo)
+        : basePower * (1 + allowance),
+    };
+    // Boost stays inside the original internals/fuel/cooling support envelope.
+    const boostRoom = Math.max(0, Number(car.engineering?.supportedBoost || 0) - car.maximumBoost);
+    const boostAllowance = .08 * Math.min(support, cooling);
+    const boostGain = boostAllowance > 0
+      ? Math.min(boostRoom, boostAllowance * (1 - Math.exp(-requests.boost / boostAllowance))) : 0;
+    car.maximumBoost += boosted ? boostGain : 0;
+    // Shared valve/rotor finishing allowance, scaled to this engine's speed and
+    // internal support; purchasing three rev packages cannot add three limits.
+    const rpmAllowance = engine.redlineRPM * (profile.rotary ? .025 : .02) * support;
+    const rpmGain = rpmAllowance > 0 ? Math.round(rpmAllowance * (1 - Math.exp(-requests.rpm / rpmAllowance))) : 0;
+    engine.redlineRPM += rpmGain;
+    engine.limiterRPM += rpmGain;
+    car.engineRedlineRPM = engine.redlineRPM;
+    car.engineLimiterRPM = engine.limiterRPM;
+    car.specialistRefinement = { demand, boostGain, rpmGain, sharedLimits: true };
+  }
   return { car, engine, installed };
 }

@@ -43,12 +43,25 @@ export default class Engine {
       boostScale = 1 + positiveBoost * 0.78;
     }
 
+    let combustion;
     if(this.config.engineering&&positiveBoost>referenceBoost){
       const h=this.config.engineering,requested=Math.max(0,base*(boostScale-1))*h.thermalEfficiency;
       const available=Math.min(h.torqueHeadroom,h.powerHeadroom*30000/(Math.PI*Math.max(500,this.rpm)));
-      return (base+available*Math.tanh(requested/Math.max(1,available))+nosTorque)*limiterCut;
+      combustion = base+available*Math.tanh(requested/Math.max(1,available));
+    } else {
+      combustion = base * boostScale;
     }
-    return (base * boostScale + nosTorque) * limiterCut;
+    const refinement = this.config.specialistRefinement;
+    if (refinement) {
+      // Only the extra regional gain consumes the remaining hardware capacity.
+      // Do not change an existing standard build that already exceeds a
+      // provisional capacity estimate. NOS remains a separate temporary input.
+      const capacity = Math.min(refinement.torqueCapacity,
+        refinement.powerCapacity * 30000 / (Math.PI * Math.max(500, this.rpm)));
+      const reserve = Math.max(0, capacity - combustion);
+      if (reserve > 0) combustion += reserve * Math.tanh(combustion * refinement.demand / reserve);
+    }
+    return (combustion + nosTorque) * limiterCut;
   }
 
   updateRPM(dt, netTorqueNm) {
