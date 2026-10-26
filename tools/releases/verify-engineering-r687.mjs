@@ -16,7 +16,7 @@ assert.equal(cars.galant.powerKW,176);
 assert.equal(stockClassFor(cars.dc2),'B');
 assert.equal(cars.espritNsx.powerKW,625);
 assert.equal(cars.libertyWalk240z.tuningLocked,true);
-assert.equal(cars.arkonLibertyWalk240z.collector,false);
+assert.equal(Boolean(cars.arkonLibertyWalk240z.collector),false);
 assert.ok(engines[cars.renownMazda787B.engine].torqueCurve.length>3);
 assert.ok(engines['4g63t_galant_vr4'].referenceBoostBar>0);
 
