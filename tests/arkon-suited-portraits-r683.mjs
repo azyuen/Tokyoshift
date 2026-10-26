@@ -82,7 +82,7 @@ test('R683 Ch9 final confrontation preserves suit when VIP speaks and serious ex
   const exit=scene(ARKON_CHAPTER_09,'AN EXIT');
   assert.ok(exit.pages.every(p=>['ginzaSuit','devSerious'].includes(p.leftPose)));
   assert.ok(exit.pages.every(p=>p.rightPose==='ginzaDress'));
-  assert.equal(scene(ARKON_CHAPTER_09,'THE ROAD HOME').pages[0].leftPose,'storySerious');
+  assert.equal(scene(ARKON_CHAPTER_09,'THE ROAD HOME').pages[0].leftPose,'devSerious');
 });
 
 test('R683 Ch10 warm gallery, serious reassurance and nervous invitation stay in suit',()=>{

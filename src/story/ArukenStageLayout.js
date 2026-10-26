@@ -24,6 +24,9 @@ export function getArukenCarBay(template,index,total){
     targetWidth:Math.min(440,f.w*.38),flipX:index===1};
 }
 export function getArukenActorPlacement(template,actor,index,total){
+  if(template&&actor.role==='chapter02ShibuyaRina')return {
+    x:template.frame.x+template.frame.w*.70,
+    feetY:template.character.feetY,height:template.character.height};
   if(!template||actor.role?.startsWith('chapter'))return null;
   const base=template.character,f=template.frame;
   if(actor.role==='carMechanic')return {...base,x:template.car.x};

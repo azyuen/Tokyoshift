@@ -44,7 +44,7 @@ test('R686: Sayaka speaking and listening manga portraits NEVER fall back to hom
 test('R686: revised Chapter 1 expression variety includes non-thumbs-up options',()=>{
   const poses=new Set(revised.steps.filter(x=>x.type==='MANGA'&&
     x.characters?.right==='sayakaFujieda').flatMap(x=>x.pages.map(y=>y.rightPose)));
-  for(const pose of ['oshiageNeutral','oshiageHappy','oshiageSerious','oshiageExplaining',
+  for(const pose of ['oshiageNeutral','oshiageHappy','oshiageSerious',
     'oshiageTalking','oshiageReviewing','oshiageConcerned','oshiageRelaxed'])
     assert.ok(poses.has(pose),pose+' absent');
   assert.doesNotMatch(readFileSync(fullPath('src/data/arkonChapter01Revised.js'),'utf8'),

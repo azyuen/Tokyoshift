@@ -438,7 +438,7 @@ test('R653 Story time controls scene phase without touching other profiles',()=>
 test('R653 Story CTA wraps long titles within the scene viewport',()=>{
   const code=readFileSync(new URL('../src/ui/StoryContinuePrompt.js',import.meta.url),'utf8');
   assert.match(code,/wordWrap:\{width:w-74,useAdvancedWrap:true\}/);
-  assert.match(code,/const w=Math\.min\(455,stage\.w-36\),h=82/);
+  assert.match(code,/const w=Math\.min\(aruken\?560:455,stage\.w-36\),h=aruken\?100:82/);
 });
 
 test('R653 rival uses the existing adult Daigo Moriyama artwork',()=>{

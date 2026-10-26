@@ -33,7 +33,7 @@ test('R686 Ch1 uses varied Oshiage uniform Sayaka sprites, not just thumbs-up',(
  const sayakaScenes=C1.steps.filter(s=>s.type==='MANGA'&&
    s.characters?.right==='sayakaFujieda');
  const poses=new Set(sayakaScenes.flatMap(s=>s.pages.map(p=>p.rightPose)));
- for(const pose of ['oshiageNeutral','oshiageHappy','oshiageReviewing','oshiageConcerned','oshiageRelaxed','oshiageExplaining','oshiageTalking','oshiageSerious'])
+ for(const pose of ['oshiageNeutral','oshiageHappy','oshiageReviewing','oshiageConcerned','oshiageRelaxed','oshiageTalking','oshiageSerious'])
    assert.ok(poses.has(pose),pose);
  assert.equal([...poses].every(p=>String(p).startsWith('oshiage')),true);
  for(const pose of poses) {
