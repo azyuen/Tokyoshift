@@ -600,6 +600,16 @@ export default class TunerShopScene extends Phaser.Scene {
     const cash = Number(this.registry.get('cash') || 0);
 
     if (this.shop.cosmeticOnly) {
+      const currentBuild=cars[this.shop.heroCarId];
+      const donorModel=cars[this.shop.donorCarId];
+      const sx=SIDE.x+27;
+      const stat=(y,value,color='#c7d6dd',size='9px')=>
+        this.sideContent.add(this.add.text(sx,SIDE.y+y,value,{
+          fontFamily:PIXEL_FONT,fontSize:size,color
+        }));
+      stat(550,'SELECTED  '+(currentBuild?.shortName||'HERO BUILD'),'#ffe2a3','8px');
+      stat(576,'POWER '+Math.round(currentBuild?.powerKW||0)+' kW    TORQUE '+Math.round(currentBuild?.torqueNm||0)+' Nm','#dce7eb','8px');
+      stat(601,'BUILD  '+money(cost),'#f3c77b','9px');
       if (currentIsDonor && donorEligible && !heroOwned) {
         const y=SIDE.y+SIDE.h-96;
         const b=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
