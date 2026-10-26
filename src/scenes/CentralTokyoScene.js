@@ -11,6 +11,7 @@ import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCU
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261027-r692';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261023-r658';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r692';
+import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -399,6 +400,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
+    if(isProSponsorPlayableReplay(this.registry))
+      this._proSponsorReplayExit=addProSponsorReplayExit(this,1385,55);
     if(this.autoShowProVictory){
       const result=this.autoShowProVictory;
       this.time.delayedCall(0,()=>{
@@ -751,6 +754,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.drawDragComplex();
+    // Recount replay first shows the existing four-part Drag Complex welcome,
+    // then hands off to Aruken's first-season signing and actual race.
+    if(isProSponsorPlayableReplay(this.registry) &&
+       this.registry.get('__proSponsorReplayPhase')==='welcome' &&
+       !this._proReplayWelcomeScheduled){
+      this._proReplayWelcomeScheduled=true;
+      this.time.delayedCall(180,()=>{
+        this._proReplayWelcomeScheduled=false;
+        if(this.sys?.isActive?.() && this.activeLocationId==='tokyoDragComplex')
+          startProSponsorReplayWelcome(this,()=>maybePlayProSponsorStory(this));
+      });
+    }
     this.queueSayakaProStrategistReveal();
     // Resume a first-season sponsorship cutscene/race on an ordinary return
     // from racing or after an interrupted app session, not on every redraw.
