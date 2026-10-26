@@ -57,7 +57,7 @@ for(const hz of [30,60,120])for(const n of [0,1,2,3])for(const id of ['dc2','gal
  console.log('R687_CAR '+JSON.stringify(o));
 }
 const pick=(id,n,hz=60)=>all.find(x=>x.id===id&&x.n===n&&x.hz===hz);
-assert.ok(pick('galant',2).et < pick('dc2',2).et-.25,'Galant's AWD turbo advantage preserved');
+assert.ok(pick('galant',2).et < pick('dc2',2).et-.25,'Galant AWD turbo advantage preserved');
 assert.ok(pick('dc2',3).et < pick('dc2',0).et,'DC2 improves with hardware');
 assert.ok(pick('galant',3).et < pick('galant',0).et,'Galant improves with hardware');
 assert.ok(all.every(x=>x.et>8&&x.et<25&&x.shifts>=2),'valid timed physics');
