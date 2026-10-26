@@ -1240,6 +1240,8 @@ export const CUTSCENE_ORDER = [
   'chapter08WarehouseFarewell',
   'chapter08Ginza',
   ...CHAPTER09_SEQUENCE,
+  'proSponsorIntroduction',
+  'proSponsorEpilogue',
   'chapter09SeasonRegistration',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
