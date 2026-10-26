@@ -1,13 +1,23 @@
 // Production integration-only regression: evaluates the REAL src tree.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import Vehicle from '../../src/vehicles/Vehicle.js';
-import AI from '../../src/ai/DragRacingAI.js';
-import {cars} from '../../src/data/cars.js';
-import {engines} from '../../src/data/engines.js';
-import {getBuiltCar,calculatePerformanceIndex} from '../../src/vehicles/VehiclePerformance.js';
-import {getEncounterAi,boostAiForStandingStart} from '../../src/data/encounterProfiles.js';
-import {stockClassFor} from '../../src/data/stockClasses.js';
+// Browser supplies Phaser globally; the CI physics probe needs only the
+// identical Clamp/Linear helpers from that library.
+globalThis.Phaser ??= {Math:{
+  Clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),
+  Linear:(a,b,t)=>a+(b-a)*t,
+}};
+const [{default:Vehicle},{default:AI},{cars},{engines},
+  {getBuiltCar,calculatePerformanceIndex},{getEncounterAi,boostAiForStandingStart},
+  {stockClassFor}] = await Promise.all([
+  import('../../src/vehicles/Vehicle.js'),
+  import('../../src/ai/DragRacingAI.js'),
+  import('../../src/data/cars.js'),
+  import('../../src/data/engines.js'),
+  import('../../src/vehicles/VehiclePerformance.js'),
+  import('../../src/data/encounterProfiles.js'),
+  import('../../src/data/stockClasses.js'),
+]);
 
 assert.equal(cars.dc2.stockClass,'B');
 assert.equal(cars.galant.stockClass,'B');
