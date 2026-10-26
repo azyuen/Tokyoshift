@@ -48,7 +48,7 @@ function walk(dir){
   if(ent.isDirectory())walk(file);
   else if(ent.name.endsWith('.js')){
    const original=read(file);
-   const contents=original.replace(/(from\\s*['"]|import\\s*\\(\\s*['"])([^'"]+\\.js)(?:\\?[^'"]*)?(['"])/g,(all,a,spec,close)=>{
+   const contents=original.replace(/(from\s*['"]|import\s*\(\s*['"])([^'"]+\.js)(?:\?[^'"]*)?(['"])/g,(all,a,spec,close)=>{
      const absolute=path.resolve(path.dirname(file),spec);
      const relative=path.relative(path.resolve('src'),absolute).split(path.sep).join('/');
      if(!MODULES.has(relative)) return all;
@@ -63,21 +63,21 @@ walk('src');
 // Force a fresh scene graph for the production app while preserving EXACT
 // same scene classes and behaviour. Version reconciliation clears old caches.
 const mainPath='src/main.js',main=read(mainPath);
-const newMain=main.replace(/(loadScene\\([^\\n]*?['"]\\.\\/scenes\\/[^'"]+\\.js)\\?v=[^'"]+(?=['"])/g,'$1?v='+RELEASE);
+const newMain=main.replace(/(loadScene\([^\n]*?['"]\.\/scenes\/[^'"]+\.js)\?v=[^'"]+(?=['"])/g,'$1?v='+RELEASE);
 assert.ok(newMain.includes('scenes/RaceScene.js?v='+RELEASE),'race scene cache revision');
 save(mainPath,newMain);
 
 let html=read('index.html');
-assert.ok(/id="build-stamp">R686<\\/div>/.test(html)||html.includes('id="build-stamp">R687</div>'),'known prior production build');
+assert.ok(/id="build-stamp">R686<\/div>/.test(html)||html.includes('id="build-stamp">R687</div>'),'known prior production build');
 html=html.replace('id="build-stamp">R686</div>','id="build-stamp">R687</div>')
- .replace(/src\\/main\\.js\\?v=20261025-r686/g,'src/main.js?v='+RELEASE);
+ .replace(/src\/main\.js\?v=20261025-r686/g,'src/main.js?v='+RELEASE);
 assert.ok(html.includes("import('./src/main.js?v="+RELEASE+"')"),'revision entry point');
 save('index.html',html);
 let sw=read('sw.js').replace(/R686/g,'R687').replace(/r686/g,'r687');
 save('sw.js',sw);
 const version=JSON.parse(read('version.json'));
 version.build='R687';version.stamp='2026-10-26T19:23:00+11:00';
-save('version.json',JSON.stringify(version,null,2)+'\\n');
+save('version.json',JSON.stringify(version,null,2)+'\n');
 
 assert.ok(!touched.includes('src/input/TouchControls.js'),'touch controls must remain untouched');
 console.log('R687_PORT_COMPLETE '+JSON.stringify({copied:COPY.length,importOnlyFiles:touched.length,importOnly:touched}));
