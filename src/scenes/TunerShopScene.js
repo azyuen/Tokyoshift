@@ -1762,44 +1762,82 @@ export default class TunerShopScene extends Phaser.Scene {
 
   rollInDonor() {
     if (this.conversionInProgress) return;
+    const currentCarId=this.getCurrentCarId();
+    const donor=cars[currentCarId];
+    const donorState=(this.registry.get('carStates')||{})[currentCarId]||{};
+    if (!donor || getBaseCarId(currentCarId)!==this.shop.donorCarId ||
+        (!this.shop.cosmeticOnly && donorState.stock===false)) return;
 
-    const donor = cars[this.shop.donorCarId];
-    const currentCarId = this.getCurrentCarId();
-    const donorState = (this.registry.get('carStates') || {})[currentCarId] || {};
-
-    if (
-      !donor ||
-      getBaseCarId(currentCarId) !== this.shop.donorCarId ||
-      (!this.shop.cosmeticOnly && donorState.stock === false)
-    ) return;
-
-    this.conversionInProgress = true;
+    this.conversionInProgress=true;
     this.clearDynamic();
     this.drawMechanic();
-
-    const carObjects = this.drawCarOnStage(
-      this.shop.donorCarId,
-      720,
-      650,
-      TUNER_STAGE_CAR_WIDTH,
-      10,
-      true
-    );
-
-    carObjects.forEach(obj => {
-      obj.x -= 1100;
-    });
-
+    const carObjects=this.drawCarOnStage(currentCarId,720,650,TUNER_STAGE_CAR_WIDTH,10,true);
+    if (!carObjects.length) {
+      this.conversionInProgress=false;
+      this.showHeroMode();
+      return;
+    }
+    const wheelObjects=carObjects.slice(3,5);
+    carObjects.forEach(obj=>{obj.x-=1050;});
+    // Constant deceleration: the car travels in as the wheels turn and both
+    // translation and wheel rotation come to rest on the same frame.
+    const arrivalXs=carObjects.map(obj=>obj.x);
+    const travel={progress:0};
     this.tweens.add({
-      targets: carObjects,
-      x: '+=1100',
-      duration: 900,
-      ease: 'Sine.easeOut',
-      onComplete: () => {
-        this.conversionInProgress = false;
-        this.showBuildConfirmation();
+      targets:travel,progress:1,duration:2450,ease:'Cubic.easeOut',
+      onUpdate:()=>{
+        const p=travel.progress;
+        const eased=1050*p;
+        carObjects.forEach((obj,i)=>{obj.x=arrivalXs[i]+eased;});
+        wheelObjects.forEach(obj=>{
+          const radius=Math.max(1,obj.displayWidth/2);
+          obj.rotation=eased/radius;
+        });
       },
+      onComplete:()=>{
+        this.conversionInProgress=false;
+        if (this.shop.cosmeticOnly) this.showLbwkBuildReview();
+        else this.showBuildConfirmation();
+      }
     });
+  }
+
+  showLbwkBuildReview() {
+    this.clearPopup();
+    if (!this.shop.cosmeticOnly) return this.showBuildConfirmation();
+    const currentId=this.getCurrentCarId();
+    const donor=cars[currentId],hero=cars[this.shop.heroCarId];
+    if (!donor || !hero || getBaseCarId(currentId)!==this.shop.donorCarId) {
+      this.showHeroMode();return;
+    }
+    this.sideContent.removeAll(true);
+    const x=SIDE.x+22;
+    const add=(y,value,size='10px',color='#e5edf1')=>
+      this.sideContent.add(this.add.text(x,SIDE.y+y,value,{
+        fontFamily:PIXEL_FONT,fontSize:size,color,wordWrap:{width:SIDE.w-44},
+        lineSpacing:8
+      }));
+    add(65,'YOUR LBWK BUILD','12px','#ffe2a3');
+    add(122,donor.name+'  >  '+hero.name,'8px');
+    add(184,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
+    add(225,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
+    add(271,'FULL WORKS CONVERSION','9px','#ffe2a3');
+    add(311,'Your current car is permanently replaced by its sealed LBWK hero build. Existing modifications are not carried over.','8px');
+    add(411,'BUILD COST','9px','#ffe2a3');
+    add(444,money(this.shop.buildCost),'12px','#ffe2a3');
+    const cash=Number(this.registry.get('cash')||0);
+    const owned=(this.registry.get('ownedCarIds')||[]).includes(hero.id);
+    const ready=cash>=Number(this.shop.buildCost||0)&&!owned;
+    const y=SIDE.y+SIDE.h-100;
+    const button=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
+      SIDE.w-56,48,ready?0x392916:0x202327,1)
+      .setStrokeStyle(2,ready?0xe2b464:0x59646a,1));
+    this.sideContent.add(this.add.text(SIDE.x+SIDE.w/2,y,
+      owned?'HERO ALREADY OWNED':ready?'DO THE BUILD':'INSUFFICIENT FUNDS',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:ready?'#fff1d5':'#9ca5aa'
+      }).setOrigin(0.5));
+    if (ready) button.setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>this.showBuildConfirmation());
   }
 
   showBuildConfirmation() {
