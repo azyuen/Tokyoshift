@@ -110,6 +110,19 @@ export default class TunerShopScene extends Phaser.Scene {
       queued += 1;
     }
 
+    // Liberty Walk collaborators have dedicated racing-outfit artwork.
+    if (shop.cosmeticOnly) {
+      for (const [key, path] of [
+        ['lbwkArukenProIdle', 'assets/Characters/Pro/arkon_den_idle.png'],
+        ['lbwkSayakaRaceIdle', 'assets/Characters/Main/race_sayaka_fujieda_idle.png'],
+      ]) {
+        if (!this.textures.exists(key)) {
+          this.load.image(key, path);
+          queued += 1;
+        }
+      }
+    }
+
     const currentCarId = this.registry.get('selectedCarId');
     const owned = this.registry.get('ownedCarIds') || [];
     const carStates = this.registry.get('carStates') || {};
@@ -1524,6 +1537,31 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   drawMechanic() {
+    if (this.shop.cosmeticOnly) {
+      const feetY = 714;
+      const addPerson = (key, x, height, depth) => {
+        if (!this.textures.exists(key)) return;
+        const source = this.textures.get(key).getSourceImage();
+        this.addDynamic(this.add.ellipse(x, feetY - 7, 126, 27, 0x000000, 0.58).setDepth(depth - 1));
+        const sprite = this.addDynamic(this.add.image(x, feetY, key)
+          .setOrigin(0.5, 1).setDepth(depth));
+        sprite.setScale(height / source.height);
+      };
+      // Sayaka stands immediately to Aruken's left, both grounded at the same floor line.
+      addPerson('lbwkSayakaRaceIdle', 153, 302, 13);
+      addPerson('lbwkArukenProIdle', 333, 350, 14);
+      const infoX = 46, infoY = 724, infoW = 430, infoH = 78;
+      this.addDynamic(this.add.rectangle(infoX + infoW / 2, infoY + infoH / 2,
+        infoW, infoH, 0x05090d, 0.74).setStrokeStyle(1, 0xd6aa68, 0.48).setDepth(18));
+      this.addDynamic(this.add.text(infoX + 18, infoY + 13, 'ARUKEN DENZAKI', {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f3dfbd'
+      }).setDepth(20));
+      this.addDynamic(this.add.text(infoX + 18, infoY + 44,
+        'GINZA MOTOR GALLERY // COLLABORATOR', {
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c2d0d6'
+        }).setDepth(20));
+      return;
+    }
     const character = characters[this.shop.mechanicId];
     if (!character?.visual?.spriteKey || !this.textures.exists(character.visual.spriteKey)) return;
 
