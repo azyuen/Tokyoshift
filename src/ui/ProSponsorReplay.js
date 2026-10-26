@@ -7,7 +7,7 @@ import { cars } from '../data/cars.js?v=20261026-r687';
 import { createDefaultProCircuitState } from '../data/proCircuit.js?v=20261017-r575';
 import { startProfessionalSeason } from '../data/proSeason.js?v=20261021-r628';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
-import { startChapter09 } from './Chapter09Story.js?v=20261027-r692';
+import { startChapter09 } from './Chapter09Story.js?v=20261027-r693';
 
 const ACTIVE='__proSponsorPlayableReplay';
 const OWNER='__proSponsorReplayOwnerSlot';
