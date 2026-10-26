@@ -1,7 +1,7 @@
 // R570 — Story Archive: player-facing, spoiler-safe chapter library.
 // Only canonical chapters appear. Dev micro-scenes remain in
 // Arkon Den's existing D) SCENES panel.
-import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r577';
+import { availableStoryChapters } from '../data/storyChapters.js?v=20261027-r693';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
 import { startChapter09 } from './Chapter09Story.js?v=20261027-r693';
