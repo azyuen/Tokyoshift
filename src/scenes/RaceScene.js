@@ -432,6 +432,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentCharacterId =
       (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
         storedOpponentCharacterId === 'sayakaFujieda') ||
+      (this.registry.get('selectedRaceCategory') === 'PRO_SPONSOR' &&
+        storedOpponentCharacterId === 'arkonDen') ||
       oshiageEliteOpponent || (this.registry.get('gameMode')==='arkonStory' &&
         storedOpponentCharacterId==='storyDaigoKirishima') ||
         regionRivals.includes(storedOpponentCharacterId)
@@ -934,6 +936,8 @@ export default class RaceScene extends Phaser.Scene {
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
       : this.raceMode === 'CHAPTER08'
         ? 'STORY RUN // NO STAKES'
+      : this.raceMode === 'PRO_SPONSOR'
+        ? 'GINZA SPONSOR TEST // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
@@ -1165,6 +1169,17 @@ export default class RaceScene extends Phaser.Scene {
 
   forfeitRace(cashPenalty = 0) {
     if (this.resultsShown) return;
+    if (this.raceMode === 'PRO_SPONSOR') {
+      // An exhibition withdrawal still moves the team to its registered
+      // season. Neither Aruken nor Sayaka makes sponsorship conditional.
+      markCutsceneSeen(this.registry, 'proSponsorRaceComplete');
+      this.registry.set('selectedRaceCategory', 'SINGLE');
+      this.registry.set('selectedRaceDeal', 'BET');
+      this.registry.set('selectedRaceMeetOffer', null);
+      saveSessionState(this.registry);
+      this.scene.start('CentralTokyoScene', { locationId: 'tokyoDragComplex' });
+      return;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryMx5Loan')?.active){
       this.registry.set('arkonStoryMx5RaceResult','forfeit');
@@ -3624,7 +3639,9 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
-    const contextType = isPinkSlip
+    const contextType = this.raceMode === 'PRO_SPONSOR'
+      ? 'GINZA SPONSOR EXHIBITION'
+      : isPinkSlip
       ? 'PINK SLIP'
       : this.raceMode === 'COMPETITION'
         ? 'STREET SHOWDOWN'
@@ -4031,7 +4048,9 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : settlement?.oshiageEliteContinues
               ? 'NEXT ELITE ROUND'
-              : 'CONTINUE';
+              : this.raceMode === 'PRO_SPONSOR'
+        ? 'RETURN TO THE TEAM'
+        : 'CONTINUE';
 
     const actionHintText = this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
@@ -4052,7 +4071,16 @@ export default class RaceScene extends Phaser.Scene {
       advanced = true;
       tapTarget.disableInteractive();
 
-      if (chapter08Race) {
+      if (this.raceMode === 'PRO_SPONSOR') {
+        markCutsceneSeen(this.registry, 'proSponsorRaceComplete');
+        this.registry.set('selectedRaceCategory', 'SINGLE');
+        this.registry.set('selectedRaceDeal', 'BET');
+        this.registry.set('selectedRaceMeetOffer', null);
+        this.registry.set('selectedOpponentCharacterId', null);
+        this.registry.set('selectedOpponentCarId', null);
+        saveSessionState(this.registry);
+        this.scene.start('CentralTokyoScene', { locationId: 'tokyoDragComplex' });
+      } else if (chapter08Race) {
         if (!isChapter08DevReplay(this.registry)) {
           markCutsceneSeen(this.registry, 'chapter08RaceFinished');
         }
@@ -5043,6 +5071,15 @@ export default class RaceScene extends Phaser.Scene {
       this.raceSettlement={
         playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
         pinkMessage:'',gameOver:false,devStoryExhibition:true,
+      };
+      return this.raceSettlement;
+    }
+    if (this.raceMode === 'PRO_SPONSOR') {
+      // This is a genuine head-to-head race, but it has NO cash, win/loss,
+      // coupon, ranking, recruitment or season-point settlement.
+      this.raceSettlement = {
+        playerWon, cashDelta: 0, cash: this.registry.get('cash') ?? 0,
+        pinkMessage: '', gameOver: false, proSponsorExhibition: true,
       };
       return this.raceSettlement;
     }
