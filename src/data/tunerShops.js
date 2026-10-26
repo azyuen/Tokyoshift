@@ -17,7 +17,7 @@ export const TUNER_SHOPS = {
   CENTRAL_TOKYO: {
     id: 'ginzaLibertyWalk', enabled: true, regionId: 'CENTRAL_TOKYO',
     mapLabel: 'TUNER SHOP', label: 'LIBERTY WALK', fullName: 'LIBERTY WALK',
-    specialty: 'FULL WORKS // 240Z', mechanicId: 'arkonDen',
+    specialty: 'FULL WORKS', mechanicId: 'arkonDen',
     heroCarId: 'libertyWalk240z', donorCarId: '240z',
     donorLabel: 'DATSUN 240Z', buildCost: 22000000,
     backgroundKey: 'tunerShopGinzaLbwkBg',
