@@ -48,9 +48,9 @@ test('Drag Scene triggers the same connected story after first arrival, and expo
  assert.match(panel,/confirmLabel:'CONFIRM FORFEIT'/);
  assert.match(panel,/const crewTitle=/);
  assert.match(panel,/fontFamily:'"Silkscreen", monospace',fontSize:'11px'/);
- assert.match(tester,/CHAPTER 09 — WELCOME TO THE BIG LEAGUES/);
- assert.match(tester,/startChapter09\(scene,\{preview:true\}\)/);
- assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+ assert.match(tester,/ARUKEN SPONSORSHIP/);
+ assert.match(tester,/beginProSponsorPlayableReplay/);
+ assert.match(archive,/beginProSponsorPlayableReplay/);
 });
 test('registration and withdrawal keep distinct safe confirmation paths',()=>{
  const panel=source('src/ui/ProSeasonPanel.js');
