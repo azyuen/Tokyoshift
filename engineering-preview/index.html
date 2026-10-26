@@ -23,6 +23,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,900&family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css?v=20261009-r449" />
   <style>
+    /* Preview-only badge placement: never change production stylesheet. */
+    #game-shell > #build-stamp {
+      left: auto !important;
+      right: max(8px, env(safe-area-inset-right)) !important;
+      top: max(8px, env(safe-area-inset-top)) !important;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      color: #b7ebff;
+      border-color: rgba(130, 217, 255, .55);
+      background: rgba(4, 18, 34, .82);
+    }
     #boot-diagnostic[hidden] { display: none !important; }
     #arkon-pin-row[hidden] { display: none !important; }
     #driver-name-overlay.is-visible.needs-owner-pin { top: 43.5%; }
@@ -127,7 +139,7 @@
         </div>
       </div>
     </div>
-    <div id="build-stamp">ENGINEERING PREVIEW 4 · HERO ENDGAME</div>
+    <div id="build-stamp" title="Tokyo SHIFT Engineering Preview E005 — Human Drivers" aria-label="Engineering Preview revision E005">E005</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -186,12 +198,12 @@
   </script>
   <script src="/Tokyoshift/engineering-preview/isolation.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="importmap">{"imports":{"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js":"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js?regional=3","/Tokyoshift/engineering-preview/src/data/tunerShops.js":"/Tokyoshift/engineering-preview/src/data/tunerShops.js?regional=3","/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js":"/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js?regional=3","/Tokyoshift/engineering-preview/src/vehicles/Engine.js":"/Tokyoshift/engineering-preview/src/vehicles/Engine.js?regional=3","/Tokyoshift/engineering-preview/src/data/cars.js":"/Tokyoshift/engineering-preview/src/data/cars.js?endgame=4","/Tokyoshift/engineering-preview/src/data/centralTokyo.js":"/Tokyoshift/engineering-preview/src/data/centralTokyo.js?endgame=4","/Tokyoshift/engineering-preview/src/data/endgameHeroCalibration.js":"/Tokyoshift/engineering-preview/src/data/endgameHeroCalibration.js?endgame=4"}}</script>
+  <script type="importmap">{"imports":{"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js":"/Tokyoshift/engineering-preview/src/data/stage3Calibration.js?regional=3","/Tokyoshift/engineering-preview/src/data/tunerShops.js":"/Tokyoshift/engineering-preview/src/data/tunerShops.js?regional=3","/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js":"/Tokyoshift/engineering-preview/src/data/vehicleEngineering.js?regional=3","/Tokyoshift/engineering-preview/src/vehicles/Engine.js":"/Tokyoshift/engineering-preview/src/vehicles/Engine.js?regional=3","/Tokyoshift/engineering-preview/src/data/cars.js":"/Tokyoshift/engineering-preview/src/data/cars.js?endgame=4","/Tokyoshift/engineering-preview/src/data/centralTokyo.js":"/Tokyoshift/engineering-preview/src/data/centralTokyo.js?endgame=4","/Tokyoshift/engineering-preview/src/data/endgameHeroCalibration.js":"/Tokyoshift/engineering-preview/src/data/endgameHeroCalibration.js?endgame=4","/Tokyoshift/engineering-preview/src/ai/DragRacingAI.js":"/Tokyoshift/engineering-preview/src/ai/DragRacingAI.js?e=005","/Tokyoshift/engineering-preview/src/input/TouchControls.js":"/Tokyoshift/engineering-preview/src/input/TouchControls.js?e=005"}}</script>
   <script type="module">
     const entry = new URL('/Tokyoshift/engineering-preview/src/main.js', location.origin);
-    entry.searchParams.set('preview', '4');
+    entry.searchParams.set('preview', '5');
     import(entry.href).catch(e => window.TOKYO_SHIFT_SHOW_BOOT_ERROR(
-      'PREVIEW 4 ENTRY FAILED\n' + entry.href + '\n' + (e.message || e)
+      'E005 ENTRY FAILED\n' + entry.href + '\n' + (e.message || e)
     ));
   </script>
 </body></html>
