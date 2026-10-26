@@ -543,7 +543,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const donorExists = Boolean(cars[this.shop.donorCarId]);
     const currentIsDonor = getBaseCarId(currentCarId) === this.shop.donorCarId;
     const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
-    const donorStock = currentIsDonor && donorState.stock !== false;
+    const donorEligible = currentIsDonor && (this.shop.cosmeticOnly || donorState.stock !== false);
     const heroOwned = owned.includes(this.shop.heroCarId);
     const cost = Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
@@ -583,9 +583,11 @@ export default class TunerShopScene extends Phaser.Scene {
       label = 'HERO ALREADY OWNED';
       enabled = false;
     } else if (!currentIsDonor) {
-      label = 'BRING YOUR STOCK ' + this.shop.donorLabel;
+      label = this.shop.cosmeticOnly
+        ? 'DRIVE YOUR ' + this.shop.donorLabel + ' HERE'
+        : 'BRING YOUR STOCK ' + this.shop.donorLabel;
       enabled = false;
-    } else if (!donorStock) {
+    } else if (!donorEligible) {
       label = 'CURRENT DONOR MUST BE STOCK';
       enabled = false;
     } else if (cash < cost) {
@@ -631,7 +633,9 @@ export default class TunerShopScene extends Phaser.Scene {
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
       SIDE.y + 536,
-      'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
+      this.shop.cosmeticOnly
+        ? 'Buy a compatible car at Auto Market and\ndeliver it to a garage. Select it there, then\ndrive here to arrange your full-works build.\nStock and modified donors are accepted.'
+        : 'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
       {
         fontFamily: BODY_FONT,
         fontSize: '9px',
@@ -1781,7 +1785,7 @@ export default class TunerShopScene extends Phaser.Scene {
     if (
       !donor ||
       getBaseCarId(currentCarId) !== this.shop.donorCarId ||
-      donorState.stock === false
+      (!this.shop.cosmeticOnly && donorState.stock === false)
     ) return;
 
     this.conversionInProgress = true;
@@ -1986,7 +1990,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const donorState = carStates[donorId] || {};
-    if (donorState.stock === false) return false;
+    if (!this.shop.cosmeticOnly && donorState.stock === false) return false;
     if (this.shop.cosmeticOnly && !isTunerShopUnlocked(this.registry, this.regionId)) return false;
 
     const cash = Number(this.registry.get('cash') || 0);
