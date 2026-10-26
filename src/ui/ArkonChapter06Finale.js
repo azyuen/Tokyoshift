@@ -75,12 +75,12 @@ export function showArkonChapter06Finale(scene,{onComplete}={}){
   void title;void subtitle;void blocker;
   // An unobtrusive Continue control lives in the right action column;
   // the waterfront image is not hidden by large bottom bars.
-  const button=add(scene.add.rectangle(1360,748,322,64,0x173a42,.96)
+  const button=add(scene.add.rectangle(1360,748,375,96,0x173a42,.96)
     .setStrokeStyle(2,0x90e7d6)
     .setDepth(1510).setScrollFactor(0)
     .setInteractive({useHandCursor:true}));
   const label=add(scene.add.text(1360,748,'FINISH CHAPTER 06  >',{
-    fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
+    fontFamily:PIXEL,fontSize:'16px',color:'#ffffff',
   }).setOrigin(.5).setDepth(1511).setScrollFactor(0));
   const black=add(scene.add.rectangle(780,420,1560,840,0x02060e,1)
     .setAlpha(0).setDepth(1700).setScrollFactor(0));
@@ -97,11 +97,11 @@ export function showArkonChapter06Finale(scene,{onComplete}={}){
         fontFamily:BODY,fontSize:'20px',color:'#e4edf5',
         align:'center',lineSpacing:9,
       }).setOrigin(.5).setDepth(1721).setScrollFactor(0));
-    const exit=add(scene.add.rectangle(780,518,334,58,0x1d5756,1)
+    const exit=add(scene.add.rectangle(780,518,334,96,0x1d5756,1)
       .setStrokeStyle(2,0x9be7dc).setDepth(1722)
       .setScrollFactor(0).setInteractive({useHandCursor:true}));
     const exitLabel=add(scene.add.text(780,518,'RETURN TO TOKYO',{
-      fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
+      fontFamily:PIXEL,fontSize:'16px',color:'#ffffff',
     }).setOrigin(.5).setDepth(1723).setScrollFactor(0));
     void popup;void headline;void description;void exitLabel;
     exit.once('pointerdown',()=>{

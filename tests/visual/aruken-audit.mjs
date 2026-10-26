@@ -9,19 +9,20 @@ const port=Number(process.env.AUDIT_PORT||8770),out=path.join(root,'docs/story-a
 await fs.mkdir(out,{recursive:true});
 const server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1','--directory',source],{stdio:'ignore'});
 const browser=await chromium.launch({executablePath:process.env.AUDIT_CHROMIUM||path.resolve('../browser-runtime/bin/chromium'),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const results=[];let failed=false;
+let results=[];if(process.env.AUDIT_RESUME){try{results=JSON.parse(await fs.readFile(path.join(out,'results.json'),'utf8')).results.filter(r=>!r.error);}catch{}}let failed=false;
 try {
 for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
+ if(process.env.AUDIT_DEVICE&&process.env.AUDIT_DEVICE!==device)continue;
  const context=await browser.newContext({viewport:{width,height},hasTouch:true,deviceScaleFactor:1,serviceWorkers:'block'});
  const page=await context.newPage();const errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
  await page.route('**/*phaser*.js',async route=>{if(!route.request().url().includes('127.0.0.1'))await route.fulfill({path:path.resolve('../browser-runtime/node_modules/phaser/dist/phaser.min.js')});else await route.continue();});
  await page.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.TOKYO_SHIFT?.scene?.isActive('CharacterSelectScene'),{timeout:120000});
- await page.evaluate(async()=>{
+ await page.evaluate(async(mode)=>{
   const g=window.TOKYO_SHIFT;for(const s of g.scene.getScenes(true))g.scene.stop(s.sys.settings.key);
   const s=new Phaser.Scene('Audit');g.scene.add('Audit',s,true);window.auditScene=s;
-  await new Promise(r=>setTimeout(r,100));
+  await new Promise(r=>setTimeout(r,100));if(!['hold','finale'].includes(mode))s.tweens.timeScale=8;
   g.registry.set('gameMode','arkonStory');g.registry.set('playerCharacterId','arkonDen');g.registry.set('selectedCarId','240z');
   const [{STORY_DIRECTOR_SCRIPTS:scripts},{showStoryStage},{getStoryBackground},{resolveBackgroundViewport},{playMangaCutscene},{default:Garage},{default:Meet},{showStoryContinuePrompt}]=await Promise.all([
    import('/src/data/storyDirectorScripts.js'),import('/src/ui/StoryStage.js'),import('/src/data/storyBackgroundCatalog.js'),import('/src/story/BackgroundViewport.js'),import('/src/ui/MangaCutscene.js'),import('/src/scenes/GarageScene.js'),import('/src/scenes/MeetScene.js'),import('/src/ui/StoryContinuePrompt.js')]);
@@ -32,10 +33,12 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
   for(const ch of [6,10])entries.push({ch,index:999,step:{type:'FINALE',title:'Chapter '+ch+' finale'},stage:{type:'STAGE',backgroundId:'meet:yokohamaMinatoMirai:night',stageMode:'native',characters:[],cars:[{carId:'rwbStellaPorsche'}]}});
   entries.push({ch:1,index:998,step:{type:'HOLD',title:'Player-controlled hold'},stage:entries[0].stage});
   window.audit={entries,showStoryStage,getStoryBackground,resolveBackgroundViewport,playMangaCutscene,Garage,Meet,showStoryContinuePrompt};
- });
+ },mode);
  const entries=await page.evaluate(mode=>audit.entries.filter(e=>mode==='finale'?e.step.type==='FINALE':mode==='hold'?e.step.type==='HOLD':mode==='stage'?e.step.type==='STAGE':mode==='phone'?e.step.type==='PHONE':['MANGA','PHONE'].includes(e.step.type)).map(e=>({ch:e.ch,index:e.index,title:e.step.title||e.stage.backgroundId})),mode);
  let count=0,last=0;
  for(const item of entries){
+  if(item.ch<Number(process.env.AUDIT_MIN_CHAPTER||1)||item.ch>Number(process.env.AUDIT_MAX_CHAPTER||10))continue;
+  if(results.some(r=>r.ch===item.ch&&r.index===item.index&&r.device===device))continue;
   if(process.env.AUDIT_CHAPTER&&item.ch!==Number(process.env.AUDIT_CHAPTER))continue;
   if(process.env.AUDIT_LIMIT&&count++>=Number(process.env.AUDIT_LIMIT))break;
   if(last!==item.ch){last=item.ch;console.log(phase,mode,device,'Chapter',last);}
@@ -80,25 +83,26 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
      a.playMangaCutscene(s,d,{preloadPagePosesOnly:true,preview:true,force:true,backgroundStyle:d.backgroundStyle||'wash'});
      await delay(500);
      if(d.type==='PHONE'){
-      for(let t=0;t<100&&s._phoneConversation?.phase==='loading';t++)await delay(50);
+      for(let t=0;t<300&&s._phoneConversation?.phase==='loading';t++)await delay(50);
       if(!s._phoneConversation?.active)throw Error('Phone inactive');
-      const clickButton=()=>{
+      const clickButton=async()=>{
+       for(let t=0;t<300&&s._phoneConversation?.phase==='transition';t++)await delay(50);
        const all=s.children.list.flatMap(o=>o.type==='Container'?[...o.list]:[o]);
-       const buttons=all.filter(o=>o.input?.enabled&&o.type==='Rectangle'&&o.width<600).sort((a,b)=>b.depth-a.depth);
-       if(!buttons.length)throw Error('Phone button missing');buttons[0].emit('pointerdown');
+       const buttons=all.filter(o=>o.input?.enabled&&['Rectangle','Arc'].includes(o.type)&&o.width<600).sort((a,b)=>b.depth-a.depth);
+       if(!buttons.length)throw Error('Phone button missing '+JSON.stringify({phase:s._phoneConversation?.phase,objects:all.filter(o=>o.input).map(o=>({type:o.type,width:o.width,enabled:o.input.enabled,depth:o.depth}))}));buttons[0].emit('pointerdown');
       };
-      if(s._phoneConversation.phase==='ringing'){clickButton();await delay(1300);}
+      if(s._phoneConversation.phase==='ringing'){await clickButton();await delay(1300);}
       for(let i=0;i<d.pages.length;i++){
        await delay(800);if(!s._phoneConversation?.active)throw Error('Phone closed early');pages++;
-       if(i<d.pages.length-1)clickButton();
+       if(i<d.pages.length-1)await clickButton();
       }
      }
      if(d.type==='MANGA'){
-      for(let t=0;t<100&&!s._mangaCutscene?.advance;t++)await delay(50);
+      for(let t=0;t<300&&!s._mangaCutscene?.advance;t++)await delay(50);
       if(!s._mangaCutscene?.advance)throw Error('Manga not ready');
       for(let i=0;i<d.pages.length;i++){
        if(i){s._mangaCutscene.lastAdvanceAt=0;s._mangaCutscene.advance('button');}
-       for(let t=0;t<100&&(!s._mangaCutscene.dialogueObjects.length||s._mangaCutscene.dialogueObjects.some(o=>o.alpha<.99));t++)await delay(50);
+       for(let t=0;t<300&&(!s._mangaCutscene.dialogueObjects.length||s._mangaCutscene.dialogueObjects.some(o=>o.alpha<.99));t++)await delay(50);
        if(!s._mangaCutscene.dialogueObjects.length||s._mangaCutscene.dialogueObjects.some(o=>o.alpha<.99))throw Error('Dialogue invisible');
        pages++;
       }
@@ -117,7 +121,7 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
      if(await page.evaluate(()=>auditDirector.status.index)!==1)throw Error('Post-dialogue hold auto advanced');
      await tap(866,700);await page.waitForFunction(()=>!auditDirector.status.active);
     }else{
-     await tap(1354,747);await page.waitForTimeout(6500);await tap(780,515);await page.waitForFunction(()=>window.auditFinished===true);await page.evaluate(()=>window.auditFinished=false);
+     await tap(1354,747);await page.waitForFunction(()=>auditScene.children.list.some(o=>o.text==='RETURN TO TOKYO'),{timeout:60000});await tap(780,515);await page.waitForFunction(()=>window.auditFinished===true);await page.evaluate(()=>window.auditFinished=false);
     }
    }
    results.push({...item,device,...detail,file:filename});

@@ -1,0 +1,25 @@
+Aruken presentation audit
+Baseline: 3fc821ee2f6da6bbefa8dba41f762b42357b8f23
+
+Baseline Aruken suite
+ℹ tests 193
+ℹ suites 0
+ℹ pass 192
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3155.989933
+Known failure: Career scenes and racing names use the in-game identity; retired R677 expectation /Aruken and I spent/. Reproduces on baseline.
+
+Edited Aruken + presentation suite
+ℹ tests 207
+ℹ suites 0
+ℹ pass 206
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4174.467025
+Known failure: Career scenes and racing names use the in-game identity; retired R677 expectation /Aruken and I spent/. Reproduces on baseline.
+

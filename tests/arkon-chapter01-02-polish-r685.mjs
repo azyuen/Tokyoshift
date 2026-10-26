@@ -99,7 +99,7 @@ test('R685 Ch2 drive dialogue is paced by BOTH elapsed time and distance, not ac
 
 test('R685 chapter-only wider bottom-right prompt and story reason to race',()=>{
  const prompt=read('src/ui/StoryContinuePrompt.js');
- assert.match(prompt,/Math.min\(455,stage.w-36\)/);
+ assert.match(prompt,/Math.min\(aruken\?560:455,stage.w-36\)/);
  assert.match(prompt,/replace\(\/\^ARUKEN DENZAKI/);
  const reg={get:k=>({gameMode:'arkonStory',arkonStoryPhase:'chapter02AfterWorkshop',
    storyDirectorProgress:{id:'arkonChapter02',index:10,vars:{ch2BeforeFriendlyRace:9}},

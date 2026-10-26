@@ -33,17 +33,17 @@ export function showStoryContinuePrompt(scene,{
   const polygon=[{x:left+18,y:top},{x:right,y:top},{x:right-18,y:bottom},{x:left,y:bottom}];
   plate.fillPoints(polygon,true);plate.strokePoints(polygon,true);
   const title=add(scene.add.text(x,y+(caption?-11:0),String(label).toUpperCase(),{
-    fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+    fontFamily:PIXEL,fontSize:aruken?'20px':'10px',color:'#ffffff',align:'center',
     wordWrap:{width:w-74,useAdvancedWrap:true},
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
   // Phaser sizes text after measuring glyph widths; shrink any unexpectedly
   // long translations instead of bleeding outside the parallelogram.
-  if(title.width>w-65)title.setFontSize('8px');
+  if(title.width>w-65)title.setFontSize(aruken?'16px':'8px');
   // The button already belongs to Aruken's Story; display the chapter title
   // alone, not a redundant ARUKEN DENZAKI prefix on every scene prompt.
   const shortCaption=String(caption||'').replace(/^ARUKEN DENZAKI\s*\/\/\s*/i,'');
   const captionText=shortCaption?add(scene.add.text(x,y+19,shortCaption,{
-    fontFamily:BODY,fontSize:'11px',color:'#b9e6ec',align:'center',
+    fontFamily:BODY,fontSize:aruken?'18px':'11px',color:'#b9e6ec',align:'center',
     wordWrap:{width:w-88,useAdvancedWrap:true},
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0)):null;
   const hit=add(scene.add.rectangle(x,y,w,h,0xffffff,.001)
