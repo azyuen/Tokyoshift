@@ -12,7 +12,7 @@ export function chapter09ShouldBegin(source){
     !hasSeenCutscene(source,'chapter09Welcome');
 }
 
-export function startChapter09(scene,{preview=false}={}){
+export function startChapter09(scene,{preview=false,onPreviewComplete=null}={}){
   if(!scene || sceneCutsceneActive(scene) || scene._chapter09Playing)return false;
   if(!preview && (!chapter09ShouldBegin(scene.registry) ||
     scene.activeLocationId!=='tokyoDragComplex'))return false;
@@ -43,7 +43,8 @@ export function startChapter09(scene,{preview=false}={}){
     if(stopped)return;
     stage?.finish?.(()=>{
       if(!cleanup())return;
-      if(!preview && scene.sys?.isActive?.() &&
+      if(preview)onPreviewComplete?.();
+      else if(scene.sys?.isActive?.() &&
         scene.activeLocationId==='tokyoDragComplex')
         scene.renderLocation(scene.activeLocationId);
     });
