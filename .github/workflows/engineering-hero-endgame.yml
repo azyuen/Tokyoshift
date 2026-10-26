@@ -1,0 +1,23 @@
+name: Engineering Hero Endgame Evaluation
+on:
+  push:
+    branches:
+      - engineering/hero-endgame-20261026
+  workflow_dispatch:
+jobs:
+  hero-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            tools
+            package.json
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Evaluate all endgame heroes with real game simulation
+        run: node tools/engineering-hero-endgame.mjs
