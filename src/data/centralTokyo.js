@@ -273,11 +273,12 @@ export const AUTO_MARKET_LISTINGS = [
 ];
 
 export const GINZA_LISTINGS = [
+  { carId: 'libertyWalk240z', price: 72000000, collectionLabel: 'LIBERTY WALK 240Z // TOKYO SHIFT', rarity: 'ULTRA RARE' },
   { carId: 'essoToyotaGtOne', price: 240000000, collectionLabel: 'ESSO GT-ONE', rarity: 'LEGENDARY' },
   { carId: 'cleanToyotaGtOne', price: 240000000, collectionLabel: 'GT-ONE CLEAN BODY', rarity: 'LEGENDARY' },
   { carId: 'calsonicR390', price: 230000000, collectionLabel: 'CALSONIC R390 GT1', rarity: 'LEGENDARY' },
   { carId: 'cleanR390', price: 230000000, collectionLabel: 'R390 CLEAN BODY', rarity: 'LEGENDARY' },
-  { carId: 'mcrae22B', price: 30000000, collectionLabel: '22B RALLY TRIBUTE', rarity: 'COLLECTOR' },
+  { carId: 'mcrae22B', price: 30000000, collectionLabel: 'McRAE WRC97 SPECIAL', rarity: 'COLLECTOR' },
   { carId: 'zeroSportsGc8', price: 38000000, collectionLabel: 'ZERO/SPORTS GC8', rarity: 'RARE' },
   { carId: 'tommiEvo6', price: 65000000, collectionLabel: 'MÄKINEN GROUP A', rarity: 'ULTRA RARE' },
   { carId: 'castrolMugenNsx', price: 160000000, collectionLabel: 'CASTROL MUGEN GT500', rarity: 'LEGENDARY' },
