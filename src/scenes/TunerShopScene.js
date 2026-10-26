@@ -394,7 +394,7 @@ export default class TunerShopScene extends Phaser.Scene {
         const y=SIDE.y+169+i*47;
         const selected=this.shop.heroCarId===g.id;
         const label=({libertyWalk240z:'240Z',lbwk180sx:'180SX',
-          lbwkA60:'CELICA XX / SUPRA A60',lbwk350z:'350Z',lbwkS15:'S15',
+          lbwkA60:'A60 SUPRA',lbwk350z:'350Z',lbwkS15:'S15',
           lbwkR34:'R34',lbwkMx5:'MX-5 NB',lbwkR32:'R32'})[g.id]||g.name.replace(/^LBWK\\s*/,'');
         const b=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,
           selected?0x3a2d18:0x12202b,1)
