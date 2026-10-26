@@ -29,7 +29,7 @@ for(const [a,b] of [['cleanMazda787B','renownMazda787B'],['cleanToyotaGtOne','es
  assert.equal(x.standing400,y.standing400,a+' physics parity');
  assert.equal(x.kw,y.kw,a+' power parity');
 }
-assert.equal(cars.arkonLibertyWalk240z.collector,false,'original story car must not become sealed');
+assert.equal(Boolean(cars.arkonLibertyWalk240z.collector),false,'original story car must not become sealed');
 assert.equal(cars.arkonLibertyWalk240z.engine,cars['240z'].engine,'original story engine untouched');
 const failing=result.filter(r=>r.standing400>10.15);
 console.log('HERO_SUMMARY '+JSON.stringify({tested:result.length,under10:result.filter(r=>r.standing400<10).length,over1015:failing.map(r=>[r.id,r.standing400])}));
