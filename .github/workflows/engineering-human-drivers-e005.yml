@@ -26,5 +26,5 @@ jobs:
           node --check engineering-preview/src/input/TouchControls.js
           node --check engineering-preview/src/scenes/RaceScene.js
           node --check tools/engineering-human-ai-preview-e005.mjs
-      - name: Compare identical cars: previous AI vs E005 expert and elite
+      - name: 'Compare identical cars: previous AI vs E005 expert and elite'
         run: node tools/engineering-human-ai-preview-e005.mjs
