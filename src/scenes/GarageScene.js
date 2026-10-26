@@ -7,6 +7,7 @@ import {
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
+import { stockClassFor } from '../data/stockClasses.js?v=20261026-r688';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261024-r680';
@@ -1844,6 +1845,7 @@ export default class GarageScene extends Phaser.Scene {
       ['POWER', 'power'],
       ['TORQUE', 'torque'],
       ['WEIGHT', 'weight'],
+      ['CLASS', 'class'],
     ];
 
     this.specValueTexts = {};
@@ -4664,6 +4666,8 @@ export default class GarageScene extends Phaser.Scene {
       (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
     );
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
+    // Factory class is fixed for the car's original model; tuning cannot alter it.
+    this.specValueTexts.class.setText(stockClassFor(car) || '—');
 
     this.refreshTuningCategoryAvailability();
 
@@ -4708,6 +4712,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
     this.specValueTexts.weight.setText('—');
+    this.specValueTexts.class.setText('—');
     this.tuningStatusText
       ?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel)
       .setColor('#8cc8ec');
@@ -6799,6 +6804,7 @@ export default class GarageScene extends Phaser.Scene {
       (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
     );
     this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
+    this.specValueTexts.class.setText(stockClassFor(car) || '—');
   }
 
   buildSecondaryHotspots(mode) {
