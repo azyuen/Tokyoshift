@@ -1,0 +1,37 @@
+name: R693 Chapter 09 playable recount and dev micro-scenes
+on:
+  push:
+    branches: [main, feature/recount-ch09-pro-sponsor-and-dev-micro-cleanup-r693]
+    paths:
+      - 'src/ui/ProSponsorReplay.js'
+      - 'src/ui/ProSponsorStory.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/ui/StoryArchivePanel.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/data/storyChapters.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/pro-sponsor-recount-r693.mjs'
+      - 'tests/chapter09-drag-r577.mjs'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - 'tests/story-archive-r570.mjs'
+      - '.github/workflows/pro-sponsor-recount-r693.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          for f in src/ui/ProSponsorReplay.js src/ui/ProSponsorStory.js src/ui/CutsceneTester.js src/ui/StoryArchivePanel.js src/ui/Chapter09Story.js src/data/storyChapters.js src/state/GameState.js src/scenes/CentralTokyoScene.js src/scenes/RaceScene.js tests/pro-sponsor-recount-r693.mjs; do node --check "$f"; done
+      - name: Replay / chapters / sponsorship regression
+        run: |
+          node --test tests/pro-sponsor-recount-r693.mjs tests/pro-sponsor-r692.mjs tests/story-archive-r570.mjs tests/chapter09-drag-r577.mjs tests/chapter09-establishing-r579.mjs

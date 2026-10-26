@@ -182,11 +182,11 @@ test('Arkon Den + Story Archive replay the complete story over the room without 
   const tester=source('src/ui/CutsceneTester.js');
   const archive=source('src/ui/StoryArchivePanel.js');
   const story=source('src/ui/Chapter09Story.js');
-  assert.match(tester,/startChapter09\(scene,\{preview:true\}\)/);
-  assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+  assert.match(tester,/beginProSponsorPlayableReplay/);
+  assert.match(archive,/beginProSponsorPlayableReplay/);
   assert.match(story,/const sequence=preview\?\[\.\.\.CHAPTER09_SEQUENCE\]/);
   assert.match(story,/onPreviewComplete:done/);
-  assert.match(story,/if\(!preview && scene\.sys\?\.isActive\?\.\(\)/);
+  assert.ok(story.includes('onPreviewComplete?.()'));
   assert.match(archive,/const leftColumn=i<5/);
   assert.match(archive,/const y=210\+\(leftColumn\?i:i-5\)\*123/);
 });

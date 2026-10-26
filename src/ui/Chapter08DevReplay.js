@@ -5,7 +5,7 @@
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
-import { isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
+import { isStoryChapterComplete } from '../data/storyChapters.js?v=20261027-r693';
 
 const SESSION_KEY = '__chapter08DevReplay';
 const OWNER_KEY = '__chapter08ReplayProfileSlot';

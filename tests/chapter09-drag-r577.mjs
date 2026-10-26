@@ -19,7 +19,7 @@ test('four connected scenes follow Chapter 08 and include the genuine Ryuji/Saya
  assert.ok(CHAPTER09_SCENES.chapter09Visitor.pages.some(p=>p.leftCharacter==='mikaHayaseChampion'));
  assert.equal(characters.mikaHayaseChampion.name,'Mika Hayase');
  assert.notEqual(characters.mikaHayaseChampion.visual.path,characters.mikaHayase.visual.path);
- assert.equal(CHAPTER09_SCENES.chapter09Welcome.finalActionLabel,'CHAPTER 09 COMPLETE');
+ assert.equal(CHAPTER09_SCENES.chapter09Welcome.finalActionLabel,'EXPLORE THE DRAG COMPLEX');
  assert.ok(CHAPTER09_SCENES.chapter09SeasonRegistration.pages.some(p=>p.text==="Alright, you two. We've had our fun. Now let's get serious."));
 });
 test('Chapter 09 unlocks on first eligible strip arrival, never before the Chapter 08 Ginza reveal',()=>{
@@ -27,7 +27,8 @@ test('Chapter 09 unlocks on first eligible strip arrival, never before the Chapt
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza'])),true);
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza','chapter09Welcome'])),false);
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza'],{devMode:false})),false);
- assert.equal(isStoryChapterComplete(registry(['chapter09Welcome']),'chapter09'),true);
+ assert.equal(isStoryChapterComplete(registry(['chapter09Welcome']),'chapter09'),false);
+ assert.equal(isStoryChapterComplete(registry(['chapter09Welcome','proSponsorEpilogue']),'chapter09'),true);
  assert.equal(STORY_CHAPTERS.at(-1).id,'chapter09');
 });
 test('Drag Scene triggers the same connected story after first arrival, and exposes consistent compact actions',()=>{
@@ -47,9 +48,9 @@ test('Drag Scene triggers the same connected story after first arrival, and expo
  assert.match(panel,/confirmLabel:'CONFIRM FORFEIT'/);
  assert.match(panel,/const crewTitle=/);
  assert.match(panel,/fontFamily:'"Silkscreen", monospace',fontSize:'11px'/);
- assert.match(tester,/CHAPTER 09 — WELCOME TO THE BIG LEAGUES/);
- assert.match(tester,/startChapter09\(scene,\{preview:true\}\)/);
- assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+ assert.match(tester,/ARUKEN SPONSORSHIP/);
+ assert.match(tester,/beginProSponsorPlayableReplay/);
+ assert.match(archive,/beginProSponsorPlayableReplay/);
 });
 test('registration and withdrawal keep distinct safe confirmation paths',()=>{
  const panel=source('src/ui/ProSeasonPanel.js');

@@ -1,7 +1,7 @@
 // Canonical public chapter index. Micro-cutscenes never enter the Story Archive.
 // Progress is checked against the ACTIVE profile, with legacy milestones as
 // fallback for players who completed chapters before once-flags were added.
-import { hasSeenCutscene } from './cutscenes.js?v=20261017-r577';
+import { hasSeenCutscene } from './cutscenes.js?v=20261027-r693';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20261017-r553';
 import { isCrewComplete } from './crewSystem.js?v=20261016-r551';
 const get = (source,key,fallback=null) => source?.get?.(key) ?? source?.[key] ?? fallback;
@@ -14,7 +14,7 @@ export const STORY_CHAPTERS = Object.freeze([
   { number:6,id:'chapter06',title:'Beyond Seven',subtitle:'Seven regional leaders' },
   { number:7,id:'chapter07',title:'One Crew, Seven Roads',subtitle:'Your crew comes together' },
   { number:8,id:'chapter08',title:'The Next Level',subtitle:'A new racing career begins' },
-  { number:9,id:'chapter09',title:'Welcome to the Big Leagues',subtitle:'Meet the professional Drag Complex' },
+  { number:9,id:'chapter09',title:'Ginza Backing',subtitle:'The Drag Complex, Aruken and the first Pro Season' },
 ]);
 export const getStoryChapter = id => STORY_CHAPTERS.find(chapter => chapter.id === id) || null;
 export function isStoryChapterComplete(source, chapterId) {
@@ -42,7 +42,9 @@ export function isStoryChapterComplete(source, chapterId) {
     case 'chapter08':
       return seen('chapter08Ginza');
     case 'chapter09':
-      return seen('chapter09Welcome');
+      // The initial Drag Complex briefing is only the chapter prelude.
+      // The sponsor revelation and post-race send-off complete Chapter 09.
+      return seen('proSponsorEpilogue');
     default:
       return false;
   }

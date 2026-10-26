@@ -89,7 +89,7 @@ export const CHAPTER09_SCENES=Object.freeze({
       sayaka("Just someone who believes in us. Don't worry about the paperwork.",'trackHappy'),
       daichi("Right! Time to fire up our engines!",'win'),
       sayaka("Before that, you two need to look like professionals. Style is important!",'trackHappy'),
-    ],'CHAPTER 09 COMPLETE'),
+    ],'EXPLORE THE DRAG COMPLEX'),
   // First-ever official season only. The signing is distinct from the earlier
   // free Open Circuit invitation: Daichi meets Aruken here for the FIRST time.
   proSponsorIntroduction:{

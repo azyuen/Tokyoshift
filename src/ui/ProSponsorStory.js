@@ -2,9 +2,10 @@
 // Open Circuit and the repeatable eight-round Pro Season economy.
 // Every checkpoint is stored in cutscenesSeen (which already survives saves).
 import { cars } from '../data/cars.js?v=20261026-r687';
-import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261027-r692';
+import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261027-r693';
 import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r692';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r693';
+import { finishProSponsorPlayableReplay, isProSponsorPlayableReplay } from './ProSponsorReplay.js?v=20261027-r693';
 
 const strip = 'tokyoDragComplex';
 
@@ -84,7 +85,9 @@ export function startProSponsorRace(scene) {
 // This recovers gracefully if the app was closed mid-dialogue/mid-race.
 export function maybePlayProSponsorStory(scene) {
   if (!scene?.sys?.isActive?.() || scene.activeLocationId !== strip ||
-      sceneCutsceneActive(scene) || !firstActiveSeason(scene)) return false;
+      sceneCutsceneActive(scene) || !firstActiveSeason(scene) ||
+      (isProSponsorPlayableReplay(scene.registry) &&
+       ['welcome','welcoming'].includes(scene.registry.get('__proSponsorReplayPhase')))) return false;
   const source = scene.registry;
   if (hasSeenCutscene(source, 'proSponsorEpilogue')) return false;
 
@@ -92,7 +95,9 @@ export function maybePlayProSponsorStory(scene) {
     const result = playMangaCutscene(scene, 'proSponsorEpilogue', {
       preloadPagePosesOnly: true,
       onComplete: () => {
-        if (scene.sys?.isActive?.()) scene.renderLocation(strip);
+        if (isProSponsorPlayableReplay(scene.registry)) {
+          finishProSponsorPlayableReplay(scene);
+        } else if (scene.sys?.isActive?.()) scene.renderLocation(strip);
       },
     });
     return Boolean(result?.played);

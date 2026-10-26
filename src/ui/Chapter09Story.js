@@ -1,6 +1,6 @@
 // R583 — The registration room persists under the ORIGINAL manga renderer.
 // All four dialogue sections and both establishing beats share one room stage.
-import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter09.js?v=20261027-r692';
+import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter09.js?v=20261027-r693';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261027-r692';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r692';
@@ -12,7 +12,7 @@ export function chapter09ShouldBegin(source){
     !hasSeenCutscene(source,'chapter09Welcome');
 }
 
-export function startChapter09(scene,{preview=false}={}){
+export function startChapter09(scene,{preview=false,onPreviewComplete=null}={}){
   if(!scene || sceneCutsceneActive(scene) || scene._chapter09Playing)return false;
   if(!preview && (!chapter09ShouldBegin(scene.registry) ||
     scene.activeLocationId!=='tokyoDragComplex'))return false;
@@ -43,7 +43,8 @@ export function startChapter09(scene,{preview=false}={}){
     if(stopped)return;
     stage?.finish?.(()=>{
       if(!cleanup())return;
-      if(!preview && scene.sys?.isActive?.() &&
+      if(preview)onPreviewComplete?.();
+      else if(scene.sys?.isActive?.() &&
         scene.activeLocationId==='tokyoDragComplex')
         scene.renderLocation(scene.activeLocationId);
     });

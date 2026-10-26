@@ -14,7 +14,8 @@ class FakeRegistry {
 }
 const seen=['openingDaichiAfterSayaka','centralTokyoUnlocked','firstRegionalChampion',
   'canalYardBiggerDreams','warehouseHqUnlocked','sevenRegionsConquered',
-  'fullCrewTogether','chapter08Ginza','chapter08RaceFinished','chapter09Welcome'];
+  'fullCrewTogether','chapter08Ginza','chapter08RaceFinished','chapter09Welcome',
+  'proSponsorEpilogue'];
 const profile={
   devMode:false,cutscenesSeen:seen,openingChapter:null,playerCharacterId:'renMizuno',
   firstName:'Young',lastName:'Driver',selectedCarId:'ae86',preferredCarId:'ae86',
@@ -113,8 +114,8 @@ test('chapter replays reuse phone, magazine, rivals and crew interactions',()=>{
   assert.match(garage,/storyArchiveChapter/);
   assert.match(garage,/showStoryArchivePanel\(this\)/);
   const tester=source('src/ui/CutsceneTester.js');
-  assert.match(tester,/beginStoryArchiveSceneReplay\(scene,STORY_REPLAY_IDS\[id\]\)/);
-  assert.match(tester,/smallerScenes = CUTSCENE_ORDER/);
+  assert.match(tester,/beginProSponsorPlayableReplay/);
+  assert.match(tester,/ACTIVE_DEV_MICRO_SCENES/);
   const office=source('src/ui/OfficePanel.js');
   assert.match(office,/STORY ARCHIVE/);
   const chapter08=source('src/ui/Chapter08Story.js');

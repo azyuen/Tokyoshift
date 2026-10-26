@@ -98,10 +98,11 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261023-r667';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261017-r641';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261027-r693';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
+import { isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
@@ -973,6 +974,8 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
+    if(isProSponsorPlayableReplay(this.registry))
+      this._proSponsorReplayExit=addProSponsorReplayExit(this,1355,116);
     this.cancelButton.on('pointerdown', () => {
       if (this.isTutorial) {
         if (this.isCoaching) {
