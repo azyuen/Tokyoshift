@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R673 — Aruken Story Chapter 09, not the separate Career Chapter 09.
 // No named criminal organisation, magical exoneration or invented race victories.
 // Sayaka gives Aruken space to choose principle; practical danger remains for Chapter 10.
@@ -193,3 +194,5 @@ export const ARKON_CHAPTER_09={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_09);

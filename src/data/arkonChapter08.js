@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R672 — CHAPTER 08: THE PRICE OF AMBITION.
 // Sayaka and Aruken remain close, even as his new circle unsettles her.
 // Three player-driven races resolve honestly; the gala ends in a signed risk,
@@ -264,3 +265,5 @@ export const ARKON_CHAPTER_08={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_08);

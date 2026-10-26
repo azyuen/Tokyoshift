@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R669 — CHAPTER 07: NEVER ENOUGH.
 // The same prosperous Warehouse and the player’s REAL 240Z build now carry
 // Aruken’s ambition. Sayaka’s absence is not a punishment or a betrayal.
@@ -339,3 +340,5 @@ export function getArkonCh7FirstTunerManga(region){
   ],{left:A,right:'reinaKuroda'},'storyMechanic');
   return null;
 }
+
+polishArukenPresentation(ARKON_CHAPTER_07);

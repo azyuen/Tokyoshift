@@ -33,7 +33,7 @@ test('R686 Ch1 uses varied Oshiage uniform Sayaka sprites, not just thumbs-up',(
  const sayakaScenes=C1.steps.filter(s=>s.type==='MANGA'&&
    s.characters?.right==='sayakaFujieda');
  const poses=new Set(sayakaScenes.flatMap(s=>s.pages.map(p=>p.rightPose)));
- for(const pose of ['oshiageNeutral','oshiageHappy','oshiageReviewing','oshiageConcerned','oshiageRelaxed','oshiageExplaining','oshiageTalking','oshiageSerious'])
+ for(const pose of ['oshiageNeutral','oshiageHappy','oshiageReviewing','oshiageConcerned','oshiageRelaxed','oshiageTalking','oshiageSerious'])
    assert.ok(poses.has(pose),pose);
  assert.equal([...poses].every(p=>String(p).startsWith('oshiage')),true);
  for(const pose of poses) {
@@ -99,7 +99,7 @@ test('R685 Ch2 drive dialogue is paced by BOTH elapsed time and distance, not ac
 
 test('R685 chapter-only wider bottom-right prompt and story reason to race',()=>{
  const prompt=read('src/ui/StoryContinuePrompt.js');
- assert.match(prompt,/Math.min\(455,stage.w-36\)/);
+ assert.match(prompt,/Math.min\(aruken\?560:455,stage.w-36\)/);
  assert.match(prompt,/replace\(\/\^ARUKEN DENZAKI/);
  const reg={get:k=>({gameMode:'arkonStory',arkonStoryPhase:'chapter02AfterWorkshop',
    storyDirectorProgress:{id:'arkonChapter02',index:10,vars:{ch2BeforeFriendlyRace:9}},

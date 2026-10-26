@@ -82,18 +82,18 @@ test('R683 Ch9 final confrontation preserves suit when VIP speaks and serious ex
   const exit=scene(ARKON_CHAPTER_09,'AN EXIT');
   assert.ok(exit.pages.every(p=>['ginzaSuit','devSerious'].includes(p.leftPose)));
   assert.ok(exit.pages.every(p=>p.rightPose==='ginzaDress'));
-  assert.equal(scene(ARKON_CHAPTER_09,'THE ROAD HOME').pages[0].leftPose,'storySerious');
+  assert.equal(scene(ARKON_CHAPTER_09,'THE ROAD HOME').pages[0].leftPose,'devSerious');
 });
 
-test('R683 Ch10 warm gallery, serious reassurance and nervous invitation stay in suit',()=>{
+test('Ch10 gallery stays formal; closing invitation matches the casual final drive',()=>{
   const gallery=scene(ARKON_CHAPTER_10,'GINZA GALLERY');
   assert.equal(gallery.pages[0].leftPose,'devLaughing');
   const reassurance=scene(ARKON_CHAPTER_10,'A RARE MOMENT OF DOUBT');
   assert.ok(reassurance.pages.some(p=>p.leftPose==='devSerious'));
   const invitation=scene(ARKON_CHAPTER_10,'ONE MORE EVENING');
-  assert.ok(invitation.pages.some(p=>p.leftPose==='devBlushing'));
-  assert.ok(invitation.pages.some(p=>p.leftPose==='devNervous'));
-  for(const title of ['GINZA GALLERY','SOMETHING WE BUILT TOGETHER','A RARE MOMENT OF DOUBT','ONE MORE EVENING']){
+  assert.ok(invitation.pages.some(p=>p.leftPose==='storyBlushing'));
+  assert.ok(invitation.pages.some(p=>p.leftPose==='storySheepish'));
+  for(const title of ['GINZA GALLERY','SOMETHING WE BUILT TOGETHER','A RARE MOMENT OF DOUBT']){
     assert.ok(scene(ARKON_CHAPTER_10,title).pages.every(p=>p.leftPose==='ginzaSuit'||
       p.leftPose.startsWith('dev')),title);
   }

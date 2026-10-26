@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R666 — Aruken Story Chapter 05, a playable, upbeat workshop/race chapter.
 // Customer cars are loans for real race tests. Daigo Kirishima ALWAYS brings
 // his own AE86; he is the persistent, ordinary show-off from Chapters 01–02.
@@ -380,3 +381,5 @@ export const ARKON_CHAPTER_05={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_05);

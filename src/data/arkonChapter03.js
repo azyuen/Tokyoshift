@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R656 — Aruken's independent story, following his FIRST regional title.
 // Five real customer power builds. No Daichi, no unearned MX-5 ownership.
 const A='arkonDen',S='sayakaFujieda';
@@ -250,3 +251,5 @@ export const ARKON_CHAPTER_03={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_03);

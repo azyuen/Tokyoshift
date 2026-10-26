@@ -1,0 +1,46 @@
+{
+  "arkonChapter01": {
+    "steps": 110,
+    "hash": "f2b90cf3f792c8399cb5efc986e679f339b47ca924e14c58f0e1e4bc42e90f25"
+  },
+  "arkonChapter01Revised": {
+    "steps": 69,
+    "hash": "04af9e3b0ab2730dbca926f3d782fbaed3911940dad4cbe533d4753e92d1cfe4"
+  },
+  "arkonChapter02": {
+    "steps": 95,
+    "hash": "bcee8856d6a414c5be553e5f632f0b561b3e37eb06baeac716adf87bc9da02c5"
+  },
+  "arkonChapter03": {
+    "steps": 73,
+    "hash": "04cebc658e989a71c9c4acb18941edc9bae69a8c151377b1b2a5552c0717b081"
+  },
+  "arkonChapter04": {
+    "steps": 115,
+    "hash": "df13c56806f1cb253dd4596f68689146e9b75a8a8e36cfc43515934319f5be24"
+  },
+  "arkonChapter05": {
+    "steps": 149,
+    "hash": "d207eece11c6d3a2fd5b6cdc2ca15a2ffb4a7bbc9a9ddc5071f454158f92dec5"
+  },
+  "arkonChapter06": {
+    "steps": 84,
+    "hash": "b560e5117692f59c7f4ef3fcb5772c541ed85e81beb63dc71b3ad437b8a88760"
+  },
+  "arkonChapter07": {
+    "steps": 132,
+    "hash": "05929585fbc18dc0db7c30c5633422fab493517024cde8ff741a2294bf676428"
+  },
+  "arkonChapter08": {
+    "steps": 92,
+    "hash": "71893c2dda2dd2a9b9536ebf418dce2a9177a01f245fcb4588b0d2780be96c65"
+  },
+  "arkonChapter09": {
+    "steps": 67,
+    "hash": "8f53ea81e7ba07aea5d1653d7f817ad51e7e6f48989b6716aee27a7528ef77b3"
+  },
+  "arkonChapter10": {
+    "steps": 80,
+    "hash": "8d07ec8cb884bb200acab67247212bd40b39d60f3f773df2506f939f2c105684"
+  }
+}

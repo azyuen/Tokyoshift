@@ -1,0 +1,22 @@
+✔ arkonChapter01: dialogue, action parameters and save positions unchanged (8.369044ms)
+✔ arkonChapter01Revised: dialogue, action parameters and save positions unchanged (2.590037ms)
+✔ arkonChapter02: dialogue, action parameters and save positions unchanged (4.145182ms)
+✔ arkonChapter03: dialogue, action parameters and save positions unchanged (3.890034ms)
+✔ arkonChapter04: dialogue, action parameters and save positions unchanged (24.968518ms)
+✔ arkonChapter05: dialogue, action parameters and save positions unchanged (1.057242ms)
+✔ arkonChapter06: dialogue, action parameters and save positions unchanged (5.355047ms)
+✔ arkonChapter07: dialogue, action parameters and save positions unchanged (0.841926ms)
+✔ arkonChapter08: dialogue, action parameters and save positions unchanged (3.925983ms)
+✔ arkonChapter09: dialogue, action parameters and save positions unchanged (0.887856ms)
+✔ arkonChapter10: dialogue, action parameters and save positions unchanged (0.582163ms)
+✔ all authored stage and manga assets exist (78.748068ms)
+✔ native geometry is reused only for Aruken across scene owners; Rina does not overlap Sayaka (0.484166ms)
+✔ party populations and contemplative pauses do not spill into private finale (0.250913ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1258.079075

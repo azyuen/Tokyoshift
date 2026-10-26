@@ -23,7 +23,8 @@ const finite=(n,f)=>Number.isFinite(Number(n))?Number(n):f;
  */
 export function getNativeStoryStageTemplate(profile,scene) {
   const key=scene?.sys?.settings?.key || scene?.scene?.key || '';
-  if(profile?.id?.startsWith('workshop:') && key==='GarageScene') {
+  const aruken=scene?.registry?.get?.('gameMode')==='arkonStory';
+  if(profile?.id?.startsWith('workshop:') && (key==='GarageScene'||aruken)) {
     const player=WORKSHOP_PRESENTATION.player;
     const hero=WORKSHOP_PRESENTATION.heroCar;
     return Object.freeze({
@@ -36,7 +37,7 @@ export function getNativeStoryStageTemplate(profile,scene) {
       observerX:profile.frame.x+profile.frame.w-130,
     });
   }
-  if(profile?.id?.startsWith('meet:') && key==='MeetScene') {
+  if(profile?.id?.startsWith('meet:') && (key==='MeetScene'||aruken)) {
     return Object.freeze({
       kind:'meet',
       frame:SHOWDOWN_STAGE,

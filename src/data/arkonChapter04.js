@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R659 — Aruken Chapter 04: The Price of Trust.
 // Same live Garage/Meet-native stage geometry and modular vehicle renderer.
 // Deliberate HOLD_SCENE boundaries: no timed dialogue, races, pink-slip offers,
@@ -313,3 +314,5 @@ export const ARKON_CHAPTER_04={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_04);

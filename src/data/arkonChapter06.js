@@ -1,3 +1,4 @@
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
 // R668 — Chapter 06: Aruken and Sayaka's positive business/relationship peak.
 // Same black repossessed RWB: repay finance, restore, independently certify,
 // cinematic no-input drive, then personal gift to Sayaka under the Ferris wheel.
@@ -272,3 +273,5 @@ export const ARKON_CHAPTER_06={
     {type:'END'},
   ],
 };
+
+polishArukenPresentation(ARKON_CHAPTER_06);
