@@ -1083,7 +1083,9 @@ export default class RaceScene extends Phaser.Scene {
     const isCompetition = this.raceMode === 'COMPETITION';
     const cashPenalty = this.raceMode === 'OSHIAGE_ELITE'
       ? 0 : Math.ceil((this.raceStake * 0.5) / 250) * 250;
-    const penaltyText = isPink
+    const penaltyText = this.raceMode === 'PRO_SPONSOR'
+      ? 'End this friendly exhibition? Your Pro Season registration and sponsorship remain secure.'
+      : isPink
       ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
       : isCompetition
         ? 'Your Street Showdown ends here. The entry fee is not refunded.'
@@ -1122,7 +1124,9 @@ export default class RaceScene extends Phaser.Scene {
       wordWrap: { width: 590 },
     }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
-    add(this.add.text(780, 382, 'This counts as a loss.', {
+    add(this.add.text(780, 382, this.raceMode === 'PRO_SPONSOR'
+      ? 'No official win, loss or fee is recorded.'
+      : 'This counts as a loss.', {
       fontFamily: BODY_FONT,
       fontSize: '11px',
       color: '#8799a5',
