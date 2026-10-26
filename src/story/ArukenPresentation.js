@@ -9,11 +9,14 @@ const suited={storyLaughing:'devLaughing',storySerious:'devSerious',storyThinkin
 const uniform={oshiageConfident:'oshiageHappy',oshiageContemplative:'oshiageReviewing',
   oshiageExplaining:'oshiageTalking',oshiageAlert:'oshiageConcerned'};
 export function polishArukenPresentation(script){
-  let cast=[];
+  let cast=[],closingTime=false;
   for(const [index,step] of script.steps.entries()){
     if(step.type==='STAGE'){
       cast=step.characters||[];
       const label=script.steps[index+1]?.label||'';
+      closingTime=script.id==='arkonChapter10'&&label==='GINZA // CLOSING TIME';
+      if(closingTime)step.characters=cast=cast.map(a=>({...a,
+        pose:a.id==='arkonDen'?'storyIdle':'homeNormal'}));
       if(/MORNING|FAMILIAR SOUND/.test(label)||
         script.id==='arkonChapter08'&&label==='WAREHOUSE HQ // A FAMILIAR VISITOR'){
         step.backgroundId=step.backgroundId.replace(/:night$/,':day');
@@ -29,7 +32,7 @@ export function polishArukenPresentation(script){
         step.population='invitational';
       if(script.id==='arkonChapter09'&&step.backgroundId==='meet:shibuyaScramble:night'&&
         cast.some(a=>a.pose==='ginzaSuit'))step.population='private-sale';
-      if(script.id==='arkonChapter10'&&step.backgroundId==='central:ginzaMotorGallery:night')
+      if(script.id==='arkonChapter10'&&label==='GINZA // OPENING EVENING')
         step.population='gallery';
       for(const actor of cast)actor.pose=uniform[actor.pose]||actor.pose;
     }
@@ -39,10 +42,13 @@ export function polishArukenPresentation(script){
       const id=step.characters?.[side],key=side+'Pose',actor=cast.find(a=>a.id===id);
       for(const page of step.pages||[]){
         const pose=page[key];
+        if(closingTime&&id==='arkonDen')page[key]={ginzaSuit:'storyIdle',
+          devBlushing:'storyBlushing',devNervous:'storySheepish'}[pose]||pose;
         if(id==='arkonDen'&&actor?.pose==='ginzaSuit')page[key]=suited[pose]||pose;
         else if(id==='arkonDen'&&String(actor?.pose).startsWith('storyMechanic')&&
           !String(pose).startsWith('storyMechanic'))page[key]='storyMechanic';
         if(id==='sayakaFujieda'){
+          if(closingTime&&page[key]==='ginzaDress')page[key]='homeNormal';
           page[key]=uniform[page[key]]||page[key];
           if(actor?.pose==='ginzaDress')page[key]='ginzaDress';
           else if(String(actor?.pose).startsWith('home')&&String(page[key]).startsWith('oshiage'))

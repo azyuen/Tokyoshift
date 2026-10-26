@@ -402,8 +402,8 @@ export function showStoryStage(scene, {
                height:278}:null
         :null;
       const storyCast=aruken?getArukenActorPlacement(template,a,i,actors.length):null;
-      const assigned=repairCast??ch6Cast??(duel?getChapter05DuelActor(a.role):storyCast??
-        template?getNativeCastPlacement(template,i,actors.length,a.role):null);
+      const assigned=repairCast??ch6Cast??(duel?getChapter05DuelActor(a.role):
+        storyCast??(template?getNativeCastPlacement(template,i,actors.length,a.role):null));
       const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
         sourceWidth:viewport?.sourceWidth||1672,

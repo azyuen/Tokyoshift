@@ -29,9 +29,11 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
    const script=scripts[ch===1?'arkonChapter01Revised':'arkonChapter'+String(ch).padStart(2,'0')];let stage=null;
    script.steps.forEach((step,index)=>{if(step.type==='STAGE')stage=step;if(['STAGE','MANGA','PHONE'].includes(step.type))entries.push({ch,index,step,stage});});
   }
+  for(const ch of [6,10])entries.push({ch,index:999,step:{type:'FINALE',title:'Chapter '+ch+' finale'},stage:{type:'STAGE',backgroundId:'meet:yokohamaMinatoMirai:night',stageMode:'native',characters:[],cars:[{carId:'rwbStellaPorsche'}]}});
+  entries.push({ch:1,index:998,step:{type:'HOLD',title:'Player-controlled hold'},stage:entries[0].stage});
   window.audit={entries,showStoryStage,getStoryBackground,resolveBackgroundViewport,playMangaCutscene,Garage,Meet,showStoryContinuePrompt};
  });
- const entries=await page.evaluate(mode=>audit.entries.filter(e=>mode==='stage'?e.step.type==='STAGE':e.step.type!=='STAGE').map(e=>({ch:e.ch,index:e.index,title:e.step.title||e.stage.backgroundId})),mode);
+ const entries=await page.evaluate(mode=>audit.entries.filter(e=>mode==='finale'?e.step.type==='FINALE':mode==='hold'?e.step.type==='HOLD':mode==='stage'?e.step.type==='STAGE':mode==='phone'?e.step.type==='PHONE':['MANGA','PHONE'].includes(e.step.type)).map(e=>({ch:e.ch,index:e.index,title:e.step.title||e.stage.backgroundId})),mode);
  let count=0,last=0;
  for(const item of entries){
   if(process.env.AUDIT_CHAPTER&&item.ch!==Number(process.env.AUDIT_CHAPTER))continue;
@@ -40,7 +42,7 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
   try {
    const detail=await page.evaluate(async({item,mode})=>{
     const s=window.auditScene,a=window.audit,e=a.entries.find(x=>x.ch===item.ch&&x.index===item.index),delay=ms=>new Promise(r=>setTimeout(r,ms));
-    s._mangaCutscene?.shutdownHandler?.();s._phoneConversation?.close?.('shutdown');s._storyContinuePrompt?.destroy?.();s._storyDirectorStage?.destroy?.();s.tweens.killAll();s.children.removeAll(true);
+    s._arkonCh6Finale?.destroy?.();s._arkonCh10Finale?.destroy?.();s._mangaCutscene?.shutdownHandler?.();s._phoneConversation?.close?.('shutdown');s._storyContinuePrompt?.destroy?.();s._storyDirectorStage?.destroy?.();s.tweens.killAll();s.children.removeAll(true);
     const stage=structuredClone(e.stage||{});
     s.registry.set('workshopLocationId',item.ch<4?'shinonomeWorkshop':item.ch<7?'shinonomeCanalYard':'shinonomeWarehouseStrip');
     s.worldPhase='night';s.selectedMeetLocation='odaiba7eleven';
@@ -59,10 +61,38 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
     }
     if(e.stage)await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Stage arrival timeout')),15000);a.showStoryStage(s,{...stage,onArrivalComplete:()=>{clearTimeout(timer);resolve();}});});
     let pages=0;
-    if(mode==='dialogue'){
-     const d={...e.step,id:'audit-'+item.ch+'-'+item.index,once:false};if(d.type==='PHONE')d.presentation='phone';
-     a.playMangaCutscene(s,d,{preview:true,force:true,backgroundStyle:d.backgroundStyle||'wash'});
+    if(mode==='finale'){
+     s.selectedMeetLocation='yokohamaMinatoMirai';
+     const module=await import('/src/ui/ArkonChapter'+String(item.ch).padStart(2,'0')+'Finale.js');
+     const control=module['showArkonChapter'+String(item.ch).padStart(2,'0')+'Finale'](s,{onComplete:()=>window.auditFinished=true});
+     if(!control)throw Error('Finale unavailable');await delay(3500);
+    }
+    if(mode==='hold'){
+     const {StoryDirector}=await import('/src/story/StoryDirector.js');
+     const manga=structuredClone(a.entries.find(x=>x.step.type==='MANGA').step);manga.pages=manga.pages.slice(0,1);manga.holdAfter=true;
+     const script={id:'auditHold',title:'Audit hold',steps:[{type:'HOLD_SCENE',label:'CONTINUE STORY'},manga,{type:'END'}]};
+     const director=new StoryDirector(s.game,{auditHold:script});director.activeScene=()=>s;window.auditDirector=director;
+     if(!director.start('auditHold',{preview:true}))throw Error('Director did not start');await delay(2000);
+     if(director.status.index!==0||!s._storyContinuePrompt?.active)throw Error('Hold auto advanced');
+    }
+    if(mode==='dialogue'||mode==='phone'){
+     const d={...e.step,id:'audit-'+item.ch+'-'+item.index,once:false};if(d.type==='PHONE'){d.presentation='phone';d.presentationMode=d.presentationMode||'openingSwipe';}
+     a.playMangaCutscene(s,d,{preloadPagePosesOnly:true,preview:true,force:true,backgroundStyle:d.backgroundStyle||'wash'});
      await delay(500);
+     if(d.type==='PHONE'){
+      for(let t=0;t<100&&s._phoneConversation?.phase==='loading';t++)await delay(50);
+      if(!s._phoneConversation?.active)throw Error('Phone inactive');
+      const clickButton=()=>{
+       const all=s.children.list.flatMap(o=>o.type==='Container'?[...o.list]:[o]);
+       const buttons=all.filter(o=>o.input?.enabled&&o.type==='Rectangle'&&o.width<600).sort((a,b)=>b.depth-a.depth);
+       if(!buttons.length)throw Error('Phone button missing');buttons[0].emit('pointerdown');
+      };
+      if(s._phoneConversation.phase==='ringing'){clickButton();await delay(1300);}
+      for(let i=0;i<d.pages.length;i++){
+       await delay(800);if(!s._phoneConversation?.active)throw Error('Phone closed early');pages++;
+       if(i<d.pages.length-1)clickButton();
+      }
+     }
      if(d.type==='MANGA'){
       for(let t=0;t<100&&!s._mangaCutscene?.advance;t++)await delay(50);
       if(!s._mangaCutscene?.advance)throw Error('Manga not ready');
@@ -78,6 +108,18 @@ for(const [device,width,height] of [['mobile',844,390],['tablet',1180,820]]){
    },{item,mode});
    const filename=`ch${String(item.ch).padStart(2,'0')}-${String(item.index).padStart(3,'0')}-${device}.jpg`;
    await page.screenshot({path:path.join(out,filename),type:'jpeg',quality:85});
+   if(mode==='hold'||mode==='finale'){
+    const tap=async(x,y)=>{const b=await page.locator('canvas').boundingBox();await page.touchscreen.tap(b.x+x/1560*b.width,b.y+y/840*b.height);};
+    if(mode==='hold'){
+     await tap(866,700);await page.waitForFunction(()=>auditScene._mangaCutscene?.dialogueObjects?.some(o=>o.alpha>.99));
+     await page.evaluate(()=>{auditScene._mangaCutscene.lastAdvanceAt=0;auditScene._mangaCutscene.advance('button');});
+     await page.waitForFunction(()=>auditScene._storyContinuePrompt?.active);await page.waitForTimeout(1600);
+     if(await page.evaluate(()=>auditDirector.status.index)!==1)throw Error('Post-dialogue hold auto advanced');
+     await tap(866,700);await page.waitForFunction(()=>!auditDirector.status.active);
+    }else{
+     await tap(1354,747);await page.waitForTimeout(6500);await tap(780,515);await page.waitForFunction(()=>window.auditFinished===true);await page.evaluate(()=>window.auditFinished=false);
+    }
+   }
    results.push({...item,device,...detail,file:filename});
   }catch(e){failed=true;results.push({...item,device,error:String(e)});console.error(item,String(e));}
   await fs.writeFile(path.join(out,'results.json'),JSON.stringify({phase,mode,results,errors},null,2));
