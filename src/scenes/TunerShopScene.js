@@ -394,7 +394,7 @@ export default class TunerShopScene extends Phaser.Scene {
         const y=SIDE.y+169+i*47;
         const selected=this.shop.heroCarId===g.id;
         const label=({libertyWalk240z:'240Z',lbwk180sx:'180SX',
-          lbwkA60:'CELICA XX / SUPRA A60',lbwk350z:'350Z',lbwkS15:'S15',
+          lbwkA60:'A60 SUPRA',lbwk350z:'350Z',lbwkS15:'S15',
           lbwkR34:'R34',lbwkMx5:'MX-5 NB',lbwkR32:'R32'})[g.id]||g.name.replace(/^LBWK\\s*/,'');
         const b=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,
           selected?0x3a2d18:0x12202b,1)
@@ -607,18 +607,30 @@ export default class TunerShopScene extends Phaser.Scene {
         this.sideContent.add(this.add.text(sx,SIDE.y+y,value,{
           fontFamily:PIXEL_FONT,fontSize:size,color
         }));
-      stat(550,'SELECTED  '+(currentBuild?.shortName||'HERO BUILD'),'#ffe2a3','8px');
-      stat(576,'POWER '+Math.round(currentBuild?.powerKW||0)+' kW    TORQUE '+Math.round(currentBuild?.torqueNm||0)+' Nm','#dce7eb','8px');
-      stat(601,'BUILD  '+money(cost),'#f3c77b','9px');
+      stat(535,'SELECTED  '+(currentBuild?.shortName||'HERO BUILD'),'#ffe2a3','8px');
+      stat(558,'POWER '+Math.round(currentBuild?.powerKW||0)+' kW    TORQUE '+Math.round(currentBuild?.torqueNm||0)+' Nm','#dce7eb','8px');
+      stat(583,'BUILD  '+money(cost),'#f3c77b','9px');
       if (currentIsDonor && donorEligible && !heroOwned) {
+        // Keep the CTA above the sidebar's text container so touch input
+        // cannot be intercepted by overlapping price or other UI children.
         const y=SIDE.y+SIDE.h-96;
-        const b=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
+        const b=this.addDynamic(this.add.rectangle(SIDE.x+SIDE.w/2,y,
           SIDE.w-56,44,0x392916,1).setStrokeStyle(2,0xe2b464,1)
-          .setInteractive({useHandCursor:true}));
-        this.sideContent.add(this.add.text(SIDE.x+SIDE.w/2,y,'YOUR LBWK BUILD',{
+          .setDepth(60).setInteractive({useHandCursor:true}));
+        this.addDynamic(this.add.text(SIDE.x+SIDE.w/2,y,'YOUR LBWK BUILD',{
           fontFamily:PIXEL_FONT,fontSize:'9px',color:'#fff1d5'
-        }).setOrigin(0.5));
-        b.on('pointerdown',()=>this.rollInDonor());
+        }).setOrigin(0.5).setDepth(61));
+        b.on('pointerdown',()=>{
+          if (this.conversionInProgress) return;
+          b.disableInteractive();
+          try { this.rollInDonor(); }
+          catch (error) {
+            console.error('[LBWK] donor arrival failed',error);
+            this.conversionInProgress=false;
+            this.showHeroMode();
+            this.showLbwkActionError(error);
+          }
+        });
       }
       return;
     }
@@ -1777,6 +1789,13 @@ export default class TunerShopScene extends Phaser.Scene {
 
     if (track) objects.forEach(obj => this.addDynamic(obj));
     return objects;
+  }
+
+  showLbwkActionError(error) {
+    this.addDynamic(this.add.text(SIDE.x+25,SIDE.y+SIDE.h-156,
+      'BUILD PREVIEW ERROR — PLEASE RETRY',{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffac99'
+      }).setDepth(62));
   }
 
   rollInDonor() {
