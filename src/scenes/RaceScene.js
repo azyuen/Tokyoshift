@@ -566,7 +566,7 @@ export default class RaceScene extends Phaser.Scene {
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
     const isCompetitionBuild =
-      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM', 'OSHIAGE_ELITE'].includes(this.raceMode) &&
+      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM', 'OSHIAGE_ELITE', 'PRO_SPONSOR'].includes(this.raceMode) &&
       storedBuildState &&
       typeof storedBuildState === 'object';
 
@@ -4006,7 +4006,11 @@ export default class RaceScene extends Phaser.Scene {
     // two authored lines per outcome without introducing random redraw flicker.
     const eventIndex = Math.max(0,
       Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
-    const rivalQuote = chapter08Race ? '...' : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+    const rivalQuote = chapter08Race ? '...'
+      : this.raceMode === 'PRO_SPONSOR'
+        ? (playerWon ? 'Excellent run. You made me work for that.'
+          : 'Good effort. Keep refining your launch and your shifts.')
+        : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
       eventIndex, playerWon
         ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
         : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
