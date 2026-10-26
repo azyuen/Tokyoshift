@@ -1,0 +1,28 @@
+name: R688 Factory Classes D–S
+on:
+  push:
+    branches:
+      - feature/factory-vehicle-classes-r688-20261026
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            tests
+            package.json
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/data/stockClasses.js
+          node --check src/scenes/GarageScene.js
+          node --check tests/factory-vehicle-classes-r688.mjs
+      - name: Check fixed grades, crew aliases, hero S and garage layout
+        run: node --test tests/factory-vehicle-classes-r688.mjs
