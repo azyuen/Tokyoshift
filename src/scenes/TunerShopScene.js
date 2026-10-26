@@ -663,7 +663,7 @@ export default class TunerShopScene extends Phaser.Scene {
       fontFamily:PIXEL_FONT,fontSize:'14px',color:'#ffe2a3'
     }).setOrigin(0.5).setDepth(152));
     const choices=[
-      {id:'arkonLibertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},
+      {id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},
       ...LBWK_CONVERSIONS
     ];
     choices.forEach((g,i)=>{
