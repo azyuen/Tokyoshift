@@ -13,6 +13,8 @@ const hz = Math.max(30, Math.min(120, Number(process.env.ENGINEERING_HZ || 120))
 const dt = 1 / hz;
 const candidates = [
   ['ek9',2], ['gc8',2], ['r34',2], ['jza80',2], ['evo5',2],
+  ['dc2',0], ['galant',0], ['dc2',1], ['galant',1],
+  ['dc2',2], ['galant',2], ['dc2',3], ['galant',3],
   ['renownMazda787B',0], ['espritNsx',0],
 ];
 const tuned = n => ({
