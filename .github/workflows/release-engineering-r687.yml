@@ -1,0 +1,60 @@
+name: R687 Scoped Production Vehicle Engineering
+on:
+  push:
+    branches:
+      - release/vehicle-engineering-human-ai-r687-20261026
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify-and-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 'Apply preview engine and human AI without moving unrelated gameplay'
+        run: node tools/releases/port-engineering-r687.mjs
+      - name: 'Check source scope and JavaScript syntax'
+        shell: bash
+        run: |
+          node --check tools/releases/port-engineering-r687.mjs
+          node --check tools/releases/verify-engineering-r687.mjs
+          while IFS= read -r -d '' file; do node --check "$file" || exit 1; done < <(find src -type f -name '*.js' -print0)
+          if git diff --name-only | grep -q '^src/input/TouchControls.js$'; then echo 'TOUCH CONTROL CHANGED'; exit 1; fi
+          if git diff --name-only | grep -q '^src/state/GameState.js$'; then
+            echo 'State import strings changed, validate source preservation in next step'
+          fi
+      - name: 'Verify production physics, hero cars and Elite driving'
+        run: node tools/releases/verify-engineering-r687.mjs
+      - name: 'Enforce non-engineering changes are import-only'
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const copied=new Set(['ai/DragRacingAI.js','data/cars.js','data/engines.js','data/endgameHeroCalibration.js','data/stockClasses.js','data/tuningPotential.js','data/vehicleEngineering.js','data/tuning.js','data/secondaryTuning.js','data/stage3Calibration.js','vehicles/Engine.js','vehicles/Transmission.js','vehicles/VehiclePerformance.js','vehicles/PerformanceEstimate.js']);
+          const changed=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          for(const file of changed) {
+            if(!file.startsWith('src/')||copied.has(file.slice(4))||file==='src/main.js')continue;
+            const base=execFileSync('git',['show','HEAD:'+file],{encoding:'utf8'});
+            const actual=fs.readFileSync(file,'utf8');
+            const strip=s=>s.replace(/\?v=20261026-r687/g,'').replace(/\?v=[^'"\s)]+/g,'');
+            if(strip(base)!==strip(actual)){throw Error('NON-ENGINEERING EDIT DETECTED: '+file);}
+          }
+          console.log('R687_SCOPE_PASS '+JSON.stringify({changed,changeCount:changed.length}));
+          EOF
+      - name: 'Commit validated changes on isolated release branch'
+        shell: bash
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html version.json sw.js src/
+            git commit -m 'R687: vehicle engineering model and human Expert/Elite AI only'
+            git push
+          fi
