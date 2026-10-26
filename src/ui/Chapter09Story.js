@@ -1,6 +1,6 @@
 // R583 — The registration room persists under the ORIGINAL manga renderer.
 // All four dialogue sections and both establishing beats share one room stage.
-import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter09.js?v=20261027-r692';
+import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter09.js?v=20261027-r693';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261027-r692';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r692';
