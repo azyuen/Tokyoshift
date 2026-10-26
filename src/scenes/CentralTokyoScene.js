@@ -121,7 +121,7 @@ import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20261011-r479';
+} from '../data/tunerShops.js?v=20261026-lbwk1';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
