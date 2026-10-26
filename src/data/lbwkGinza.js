@@ -12,16 +12,9 @@ export const LBWK_GINZA = Object.freeze({
   decals: false,
   outrightSales: false,
 });
+// Only the 240Z is enabled until the other hero art is ready.
 export const LBWK_BUILDS = Object.freeze([
-  { id: 'lbwk240z', model: '240z' },
-  { id: 'lbwkR32', model: 'r32' },
-  { id: 'lbwk180sx', model: '180sx' },
-  { id: 'lbwkS15', model: 's15' },
-  { id: 'lbwkA60', model: 'a60' },
-  { id: 'lbwkRx8', model: 'rx8' },
-  { id: 'lbwkMx5', model: 'mx5nb' },
-  { id: 'lbwk350z', model: '350z' },
-  { id: 'lbwkEk9', model: 'ek9' },
+  { id: 'lbwk240z', model: '240z', enabled: true },
 ]);
 // Only the developer profile may preview this location until the story gate exists.
 // Do not use this flag as an ownership or purchase authorisation check.
