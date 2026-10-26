@@ -186,6 +186,46 @@ export function tuningPotentialSummary(car) {
     'STANDARD MAX '+p.maximumPowerKW+' kW // '+p.maximumTorqueNm+' Nm'+
     (p.competitiveCost?'\nBENCHMARK BUILD FROM ¥'+p.competitiveCost.toLocaleString('en-US')+' INCLUDING CAR':'\nALL-ROUND BENCHMARK NOT REACHED WITH STANDARD PARTS');
 }
-export const STOCK_CLASSES=Object.freeze({A:'A / Performance',B:'B / Sports',C:'C / Club',D:'D / Entry'});
-export function stockClassFor(car){return STOCK_CLASS_DATA[car?.ownedBaseCarId||car?.crewBaseCarId||car?.id]?.stockClass||null;}
-export function engineeringLabel(car){const d=STOCK_CLASS_DATA[car?.ownedBaseCarId||car?.crewBaseCarId||car?.id];return d?'FACTORY '+d.stockClass+' // POTENTIAL '+d.tuningPotential.toUpperCase():'EXCLUSIVE';}
+// Permanent factory grades, ordered from lowest to highest. Upgrades never
+// change the grade: class ceilings are inclusive (e.g. CLASS C allows D + C).
+// S is reserved for authored hero/collector cars, not tuned regular cars.
+export const STOCK_CLASS_ORDER = Object.freeze(['D', 'C', 'B', 'A', 'S']);
+export const STOCK_CLASSES = Object.freeze({
+  D: 'D / Entry',
+  C: 'C / Club',
+  B: 'B / Sports',
+  A: 'A / Performance',
+  S: 'S / Hero',
+});
+
+// The Aruken story Liberty Walk 240Z is a BODY conversion of the same base
+// Datsun, not the separate sealed Ginza collector Liberty Walk 240Z.
+const FACTORY_MODEL_ALIASES = Object.freeze({arkonLibertyWalk240z: '240z'});
+
+export function stockClassFor(car) {
+  if (!car) return null;
+  // A collector retains S even if its engine/skin derives from a regular car.
+  if (car.collector === true) return 'S';
+  const rawId = String(car.ownedBaseCarId || car.crewBaseCarId || car.id || '');
+  const id = FACTORY_MODEL_ALIASES[rawId] || rawId;
+  return STOCK_CLASS_DATA[id]?.stockClass ||
+    (STOCK_CLASS_ORDER.includes(car.stockClass) ? car.stockClass : null);
+}
+
+// FUTURE event restrictions: a "maximum Class C" meet admits both D and C,
+// without changing the car's permanent class or inspecting installed upgrades.
+export function isWithinStockClassLimit(car, maximumClass) {
+  const actual = stockClassFor(car);
+  const maximum = String(maximumClass || '').trim().toUpperCase();
+  if (!actual || !STOCK_CLASS_ORDER.includes(maximum)) return false;
+  return STOCK_CLASS_ORDER.indexOf(actual) <= STOCK_CLASS_ORDER.indexOf(maximum);
+}
+
+export function engineeringLabel(car) {
+  const grade = stockClassFor(car);
+  if (grade === 'S') return 'FACTORY S // HERO COLLECTOR';
+  const rawId = String(car?.ownedBaseCarId || car?.crewBaseCarId || car?.id || '');
+  const id = FACTORY_MODEL_ALIASES[rawId] || rawId;
+  const d = STOCK_CLASS_DATA[id];
+  return d ? 'FACTORY ' + d.stockClass + ' // POTENTIAL ' + d.tuningPotential.toUpperCase() : 'EXCLUSIVE';
+}
