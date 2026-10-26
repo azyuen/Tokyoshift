@@ -61,8 +61,11 @@ export function beginProSponsorPlayableReplay(scene,{returnToArchive=false}={}) 
     ginza:true,dragComplex:true,
   });
   // A developer portrait cannot race against itself. Swap ONLY in sandbox.
-  if(registry.get('playerCharacterId')==='arkonDen')
+  if(registry.get('playerCharacterId')==='arkonDen'){
     registry.set('playerCharacterId','renMizuno');
+    registry.set('firstName','Ren');
+    registry.set('lastName','Mizuno');
+  }
   queueSafeSceneStart(scene,'CentralTokyoScene',{locationId:'tokyoDragComplex'});
   return true;
 }
