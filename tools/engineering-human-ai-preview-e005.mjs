@@ -9,7 +9,8 @@ import BaselineAI from './fixtures/engineering-ai-e004.mjs';
 import { getEncounterAi, boostAiForStandingStart } from '../engineering-preview/src/data/encounterProfiles.js';
 
 const rand = seed => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-const dt = 1 / 120;
+const hz = Math.max(30, Math.min(120, Number(process.env.ENGINEERING_HZ || 120)));
+const dt = 1 / hz;
 const candidates = [
   ['ek9',2], ['gc8',2], ['r34',2], ['jza80',2], ['evo5',2],
   ['renownMazda787B',0], ['espritNsx',0],
@@ -77,7 +78,7 @@ for(const rating of [4,5]){
    slowestUpdated:Math.max(...filtered.map(r=>r.new.et)),
  };
 }
-console.log('HUMAN_DRIVER_SUMMARY '+JSON.stringify(summary));
+console.log('HUMAN_DRIVER_SUMMARY '+JSON.stringify({hz,...summary}));
 assert.ok(rows.every(r=>r.new.shifts>=2),'all cars have made real shifts');
 assert.ok(rows.every(r=>r.new.et>5 && r.new.et<25),'reasonable duration, no stuck cars');
 assert.ok(summary.elite.updatedMeanEt < summary.expert.updatedMeanEt+1.3,'elite remains competitive');

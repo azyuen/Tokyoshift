@@ -27,4 +27,7 @@ jobs:
           node --check engineering-preview/src/scenes/RaceScene.js
           node --check tools/engineering-human-ai-preview-e005.mjs
       - name: 'Compare identical cars: previous AI vs E005 expert and elite'
-        run: node tools/engineering-human-ai-preview-e005.mjs
+        run: |
+          node tools/engineering-human-ai-preview-e005.mjs
+          ENGINEERING_HZ=60 node tools/engineering-human-ai-preview-e005.mjs
+          ENGINEERING_HZ=30 node tools/engineering-human-ai-preview-e005.mjs
