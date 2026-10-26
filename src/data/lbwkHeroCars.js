@@ -1,7 +1,7 @@
 import { LBWK_CONVERSIONS } from './lbwkConversions.js';
 import { HERO_WHEEL_DIAMETERS } from './heroCarAssets.js';
 import { TUNING_POTENTIAL } from './tuningPotential.js';
-import { engines } from './engines.js';
+import { engines } from './engines.js?v=20261026-r687';
 
 // Sealed hero engines: unique curves so stock cars and existing builds remain
 // completely unchanged. Power and torque targets exceed the level-3 catalogue
