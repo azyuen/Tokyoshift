@@ -955,6 +955,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     mapButton.on('pointerdown', () => this.openMap());
 
+    // Developer preview: intentionally absent from the public destination list.
+    if (isArkonDen(this.registry)) {
+      const lbwkX = SIDE.x + SIDE.w / 2;
+      const lbwkY = SIDE.y + 610;
+      const lbwkTile = this.addContent(this.add.rectangle(lbwkX, lbwkY, SIDE.w - 36, 70, 0x281e0d, 1)
+        .setStrokeStyle(2, 0xe4b958, 1).setInteractive({ useHandCursor: true }).setDepth(35));
+      this.addContent(this.add.text(lbwkX, lbwkY,
+        'TUNER SHOP  //  LIBERTY WALK\\nFULL WORKS  //  DEV PREVIEW',
+        { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe2a3', align: 'center', lineSpacing: 9 }
+      ).setOrigin(0.5).setDepth(36));
+      lbwkTile.on('pointerdown', () => this.scene.start('TunerShopScene', {
+        regionId: 'CENTRAL_TOKYO', returnScene: 'CentralTokyoScene',
+        returnLocationId: this.activeLocationId,
+      }));
+    }
+
+
     if (isArkonDen(this.registry) &&
         LOCATION_BY_ID[this.activeLocationId]?.kind !== 'proDrag') {
       const location = LOCATION_BY_ID[this.activeLocationId];
