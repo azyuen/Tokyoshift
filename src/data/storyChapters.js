@@ -1,7 +1,7 @@
 // Canonical public chapter index. Micro-cutscenes never enter the Story Archive.
 // Progress is checked against the ACTIVE profile, with legacy milestones as
 // fallback for players who completed chapters before once-flags were added.
-import { hasSeenCutscene } from './cutscenes.js?v=20261017-r577';
+import { hasSeenCutscene } from './cutscenes.js?v=20261027-r693';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20261017-r553';
 import { isCrewComplete } from './crewSystem.js?v=20261016-r551';
 const get = (source,key,fallback=null) => source?.get?.(key) ?? source?.[key] ?? fallback;
