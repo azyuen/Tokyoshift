@@ -385,13 +385,14 @@ export default class TunerShopScene extends Phaser.Scene {
         fontFamily:PIXEL_FONT,fontSize:'15px',color:'#fff2dc'
       }).setDepth(32);
       this.add.text(SIDE.x+26,SIDE.y+61,
-        'Bring a compatible car for the\nLiberty Walk treatment.\nExplore the builds below.',{
+        'Bring a compatible car for the\nLiberty Walk treatment.',{
           fontFamily:BODY_FONT,fontSize:'14px',color:'#b5c6cd',
           lineSpacing:3
         }).setDepth(32);
       this.lbwkChoices=[{id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},...LBWK_CONVERSIONS];
+      this.lbwkBrowseObjects=[];
       this.lbwkChoices.forEach((g,i)=>{
-        const y=SIDE.y+169+i*47;
+        const y=SIDE.y+149+i*46;
         const selected=this.shop.heroCarId===g.id;
         const label=({libertyWalk240z:'240Z',lbwk180sx:'180SX',
           lbwkA60:'A60 SUPRA',lbwk350z:'350Z',lbwkS15:'S15',
@@ -405,6 +406,8 @@ export default class TunerShopScene extends Phaser.Scene {
           color:selected?'#ffe2a3':'#dce7eb'
         }).setOrigin(0.5).setDepth(33);
         b.on('pointerdown',()=>this.selectLbwkBuild(g));
+        this.lbwkBrowseObjects.push(b);
+        this.lbwkBrowseObjects.push(...this.children.list.slice(-1));
       });
       const y=SIDE.y+SIDE.h-39;
       const map=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,0x111920,1)
@@ -578,6 +581,9 @@ export default class TunerShopScene extends Phaser.Scene {
     if (this.conversionInProgress) return;
     this.mode = 'HERO';
     this.clearDynamic();
+    if (this.shop.cosmeticOnly) {
+      (this.lbwkBrowseObjects||[]).forEach(o=>{o.setVisible(true);if(o.input)o.input.enabled=true;});
+    }
     this.setTabStyle();
 
     this.drawMechanic();
@@ -1848,34 +1854,43 @@ export default class TunerShopScene extends Phaser.Scene {
     if (!donor || !hero || getBaseCarId(currentId)!==this.shop.donorCarId) {
       this.showHeroMode();return;
     }
+    // The model-selection buttons are scene objects, not sideContent children.
+    // Hide and disable them during review to prevent overlapping labels/touch targets.
+    (this.lbwkBrowseObjects||[]).forEach(o=>{
+      o.setVisible(false);
+      if(o.input)o.input.enabled=false;
+    });
     this.sideContent.removeAll(true);
-    const x=SIDE.x+22;
-    const add=(y,value,size='10px',color='#e5edf1')=>
+    const x=SIDE.x+26;
+    const add=(y,value,size='9px',color='#e5edf1')=>
       this.sideContent.add(this.add.text(x,SIDE.y+y,value,{
-        fontFamily:PIXEL_FONT,fontSize:size,color,wordWrap:{width:SIDE.w-44},
-        lineSpacing:8
+        fontFamily:PIXEL_FONT,fontSize:size,color,
+        wordWrap:{width:SIDE.w-52},lineSpacing:8
       }));
-    add(65,'YOUR LBWK BUILD','12px','#ffe2a3');
-    add(122,donor.name+'  >  '+hero.name,'8px');
-    add(184,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
-    add(225,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
-    add(271,'FULL WORKS CONVERSION','9px','#ffe2a3');
-    add(311,'Your current car is permanently replaced by its sealed LBWK hero build. Existing modifications are not carried over.','8px');
-    add(411,'BUILD COST','9px','#ffe2a3');
-    add(444,money(this.shop.buildCost),'12px','#ffe2a3');
+    add(86,'YOUR LBWK BUILD','12px','#ffe2a3');
+    add(141,donor.name+'  >  '+hero.name,'8px');
+    add(206,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
+    add(251,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
+    add(303,'FULL WORKS CONVERSION','9px','#ffe2a3');
+    add(347,'Your car is permanently replaced by the sealed LBWK hero build. Existing modifications are not carried over.','8px');
+    add(469,'BUILD COST  '+money(this.shop.buildCost),'9px','#ffe2a3');
     const cash=Number(this.registry.get('cash')||0);
     const owned=(this.registry.get('ownedCarIds')||[]).includes(hero.id);
     const ready=cash>=Number(this.shop.buildCost||0)&&!owned;
-    const y=SIDE.y+SIDE.h-100;
-    const button=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
-      SIDE.w-56,48,ready?0x392916:0x202327,1)
-      .setStrokeStyle(2,ready?0xe2b464:0x59646a,1));
-    this.sideContent.add(this.add.text(SIDE.x+SIDE.w/2,y,
-      owned?'HERO ALREADY OWNED':ready?'DO THE BUILD':'INSUFFICIENT FUNDS',{
-        fontFamily:PIXEL_FONT,fontSize:'9px',color:ready?'#fff1d5':'#9ca5aa'
-      }).setOrigin(0.5));
-    if (ready) button.setInteractive({useHandCursor:true})
-      .on('pointerdown',()=>this.showBuildConfirmation());
+    const makeAction=(y,label,enabled,handler,highlight=false)=>{
+      const box=this.addDynamic(this.add.rectangle(SIDE.x+SIDE.w/2,SIDE.y+y,
+        SIDE.w-56,43,highlight?0x392916:0x111d26,1)
+        .setStrokeStyle(2,highlight?0xe2b464:0x667783,1)
+        .setDepth(75));
+      this.addDynamic(this.add.text(SIDE.x+SIDE.w/2,SIDE.y+y,label,{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#fff1d5'
+      }).setOrigin(0.5).setDepth(76));
+      if(enabled)box.setInteractive({useHandCursor:true}).on('pointerdown',handler);
+    };
+    makeAction(SIDE.h-151,owned?'HERO ALREADY OWNED':ready?'DO THE BUILD':'INSUFFICIENT FUNDS',
+      ready,()=>this.showBuildConfirmation(),true);
+    makeAction(SIDE.h-98,'BACK',true,()=>this.showHeroMode());
+
   }
 
   showBuildConfirmation() {
