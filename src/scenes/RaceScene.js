@@ -432,6 +432,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentCharacterId =
       (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
         storedOpponentCharacterId === 'sayakaFujieda') ||
+      (this.registry.get('selectedRaceCategory') === 'PRO_SPONSOR' &&
+        storedOpponentCharacterId === 'arkonDen') ||
       oshiageEliteOpponent || (this.registry.get('gameMode')==='arkonStory' &&
         storedOpponentCharacterId==='storyDaigoKirishima') ||
         regionRivals.includes(storedOpponentCharacterId)
@@ -564,7 +566,7 @@ export default class RaceScene extends Phaser.Scene {
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
     const isCompetitionBuild =
-      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM', 'OSHIAGE_ELITE'].includes(this.raceMode) &&
+      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM', 'OSHIAGE_ELITE', 'PRO_SPONSOR'].includes(this.raceMode) &&
       storedBuildState &&
       typeof storedBuildState === 'object';
 
@@ -934,6 +936,8 @@ export default class RaceScene extends Phaser.Scene {
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
       : this.raceMode === 'CHAPTER08'
         ? 'STORY RUN // NO STAKES'
+      : this.raceMode === 'PRO_SPONSOR'
+        ? 'GINZA SPONSOR TEST // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
@@ -1079,7 +1083,9 @@ export default class RaceScene extends Phaser.Scene {
     const isCompetition = this.raceMode === 'COMPETITION';
     const cashPenalty = this.raceMode === 'OSHIAGE_ELITE'
       ? 0 : Math.ceil((this.raceStake * 0.5) / 250) * 250;
-    const penaltyText = isPink
+    const penaltyText = this.raceMode === 'PRO_SPONSOR'
+      ? 'End this friendly exhibition? Your Pro Season registration and sponsorship remain secure.'
+      : isPink
       ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
       : isCompetition
         ? 'Your Street Showdown ends here. The entry fee is not refunded.'
@@ -1118,7 +1124,9 @@ export default class RaceScene extends Phaser.Scene {
       wordWrap: { width: 590 },
     }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
-    add(this.add.text(780, 382, 'This counts as a loss.', {
+    add(this.add.text(780, 382, this.raceMode === 'PRO_SPONSOR'
+      ? 'No official win, loss or fee is recorded.'
+      : 'This counts as a loss.', {
       fontFamily: BODY_FONT,
       fontSize: '11px',
       color: '#8799a5',
@@ -1165,6 +1173,17 @@ export default class RaceScene extends Phaser.Scene {
 
   forfeitRace(cashPenalty = 0) {
     if (this.resultsShown) return;
+    if (this.raceMode === 'PRO_SPONSOR') {
+      // An exhibition withdrawal still moves the team to its registered
+      // season. Neither Aruken nor Sayaka makes sponsorship conditional.
+      markCutsceneSeen(this.registry, 'proSponsorRaceComplete');
+      this.registry.set('selectedRaceCategory', 'SINGLE');
+      this.registry.set('selectedRaceDeal', 'BET');
+      this.registry.set('selectedRaceMeetOffer', null);
+      saveSessionState(this.registry);
+      this.scene.start('CentralTokyoScene', { locationId: 'tokyoDragComplex' });
+      return;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryMx5Loan')?.active){
       this.registry.set('arkonStoryMx5RaceResult','forfeit');
@@ -3624,7 +3643,9 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
-    const contextType = isPinkSlip
+    const contextType = this.raceMode === 'PRO_SPONSOR'
+      ? 'GINZA SPONSOR EXHIBITION'
+      : isPinkSlip
       ? 'PINK SLIP'
       : this.raceMode === 'COMPETITION'
         ? 'STREET SHOWDOWN'
@@ -3985,7 +4006,11 @@ export default class RaceScene extends Phaser.Scene {
     // two authored lines per outcome without introducing random redraw flicker.
     const eventIndex = Math.max(0,
       Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
-    const rivalQuote = chapter08Race ? '...' : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+    const rivalQuote = chapter08Race ? '...'
+      : this.raceMode === 'PRO_SPONSOR'
+        ? (playerWon ? 'Excellent run. You made me work for that.'
+          : 'Good effort. Keep refining your launch and your shifts.')
+        : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
       eventIndex, playerWon
         ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
         : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
@@ -4031,7 +4056,9 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : settlement?.oshiageEliteContinues
               ? 'NEXT ELITE ROUND'
-              : 'CONTINUE';
+              : this.raceMode === 'PRO_SPONSOR'
+        ? 'RETURN TO THE TEAM'
+        : 'CONTINUE';
 
     const actionHintText = this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
@@ -4052,7 +4079,16 @@ export default class RaceScene extends Phaser.Scene {
       advanced = true;
       tapTarget.disableInteractive();
 
-      if (chapter08Race) {
+      if (this.raceMode === 'PRO_SPONSOR') {
+        markCutsceneSeen(this.registry, 'proSponsorRaceComplete');
+        this.registry.set('selectedRaceCategory', 'SINGLE');
+        this.registry.set('selectedRaceDeal', 'BET');
+        this.registry.set('selectedRaceMeetOffer', null);
+        this.registry.set('selectedOpponentCharacterId', null);
+        this.registry.set('selectedOpponentCarId', null);
+        saveSessionState(this.registry);
+        this.scene.start('CentralTokyoScene', { locationId: 'tokyoDragComplex' });
+      } else if (chapter08Race) {
         if (!isChapter08DevReplay(this.registry)) {
           markCutsceneSeen(this.registry, 'chapter08RaceFinished');
         }
@@ -5043,6 +5079,15 @@ export default class RaceScene extends Phaser.Scene {
       this.raceSettlement={
         playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
         pinkMessage:'',gameOver:false,devStoryExhibition:true,
+      };
+      return this.raceSettlement;
+    }
+    if (this.raceMode === 'PRO_SPONSOR') {
+      // This is a genuine head-to-head race, but it has NO cash, win/loss,
+      // coupon, ranking, recruitment or season-point settlement.
+      this.raceSettlement = {
+        playerWon, cashDelta: 0, cash: this.registry.get('cash') ?? 0,
+        pinkMessage: '', gameOver: false, proSponsorExhibition: true,
       };
       return this.raceSettlement;
     }

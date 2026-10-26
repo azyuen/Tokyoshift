@@ -1,5 +1,5 @@
 import { CHAPTER08_SCENES } from './chapter08.js?v=20261024-r680';
-import { CHAPTER09_SCENES, CHAPTER09_SEQUENCE } from './chapter09.js?v=20261018-r586';
+import { CHAPTER09_SCENES, CHAPTER09_SEQUENCE } from './chapter09.js?v=20261027-r692';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
@@ -1240,6 +1240,8 @@ export const CUTSCENE_ORDER = [
   'chapter08WarehouseFarewell',
   'chapter08Ginza',
   ...CHAPTER09_SEQUENCE,
+  'proSponsorIntroduction',
+  'proSponsorEpilogue',
   'chapter09SeasonRegistration',
   'ginzaInvitation',
   'ginzaHeroCarReveal',

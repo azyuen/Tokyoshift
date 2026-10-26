@@ -68,13 +68,12 @@ test('Standalone pre-Pro strategist disclosure also conceals Aruken',()=>{
     content(CUTSCENES.fullCrewTogether)+' '+Object.values(CHAPTER08_SCENES).map(content).join(' ');
   assert.doesNotMatch(careerDialogue,/Aruken|Denzaki|father.s racing days|ex-professional racer/i);
 });
-test('Pro sponsorship is canon only: no newly introduced payment or save-state side effects',()=>{
+test('Pro sponsorship follows the old Chapter 8, with Denzaki only named at the Drag Complex',()=>{
   const canon=source('docs/CAREER_R680_PRE_PRO_CONTINUITY.md');
   assert.match(canon,/not yet implemented in R680/i);
-  assert.match(canon,/We.ll cover the expenses/);
-  assert.match(canon,/Too well/);
-  assert.match(canon,/first meeting with Daichi/i);
-  assert.doesNotMatch(source('src/data/chapter09.js'),/Aruken|Denzaki|We.ll cover the expenses/i);
+  assert.match(canon,/R692 follow-up/i);
+  assert.match(canon,/first in-person appearance/i);
+  assert.match(source('src/data/chapter09.js'),/Denzaki-san/);
   assert.match(source('src/data/chapter09.js'),/We.re not signing anything today/i);
   assert.match(source('src/ui/ProSeasonPanel.js'),/showProSeasonRegistration/);
   assert.match(source('src/ui/Chapter08Story.js'),/markCentralTokyoUnlocked/);

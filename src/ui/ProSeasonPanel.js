@@ -1,5 +1,6 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { playMangaCutscene } from './MangaCutscene.js?v=20261018-r586';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
+import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
 import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
@@ -611,9 +612,15 @@ export function showProSeasonRegistration(s){
       if(next.error){dialog.label(477,next.error,17,'#ff98a1');return;}
       if(!commit(s,{proCircuit:next.circuit}))return;
       dialog.close();redraw(s);
-      // This short, separate registration scene only plays after a durable
-      // season registration. It never awards points or alters race outcomes.
-      playMangaCutscene(s,'chapter09SeasonRegistration',{preloadPagePosesOnly:true});
+      // First official season only: introduce the quiet Ginza sponsorship.
+      // Subsequent seasons retain the existing short registration vignette.
+      // The story runs AFTER the durable season transition, so the player
+      // cannot accidentally pay twice or lose the registration on a reload.
+      if (next.circuit.season === 1 && !s.registry.get('cutscenesSeen')?.includes('proSponsorEpilogue')) {
+        maybePlayProSponsorStory(s);
+      } else {
+        playMangaCutscene(s,'chapter09SeasonRegistration',{preloadPagePosesOnly:true});
+      }
     },
   });
 }

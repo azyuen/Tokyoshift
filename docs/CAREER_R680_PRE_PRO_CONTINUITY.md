@@ -41,3 +41,15 @@ Chapter IDs, dialogue page counts, presentation cues, cutscene flags, playabilit
 Runtime scripts: `src/data/cutscenes.js`, `src/data/chapter08.js`, `src/data/characters.js`. The original Prelude is frozen at R679. Character internal ID `arkonDen` and developer login "Arkon Den" remain unchanged; in-world character is **Aruken Denzaki**.
 
 Regression coverage: `tests/career-continuity-r680.mjs` with the existing opening, Chapter 8, Sayaka/Reika and story replay tests. Retired father-racer material left in older historical prose is not current canon.
+
+## R692 follow-up — first Pro Season sponsor introduction (27 October 2026)
+
+The historical R680 heading above records what had **not** been implemented in R680; the following material supersedes its future-state label once R692 is merged.
+
+- **Chapter 08 remains untouched**: Aruken is unnamed in the phone invitation, Warehouse and Ginza reveals. During the existing Chapter 09 first Drag Complex visit, Masato briefly notices **Denzaki-san** on the team's supporting paperwork. Sayaka brushes the player's question aside; **no Aruken portrait** appears in this Chapter 09 visit.
+- On the **first deliberate official Pro Season registration only**, the season becomes ACTIVE through the established registration method and existing economy. Masato lists fees, bond, insurance, pit/workspace and employee contributions. Daichi and the player react; Aruken makes his **first in-person appearance** and first meeting with Daichi, saying the team has sponsor backing. Masato registers the sponsor as **Ginza Motor Gallery**, which Aruken and Sayaka co-own.
+- Sayaka and Aruken share familiar, restrained banter. Their relationship remains **unlabelled**. Aruken's appreciation of Daichi's engineering derives from Sayaka's photos and records, **not** prior contact.
+- A single no-stakes **Liberty Walk 240Z** exhibition follows using the real two-car race physics. Win, loss and forfeiture all return to the same sponsor send-off; the exhibition creates no career cash, win/loss, entry-fee, coupon, crew, season point, ranking or championship change. The professional season remains ACTIVE throughout.
+- The closing cutscene offers encouragement and a brief invitation to Ginza's Liberty Walk collaboration. The Central Tokyo tuner access flag is keyed to completion of this one-time scene; existing tuner build prices, purchase/ownership checks and dev access remain unchanged.
+- Subsequent Pro Seasons keep the previous brief season registration vignette, with no repeated sponsorship or paid exhibition. Cutscene history stores intro, race-pending, race-finished and closing-scene checkpoints so interrupted play can resume from the Drag Complex.
+- **Later Tokyo Champion celebration cameo** of Aruken with Sayaka remains a separate future scene; R692 does not implement this finale.
