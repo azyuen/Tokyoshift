@@ -12,7 +12,7 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20261025-r684';
+} from '../data/tunerShops.js?v=20261026-lbwk1';
 import {
   saveSessionState,
   recordCarAcquisition,
