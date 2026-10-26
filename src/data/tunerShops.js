@@ -14,6 +14,20 @@ const sourceValue = (source, key, fallback = null) => {
 };
 
 export const TUNER_SHOPS = {
+  CENTRAL_TOKYO: {
+    id: 'ginzaLibertyWalk', enabled: true, regionId: 'CENTRAL_TOKYO',
+    mapLabel: 'TUNER SHOP', label: 'LIBERTY WALK', fullName: 'LIBERTY WALK',
+    specialty: 'FULL WORKS // 240Z', mechanicId: 'arkonDen',
+    heroCarId: 'arkonLibertyWalk240z', donorCarId: '240z',
+    donorLabel: 'DATSUN 240Z', buildCost: 22000000,
+    backgroundKey: 'tunerShopGinzaLbwkBg',
+    backgroundPath: 'assets/Locations/TunerShops/ginza_lbwk_day.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
+      night: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
+    },
+    tuningOptions: [], cosmeticOnly: true,
+  },
   ODAIBA: {
     id: 'odaibaEsprit',
     enabled: true,
@@ -698,6 +712,7 @@ export function getRegionWinCount(source, regionId) {
 export function isTunerShopUnlocked(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return false;
+  if (String(regionId || '').toUpperCase() === 'CENTRAL_TOKYO') return isTunerDevProfile(source);
   // The first Chapter 07 build deliberately introduces JUST the two real
   // workshops: Amuse in Shibuya and Mine's in Yokohama. Even Aruken's dev
   // profile should experience these story gates. All seven open at stage 2.
