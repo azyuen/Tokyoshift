@@ -4,7 +4,9 @@
 import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r577';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
-import { startChapter09 } from './Chapter09Story.js?v=20261018-r586';
+import { startChapter09 } from './Chapter09Story.js?v=20261027-r693';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
+import { beginProSponsorPlayableReplay } from './ProSponsorReplay.js?v=20261027-r693';
 const FONT='"Silkscreen", monospace';
 const BODY='"Rajdhani", monospace';
 export function showStoryArchivePanel(scene) {
@@ -48,7 +50,19 @@ export function showStoryArchivePanel(scene) {
           allowPlayer:true,returnToOffice:true,skipRace:!interactive,
         })
       : id==='chapter09'
-        ? startChapter09(scene,{preview:true})
+        ? (interactive
+          ? beginProSponsorPlayableReplay(scene,{returnToArchive:true})
+          : startChapter09(scene,{preview:true,onPreviewComplete:()=>{
+              // The non-playable version retains the full Drag Complex
+              // welcome, followed by the sponsor conversations. No race.
+              const intro=playMangaCutscene(scene,'proSponsorIntroduction',{
+                preview:true,preloadPagePosesOnly:true,
+                onPreviewComplete:()=>playMangaCutscene(scene,'proSponsorEpilogue',{
+                  preview:true,preloadPagePosesOnly:true,
+                }),
+              });
+              if(!intro?.played)console.warn('[Tokyo SHIFT] Sponsor dialogue replay unavailable');
+            }}))
         : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
     if(!started) {
       detail.push(scene.add.text(780,550,
@@ -113,6 +127,10 @@ export function showStoryArchivePanel(scene) {
           }).setOrigin(.5).setDepth(depth+19).setScrollFactor(0));
         }
       });
+    } else if(chapter.id==='chapter09'){
+      choice(566,484,350,'WATCH STORY','Welcome and sponsor reveal',()=>launch(chapter.id,false));
+      choice(996,484,350,'RELIVE CHAPTER','Play the Liberty Walk 240Z race',
+        ()=>launch(chapter.id,true));
     } else if(chapter.id==='chapter01'){
       choice(566,484,350,'WATCH STORY','Opening scenes',()=>launch(chapter.id,false));
       choice(996,484,350,'RELIVE CHAPTER','Flip Issue 01 and choose a car',()=>launch(chapter.id,true));
@@ -128,8 +146,8 @@ export function showStoryArchivePanel(scene) {
     back.on('pointerdown',discardDetail);
   };
   chapters.forEach((chapter,i)=>{
-    // Five rows left and four right: nine chapters must have distinct,
-    // accessible hitboxes (the old 4-row grid overlaid Chapter 09 on Chapter 05).
+    // Five rows left, four right: all nine career chapters stay separate
+    // and the new sponsor chapter is directly accessible in recount mode.
     const leftColumn=i<5;
     const x=leftColumn?449:1111;
     const y=210+(leftColumn?i:i-5)*123;
