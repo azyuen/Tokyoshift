@@ -955,8 +955,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     mapButton.on('pointerdown', () => this.openMap());
 
-    // Developer preview: intentionally absent from the public destination list.
-    if (isArkonDen(this.registry)) {
+    // The Liberty Walk shortcut belongs only at Ginza, never Auto Market.
+    // Auto Market's purchase/delivery controls occupy this same side-panel area.
+    if (isArkonDen(this.registry) &&
+        LOCATION_BY_ID[this.activeLocationId]?.kind === 'showroom') {
       const lbwkX = SIDE.x + SIDE.w / 2;
       const lbwkY = SIDE.y + 610;
       const lbwkTile = this.addContent(this.add.rectangle(lbwkX, lbwkY, SIDE.w - 36, 70, 0x281e0d, 1)
@@ -970,7 +972,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
         returnLocationId: this.activeLocationId,
       }));
     }
-
 
     if (isArkonDen(this.registry) &&
         LOCATION_BY_ID[this.activeLocationId]?.kind !== 'proDrag') {
