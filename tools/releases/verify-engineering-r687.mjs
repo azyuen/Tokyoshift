@@ -10,13 +10,13 @@ globalThis.Phaser ??= {Math:{
 const [{default:Vehicle},{default:AI},{cars},{engines},
   {getBuiltCar,calculatePerformanceIndex},{getEncounterAi,boostAiForStandingStart},
   {stockClassFor}] = await Promise.all([
-  import('../../src/vehicles/Vehicle.js'),
-  import('../../src/ai/DragRacingAI.js'),
-  import('../../src/data/cars.js'),
-  import('../../src/data/engines.js'),
-  import('../../src/vehicles/VehiclePerformance.js'),
+  import('../../src/vehicles/Vehicle.js?v=20261026-r687'),
+  import('../../src/ai/DragRacingAI.js?v=20261026-r687'),
+  import('../../src/data/cars.js?v=20261026-r687'),
+  import('../../src/data/engines.js?v=20261026-r687'),
+  import('../../src/vehicles/VehiclePerformance.js?v=20261026-r687'),
   import('../../src/data/encounterProfiles.js'),
-  import('../../src/data/stockClasses.js'),
+  import('../../src/data/stockClasses.js?v=20261026-r687'),
 ]);
 
 assert.equal(cars.dc2.stockClass,'B');
