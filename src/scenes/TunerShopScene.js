@@ -1937,17 +1937,14 @@ export default class TunerShopScene extends Phaser.Scene {
     this.clearPopup();
 
     if (this.shop.cosmeticOnly) {
-      // Keep the garage, Aruken and Sayaka visible throughout the reveal.
-      const allCarObjects=this.dynamicObjects.filter(obj=>obj?.active &&
-        obj.depth>=9 && obj.depth<12);
+      const donorCarObjects=this.dynamicObjects.filter(obj=>obj?.active && obj.depth>=9 && obj.depth<12);
       this.tweens.add({
-        targets:allCarObjects,alpha:0,duration:850,ease:'Sine.easeInOut',
+        targets:donorCarObjects,alpha:0,duration:850,ease:'Sine.easeInOut',
         onComplete:()=>{
           const success=this.performHeroConversion();
           if (!success) {
             this.conversionInProgress=false;
-            this.showHeroMode();
-            return;
+            this.showHeroMode();return;
           }
           this.clearDynamic();
           this.drawMechanic();
@@ -2029,3 +2026,211 @@ export default class TunerShopScene extends Phaser.Scene {
         });
       },
     });
+  }
+
+  performHeroConversion() {
+    const donorBaseId = this.shop.donorCarId;
+    const donorId = this.getCurrentCarId();
+    const heroId = this.shop.heroCarId;
+    const owned = [...(this.registry.get('ownedCarIds') || [])];
+    const donorIndex = owned.indexOf(donorId);
+    if (
+      !donorId ||
+      getBaseCarId(donorId) !== donorBaseId ||
+      donorIndex < 0 ||
+      owned.includes(heroId)
+    ) return false;
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const donorState = carStates[donorId] || {};
+    if (!this.shop.cosmeticOnly && donorState.stock === false) return false;
+    if (this.shop.cosmeticOnly && !isTunerShopUnlocked(this.registry, this.regionId)) return false;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const cost = Math.max(0, Number(this.shop.buildCost || 0));
+    if (cash < cost) return false;
+
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+    const donorLocation = locations[donorId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+
+    recordCarDeparture(this.registry, donorId, 'converted', {
+      convertedTo: heroId,
+    });
+
+    owned.splice(donorIndex, 1, heroId);
+    delete carStates[donorId];
+    carStates[heroId] = {
+      stock: false,
+      collector: true,
+      immutable: true,
+      tuningLocked: true,
+      acquiredVia: 'tuner-shop',
+      tunerShopId: this.shop.id,
+      convertedFrom: donorId,
+      builtAt: Date.now(),
+    };
+
+    delete locations[donorId];
+    locations[heroId] = donorLocation;
+
+    const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
+    progress[this.shop.id] = {
+      ...(progress[this.shop.id] || {}),
+      discovered: true,
+      heroBuilt: true,
+      heroCarId: heroId,
+      builtAt: Date.now(),
+    };
+
+    this.registry.set('ownedCarIds', owned);
+    this.registry.set('selectedCarId', heroId);
+    this.registry.set('carStates', carStates);
+    this.registry.set('carGarageLocations', locations);
+    this.registry.set('tunerShopProgress', progress);
+    this.registry.set('cash', cash - cost);
+    this.registry.set('gameOver', false);
+    recordCarAcquisition(this.registry, heroId, {
+      acquiredVia: 'tuner-shop',
+      convertedFrom: donorId,
+    });
+    saveSessionState(this.registry);
+
+    return true;
+  }
+
+  showToast(message) {
+    const bg = this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + 60,
+      420,
+      48,
+      0x07151a,
+      0.96
+    ).setStrokeStyle(1, 0x62c9c2, 1).setDepth(180);
+
+    const text = this.add.text(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + 60,
+      message,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eafffc',
+      }
+    ).setOrigin(0.5).setDepth(181);
+
+    this.time.delayedCall(1600, () => {
+      bg.destroy();
+      text.destroy();
+    });
+  }
+
+  openMap() {
+    const district = String(this.registry.get('district') || '').toUpperCase();
+    const currentLocationId =
+      this.returnLocationId ||
+      (district === 'CENTRAL_TOKYO'
+        ? this.registry.get('centralTokyoLocation')
+        : this.registry.get('meetLocation')) ||
+      'odaiba7eleven';
+
+    showTravelMap(this, {
+      currentLocationId,
+      title: 'TOKYO REGION MAP',
+      actionVerb: 'DRIVE',
+      allowCurrentAction: false,
+      fromWorkshop: false,
+      onHome: (workshopLocationId, cost) =>
+        this.returnToWorkshop(workshopLocationId, cost),
+      onWorkshopUpgrade: (location, cost, alreadyUnlocked) =>
+        this.upgradeWorkshopFromMap(location, cost, alreadyUnlocked),
+      onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
+    });
+  }
+
+  travelToLocation(locationId, cost = 0) {
+    const target = getTravelLocation(locationId);
+    if (!target) return;
+
+    const price = Math.max(0, Number(cost || 0));
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < price) return;
+
+    this.registry.set('cash', cash - price);
+    this.cashText?.setText(money(cash - price));
+    this.registry.set('meetStranded', false);
+
+    if (String(target.regionId || '').toUpperCase() === 'CENTRAL_TOKYO') {
+      this.registry.set('centralTokyoLocation', locationId);
+      this.registry.set('district', 'CENTRAL_TOKYO');
+      saveSessionState(this.registry);
+      this.scene.start('CentralTokyoScene', { locationId });
+      return;
+    }
+
+    this.registry.set('meetLocation', locationId);
+    this.registry.set('district', target.regionId);
+    saveSessionState(this.registry);
+    this.scene.start('MeetScene');
+  }
+
+  upgradeWorkshopFromMap(location, cost = 0, alreadyUnlocked = false) {
+    if (!location) return;
+
+    if (alreadyUnlocked) {
+      this.returnToWorkshop(location.id, 0);
+      return;
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    const targetTier = Number(location.garageTier || 0);
+    const selectedCarId = this.registry.get('selectedCarId');
+    const ownedCarIds = this.registry.get('ownedCarIds') || [];
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    this.registry.set(
+      'garageTier',
+      Math.max(Number(this.registry.get('garageTier') || 0), targetTier)
+    );
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', location.id);
+
+    if (selectedCarId && ownedCarIds.includes(selectedCarId)) {
+      locations[selectedCarId] = location.id;
+      this.registry.set('carGarageLocations', locations);
+    }
+
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
+  }
+
+  returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', workshopLocationId || 'shinonomeWorkshop');
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
+  }
+}
