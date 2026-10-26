@@ -74,7 +74,7 @@ import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261024-r680
 import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
-import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261018-r586';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261027-r693';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
