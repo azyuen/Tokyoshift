@@ -104,7 +104,7 @@ test('scene transitions are real and replay exits cleanly after epilogue or race
  const central=src('src/scenes/CentralTokyoScene.js');
  const race=src('src/scenes/RaceScene.js');
  const welcome=src('src/ui/Chapter09Story.js');
- assert.match(sponsor,/finishProSponsorPlayableReplay\\(scene\\)/);
+ assert.ok(sponsor.includes('finishProSponsorPlayableReplay(scene)'));
  assert.match(sponsor,/__proSponsorReplayPhase/);
  assert.match(central,/startProSponsorReplayWelcome/);
  assert.match(central,/addProSponsorReplayExit/);
