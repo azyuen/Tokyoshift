@@ -3,7 +3,7 @@
 // remain temporary displays; changes never mutate owned cars or player tuning.
 import {
   ENGINE_PART_ORDER, ENGINE_TUNING_PARTS, normaliseEngineTuning,
-} from '../data/tuning.js?v=20261011-r479';
+} from '../data/tuning.js?v=20261026-r687';
 import {
   CANAL_YARD_MAX, getArkonCustomerPower, isArkonCustomerJobComplete,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';

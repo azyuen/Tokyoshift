@@ -1,6 +1,6 @@
 // R501: Oshiage Custom Works owns the former Tokyo Auto Market wheel shop.
 // The ownership and per-car customWheelId keys are unchanged for old profiles.
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { isActiveCrewLoanCar } from './crewSystem.js?v=20261020-r615';
 import { WHEEL_CATALOG, getOwnedWheelIds, getWheelOption } from './wheels.js?v=20260929-r246';

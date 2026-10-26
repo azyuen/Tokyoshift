@@ -1,25 +1,29 @@
+// Includes any primary reduction ahead of the differential (AP1: 1.160).
+export const effectiveFinalDrive = config => Number(config?.finalDriveRatio || 1) * Number(config?.primaryReductionRatio ?? 1);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
 export default class Transmission {
   constructor(config) {
     this.gearRatios = config.gearRatios;
-    this.finalDrive = config.finalDriveRatio;
+    this.finalDrive = effectiveFinalDrive(config);
     this.efficiency = config.drivetrainEfficiency;
     this.shiftTimeScale = Math.max(0.45, Number(config.shiftTimeScale || 1));
-    this.clutchRejectThreshold = Phaser.Math.Clamp(
+    this.clutchRejectThreshold = clamp(
       Number(config.difficultyShiftClutchRejectThreshold ?? 0.58),
       0.30,
       0.80
     );
-    this.clutchTarget = Phaser.Math.Clamp(
+    this.clutchTarget = clamp(
       Number(config.difficultyShiftClutchTarget ?? 0.90),
       this.clutchRejectThreshold,
       1
     );
-    this.throttleGrace = Phaser.Math.Clamp(
+    this.throttleGrace = clamp(
       Number(config.difficultyShiftThrottleGrace ?? 0.22),
       0,
       0.60
     );
-    this.shiftPenaltyMultiplier = Phaser.Math.Clamp(
+    this.shiftPenaltyMultiplier = clamp(
       Number(config.difficultyShiftPenaltyMultiplier ?? 1),
       0.45,
       1.40
@@ -45,7 +49,7 @@ export default class Transmission {
       return false;
     }
 
-    const qualityPenalty = Phaser.Math.Clamp(
+    const qualityPenalty = clamp(
       (
         (this.clutchTarget - clutchPedal) * 1.7
         + Math.max(0, throttle - this.throttleGrace) * 0.75

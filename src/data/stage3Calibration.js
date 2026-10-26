@@ -1,5 +1,6 @@
-import { getEngineTuning } from './tuning.js?v=20260926-r211';
-import { getDrivetrainTuning } from './secondaryTuning.js?v=20260926-r211';
+import {refreshEngineOutput} from '../vehicles/Engine.js?v=20261026-r687';
+import { getEngineTuning } from './tuning.js?v=20261026-r687';
+import { getDrivetrainTuning } from './secondaryTuning.js?v=20261026-r687';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const clone = value => JSON.parse(JSON.stringify(value || {}));
@@ -84,7 +85,7 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
   // Negative = stronger midrange but less top-end; positive = the opposite.
   if (tune.ecuBias !== 0 && engine.torqueCurve.length) {
     const idle = Math.max(500, Number(engine.idleRPM || 850));
-    const redline = Math.max(idle + 1000, Number(engine.redlineRPM || car.engineRedlineRPM || 7600));
+    const redline = Math.max(idle + 1000, Number(engine.specialistRefinement?.calibrationRedlineRPM || engine.redlineRPM || car.engineRedlineRPM || 7600));
     engine.torqueCurve = engine.torqueCurve.map(([rpm, torque]) => {
       const position = clamp((Number(rpm) - idle) / Math.max(1, redline - idle), 0, 1);
       const curveShift = tune.ecuBias * (position - 0.58) * 0.12;
@@ -103,8 +104,8 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
     const strength = tune.boostBias / 2;
     car.maximumBoost = Math.max(0.05, Number(car.maximumBoost) * (1 + strength * 0.11));
     car.turboSpoolRate = Math.max(0.1, Number(car.turboSpoolRate || 1.75) * (1 - strength * 0.18));
-    car.boostOnsetRPM = Math.round(1800 + strength * 350);
-    car.boostRampRPM = Math.round(4300 + strength * 700);
+    car.boostOnsetRPM = Math.round((car.boostOnsetRPM||1800)+strength*350);
+    car.boostRampRPM = Math.round((car.boostRampRPM||4300)+strength*700);
 
     // Keep the published peak figure aligned with the possible boost target.
     // This is still a trade: stronger peak arrives later, early response arrives weaker.
@@ -126,6 +127,7 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
     });
   }
 
+  refreshEngineOutput(car,engine);
   car.stage3Calibration = { ...tune };
   engine.stage3Calibration = { ...tune };
   return { car, engine, calibration: tune, eligibility };

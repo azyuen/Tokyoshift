@@ -1,7 +1,7 @@
-import { cars, carOrder } from './cars.js?v=20261011-r479';
+import { cars, carOrder } from './cars.js?v=20261026-r687';
 import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260929-r271';
 import { chooseRivalBuildArchetype } from './rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { canInstallTuningLevel, WORKSHOP_TIERS } from './workshopProgression.js?v=20261005-r354';
 
 const PARTS = Object.freeze({

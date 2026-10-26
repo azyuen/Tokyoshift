@@ -1,7 +1,7 @@
 // Crew recruitment car selection: one manga-style dialogue with symmetrical
 // player/crew car bays. This intentionally does not replace the preceding
 // crew-recruitment manga invitation or its signature-car reveal.
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getWorkshopPhaseBackground } from '../data/workshopProgression.js?v=20261005-r354';
 import { getMeetBackgroundForPhase } from '../data/meetAssets.js?v=20261004-r322';
 import {

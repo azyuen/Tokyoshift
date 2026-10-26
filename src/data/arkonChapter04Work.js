@@ -1,9 +1,9 @@
 // Chapter 04 pause: genuine post-setback 240Z progression, not pre-existing wins.
 // No special race offers, free upgrades, or hidden power modifiers.
-import {ENGINE_PART_ORDER,getEngineTuning} from './tuning.js?v=20260926-r211';
+import {ENGINE_PART_ORDER,getEngineTuning} from './tuning.js?v=20261026-r687';
 import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER,
   getDrivetrainTuning,getChassisTuning,getExhaustNosTuning
-} from './secondaryTuning.js?v=20261008-r428';
+} from './secondaryTuning.js?v=20261026-r687';
 
 export const ARKON_CH4_RACE_GOAL=3;
 export const ARKON_CH4_SHOWDOWN_GOAL=1;

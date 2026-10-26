@@ -1,7 +1,7 @@
 // Regional crew regulations are strict eligibility checks for player cars.
 // Never auto-trim a player's engine, upgrades or installed NOS for a race.
 // Opponents are generated with legal builds before registration.
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 
 const OPEN = Object.freeze({ label: 'OPEN CLASS' });
 const NO_NOS = Object.freeze({ label: 'NO NOS', noNos: true });

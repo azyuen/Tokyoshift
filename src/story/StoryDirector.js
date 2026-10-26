@@ -51,7 +51,7 @@ import {
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261025-r685';
-import { cars } from '../data/cars.js?v=20261023-r669';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
 } from '../data/devVaultStory.js?v=20261022-r643';

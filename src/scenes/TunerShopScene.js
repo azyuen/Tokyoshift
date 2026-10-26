@@ -3,7 +3,7 @@ import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r
 import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {

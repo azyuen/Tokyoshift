@@ -1,7 +1,7 @@
 // R570: Chapter 01–07 archival playback across authentic workshop/crew rooms.
 // This is an in-memory rehearsal, not a separate save or a progress reset.
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { getStoryChapter, isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
 const sessions=new WeakMap();

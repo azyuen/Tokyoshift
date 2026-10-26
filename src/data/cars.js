@@ -1,7 +1,9 @@
-import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261015-r527';
-import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
-import { addCollectorExpansion } from './collectorExpansion.js?v=20261015-r527';
-import { applyHeroCarAssets } from './heroCarAssets.js?v=20261015-r527';
+import {STOCK_CLASS_DATA} from './stockClasses.js?v=20261026-r687';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js';
+import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
+import { addCollectorExpansion } from './collectorExpansion.js';
+import { applyHeroCarAssets } from './heroCarAssets.js';
+import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261026-r687';
 
 const base = {
   wheelRadius: 0.305,
@@ -320,12 +322,14 @@ export const cars = {
     engineModel: 'F20C',
     powerKW: 184,
     torqueNm: 218,
-    vehicleMassKg: 1260,
+    vehicleMassKg: 1240,
     engineIdleRPM: 900,
     engineRedlineRPM: 9000,
     engineLimiterRPM: 9200,
     engineInertia: 0.14,
-    gearRatios: [3.133, 2.045, 1.481, 1.161, 0.943, 0.763],
+    gearRatios: [3.133, 2.045, 1.481, 1.161, 0.970, 0.810],
+    // Honda AP1 April 1999 specification: primary reduction precedes final drive.
+    primaryReductionRatio: 1.160,
     finalDriveRatio: 4.100,
     drivetrainEfficiency: 0.90,
     drivenAxleWeightFraction: 0.50,
@@ -2290,6 +2294,9 @@ cars.arkonLibertyWalk240z={
   },
 };
 
+// Preview-only endgame builds. Story's custom 240Z remains a cosmetic conversion.
+applyEndgameHeroCalibration(cars);
+
 // Unique collector cars retain fixed liveries (no paint mask).
 Object.values(cars).forEach(car => {
   car.visual = {
@@ -2307,6 +2314,7 @@ export const carOrder = [
 ];
 
 
+Object.entries(STOCK_CLASS_DATA).forEach(([id,data])=>Object.assign(cars[id],data));
 // Ginza vault demonstration aliases reuse the authentic mechanical build and
 // visuals without turning the test vehicle into a sellable collector. The
 // separate IDs prevent an owned car with the same model being overwritten.

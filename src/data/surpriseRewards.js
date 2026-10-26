@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20261011-r479';
+import { cars, carOrder } from './cars.js?v=20261026-r687';
 import { ownsCarModel } from './carOwnership.js?v=20261011-r479';
 import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20261011-r479';
 import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';

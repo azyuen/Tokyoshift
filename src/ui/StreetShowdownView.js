@@ -1,7 +1,7 @@
 // Full-screen regional Showdown preview using the Skytree three-heat layout.
 // UI only: existing MeetScene offer generation, entry settlement, race mechanics
 // and cooldown remain the sole source of gameplay state.
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import {
   characters, getCharacterVisualForContext, getCharacterForContext,
 } from '../data/characters.js?v=20261013-r494';
@@ -10,7 +10,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { carMatchesCompetitionRestriction } from '../data/carMagazine.js?v=20261011-r479';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { getCarCouponRequirement, getCarCouponCount } from '../data/centralTokyo.js?v=20261013-r496';
 import {
   SHOWDOWN_STAGE as STAGE,

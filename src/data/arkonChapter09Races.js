@@ -1,5 +1,5 @@
 // R673 — Chapter 09 real-physics private demonstrations without unrelated Career rewards.
-import {cars} from './cars.js?v=20261023-r669';
+import {cars} from './cars.js?v=20261026-r687';
 
 export const ARKON_CH9_RACES=Object.freeze([
   Object.freeze({district:'SHIBUYA',venue:'shibuyaScramble',car:'evo5',

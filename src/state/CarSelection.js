@@ -1,5 +1,5 @@
 // Preserve the last user-selected personal car separately from event overrides.
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 const read = (source, key, fallback = null) =>
   (typeof source?.get === 'function' ? source.get(key) : source?.[key]) ?? fallback;
 const personal = (source, id) =>

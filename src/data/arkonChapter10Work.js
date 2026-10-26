@@ -1,5 +1,5 @@
 // R674 — Chapter 10 milestones are Arkon Story-only. No Career save mutations.
-import {cars} from './cars.js?v=20261023-r669';
+import {cars} from './cars.js?v=20261026-r687';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261023-r662';
 
 const read=(s,k)=>s?.get?.(k);

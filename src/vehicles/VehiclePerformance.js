@@ -1,10 +1,13 @@
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { engines } from '../data/engines.js?v=20261011-r484';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261008-r428';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
-import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261004-r325';
+import {effectiveFinalDrive} from './Transmission.js?v=20261026-r687';
+import {estimateElapsed} from './PerformanceEstimate.js?v=20261026-r687';
+import Engine,{refreshEngineOutput} from './Engine.js?v=20261026-r687';
+import { cars } from '../data/cars.js?v=20261026-r687';
+import { getBaseCarId } from '../data/carOwnership.js';
+import { engines } from '../data/engines.js?v=20261026-r687';
+import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261026-r687';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
+import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261026-r687';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -60,6 +63,7 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   tuned.engine = calibrated.engine;
   tuned.stage3Calibration = calibrated.calibration;
   tuned.stage3CalibrationEligibility = calibrated.eligibility;
+  refreshEngineOutput(tuned.car,tuned.engine);
   const exhaustNos = getExhaustNosTuning(state);
 
   if (exhaustNos.nosKit <= 0) {
@@ -145,19 +149,19 @@ function standingEngineResponseFactor(car = {}, engine = {}) {
   };
 }
 
-function gearingFactor(car = {}, rolling = false) {
+function gearingFactor(car = {}, rolling = false, engine={}, speedKmh=60) {
   const ratios = Array.isArray(car.gearRatios) ? car.gearRatios : [];
   if (!ratios.length) return 1;
-  const finalDrive = Math.max(0.1, Number(car.finalDriveRatio || 1));
+  const finalDrive = Math.max(0.1, effectiveFinalDrive(car));
   const firstOverall = Math.max(0.1, Number(ratios[0] || 1) * finalDrive);
   const reference = PROGRESSION_BALANCE.performance.referenceOverallRatio;
   const launch = clamp(Math.sqrt(firstOverall / reference), 0.86, 1.14);
 
   if (!rolling) return launch;
 
-  const middle = ratios[Math.min(ratios.length - 1, Math.max(1, Math.floor(ratios.length / 2)))] || ratios[0];
-  const middleOverall = Math.max(0.1, Number(middle) * finalDrive);
-  return clamp(Math.sqrt(middleOverall / 5.5), 0.90, 1.10);
+  const selection=selectRollingGear(car,engine,speedKmh);
+  return clamp(selection.forceN*Math.max(1,speedKmh/3.6)/(Math.max(1,car.powerKW)*1000),.65,1.05);
+
 }
 
 export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
@@ -192,7 +196,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
     : 1;
 
   const launchGearing = gearingFactor(car, false);
-  const rollGearing = gearingFactor(car, true);
+  const rollGearing = gearingFactor(car,true,engine,Number(options.rollingSpeedKmh||60));
   const standingEngineResponse = standingEngineResponseFactor(car, engine);
   const aeroLoad = Math.max(0.45, Number(car.dragCoefficient || 0.34) * Number(car.frontalAreaM2 || 1.85));
   const aeroFactor = clamp(Math.sqrt(0.64 / aeroLoad), 0.86, 1.12);
@@ -213,19 +217,11 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const nosAvailability = clamp(nosCapacity / 5, 0, 1.35);
   const nosPerMass = nosPowerKw / mass * 1000 / cfg.referencePowerToWeight;
 
-  const standing = Math.max(1,
-    100 * standingCore *
-    standingTraction * clutchUsability * efficiency * launchGearing *
-    shiftFactor * standingBand * boostResponse * standingEngineResponse.combined +
-    100 * nosPerMass * nosAvailability * cfg.nosStandingUse
-  );
-
-  const rolling = Math.max(1,
-    100 * rollingCore *
-    efficiency * rollGearing * shiftFactor *
-    rollingBand * boostResponse * aeroFactor +
-    100 * nosPerMass * nosAvailability * cfg.nosRollingUse
-  );
+  const distance=Math.max(100,Math.min(1600,Number(options.distanceM||400)));
+  const standingSeconds=estimateElapsed(car,engine,0,distance);
+  const rollingSeconds=estimateElapsed(car,engine,Number(options.rollingSpeedKmh||60),distance);
+  const standing=100*Math.pow((15.5*Math.sqrt(distance/400))/standingSeconds,3);
+  const rolling=100*Math.pow((12.4*Math.sqrt(distance/400))/rollingSeconds,3);
 
   const overall = standing * cfg.standingWeight + rolling * cfg.rollingWeight;
   const raceType = String(options.raceType || '').toLowerCase();
@@ -236,6 +232,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
     standing,
     rolling,
     selected,
+    simulation: {standingSeconds,rollingSeconds,distanceM:distance,timestep:1/60},
     components: {
       powerKW: power,
       torqueNm: torque,
@@ -260,4 +257,12 @@ export function getVehiclePerformance(carId, state = {}, options = {}) {
     ...built,
     index: calculatePerformanceIndex(built.car, built.engine, options),
   };
+}
+
+export function selectRollingGear(car,engine,speedKmh=60){
+ const probe=new Engine(engine),speed=Math.max(1,speedKmh/3.6),wheelRPM=speed/(2*Math.PI*car.wheelRadius)*60;
+ let best={gear:1,rpm:0,forceN:0};car.gearRatios.forEach((ratio,i)=>{const overall=ratio*effectiveFinalDrive(car),rpm=wheelRPM*overall;if(rpm<engine.idleRPM||rpm>engine.redlineRPM*.96)return;
+ probe.rpm=rpm;const spool=Math.pow(clamp((rpm-(car.boostOnsetRPM||1800))/(car.boostRampRPM||4300),0,1),1.18);
+ const forceN=probe.combustionTorque(1,(car.maximumBoost||0)*spool)*overall*car.drivetrainEfficiency/car.wheelRadius;
+ if(forceN>best.forceN)best={gear:i+1,rpm,forceN};});return best;
 }

@@ -1,14 +1,14 @@
 // R610 — Reposition player, Sayaka, car ride height and individual heat subtitle.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
-  getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
+  getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261026-r687';
 import { addProGlowingHotspot, addProHeatSubtitle, renderStewardBriefing, renderPagedStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261020-r613';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,

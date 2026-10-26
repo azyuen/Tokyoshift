@@ -1,7 +1,7 @@
 // R641 — isolated, non-canonical developer story venue.
 // No Meet rivals/cards/actions are created: just the real background,
 // Arkon, Sayaka, the currently loaned Ginza car, and authored dialogue.
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
 import { preloadStoryCar, renderStoryCar } from '../ui/StoryCarRenderer.js?v=20261022-r642';
 import { resolveStoryComposition } from '../ui/StoryComposition.js?v=20261022-r643';

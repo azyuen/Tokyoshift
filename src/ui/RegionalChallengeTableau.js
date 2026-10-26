@@ -2,7 +2,7 @@ import {
   characters,
   getCharacterForContext,
 } from '../data/characters.js?v=20261007-r411';
-import { cars } from '../data/cars.js?v=20261006-r388';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

@@ -1,6 +1,6 @@
 // Oshiage's two independent Elite street showdowns.
 // Only the seven existing regional championships open this bonus venue.
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { characters, rivalCharacterOrder } from './characters.js?v=20261013-r494';
 import { CREW_REGIONS } from './crewRoster.js?v=20261009-r457';
 import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';

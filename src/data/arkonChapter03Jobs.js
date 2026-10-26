@@ -1,10 +1,10 @@
 // R656 — Chapter 03 uses customer-owned cars, not player-owned car slots.
 // Parts on customer jobs are supplied by the customer; Arkon earns labour.
-import { cars } from './cars.js?v=20261017-r565';
-import { engines } from './engines.js?v=20261015-r527';
+import { cars } from './cars.js?v=20261026-r687';
+import { engines } from './engines.js?v=20261026-r687';
 import {
   ENGINE_PART_ORDER, applyEngineTuning, normaliseEngineTuning,
-} from './tuning.js?v=20261011-r479';
+} from './tuning.js?v=20261026-r687';
 import { getRequiredWorkshopTier } from './workshopProgression.js?v=20261005-r362';
 
 const read = (source,key) => typeof source?.get==='function'

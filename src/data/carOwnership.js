@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 
 const COPY_MARKER = '__copy';
 

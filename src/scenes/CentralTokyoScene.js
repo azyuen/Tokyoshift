@@ -13,9 +13,9 @@ import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
 import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
-import { engines } from '../data/engines.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261026-r687';
 import {
   characters,
   getCharacterAssetUrl,
@@ -28,10 +28,10 @@ import {
 } from '../data/characters.js?v=20261024-r680';
 import {
   applyEngineTuning,
-} from '../data/tuning.js?v=20260926-r211';
+} from '../data/tuning.js?v=20261026-r687';
 import {
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260926-r211';
+} from '../data/secondaryTuning.js?v=20261026-r687';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -53,7 +53,7 @@ import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261021-r628';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
   saveSessionState,
   recordCarAcquisition,

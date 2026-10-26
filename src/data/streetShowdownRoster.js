@@ -5,7 +5,7 @@ import {
   characters, getRivalCharacterOrderForRegion, getCharacterForContext,
   isMainRivalAvailableAtRegionalMeet,
 } from './characters.js?v=20261013-r494';
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { getMeetLocation } from './meetAssets.js?v=20261016-r529';
 import { getRecruitedCrewCharacterIds } from './crewSystem.js?v=20261016-r544';
 

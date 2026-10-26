@@ -6,9 +6,9 @@ import {
 } from '../data/arkonStoryWorkshopMechanic.js?v=20261023-r654';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { engines } from '../data/engines.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261026-r687';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261024-r680';
 import {
   ENGINE_PART_ORDER,
@@ -19,7 +19,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260926-r211';
+} from '../data/tuning.js?v=20261026-r687';
 import {
   DRIVETRAIN_PART_ORDER,
   CHASSIS_PART_ORDER,
@@ -40,7 +40,7 @@ import {
   getChassisCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20261008-r428';
+} from '../data/secondaryTuning.js?v=20261026-r687';
 import {
   getPartRemovalQuote,
   removeTuningPartFromState,
