@@ -3,7 +3,7 @@
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
-import { getStoryChapter, isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
+import { getStoryChapter, isStoryChapterComplete } from '../data/storyChapters.js?v=20261027-r693';
 const sessions=new WeakMap();
 const ACTIVE='__storyArchiveSceneReplay', OWNER='__storyArchiveOwnerSlot';
 export const isStoryArchiveSceneReplay=registry=>Boolean(registry?.get?.(ACTIVE)) &&
