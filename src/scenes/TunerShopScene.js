@@ -384,7 +384,7 @@ export default class TunerShopScene extends Phaser.Scene {
       this.add.text(SIDE.x+26,SIDE.y+22,'LBWK BUILDS',{
         fontFamily:PIXEL_FONT,fontSize:'15px',color:'#fff2dc'
       }).setDepth(32);
-      this.add.text(SIDE.x+26,SIDE.y+61,
+      this.lbwkIntroText=this.add.text(SIDE.x+26,SIDE.y+61,
         'Bring a compatible car for the\nLiberty Walk treatment.',{
           fontFamily:BODY_FONT,fontSize:'14px',color:'#b5c6cd',
           lineSpacing:3
@@ -583,6 +583,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.clearDynamic();
     if (this.shop.cosmeticOnly) {
       (this.lbwkBrowseObjects||[]).forEach(o=>{o.setVisible(true);if(o.input)o.input.enabled=true;});
+      this.lbwkIntroText?.setVisible(true);
     }
     this.setTabStyle();
 
@@ -1860,6 +1861,7 @@ export default class TunerShopScene extends Phaser.Scene {
       o.setVisible(false);
       if(o.input)o.input.enabled=false;
     });
+    this.lbwkIntroText?.setVisible(false);
     this.sideContent.removeAll(true);
     const x=SIDE.x+26;
     const add=(y,value,size='9px',color='#e5edf1')=>
