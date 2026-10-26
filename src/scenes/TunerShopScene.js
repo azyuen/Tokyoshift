@@ -12,7 +12,7 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20261025-r684';
+} from '../data/tunerShops.js?v=20261026-lbwk1';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -203,8 +203,8 @@ export default class TunerShopScene extends Phaser.Scene {
     };
     this.registry.set('tunerShopProgress', progress);
     // Record actual in-world specialist visits, not authored montage cards.
-    recordArkonCh7TunerVisit(this.registry,this.regionId);
-    if(claimArkonCh7FirstVisitScene(this.registry,this.regionId))
+    if (!this.shop.cosmeticOnly) recordArkonCh7TunerVisit(this.registry,this.regionId);
+    if(!this.shop.cosmeticOnly && claimArkonCh7FirstVisitScene(this.registry,this.regionId))
       this._ch7FirstVisitManga=getArkonCh7FirstTunerManga(this.regionId);
     if (this.shop.heroCarId) {
       recordCarMagazineSightings(this.registry, [{
@@ -404,7 +404,7 @@ export default class TunerShopScene extends Phaser.Scene {
     };
 
     this.heroTab = makeTab(118, 'HERO BUILD', 0x241c12, 0xe2b464, '9px');
-    this.tuneTab = makeTab(180, 'SPECIALIST TUNING', 0x101d22, 0x4f8b91, '8px');
+    this.tuneTab = makeTab(180, this.shop.cosmeticOnly ? 'FULL WORKS // 240Z ONLY' : 'SPECIALIST TUNING', 0x101d22, 0x4f8b91, '8px');
     // Split the existing third row: no extra height is used in the side panel.
     this.decalTab = makeTab(242, 'SHOP DECAL', 0x15191d, 0x59646a,
       '7px', SIDE.x + 103, 145);
@@ -412,9 +412,9 @@ export default class TunerShopScene extends Phaser.Scene {
       '7px', SIDE.x + SIDE.w - 103, 145);
 
     this.heroTab.box.on('pointerdown', () => this.showHeroMode());
-    this.tuneTab.box.on('pointerdown', () => this.showTuningMode());
-    this.decalTab.box.on('pointerdown', () => this.showDecalMode());
-    this.serviceTab.box.on('pointerdown', () => this.showServiceMode());
+    if (!this.shop.cosmeticOnly) this.tuneTab.box.on('pointerdown', () => this.showTuningMode());
+    if (!this.shop.cosmeticOnly) this.decalTab.box.on('pointerdown', () => this.showDecalMode());
+    if (!this.shop.cosmeticOnly) this.serviceTab.box.on('pointerdown', () => this.showServiceMode());
 
     this.sideContent = this.add.container(0, 0).setDepth(33);
 
@@ -1927,6 +1927,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const donorState = carStates[donorId] || {};
     if (donorState.stock === false) return false;
+    if (this.shop.cosmeticOnly && !isTunerShopUnlocked(this.registry, this.regionId)) return false;
 
     const cash = Number(this.registry.get('cash') || 0);
     const cost = Math.max(0, Number(this.shop.buildCost || 0));
