@@ -2,8 +2,8 @@
 // The only major-chapter shortcut retained is the requested fully playable
 // Chapter 09 sponsor regression, for developers with old Pro Season saves.
 import { characters } from '../data/characters.js?v=20261024-r680';
-import { CUTSCENES } from '../data/cutscenes.js?v=20261027-r692';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r692';
+import { CUTSCENES } from '../data/cutscenes.js?v=20261027-r693';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r693';
 import { beginProSponsorPlayableReplay } from './ProSponsorReplay.js?v=20261027-r693';
 
 const FONT='"Silkscreen",monospace';
