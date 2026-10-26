@@ -19,7 +19,7 @@ test('four connected scenes follow Chapter 08 and include the genuine Ryuji/Saya
  assert.ok(CHAPTER09_SCENES.chapter09Visitor.pages.some(p=>p.leftCharacter==='mikaHayaseChampion'));
  assert.equal(characters.mikaHayaseChampion.name,'Mika Hayase');
  assert.notEqual(characters.mikaHayaseChampion.visual.path,characters.mikaHayase.visual.path);
- assert.equal(CHAPTER09_SCENES.chapter09Welcome.finalActionLabel,'CHAPTER 09 COMPLETE');
+ assert.equal(CHAPTER09_SCENES.chapter09Welcome.finalActionLabel,'EXPLORE THE DRAG COMPLEX');
  assert.ok(CHAPTER09_SCENES.chapter09SeasonRegistration.pages.some(p=>p.text==="Alright, you two. We've had our fun. Now let's get serious."));
 });
 test('Chapter 09 unlocks on first eligible strip arrival, never before the Chapter 08 Ginza reveal',()=>{
