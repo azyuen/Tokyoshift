@@ -1,3 +1,4 @@
+import { LBWK_CONVERSIONS } from './lbwkConversions.js';
 // Liberty Walk Ginza — isolated feature configuration.
 // The location remains unavailable to ordinary profiles until a future story unlock.
 export const LBWK_GINZA = Object.freeze({
@@ -14,7 +15,8 @@ export const LBWK_GINZA = Object.freeze({
 });
 // Only the 240Z is enabled until the other hero art is ready.
 export const LBWK_BUILDS = Object.freeze([
-  { id: 'lbwk240z', model: '240z', enabled: true },
+  { id: 'libertyWalk240z', model: '240z', enabled: true },
+  ...LBWK_CONVERSIONS.map(({ id, donor }) => ({ id, model: donor, enabled: true })),
 ]);
 // Only the developer profile may preview this location until the story gate exists.
 // Do not use this flag as an ownership or purchase authorisation check.

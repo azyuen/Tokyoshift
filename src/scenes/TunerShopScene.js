@@ -1,3 +1,4 @@
+import { LBWK_CONVERSIONS } from '../data/lbwkConversions.js';
 import {recordArkonCh7TunerVisit,claimArkonCh7FirstVisitScene} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r684';
 import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
@@ -114,6 +115,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const carStates = this.registry.get('carStates') || {};
     const carIds = [...new Set([
       shop.heroCarId,
+      ...(shop.cosmeticOnly ? LBWK_CONVERSIONS.map(g => g.id) : []),
       owned.includes(currentCarId) ? currentCarId : null,
     ])].filter(id => cars[id]);
 
@@ -153,6 +155,7 @@ export default class TunerShopScene extends Phaser.Scene {
     playMusic('workshop');
 
     this.shop = getTunerShopForRegion(this.regionId);
+    if (this.shop?.cosmeticOnly) this.shop = { ...this.shop };
 
     if (!this.shop || !isTunerShopUnlocked(this.registry, this.regionId)) {
       this.scene.start('GarageScene');
@@ -527,6 +530,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.setTabStyle();
 
     this.drawMechanic();
+    this.drawLbwkSelectorButton();
 
     const hero = cars[this.shop.heroCarId];
     if (hero) {
@@ -636,6 +640,62 @@ export default class TunerShopScene extends Phaser.Scene {
         lineSpacing: 4,
       }
     ));
+  }
+
+  selectLbwkBuild(g) {
+    if (!this.shop?.cosmeticOnly || !isTunerShopUnlocked(this.registry,this.regionId)) return;
+    this.shop.heroCarId=g.id;
+    this.shop.donorCarId=g.donor;
+    this.shop.donorLabel=cars[g.donor]?.name || g.donor.toUpperCase();
+    this.shop.buildCost=g.cost;
+    this.clearPopup();
+    this.showHeroMode();
+  }
+
+  showLbwkBuildSelector() {
+    if (!this.shop?.cosmeticOnly) return;
+    this.clearPopup();
+    this.addPopup(this.add.rectangle(780,420,1560,840,0x030609,0.8)
+      .setDepth(150).setInteractive());
+    this.addPopup(this.add.rectangle(780,420,740,650,0x09131b,0.99)
+      .setStrokeStyle(2,0xe4b958,1).setDepth(151));
+    this.addPopup(this.add.text(780,160,'LIBERTY WALK // FULL WORKS',{
+      fontFamily:PIXEL_FONT,fontSize:'14px',color:'#ffe2a3'
+    }).setOrigin(0.5).setDepth(152));
+    const choices=[
+      {id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},
+      ...LBWK_CONVERSIONS
+    ];
+    choices.forEach((g,i)=>{
+      const y=215+i*56;
+      const chosen=this.shop.heroCarId===g.id;
+      const b=this.addPopup(this.add.rectangle(780,y,650,48,
+        chosen?0x3a2d18:0x12202b,1)
+        .setStrokeStyle(1,chosen?0xffd889:0x627786,1)
+        .setInteractive({useHandCursor:true}).setDepth(152));
+      this.addPopup(this.add.text(780,y,
+        g.name+'   //   '+Number(g.cost).toLocaleString('en-US')+' YEN',
+        {fontFamily:PIXEL_FONT,fontSize:'9px',color:chosen?'#ffe2a3':'#dce7eb'}
+      ).setOrigin(0.5).setDepth(153));
+      b.on('pointerdown',()=>this.selectLbwkBuild(g));
+    });
+    const close=this.addPopup(this.add.rectangle(780,690,260,40,0x202832,1)
+      .setStrokeStyle(1,0x8497a3,1).setInteractive({useHandCursor:true}).setDepth(152));
+    this.addPopup(this.add.text(780,690,'CLOSE',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffffff'
+    }).setOrigin(0.5).setDepth(153));
+    close.on('pointerdown',()=>this.clearPopup());
+  }
+
+  drawLbwkSelectorButton() {
+    if (!this.shop?.cosmeticOnly) return;
+    const x=STAGE.x+STAGE.w-185,y=STAGE.y+55;
+    const b=this.addDynamic(this.add.rectangle(x,y,330,52,0x322410,0.98)
+      .setStrokeStyle(2,0xe4b958,1).setInteractive({useHandCursor:true}).setDepth(29));
+    this.addDynamic(this.add.text(x,y,'CHOOSE LBWK BUILD  >',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffe2a3'
+    }).setOrigin(0.5).setDepth(30));
+    b.on('pointerdown',()=>this.showLbwkBuildSelector());
   }
 
   getTunableCarIds() {

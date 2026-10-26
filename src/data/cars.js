@@ -3,6 +3,7 @@ import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, 
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
 import { addCollectorExpansion } from './collectorExpansion.js';
 import { applyHeroCarAssets } from './heroCarAssets.js';
+import { registerLbwkHeroCars } from './lbwkHeroCars.js';
 import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261026-r687';
 
 const base = {
@@ -2296,6 +2297,7 @@ cars.arkonLibertyWalk240z={
 
 // Preview-only endgame builds. Story's custom 240Z remains a cosmetic conversion.
 applyEndgameHeroCalibration(cars);
+registerLbwkHeroCars(cars);
 
 // Unique collector cars retain fixed liveries (no paint mask).
 Object.values(cars).forEach(car => {
