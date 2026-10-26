@@ -354,7 +354,7 @@ export default class TunerShopScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x453827, 1)
       .setDepth(40);
 
-    this.add.text(52, 35, this.regionId + ' // TUNER SHOP', {
+    this.add.text(52, 35, (this.shop.cosmeticOnly ? 'GINZA MOTOR GALLERY X LIBERTY WALK' : this.regionId + ' // TUNER SHOP'), {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
       color: '#fff4df',
@@ -390,6 +390,36 @@ export default class TunerShopScene extends Phaser.Scene {
       fontSize: '8px',
       color: '#d6aa68',
     }).setDepth(32);
+
+    if (this.shop.cosmeticOnly) {
+      this.sideContent = this.add.container(0, 0).setDepth(33);
+      this.add.text(SIDE.x + 26, SIDE.y + 24, 'LBWK BUILDS', {
+        fontFamily: PIXEL_FONT, fontSize: '15px', color: '#fff2dc'
+      }).setDepth(32);
+      const choices = [
+        {id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},
+        ...LBWK_CONVERSIONS
+      ];
+      choices.forEach((g,i) => {
+        const y = SIDE.y + 85 + i*49;
+        const b = this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,43,
+          this.shop.heroCarId===g.id?0x3a2d18:0x12202b,1)
+          .setStrokeStyle(1,this.shop.heroCarId===g.id?0xffd889:0x627786,1)
+          .setInteractive({useHandCursor:true}).setDepth(32);
+        this.add.text(SIDE.x+SIDE.w/2,y,g.name.toUpperCase(),{
+          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffe2a3'
+        }).setOrigin(0.5).setDepth(33);
+        b.on('pointerdown',()=>this.selectLbwkBuild(g));
+      });
+      const mapY=SIDE.y+SIDE.h-42;
+      const map=this.add.rectangle(SIDE.x+SIDE.w/2,mapY,SIDE.w-56,40,0x111920,1)
+        .setStrokeStyle(1,0x62727b,1).setInteractive({useHandCursor:true}).setDepth(32);
+      this.add.text(SIDE.x+SIDE.w/2,mapY,'GO TO MAP',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#e7f0f2'
+      }).setOrigin(0.5).setDepth(33);
+      map.on('pointerdown',()=>this.returnToMap());
+      return;
+    }
 
     const makeTab = (y, label, fill, stroke, fontSize = '9px',
       x = SIDE.x + SIDE.w / 2, width = SIDE.w - 56) => {
