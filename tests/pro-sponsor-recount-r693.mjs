@@ -60,7 +60,7 @@ test('Dev Scenes is only live micro-cinematics plus one complete Chapter 09 rout
    'proSponsorIntroduction','proSponsorEpilogue','dragComplexInvitation',
    'ginzaHeroCarReveal','ginzaInvitation','competitionChampion'];
  for(const id of hidden)assert.equal(entries.some(x=>x.id===id),false,id);
- assert.match(src('src/ui/CutsceneTester.js'),/D\\) SCENES/);
+ assert.match(src('src/ui/CutsceneTester.js'),/D\) SCENES/);
 });
 
 test('a previously registered developer can relive the entire race without modifying the live save',async()=>{
