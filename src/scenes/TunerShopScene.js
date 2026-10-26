@@ -379,33 +379,30 @@ export default class TunerShopScene extends Phaser.Scene {
       0.97
     ).setStrokeStyle(2, 0x59462c, 1).setDepth(30);
 
-    this.add.text(SIDE.x + 26, SIDE.y + 24, this.shop.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '15px',
-      color: '#fff2dc',
-    }).setDepth(32);
-
-    this.add.text(SIDE.x + 26, SIDE.y + 58, this.shop.specialty, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#d6aa68',
-    }).setDepth(32);
-
     if (this.shop.cosmeticOnly) {
       this.sideContent = this.add.container(0,0).setDepth(33);
-      this.add.text(SIDE.x+26,SIDE.y+24,'LBWK BUILDS',{
+      this.add.text(SIDE.x+26,SIDE.y+22,'LBWK BUILDS',{
         fontFamily:PIXEL_FONT,fontSize:'15px',color:'#fff2dc'
       }).setDepth(32);
+      this.add.text(SIDE.x+26,SIDE.y+61,
+        'Bring a compatible car for the\nLiberty Walk treatment.\nExplore the builds below.',{
+          fontFamily:BODY_FONT,fontSize:'14px',color:'#b5c6cd',
+          lineSpacing:3
+        }).setDepth(32);
       this.lbwkChoices=[{id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},...LBWK_CONVERSIONS];
       this.lbwkChoices.forEach((g,i)=>{
-        const y=SIDE.y+84+i*48;
+        const y=SIDE.y+169+i*47;
         const selected=this.shop.heroCarId===g.id;
-        const b=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,42,
+        const label=({libertyWalk240z:'240Z',lbwk180sx:'180SX',
+          lbwkA60:'CELICA XX / SUPRA A60',lbwk350z:'350Z',lbwkS15:'S15',
+          lbwkR34:'R34',lbwkMx5:'MX-5 NB',lbwkR32:'R32'})[g.id]||g.name.replace(/^LBWK\\s*/,'');
+        const b=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,
           selected?0x3a2d18:0x12202b,1)
           .setStrokeStyle(1,selected?0xffd889:0x627786,1)
           .setInteractive({useHandCursor:true}).setDepth(32);
-        this.add.text(SIDE.x+SIDE.w/2,y,g.name.toUpperCase(),{
-          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffe2a3'
+        this.add.text(SIDE.x+SIDE.w/2,y,label,{
+          fontFamily:PIXEL_FONT,fontSize:'9px',
+          color:selected?'#ffe2a3':'#dce7eb'
         }).setOrigin(0.5).setDepth(33);
         b.on('pointerdown',()=>this.selectLbwkBuild(g));
       });
@@ -418,6 +415,18 @@ export default class TunerShopScene extends Phaser.Scene {
       map.on('pointerdown',()=>this.openMap());
       return;
     }
+
+    this.add.text(SIDE.x + 26, SIDE.y + 24, this.shop.label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '15px',
+      color: '#fff2dc',
+    }).setDepth(32);
+
+    this.add.text(SIDE.x + 26, SIDE.y + 58, this.shop.specialty, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#d6aa68',
+    }).setDepth(32);
 
     const makeTab = (y, label, fill, stroke, fontSize = '9px',
       x = SIDE.x + SIDE.w / 2, width = SIDE.w - 56) => {
@@ -1495,8 +1504,8 @@ export default class TunerShopScene extends Phaser.Scene {
         sprite.setScale(height / source.height);
       };
       // Sayaka stands immediately to Aruken's left, both grounded at the same floor line.
-      addPerson('lbwkSayakaRaceIdle', 153, 302, 13);
-      addPerson('lbwkArukenProIdle', 333, 350, 14);
+      addPerson('lbwkSayakaRaceIdle', 163, 347, 13);
+      addPerson('lbwkArukenProIdle', 303, 350, 14);
       const infoX = 46, infoY = 724, infoW = 430, infoH = 78;
       this.addDynamic(this.add.rectangle(infoX + infoW / 2, infoY + infoH / 2,
         infoW, infoH, 0x05090d, 0.74).setStrokeStyle(1, 0xd6aa68, 0.48).setDepth(18));
