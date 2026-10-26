@@ -10,6 +10,7 @@ const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261022-r635';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261023-r658';
+import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r692';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -751,6 +752,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawDragComplex();
     this.queueSayakaProStrategistReveal();
+    // Resume a first-season sponsorship cutscene/race on an ordinary return
+    // from racing or after an interrupted app session, not on every redraw.
+    if (!this._proSponsorScheduled) {
+      this._proSponsorScheduled = true;
+      this.time.delayedCall(420, () => {
+        this._proSponsorScheduled = false;
+        if (this.sys?.isActive?.() && this.activeLocationId === 'tokyoDragComplex' &&
+            !this._proOverlayClose && !this._proSeasonConfirmClose &&
+            !sceneCutsceneActive(this)) maybePlayProSponsorStory(this);
+      });
+    }
     // The first genuine visit after Chapter 08 introduces the professional
     // circuit, even though the Open Circuit was already unlocked by R575.
     if(!this._chapter09Scheduled && chapter09ShouldBegin(this.registry)){
