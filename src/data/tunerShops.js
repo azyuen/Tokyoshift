@@ -712,7 +712,15 @@ export function getRegionWinCount(source, regionId) {
 export function isTunerShopUnlocked(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return false;
-  if (String(regionId || '').toUpperCase() === 'CENTRAL_TOKYO') return isTunerDevProfile(source);
+  if (String(regionId || '').toUpperCase() === 'CENTRAL_TOKYO') {
+    // Ginza x Liberty Walk opens through the FIRST-season sponsorship story.
+    // Developer preview remains available, but other regional tuner gates,
+    // upgrade investments and car ownership requirements are unchanged.
+    const seen = sourceValue(source, 'cutscenesSeen', []);
+    return isTunerDevProfile(source) ||
+      (sourceValue(source, 'gameMode') !== 'arkonStory' &&
+        Array.isArray(seen) && seen.includes('proSponsorEpilogue'));
+  }
   // The first Chapter 07 build deliberately introduces JUST the two real
   // workshops: Amuse in Shibuya and Mine's in Yokohama. Even Aruken's dev
   // profile should experience these story gates. All seven open at stage 2.
