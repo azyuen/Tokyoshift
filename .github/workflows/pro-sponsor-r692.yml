@@ -1,0 +1,35 @@
+name: R692 Pro Season Ginza sponsor story
+on:
+  push:
+    branches: [main, feature/pro-sponsor-aruken-intro-r692]
+    paths:
+      - 'src/data/chapter09.js'
+      - 'src/data/cutscenes.js'
+      - 'src/data/tunerShops.js'
+      - 'src/ui/ProSponsorStory.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/pro-sponsor-r692.mjs'
+      - 'tests/career-continuity-r680.mjs'
+      - '.github/workflows/pro-sponsor-r692.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check changed module syntax
+        run: |
+          for file in src/data/chapter09.js src/data/cutscenes.js src/data/tunerShops.js src/ui/ProSponsorStory.js src/ui/ProSeasonPanel.js src/scenes/CentralTokyoScene.js src/scenes/RaceScene.js tests/pro-sponsor-r692.mjs; do
+            node --check "$file"
+          done
+      - name: Verify sponsor story and established career continuity
+        run: |
+          node --test tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs
