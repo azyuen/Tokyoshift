@@ -1,0 +1,30 @@
+name: Engineering E005 Human Driver Calibration
+on:
+  push:
+    branches:
+      - engineering/human-drivers-e005-20261026
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            src
+            engineering-preview
+            tools
+            package.json
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check preview scripts
+        run: |
+          node --check engineering-preview/src/ai/DragRacingAI.js
+          node --check engineering-preview/src/input/TouchControls.js
+          node --check engineering-preview/src/scenes/RaceScene.js
+          node --check tools/engineering-human-ai-preview-e005.mjs
+      - name: Compare identical cars: previous AI vs E005 expert and elite
+        run: node tools/engineering-human-ai-preview-e005.mjs
