@@ -329,7 +329,6 @@ export default class TouchControls {
 
     if (this.clutchPointer && !this.clutchPointer.isDown) {
       this.clutchPointer = null;
-      this.clutchLatchedMax = false;
     }
     let touchClutch = 0;
     if (this.clutchPointer) {
