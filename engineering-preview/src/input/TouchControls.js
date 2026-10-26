@@ -67,7 +67,6 @@ export default class TouchControls {
     // Race and Dyno deliberately share identical pedal gesture behaviour.
     // Legacy scene-specific overrides are ignored.
     this.pedalLatchMax = true;
-    this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
     this.shifterSwipePx = 54;
@@ -205,7 +204,6 @@ export default class TouchControls {
       if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
         this.clutchPointer = pointer;
         this.clutchStartY = pointer.y;
-        this.clutchLatchedMax = false;
       } else if (!this.throttlePointer && this.layout.throttle.contains(pointer.x, pointer.y)) {
         this.throttlePointer = pointer;
         this.throttleStartY = pointer.y;
@@ -234,13 +232,17 @@ export default class TouchControls {
     this.onPointerUp = pointer => {
       if (pointer === this.clutchPointer) {
         this.clutchPointer = null;
-        this.clutchLatchedMax = false;
       }
       if (pointer === this.throttlePointer) {
         this.throttlePointer = null;
         this.throttleLatchedMax = false;
       }
       if (pointer === this.shifterPointer) {
+        // E005 optional two-thumb shortcut: clutch held + quick tap = upshift.
+        // All existing swipe-up and swipe-down gestures remain available.
+        const isTap = !this.shifterSwipeConsumed
+          && Math.abs(pointer.y - this.shifterStartY) < 18;
+        if (isTap && this.clutchPointer?.isDown) this.pendingGearRequest = 'UP';
         this.shifterPointer = null;
         this.shifterSwipeDirection = 'neutral';
         this.shifterSwipeConsumed = false;
@@ -327,16 +329,14 @@ export default class TouchControls {
 
     if (this.clutchPointer && !this.clutchPointer.isDown) {
       this.clutchPointer = null;
-      this.clutchLatchedMax = false;
     }
     let touchClutch = 0;
     if (this.clutchPointer) {
       const scale = Math.max(0.55, Number(this.placements.clutch.scale || 1));
       const travel = this.clutchStartY - this.clutchPointer.y;
-      if (this.pedalLatchMax && travel >= this.pedalSwipePx * scale) this.clutchLatchedMax = true;
-      touchClutch = this.clutchLatchedMax
-        ? 1
-        : Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
+      // E005: clutch can be feathered DOWN again after fully depressing it.
+      // Accelerator retains the optional 100% latch for comfortable cruising.
+      touchClutch = Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
     }
     this.clutch = Math.max(keyboardClutch ? 1 : 0, touchClutch, controllerClutch);
     this.nos = this.nosEnabled && (
