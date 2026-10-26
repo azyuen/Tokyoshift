@@ -354,7 +354,7 @@ export default class TunerShopScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x453827, 1)
       .setDepth(40);
 
-    this.add.text(52, 35, this.regionId + ' // TUNER SHOP', {
+    this.add.text(52, 35, (this.shop.cosmeticOnly ? 'GINZA MOTOR GALLERY X LIBERTY WALK' : this.regionId + ' // TUNER SHOP'), {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
       color: '#fff4df',
@@ -390,6 +390,34 @@ export default class TunerShopScene extends Phaser.Scene {
       fontSize: '8px',
       color: '#d6aa68',
     }).setDepth(32);
+
+    if (this.shop.cosmeticOnly) {
+      this.sideContent = this.add.container(0,0).setDepth(33);
+      this.add.text(SIDE.x+26,SIDE.y+24,'LBWK BUILDS',{
+        fontFamily:PIXEL_FONT,fontSize:'15px',color:'#fff2dc'
+      }).setDepth(32);
+      this.lbwkChoices=[{id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},...LBWK_CONVERSIONS];
+      this.lbwkChoices.forEach((g,i)=>{
+        const y=SIDE.y+84+i*48;
+        const selected=this.shop.heroCarId===g.id;
+        const b=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,42,
+          selected?0x3a2d18:0x12202b,1)
+          .setStrokeStyle(1,selected?0xffd889:0x627786,1)
+          .setInteractive({useHandCursor:true}).setDepth(32);
+        this.add.text(SIDE.x+SIDE.w/2,y,g.name.toUpperCase(),{
+          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffe2a3'
+        }).setOrigin(0.5).setDepth(33);
+        b.on('pointerdown',()=>this.selectLbwkBuild(g));
+      });
+      const y=SIDE.y+SIDE.h-39;
+      const map=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,0x111920,1)
+        .setStrokeStyle(1,0x62727b,1).setInteractive({useHandCursor:true}).setDepth(32);
+      this.add.text(SIDE.x+SIDE.w/2,y,'GO TO MAP  >',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#e7f0f2'
+      }).setOrigin(0.5).setDepth(33);
+      map.on('pointerdown',()=>this.openMap());
+      return;
+    }
 
     const makeTab = (y, label, fill, stroke, fontSize = '9px',
       x = SIDE.x + SIDE.w / 2, width = SIDE.w - 56) => {
@@ -461,6 +489,7 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   setTabStyle() {
+    if (this.shop.cosmeticOnly) return;
     const heroActive = this.mode === 'HERO';
     const tuneActive = this.mode === 'TUNING';
     const decalActive = this.mode === 'DECAL';
@@ -543,7 +572,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.setTabStyle();
 
     this.drawMechanic();
-    this.drawLbwkSelectorButton();
+    if (!this.shop.cosmeticOnly) this.drawLbwkSelectorButton();
 
     const hero = cars[this.shop.heroCarId];
     if (hero) {
@@ -561,102 +590,20 @@ export default class TunerShopScene extends Phaser.Scene {
     const cost = Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
 
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 300, 'BUILD PROGRAM', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#d6aa68',
-    }));
-
-    this.sideContent.add(this.add.text(
-      SIDE.x + 30,
-      SIDE.y + 334,
-      this.shop.donorLabel + '\n→ ' + (hero?.shortName || this.shop.label + ' HERO'),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '12px',
-        color: '#e4edf0',
-        fontStyle: '700',
-        lineSpacing: 7,
+    if (this.shop.cosmeticOnly) {
+      if (currentIsDonor && donorEligible && !heroOwned) {
+        const y=SIDE.y+SIDE.h-96;
+        const b=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
+          SIDE.w-56,44,0x392916,1).setStrokeStyle(2,0xe2b464,1)
+          .setInteractive({useHandCursor:true}));
+        this.sideContent.add(this.add.text(SIDE.x+SIDE.w/2,y,'YOUR LBWK BUILD',{
+          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#fff1d5'
+        }).setOrigin(0.5));
+        b.on('pointerdown',()=>this.rollInDonor());
       }
-    ));
-
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 394, money(cost), {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#f3c77b',
-    }));
-
-    let label = 'BUILD HERO CAR';
-    let enabled = true;
-
-    if (!donorExists) {
-      label = 'STOCK ' + this.shop.donorLabel + ' NOT YET IN CATALOGUE';
-      enabled = false;
-    } else if (heroOwned) {
-      label = 'HERO ALREADY OWNED';
-      enabled = false;
-    } else if (!currentIsDonor) {
-      label = this.shop.cosmeticOnly
-        ? 'DRIVE YOUR ' + this.shop.donorLabel + ' HERE'
-        : 'BRING YOUR STOCK ' + this.shop.donorLabel;
-      enabled = false;
-    } else if (!donorEligible) {
-      label = 'CURRENT DONOR MUST BE STOCK';
-      enabled = false;
-    } else if (cash < cost) {
-      label = 'NEED ' + money(cost);
-      enabled = false;
+      return;
     }
 
-    const buildY = SIDE.y + 482;
-    const buildButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      buildY,
-      SIDE.w - 56,
-      64,
-      enabled ? 0x2a2115 : 0x17191b,
-      1
-    ).setStrokeStyle(
-      enabled ? 2 : 1,
-      enabled ? 0xe2b464 : 0x495057,
-      1
-    );
-
-    const buildText = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      buildY,
-      label,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: enabled ? '8px' : '7px',
-        color: enabled ? '#fff1d5' : '#768087',
-        align: 'center',
-        wordWrap: { width: SIDE.w - 96 },
-      }
-    ).setOrigin(0.5);
-
-    this.sideContent.add(buildButton);
-    this.sideContent.add(buildText);
-
-    if (enabled) {
-      buildButton.setInteractive({ useHandCursor: true });
-      buildButton.on('pointerdown', () => this.rollInDonor());
-    }
-
-    this.sideContent.add(this.add.text(
-      SIDE.x + 30,
-      SIDE.y + 536,
-      this.shop.cosmeticOnly
-        ? 'Buy a compatible car at Auto Market and\ndeliver it to a garage. Select it there, then\ndrive here to arrange your full-works build.\nStock and modified donors are accepted.'
-        : 'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: '#83939b',
-        fontStyle: '600',
-        lineSpacing: 4,
-      }
-    ));
   }
 
   selectLbwkBuild(g) {
@@ -1815,44 +1762,82 @@ export default class TunerShopScene extends Phaser.Scene {
 
   rollInDonor() {
     if (this.conversionInProgress) return;
+    const currentCarId=this.getCurrentCarId();
+    const donor=cars[currentCarId];
+    const donorState=(this.registry.get('carStates')||{})[currentCarId]||{};
+    if (!donor || getBaseCarId(currentCarId)!==this.shop.donorCarId ||
+        (!this.shop.cosmeticOnly && donorState.stock===false)) return;
 
-    const donor = cars[this.shop.donorCarId];
-    const currentCarId = this.getCurrentCarId();
-    const donorState = (this.registry.get('carStates') || {})[currentCarId] || {};
-
-    if (
-      !donor ||
-      getBaseCarId(currentCarId) !== this.shop.donorCarId ||
-      (!this.shop.cosmeticOnly && donorState.stock === false)
-    ) return;
-
-    this.conversionInProgress = true;
+    this.conversionInProgress=true;
     this.clearDynamic();
     this.drawMechanic();
-
-    const carObjects = this.drawCarOnStage(
-      this.shop.donorCarId,
-      720,
-      650,
-      TUNER_STAGE_CAR_WIDTH,
-      10,
-      true
-    );
-
-    carObjects.forEach(obj => {
-      obj.x -= 1100;
-    });
-
+    const carObjects=this.drawCarOnStage(currentCarId,720,650,TUNER_STAGE_CAR_WIDTH,10,true);
+    if (!carObjects.length) {
+      this.conversionInProgress=false;
+      this.showHeroMode();
+      return;
+    }
+    const wheelObjects=carObjects.slice(3,5);
+    carObjects.forEach(obj=>{obj.x-=1050;});
+    // Constant deceleration: the car travels in as the wheels turn and both
+    // translation and wheel rotation come to rest on the same frame.
+    const arrivalXs=carObjects.map(obj=>obj.x);
+    const travel={progress:0};
     this.tweens.add({
-      targets: carObjects,
-      x: '+=1100',
-      duration: 900,
-      ease: 'Sine.easeOut',
-      onComplete: () => {
-        this.conversionInProgress = false;
-        this.showBuildConfirmation();
+      targets:travel,progress:1,duration:2450,ease:'Cubic.easeOut',
+      onUpdate:()=>{
+        const p=travel.progress;
+        const eased=1050*p;
+        carObjects.forEach((obj,i)=>{obj.x=arrivalXs[i]+eased;});
+        wheelObjects.forEach(obj=>{
+          const radius=Math.max(1,obj.displayWidth/2);
+          obj.rotation=eased/radius;
+        });
       },
+      onComplete:()=>{
+        this.conversionInProgress=false;
+        if (this.shop.cosmeticOnly) this.showLbwkBuildReview();
+        else this.showBuildConfirmation();
+      }
     });
+  }
+
+  showLbwkBuildReview() {
+    this.clearPopup();
+    if (!this.shop.cosmeticOnly) return this.showBuildConfirmation();
+    const currentId=this.getCurrentCarId();
+    const donor=cars[currentId],hero=cars[this.shop.heroCarId];
+    if (!donor || !hero || getBaseCarId(currentId)!==this.shop.donorCarId) {
+      this.showHeroMode();return;
+    }
+    this.sideContent.removeAll(true);
+    const x=SIDE.x+22;
+    const add=(y,value,size='10px',color='#e5edf1')=>
+      this.sideContent.add(this.add.text(x,SIDE.y+y,value,{
+        fontFamily:PIXEL_FONT,fontSize:size,color,wordWrap:{width:SIDE.w-44},
+        lineSpacing:8
+      }));
+    add(65,'YOUR LBWK BUILD','12px','#ffe2a3');
+    add(122,donor.name+'  >  '+hero.name,'8px');
+    add(184,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
+    add(225,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
+    add(271,'FULL WORKS CONVERSION','9px','#ffe2a3');
+    add(311,'Your current car is permanently replaced by its sealed LBWK hero build. Existing modifications are not carried over.','8px');
+    add(411,'BUILD COST','9px','#ffe2a3');
+    add(444,money(this.shop.buildCost),'12px','#ffe2a3');
+    const cash=Number(this.registry.get('cash')||0);
+    const owned=(this.registry.get('ownedCarIds')||[]).includes(hero.id);
+    const ready=cash>=Number(this.shop.buildCost||0)&&!owned;
+    const y=SIDE.y+SIDE.h-100;
+    const button=this.sideContent.add(this.add.rectangle(SIDE.x+SIDE.w/2,y,
+      SIDE.w-56,48,ready?0x392916:0x202327,1)
+      .setStrokeStyle(2,ready?0xe2b464:0x59646a,1));
+    this.sideContent.add(this.add.text(SIDE.x+SIDE.w/2,y,
+      owned?'HERO ALREADY OWNED':ready?'DO THE BUILD':'INSUFFICIENT FUNDS',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:ready?'#fff1d5':'#9ca5aa'
+      }).setOrigin(0.5));
+    if (ready) button.setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>this.showBuildConfirmation());
   }
 
   showBuildConfirmation() {
@@ -1950,6 +1935,36 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.conversionInProgress = true;
     this.clearPopup();
+
+    if (this.shop.cosmeticOnly) {
+      const donorCarObjects=this.dynamicObjects.filter(obj=>obj?.active && obj.depth>=9 && obj.depth<12);
+      this.tweens.add({
+        targets:donorCarObjects,alpha:0,duration:850,ease:'Sine.easeInOut',
+        onComplete:()=>{
+          const success=this.performHeroConversion();
+          if (!success) {
+            this.conversionInProgress=false;
+            this.showHeroMode();return;
+          }
+          this.clearDynamic();
+          this.drawMechanic();
+          const built=this.drawCarOnStage(this.shop.heroCarId,735,650,TUNER_STAGE_CAR_WIDTH,10,true);
+          built.forEach(obj=>{obj.alpha=0;});
+          this.addDynamic(this.add.text(STAGE.x+STAGE.w/2,STAGE.y+110,
+            'LIBERTY WALK // BUILD COMPLETE',{
+              fontFamily:PIXEL_FONT,fontSize:'15px',color:'#ffe0a4'
+            }).setOrigin(0.5).setDepth(20));
+          this.tweens.add({
+            targets:built,alpha:1,duration:1100,ease:'Sine.easeInOut',
+            onComplete:()=>{
+              this.conversionInProgress=false;
+              this.cashText.setText(money(this.registry.get('cash')||0));
+            }
+          });
+        }
+      });
+      return;
+    }
 
     const fade = this.add.rectangle(
       780,
