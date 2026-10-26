@@ -1,3 +1,4 @@
+import {ENGINE_ENGINEERING,normaliseFactoryCurve} from './vehicleEngineering.js?v=20261026-r687';
 // Ref2 torque curves are game calibrations matched to the requested rated power.
 // R516 curves are gameplay approximations, not measured dyno traces.
 export const engines = {
@@ -1057,3 +1058,5 @@ export const engines = {
 
 
 };
+
+for(const [id,p] of Object.entries(ENGINE_ENGINEERING))normaliseFactoryCurve(engines[id],p);

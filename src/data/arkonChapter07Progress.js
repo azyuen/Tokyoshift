@@ -1,9 +1,9 @@
 // R669 — Arkon Chapter 07 progression. All work, visits and racing are
 // Arkon Story-only. No paid shortcuts, physics boosts or Career unlocks.
-import {cars} from './cars.js?v=20261023-r669';
-import {ENGINE_PART_ORDER,getEngineTuning} from './tuning.js?v=20261011-r479';
+import {cars} from './cars.js?v=20261026-r687';
+import {ENGINE_PART_ORDER,getEngineTuning} from './tuning.js?v=20261026-r687';
 import {DRIVETRAIN_PART_ORDER,CHASSIS_PART_ORDER,EXHAUST_NOS_PART_ORDER,
-  getDrivetrainTuning,getChassisTuning,getExhaustNosTuning} from './secondaryTuning.js?v=20261008-r428';
+  getDrivetrainTuning,getChassisTuning,getExhaustNosTuning} from './secondaryTuning.js?v=20261026-r687';
 import {getArkonCustomerJob} from './arkonChapter03Jobs.js?v=20261023-r660';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261024-r675';
 import {TUNER_SHOPS,getInstalledSpecialistTuning} from './tunerShops.js?v=20261025-r684';

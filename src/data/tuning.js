@@ -1,3 +1,5 @@
+import {applyEngineeringTuning} from './vehicleEngineering.js?v=20261026-r687';
+import {refreshEngineOutput} from '../vehicles/Engine.js?v=20261026-r687';
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 
 export const ENGINE_PART_ORDER = ['engine', 'intake', 'ecu', 'turbo', 'intercooler'];
@@ -9,9 +11,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'LONG BLOCK',
     levels: [
       { level: 0, name: 'Stock engine', cost: 0, torqueScale: 1.00, redlineAdd: 0, massDelta: 0, benefit: 'Factory long block' },
-      { level: 1, name: 'Street build', cost: 30000, torqueScale: 1.06, redlineAdd: 100, massDelta: 2, benefit: '+6% engine output' },
-      { level: 2, name: 'Forged long block', cost: 85000, torqueScale: 1.10, redlineAdd: 200, massDelta: 4, benefit: '+10% engine output' },
-      { level: 3, name: 'Stroker / big-bore', cost: 190000, torqueScale: 1.18, redlineAdd: 300, massDelta: 7, benefit: '+18% engine output' },
+      { level: 1, name: 'Street build', cost: 30000, torqueScale: 1.06, redlineAdd: 100, massDelta: 2, benefit: 'Output depends on engine and support parts' },
+      { level: 2, name: 'Forged long block', cost: 85000, torqueScale: 1.10, redlineAdd: 200, massDelta: 4, benefit: 'Output depends on engine and support parts' },
+      { level: 3, name: 'Stroker / big-bore', cost: 190000, torqueScale: 1.18, redlineAdd: 300, massDelta: 7, benefit: 'Output depends on engine and support parts' },
     ],
   },
   intake: {
@@ -20,9 +22,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'AIRFLOW',
     levels: [
       { level: 0, name: 'Stock airbox', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntakeL0', benefit: 'Factory airflow' },
-      { level: 1, name: 'High-flow intake', cost: 8000, torqueScale: 1.02, spoolScale: 1.02, spriteKey: 'tuningPartIntakeL1', benefit: '+2% output / response' },
-      { level: 2, name: 'Cold-air intake', cost: 22000, torqueScale: 1.03, spoolScale: 1.035, spriteKey: 'tuningPartIntakeL2', benefit: '+3% output / response' },
-      { level: 3, name: 'Race intake', cost: 55000, torqueScale: 1.05, spoolScale: 1.05, spriteKey: 'tuningPartIntakeL3', benefit: '+5% output / response' },
+      { level: 1, name: 'High-flow intake', cost: 8000, torqueScale: 1.02, spoolScale: 1.02, spriteKey: 'tuningPartIntakeL1', benefit: 'Output depends on engine and support parts' },
+      { level: 2, name: 'Cold-air intake', cost: 22000, torqueScale: 1.03, spoolScale: 1.035, spriteKey: 'tuningPartIntakeL2', benefit: 'Output depends on engine and support parts' },
+      { level: 3, name: 'Race intake', cost: 55000, torqueScale: 1.05, spoolScale: 1.05, spriteKey: 'tuningPartIntakeL3', benefit: 'Output depends on engine and support parts' },
     ],
   },
   ecu: {
@@ -31,9 +33,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'ENGINE CONTROL',
     levels: [
       { level: 0, name: 'Stock ECU', cost: 0, torqueScale: 1.00, redlineAdd: 0, boostAdd: 0, spriteKey: 'tuningPartEcuL0', benefit: 'Factory calibration' },
-      { level: 1, name: 'Street reflash', cost: 12000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.03, spriteKey: 'tuningPartEcuL1', benefit: '+3% output / sharper tune' },
-      { level: 2, name: 'Dyno tune', cost: 35000, torqueScale: 1.04, redlineAdd: 125, boostAdd: 0.05, spriteKey: 'tuningPartEcuL2', benefit: '+4% output / more boost' },
-      { level: 3, name: 'Motorsport ECU', cost: 85000, torqueScale: 1.07, redlineAdd: 225, boostAdd: 0.10, spriteKey: 'tuningPartEcuL3', benefit: '+7% output / full control' },
+      { level: 1, name: 'Street reflash', cost: 12000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.03, spriteKey: 'tuningPartEcuL1', benefit: 'Output depends on engine and support parts' },
+      { level: 2, name: 'Dyno tune', cost: 35000, torqueScale: 1.04, redlineAdd: 125, boostAdd: 0.05, spriteKey: 'tuningPartEcuL2', benefit: 'Output depends on engine and support parts' },
+      { level: 3, name: 'Motorsport ECU', cost: 85000, torqueScale: 1.07, redlineAdd: 225, boostAdd: 0.10, spriteKey: 'tuningPartEcuL3', benefit: 'Output depends on engine and support parts' },
     ],
   },
   turbo: {
@@ -53,9 +55,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'CHARGE COOLING',
     levels: [
       { level: 0, name: 'Factory cooling', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntercoolerL0', benefit: 'Stock charge cooling' },
-      { level: 1, name: 'Upgraded core', cost: 15000, torqueScale: 1.01, spoolScale: 1.01, spriteKey: 'tuningPartIntercoolerL1', benefit: '+1% output / consistency' },
-      { level: 2, name: 'Front-mount kit', cost: 40000, torqueScale: 1.02, spoolScale: 1.03, spriteKey: 'tuningPartIntercoolerL2', benefit: '+2% output / response' },
-      { level: 3, name: 'Race intercooler', cost: 90000, torqueScale: 1.035, spoolScale: 1.05, spriteKey: 'tuningPartIntercoolerL3', benefit: '+3.5% output / response' },
+      { level: 1, name: 'Upgraded core', cost: 15000, torqueScale: 1.01, spoolScale: 1.01, spriteKey: 'tuningPartIntercoolerL1', benefit: 'Output depends on engine and support parts' },
+      { level: 2, name: 'Front-mount kit', cost: 40000, torqueScale: 1.02, spoolScale: 1.03, spriteKey: 'tuningPartIntercoolerL2', benefit: 'Output depends on engine and support parts' },
+      { level: 3, name: 'Race intercooler', cost: 90000, torqueScale: 1.035, spoolScale: 1.05, spriteKey: 'tuningPartIntercoolerL3', benefit: 'Output depends on engine and support parts' },
     ],
   },
 };
@@ -63,7 +65,7 @@ export const ENGINE_TUNING_PARTS = {
 export function normaliseEngineTuning(input = {}) {
   const result = {};
   ENGINE_PART_ORDER.forEach(id => {
-    result[id] = clampLevel(input?.[id]);
+    result[id] = clampLevel(id==='engine'?(input?.engine??input?.internals):input?.[id]);
   });
   return result;
 }
@@ -119,6 +121,8 @@ export function applyEngineTuning(carConfig, engineConfig, carState = {}) {
     levels[id] = ENGINE_TUNING_PARTS[id].levels[tuning[id]];
   });
 
+  const engineered=applyEngineeringTuning(car,engine,tuning,carState);
+  if(engineered){refreshEngineOutput(car,engine);return engineered;}
   const baseBoost = Number(carConfig.maximumBoost || 0);
   const turboLevel = tuning.turbo;
   const turboSpec = levels.turbo;

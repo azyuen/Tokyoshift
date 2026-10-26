@@ -1,6 +1,6 @@
 // R587 — standard three-panel professional crew registration. Purely presentational:
 // the authoritative selection, eligibility and payment remain in ProSeasonPanel.
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r635';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import {

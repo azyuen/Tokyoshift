@@ -4,7 +4,7 @@ import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TRO
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261022-r635';

@@ -6,15 +6,15 @@ import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDri
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
 import RaceScene from './RaceScene.js?v=20261011-r482';
-import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
+import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261022-r635';
-import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,

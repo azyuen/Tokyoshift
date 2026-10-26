@@ -1,6 +1,6 @@
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 // Oshiage satellite district. The seven regional championships remain unchanged.
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import {
   OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
   isOshiageVoucherAvailable,
@@ -22,7 +22,7 @@ import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAcc
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
 import { saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r657';

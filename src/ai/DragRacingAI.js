@@ -1,4 +1,4 @@
-import { DrivingModel, clamp } from './DrivingModel.js?v=20261007-r399';
+import { DrivingModel, clamp } from './DrivingModel.js?v=20261026-r687';
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -16,6 +16,13 @@ export default class DragRacingAI {
     this.smart = !this.legacy && this.rating >= 4;
     this.elite = this.rating === 5;
     this.precision = this.smart ? (this.elite ? 1 : this.difficulty === 'HARD' ? .88 : .72) : 0;
+    // E005: Expert/Elite sample perceived wheelspin and RPM at human cadences.
+    // The underlying vehicle and physics are NEVER modified by driver skill.
+    this.tractionObservationInterval = this.smart ? (this.elite ? .09 : .12) : 0;
+    this.tractionObservationClock = 0;
+    this.perceivedSlip = 0;
+    this.perceivedRPM = vehicle.engine.rpm;
+    this.tractionEstimateBias = this.smart ? this.jitter(this.elite ? .025 : .045) : 0;
     this.model = new DrivingModel(vehicle);
     // Deliberate pedal/gear execution delay, never a vehicle penalty.
     this.executionHesitation = this.legacy ? 0 : [0, .22, .15, .025, 0, 0][this.rating];
@@ -39,12 +46,14 @@ export default class DragRacingAI {
       const old = vehicle.engine.config.redlineRPM * lerp(.94, .992, this.aggression)
         * lerp(.975, 1, this.shiftSkill);
       const blend = this.smart ? 1 : !this.legacy && this.rating === 3 ? .45 : 0;
-      const error = this.smart ? lerp(170, 28, this.precision) + (1 - this.shiftSkill) * 350 : 150;
+      const error = this.smart ? (this.elite ? 90 : 160) + (1 - this.shiftSkill) * 330 : 150;
       return clamp(lerp(old, ideal, blend) + this.jitter(error), this.model.ceiling * .65, this.model.ceiling);
     });
     this.diagnostics = {
       rating: this.rating, tier: ['ROOKIE', 'ROOKIE', 'SKILLED', 'EXPERT', 'ELITE'][this.rating - 1],
       difficulty: this.difficulty, legacy: this.legacy,
+      calibration: this.smart ? 'E005 HUMAN EXPERT/ELITE' : 'STANDARD',
+      tractionObservationMs: Math.round(this.tractionObservationInterval * 1000),
       skills: Object.fromEntries(['reactionSkill', 'launchSkill', 'shiftSkill', 'aggression'].map(k => [k, this[k]])),
       targetLaunchRPM: this.launchTargetRPM, reactionDelay: this.reactionDelay,
       optimalShiftRPM: [...this.model.shiftPoints], targetShiftRPM: [...this.targets],
@@ -113,8 +122,9 @@ export default class DragRacingAI {
     if (this.shiftState === 'wait') {
       if (v.transmission.currentGear === this.nextGear && v.transmission.shiftTimer <= 0) {
         this.shiftState = 'release';
+        // Even elite drivers need finite time to coordinate clutch and throttle.
         this.releaseDuration = this.smart
-          ? lerp(.10, .025, this.precision) + (1 - this.shiftSkill) * .08 + this.random() * .006
+          ? (this.elite ? .105 : .145) + (1 - this.shiftSkill) * .085 + this.random() * .025
           : lerp(.13, .065, this.shiftSkill) + this.executionHesitation + this.random() * .012;
         this.shiftTimer = this.releaseDuration;
       } else if (v.transmission.shiftTimer <= 0 && v.transmission.pendingGear == null) {
@@ -153,7 +163,9 @@ export default class DragRacingAI {
       this.nextGear = t.gear + 1;
       this.shiftStartRPM = t.rpm;
       this.shiftState = 'lift';
-      this.shiftTimer = this.smart ? lerp(.065, .018, this.precision) + (1 - this.shiftSkill) * .04 : lerp(.085, .035, this.shiftSkill) + this.executionHesitation;
+      this.shiftTimer = this.smart
+        ? (this.elite ? .055 : .080) + (1 - this.shiftSkill) * .045 + this.random() * .024
+        : lerp(.085, .035, this.shiftSkill) + this.executionHesitation;
       return { throttle: this.smart ? 0 : .06, clutch: 1, nos: false };
     }
     const nitrousReady =
@@ -190,33 +202,48 @@ export default class DragRacingAI {
 
   controlTraction(dt, elapsed, t) {
     const v = this.vehicle;
-    const response = lerp(10, 30, this.precision) * lerp(.65, 1, this.launchSkill);
-    this.filteredSlip += (t.slipRatio - this.filteredSlip) * Math.min(1, dt * response);
-    const slipTarget = lerp(.075, .025, this.precision) + (1 - this.launchSkill) * .035
-      + (this.aggression - .85) * .02;
-    const correction = clamp((this.filteredSlip - slipTarget) * 2.5, 0, .65);
+    // Observation is imperfect and periodic (Elite ~11Hz; Expert ~8Hz).
+    // No omniscient frame-by-frame wheelspin or RPM corrections.
+    this.tractionObservationClock -= dt;
+    if (this.tractionObservationClock <= 0) {
+      this.perceivedSlip = clamp(t.slipRatio + this.jitter(this.elite ? .012 : .020), 0, 1);
+      this.perceivedRPM = Math.max(
+        v.engine.config.idleRPM,
+        t.rpm + this.jitter(this.elite ? 65 : 110)
+      );
+      this.tractionObservationClock += this.tractionObservationInterval;
+    }
+    const response = this.elite ? 12 : 9;
+    this.filteredSlip += (this.perceivedSlip - this.filteredSlip) * Math.min(1, dt * response);
+    const slipTarget = (this.elite ? .052 : .072) + (1 - this.launchSkill) * .025;
+    const correction = clamp((this.filteredSlip - slipTarget) * 2.05, 0, .65);
     const ratio = v.transmission.ratio;
     if (!(ratio > 0)) return { throttle: 0, clutch: 1 };
-    const availableTorque = this.model.tractionForce() * v.config.wheelRadius / (ratio * v.transmission.efficiency);
-    const margin = lerp(.93, .99, this.precision) * (1 - correction);
+    // A driver's grip estimate isn't perfectly matched to the tyre model.
+    const estimatedTraction = this.model.tractionForce() * (1 + this.tractionEstimateBias);
+    const availableTorque = estimatedTraction * v.config.wheelRadius / (ratio * v.transmission.efficiency);
+    const margin = (this.elite ? .967 : .939) * (1 - correction);
     const capacityPedal = 1 - Math.pow(clamp(availableTorque * margin / v.clutch.maxTorqueNm), 1 / 1.35);
-    const launching = !this.rollingStart && elapsed < 2.5 && t.gear === 1
+    const launching = !this.rollingStart && elapsed < 4 && t.gear === 1
       && t.speedKmh < 65 && t.clutchSlipRPM > 200;
     let clutch = 0;
     if (launching) {
-      // Release toward the usable torque capacity; reopen slightly when slip
-      // rises. Low-grip/high-power builds naturally need more pedal travel.
-      const desired = Math.max(capacityPedal, clamp(1 - elapsed / lerp(.28, .16, this.launchSkill)));
+      const observedRPM = this.perceivedRPM;
+      const losses = 9 + observedRPM * .0017
+        + (130 + observedRPM * .018) * v.engine.config.inertia * Math.PI * 2 / 60;
+      const sustainableTorque = this.model.torque(observedRPM, t.boostBar) - losses
+        + (observedRPM - this.launchTargetRPM) * .03;
+      const enginePedal = 1 - Math.pow(clamp(sustainableTorque / v.clutch.maxTorqueNm), 1 / 1.35);
+      const desired = Math.max(capacityPedal, enginePedal, clamp(1 - elapsed / lerp(.32, .21, this.launchSkill)));
       this.launchClutch += (desired - this.launchClutch) * Math.min(1, dt * response);
       clutch = this.launchClutch;
     }
-    const fullTorque = Math.max(1, this.model.torque(t.rpm, t.boostBar, t.nosActive));
+    const fullTorque = Math.max(1, this.model.torque(this.perceivedRPM, t.boostBar, t.nosActive));
     const sync = t.clutchSlipRPM * .085 * (1 - clutch);
     let desiredThrottle = clamp((availableTorque * margin - sync) / fullTorque, .08, 1);
     if (launching) {
-      // Clutch meters road torque; throttle keeps the engine in its launch band.
-      desiredThrottle = clamp(.22 + (this.launchTargetRPM - t.rpm) / 1100, .08, 1);
-      desiredThrottle *= 1 - correction * .45;
+      desiredThrottle = clamp(1 + (this.launchTargetRPM - this.perceivedRPM) / 1250, .08, 1);
+      desiredThrottle *= 1 - correction * .42;
     }
     this.throttle += (desiredThrottle - this.throttle) * Math.min(1, dt * response);
     return { throttle: clamp(this.throttle), clutch };

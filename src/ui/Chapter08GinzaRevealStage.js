@@ -3,7 +3,7 @@
 // The SAME scene survives the pre-reveal manga, Porsche reveal and outfit
 // change; it never starts a new gameplay scene or changes race/save state.
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r645';
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 
 const DEPTH = 800;

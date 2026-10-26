@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 import {
   createCarBodyLayers,

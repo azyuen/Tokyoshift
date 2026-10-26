@@ -1,5 +1,5 @@
 import { characters } from '../data/characters.js?v=20261023-r653';
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import {
   getProfileSlots,
   getActiveProfileIndex,

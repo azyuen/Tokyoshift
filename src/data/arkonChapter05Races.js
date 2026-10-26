@@ -1,7 +1,7 @@
 // R666 — Arkon Chapter 05: customer-owned prestige test cars and real races.
 // A temporary loan is not a prize, a Ginza purchase, or a permanent car.
 // Result and labour fees are settled exactly once on return from RaceScene.
-import { cars } from './cars.js?v=20261017-r565';
+import { cars } from './cars.js?v=20261026-r687';
 
 const read=(s,k)=>typeof s?.get==='function'?s.get(k):s?.[k];
 const put=(s,k,v)=>s.set(k,v);

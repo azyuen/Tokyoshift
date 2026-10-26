@@ -3,7 +3,7 @@
 import {
   ENGINE_TUNING_PARTS,
   getEngineTuning,
-} from './tuning.js?v=20260926-r211';
+} from './tuning.js?v=20261026-r687';
 import {
   DRIVETRAIN_TUNING_PARTS,
   CHASSIS_TUNING_PARTS,
@@ -11,7 +11,7 @@ import {
   getDrivetrainTuning,
   getChassisTuning,
   getExhaustNosTuning,
-} from './secondaryTuning.js?v=20261008-r428';
+} from './secondaryTuning.js?v=20261026-r687';
 
 const PART_CATEGORIES = {
   engine: {

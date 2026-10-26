@@ -2,7 +2,7 @@
 import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261021-r631';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
-import { getExhaustNosTuning } from './secondaryTuning.js?v=20260926-r211';
+import { getExhaustNosTuning } from './secondaryTuning.js?v=20261026-r687';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {

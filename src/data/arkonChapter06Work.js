@@ -2,7 +2,7 @@
 // from spendable cash. Every milestone is idempotent, Story-only and auditable.
 import {getArkonCustomerJob,getArkonCustomerPower,CANAL_YARD_MAX} from './arkonChapter03Jobs.js?v=20261023-r660';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261023-r662';
-import {cars} from './cars.js?v=20261017-r565';
+import {cars} from './cars.js?v=20261026-r687';
 
 const read=(s,k)=>typeof s?.get==='function'?s.get(k):s?.[k];
 const set=(s,k,v)=>s.set(k,v);

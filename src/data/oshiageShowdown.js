@@ -1,7 +1,7 @@
 // Oshiage follows the normal three-heat Street Showdown lifecycle: pay one
 // entry fee, keep one car, race all three opponents without returning to the
 // venue selection screen between heats, then receive the grand prize.
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { isGinzaLoanActive } from './ginzaLoanAccess.js?v=20261022-r638';
 import {

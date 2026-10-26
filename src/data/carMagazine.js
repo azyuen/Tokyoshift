@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 
 export const MAGAZINE_ISSUES = Object.freeze({

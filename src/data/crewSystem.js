@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261011-r479';
+import { cars } from './cars.js?v=20261026-r687';
 import { getDefaultFactoryPaintColor } from './factoryPaintPalettes.js?v=20261020-r623';
 import {
   CREW_REGIONS,
@@ -11,7 +11,7 @@ import {
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
 import {
   getCrewBattleRegionRules, getCrewBattleHeatRule,

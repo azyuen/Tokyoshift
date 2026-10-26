@@ -6,7 +6,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
+import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import {
@@ -83,7 +83,7 @@ import {
   getStreetShowdownCouponEntryFee,
 } from '../data/streetShowdowns.js?v=20261016-showdown-fees';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
   getPinkSlipOpportunityChance,
   isPinkSlipValueEligible,

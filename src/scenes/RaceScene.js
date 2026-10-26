@@ -1,8 +1,8 @@
 import { getInGamePlayerDisplayName } from '../data/characterDisplayName.js?v=20261024-r677';
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
-import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
+import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
 import {
@@ -30,7 +30,7 @@ import {
   getStreetSignalFrame,
 } from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
+import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
@@ -45,8 +45,8 @@ import {
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { engines } from '../data/engines.js?v=20261011-r484';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261026-r687';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261011-r479';

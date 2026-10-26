@@ -4,13 +4,13 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars } from '../data/cars.js?v=20261006-r388';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { engines } from '../data/engines.js?v=20261004-r333';
+import { engines } from '../data/engines.js?v=20261026-r687';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { characters } from '../data/characters.js?v=20261004-r333';
 import {
@@ -22,7 +22,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260921-r55';
+} from '../data/tuning.js?v=20261026-r687';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';

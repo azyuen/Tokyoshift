@@ -1,7 +1,7 @@
 // R672 — Arkon Chapter 08 private invitational races, Story Mode only.
 // Wagers are real and result-dependent but capped to cash on hand. No pink
 // slips, global wins, coupons, crew recruitment or scripted victories.
-import {cars} from './cars.js?v=20261023-r669';
+import {cars} from './cars.js?v=20261026-r687';
 
 export const ARKON_CH8_RACES=Object.freeze([
   Object.freeze({district:'SHINAGAWA',venue:'shinagawaTennozu',car:'fc3s',

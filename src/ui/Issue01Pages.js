@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261012-r490';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { ISSUE01_ASSETS, ISSUE01_PAGES, ISSUE01_CONTENTS, ISSUE01_GINZA_CARS, ISSUE01_PROFILE_CARS } from '../data/magazineIssue01.js?v=20261012-r490';
 export { ISSUE01_ASSETS } from '../data/magazineIssue01.js?v=20261012-r490';
 export const ISSUE01_EDITORIAL_PAGE_COUNT = ISSUE01_PAGES.length;

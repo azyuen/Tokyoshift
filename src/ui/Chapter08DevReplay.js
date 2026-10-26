@@ -2,7 +2,7 @@
 // Runs through real Garage -> phone calls -> map -> Race -> Ginza, without
 // touching an Arkon Den profile's saved career. This intentionally is NOT
 // a synthetic "all chapters complete" save or a separate racing engine.
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
 import { isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';

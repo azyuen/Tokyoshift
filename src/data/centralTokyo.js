@@ -3,7 +3,7 @@ import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
   getEngineTuning,
-} from './tuning.js?v=20260926-r211';
+} from './tuning.js?v=20261026-r687';
 import {
   DRIVETRAIN_PART_ORDER,
   CHASSIS_PART_ORDER,
@@ -14,7 +14,7 @@ import {
   getDrivetrainTuning,
   getChassisTuning,
   getExhaustNosTuning,
-} from './secondaryTuning.js?v=20260926-r211';
+} from './secondaryTuning.js?v=20261026-r687';
 import {
   getRegionalChampionshipCount,
 } from './careerProgression.js?v=20260929-r272';
