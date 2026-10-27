@@ -4,7 +4,7 @@ import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
 import { addCollectorExpansion } from './collectorExpansion.js';
 import { applyHeroCarAssets } from './heroCarAssets.js';
 import { registerLbwkHeroCars } from './lbwkHeroCars.js';
-import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261026-r687';
+import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261027-r694';
 
 const base = {
   wheelRadius: 0.305,
