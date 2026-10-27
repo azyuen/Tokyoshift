@@ -1,7 +1,7 @@
 // First-season Ginza sponsorship: a one-time story interlude, separate from
 // Open Circuit and the repeatable eight-round Pro Season economy.
 // Every checkpoint is stored in cutscenesSeen (which already survives saves).
-import { cars } from '../data/cars.js?v=20261026-r687';
+import { cars } from '../data/cars.js?v=20261027-r694';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261027-r693';
 import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r693';
