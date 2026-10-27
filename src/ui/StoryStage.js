@@ -105,6 +105,7 @@ export function showStoryStage(scene, {
     (scene.workshopPlayerSprite?.stageShadows||[]).forEach(hide);
   }
   const state = {
+    fullScreenChapter08:stageMode==='chapter08-full',
     setPaintColor(color) {
       let changed=false;
       for(const object of objects){
