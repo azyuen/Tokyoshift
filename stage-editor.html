@@ -54,7 +54,7 @@ const library={
 };
 for(const [name,path] of Object.entries(library))$('assetLibrary').add(new Option(name,path));
 $('addAsset').onclick=()=>{let path=$('assetLibrary').value;if(!path)return;let name=$('assetLibrary').selectedOptions[0].textContent;let obj=make(name,50,groundY,/body/.test(name)?38:13,/body/.test(name)?30:38,Math.max(...scenes[key].objects.map(o=>o.z),0)+1);obj.assetPath=path;obj.image=assetUrl(path);fitImage(obj,obj.image);scenes[key].objects.push(obj);selected=scenes[key].objects.length-1;render()};
-const hero240z='assets/Cars/hero/liberty_walk_240z_hero_body.png';
+const hero240z='assets/Cars/hero/liberty_walk_aruken240z_hero_body.png';
 const sceneArtwork={
  garage:{background:'assets/Garage/shinonome_workshop_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png'],car:hero240z},
  reika:{background:'assets/Meet/Night/shinagawa_tennozu_isle_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png','assets/Characters/Shinagawa/reika_tachibana_idle.png'],car:hero240z,rivalCar:'assets/Cars/stock/rx7fc_stock_body.png'},
