@@ -900,7 +900,6 @@ export class StoryDirector {
           if(this.session.id!=='arkonChapter08' || !['GarageScene','MeetScene'].includes(sceneName(scene))){
             this.error='CHAPTER 08 INVITATIONAL UNAVAILABLE';return;
           }
-          this.clearStage();
           this.wait={kind:'dialogue',index};
           const meet=showArukenChapter08Meet(scene,step.index,()=>{
             if(this.session?.index===index && this.wait?.index===index)this.advance();
