@@ -25,13 +25,13 @@ The collector class is still **S** for all sealed hero cars, although the above 
 
 ## Three different 240Z roles
 - `arkonLibertyWalk240z`: existing Story Mode cosmetic body alias for Aruken's personally owned workshop 240Z; the playable Story Mode car and its tuning progression are **untouched**.
-- `libertyWalk240z`: the Career Mode player's ordinary 240Z donor converted to the same sealed Level 3 + NOS + specialist-power template as the other seven; underlying L-series engine retained. Future artwork can carry the **#52** livery.
-- `arkonGinza240z`: fictional RB26DETT-swapped, 975 kg and ~675 kW collector special, using the authored Aruken 240Z body art (**#16 intended**) and listed at Ginza for **¥125 million**. Shown only after the first Pro Season sponsorship. The free no-stakes sponsor exhibition uses this unique one-off. The existing story progression and saved narrative car never inherit these new statistics.
+- `libertyWalk240z`: the Career Mode player's ordinary 240Z donor converted to the same sealed Level 3 + NOS + specialist-power template as the other seven; underlying L-series engine retained. The dedicated **#52** red/white hero body is `assets/Cars/hero/liberty_walk_240z_hero_body.png`.
+- `arkonGinza240z`: fictional RB26DETT-swapped, 975 kg and ~675 kW collector special, using the black/gold Aruken 240Z body artwork (**#16**) from `assets/Cars/hero/liberty_walk_aruken240z_hero_body.png` and listed at Ginza for **¥125 million**. Shown only after the first Pro Season sponsorship. The free no-stakes sponsor exhibition uses this unique one-off. The existing story progression and saved narrative car never inherit these new statistics.
 
-The two 240Z career-era hero visuals currently share the existing asset. **A separate #52 body asset is still pending; this patch does not invent new visual art.**
+**Both final visual assets are integrated.** Career player (#52) and Aruken's Story Mode / one-off (#16) now have distinct body texture paths, without altering their underlying body geometry or wheel-reference configuration.
 
 ## QA and compatibility
 - Independent catalogue-level regression test: all conversions, upgrade credits, NOS in actual race builds, pre-sponsor Ginza gate, donor original class distribution, distinct 240Z identifiers, and fair Lv3 donor 402m benchmark.
 - No routine factory car, normal regional hero or existing user-purchased upgrade part definitions altered.
 - **Save compatibility:** saved car IDs are preserved. Previous LBWK owner specifications and pricing are replaced by R694 on load; no retroactive refunds are issued because purchase transactions do not persist exact historical itemised part costs. If old premium purchases need compensation, implement a dedicated, idempotent migration.
-- **Before merge:** inspect 402m benchmark output against standard full Lv3 and globally stacked regional tuning; run mobile/tablet manual checkout and NOS races. No implementation of new number-livery art.
+- **Before merge:** inspect 402m benchmark output against standard full Lv3 and globally stacked regional tuning; run mobile/tablet manual checkout and NOS races. The two supplied number-livery images are now included in the branch; verify their staging and wheel alignment in mobile/tablet QA.
