@@ -1,7 +1,7 @@
 import {effectiveFinalDrive} from './Transmission.js?v=20261026-r687';
 import {estimateElapsed} from './PerformanceEstimate.js?v=20261026-r687';
 import Engine,{refreshEngineOutput} from './Engine.js?v=20261026-r687';
-import { cars } from '../data/cars.js?v=20261026-r687';
+import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
