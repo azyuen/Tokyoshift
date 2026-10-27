@@ -6,7 +6,7 @@ import { ARKON_CHAPTER_04 } from './arkonChapter04.js?v=20261024-r678';
 import { ARKON_CHAPTER_05 } from './arkonChapter05.js?v=20261024-r679';
 import { ARKON_CHAPTER_06 } from './arkonChapter06.js?v=20261024-r679';
 import { ARKON_CHAPTER_07 } from './arkonChapter07.js?v=20261025-r684';
-import { ARKON_CHAPTER_08 } from './arkonChapter08.js?v=20261027-ch8';
+import { ARKON_CHAPTER_08 } from './arkonChapter08.js?v=20261027-ch8b';
 import { ARKON_CHAPTER_09 } from './arkonChapter09.js?v=20261025-r683';
 import { ARKON_CHAPTER_10 } from './arkonChapter10.js?v=20261025-r683';
 // Developer-only smoke scripts. These are NOT career canon and do not
