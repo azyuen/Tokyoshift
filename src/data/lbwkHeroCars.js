@@ -82,9 +82,13 @@ export function registerLbwkHeroCars(cars) {
         exhaustOffsetX:-1265,exhaustOffsetY:-diameter/2,
       };
     } else {
-      // The career 240Z remains an L-series-derived full-works conversion.
-      // Aruken's one-off has a separate engine, identity and Ginza sales path.
-      car.visual={...cars.arkonLibertyWalk240z.visual};
+      // Career player's conventional LBWK 240Z: white/red #52 body asset.
+      // This MUST NOT inherit the black/gold #16 Story Mode body from Aruken.
+      car.visual={
+        ...cars.arkonLibertyWalk240z.visual,
+        assetStem:'liberty_walk_240z_hero',
+        bodyPath:'assets/Cars/hero/liberty_walk_240z_hero_body.png',
+      };
     }
     engines[engineId]=engine;
     cars[g.id]=car;
@@ -119,7 +123,13 @@ export function registerLbwkHeroCars(cars) {
     clutchStrength:1700,drivetrainEfficiency:0.92,
     collector:true,tuningLocked:true,ginzaExclusive:true,arkonOneOff:true,
     nosPower:75,nosShots:3,nosShotDurationSeconds:1,nosCapacitySeconds:3,
-    visual:{...body.visual},
+    // Deliberate match with Aruken's Story Mode body (#16):
+    // black and gold, echoing Sayaka's RWB/Ginza identity.
+    visual:{
+      ...body.visual,
+      assetStem:'liberty_walk_aruken240z_hero',
+      bodyPath:'assets/Cars/hero/liberty_walk_aruken240z_hero_body.png',
+    },
   };
   calibrateSealedEngine(aruken,originalEngine,675);
   aruken.nosPower=75;aruken.nosShots=3;aruken.nosShotDurationSeconds=1;aruken.nosCapacitySeconds=3;
