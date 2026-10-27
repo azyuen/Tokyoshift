@@ -69,9 +69,9 @@ const school=[{id:A,pose:'storyIdle',facing:'right'},{id:S,pose:'oshiageHappy',r
 const close=[{id:A,pose:'storyIdle',facing:'right'},{id:S,pose:'homeNormal',role:'observer',facing:'left',offsetX:-32}];
 const hq=(label,cast=ordinary)=>tableau(label,'workshop:shinonomeWarehouseStrip:night',
   cast,[{carId:'arkonLibertyWalk240z'}]);
-const meet=(label,venue,rival,car)=>tableau(label,'meet:'+venue+':night',[
+const meet=(label,venue,rival,car,sayakaPose='homeHappy')=>tableau(label,'meet:'+venue+':night',[
   {id:A,pose:'storyConfident',role:'player',facing:'right'},
-  {id:S,pose:'homeHappy',role:'companion',facing:'left'},
+  {id:S,pose:sayakaPose,role:'companion',facing:'left'},
   {id:rival,pose:'idle',role:'challenger'},
 ],[{carId:'arkonLibertyWalk240z'},{carId:car}]);
 const partyCast=[
@@ -121,7 +121,7 @@ export const ARKON_CHAPTER_08={
       say("I'll remember that.",'homeHappy'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08FirstRace',timeOfDay:'night'},
-    ...meet('SHINAGAWA // THE FIRST INVITATION','shinagawaTennozu','reikaTachibana','fc3s'),
+    ...meet('SHINAGAWA // THE FIRST INVITATION','shinagawaTennozu','reikaTachibana','fc3s','oshiageHappy'),
     manga('A FAMILIAR RHYTHM',[
       say("Nice to be out in a car with you again.",'homeHappy'),
       ark("I was beginning to think you missed my driving.",'storyConfidentSmirk'),
