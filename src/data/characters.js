@@ -1923,6 +1923,19 @@ regionExclusive: true, teamRole: 'core',
   },
   // Story-only Shibuya VIP event promoter. Intentionally unnamed until later
   // chapters establish his identity; the generic portrait is not a Career rival.
+  storyVipShibuya: {
+    id:'storyVipShibuya',name:'Private Event Promoter',
+    selectable:false,rivalEligible:false,
+    archetype:'The Polished Deal-Maker',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryVipShibuya',
+      path:'assets/Characters/Shinjuku/sora_kanzaki_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryVipShibuyaIdle',
+          path:'assets/Characters/Shinjuku/sora_kanzaki_idle.png'},
+      },
+    },
+  },
   storyVipPromoter: {
     id:'storyVipPromoter',name:'Private Event Promoter',
     selectable:false,rivalEligible:false,
