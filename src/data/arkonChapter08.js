@@ -51,6 +51,10 @@ const intimate=(title,lines)=>({
     rightPose:speaker==='left'?(pose||'ginzaSuit'):'ginzaSuit',
   })),
 });
+const solo=(title,lines)=>({
+  type:'MANGA',title,characters:{left:A},
+  pages:lines.map(([,text,pose])=>({speaker:'left',text,leftPose:pose||'ginzaSuit'})),
+});
 const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId:bg,stageMode:'native',
@@ -320,11 +324,14 @@ export const ARKON_CHAPTER_08={
       ark("Thanks. I'll need it.",'ginzaSuit'),
     ]),
     // Her last words lead directly into the silent stage departure.
-    ...party('SHIBUYA // SAYAKA LEAVES',[
-      {id:S,pose:'devSad',role:'companion',offsetX:-45},
-      {id:A,pose:'ginzaSuit',role:'player'},
-      {id:V,pose:'idle',role:'observer'},
-    ]),
+    {type:'CLEAR_STAGE'},
+    {type:'STAGE',backgroundId:'meet:shibuyaScramble:night',
+      stageMode:'native',composition:'car-behind-cast',vipParty:true,
+      characters:[
+        {id:S,pose:'devSad',role:'companion',offsetX:-45},
+        {id:A,pose:'ginzaSuit',role:'player'},
+        {id:V,pose:'idle',role:'observer'},
+      ],cars:[{carId:'arkonLibertyWalk240z'}]},
     {type:'RETREAT_STORY_ACTOR',actorId:S},
     manga('THE GUARANTEES',[
       vip("Everything is prepared, Mr Denzaki.",'storyTalking'),
@@ -345,12 +352,12 @@ export const ARKON_CHAPTER_08={
     ...tableau('SHIBUYA // ALONE WITH THE Z','meet:shibuyaScramble:night',[
       {id:A,pose:'ginzaSuit',role:'player',facing:'right'},
     ],[{carId:'arkonLibertyWalk240z'}]),
-    manga('THE PRICE OF AMBITION',[
+    solo('THE PRICE OF AMBITION',[
       ark("Three cars. Six months.",'devNervous'),
       ark("I can do this.",'devSerious'),
       ark("Sayaka will understand.",'devNervous'),
       ark("I should be celebrating.",'devSad'),
-    ],V,A,true),
+    ]),
     {type:'SET_FLAG',key:'arkonStoryChapter08Done',value:true},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08Complete'},
     {type:'CLEAR_STAGE'},
