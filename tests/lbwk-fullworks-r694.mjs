@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { LBWK_CATALOG,LBWK_FULL_WORKS_STATE,LBWK_HERO_BOOST,getLbwkConversionQuote } from '../src/data/lbwkFullWorks.js';
 import { LBWK_CONVERSIONS } from '../src/data/lbwkConversions.js';
 import { cars } from '../src/data/cars.js';
@@ -70,6 +70,19 @@ test('Aruken RB26 one-off is separate from story body and career 240Z, sold at G
   assert.notEqual(oneOff.engine,player.engine);
   assert.notEqual(oneOff.engine,story.engine);
   assert.equal(oneOff.arkonOneOff,true);
+  // The black/gold #16 belongs both to Aruken's Story Mode appearance
+  // and his Ginza RB26 one-off; the player's #52 art is independent.
+  assert.equal(story.visual.bodyPath,
+    'assets/Cars/hero/liberty_walk_aruken240z_hero_body.png');
+  assert.equal(oneOff.visual.bodyPath,story.visual.bodyPath);
+  assert.equal(player.visual.bodyPath,
+    'assets/Cars/hero/liberty_walk_240z_hero_body.png');
+  assert.notEqual(player.visual.bodyPath,oneOff.visual.bodyPath);
+  assert.notEqual(player.visual.assetStem,oneOff.visual.assetStem);
+  for(const path of [player.visual.bodyPath,oneOff.visual.bodyPath]){
+    const asset=new URL('../'+path,import.meta.url);
+    assert.ok(statSync(asset).size>100000,path);
+  }
   assert.ok(oneOff.powerKW>=600);
   assert.ok(oneOff.powerKW>player.powerKW*1.45);
   assert.ok(getBuiltCar(oneOff.id,{collector:true}).car.nosCapacitySeconds>0);
