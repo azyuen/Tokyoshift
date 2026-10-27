@@ -55,9 +55,11 @@ export function showStoryStage(scene, {
   const garagePanel=stageMode==='garage-panel' && profile?.frameId==='workshop';
   const template=(stageMode==='story'||garagePanel)
     ? null : getNativeStoryStageTemplate(profile,scene) || (aruken?getArukenEnvironmentTemplate(profile):null);
-  const native=garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
+  const native=stageMode==='chapter08-full' ? false : garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const duel=Boolean(meetDuel&&template?.kind==='meet'&&profile?.frameId==='location');
   const frame=native?profile.frame:{x:0,y:0,w,h};
+  // Story-only Chapter 08 fills the display and masks irrelevant gameplay UI.
+  // Keep the normal Meet and Garage layouts intact for actual gameplay.
   const assets = [];
   const layout = resolveStoryComposition({
     width:scene.scale?.width||1560,height:scene.scale?.height||840,
@@ -217,6 +219,11 @@ export function showStoryStage(scene, {
       clipGraphics.fillStyle(0xffffff,1);
       clipGraphics.fillRect(frame.x,frame.y,frame.w,frame.h);
       clipMask=clipGraphics.createGeometryMask();
+    }
+    if(stageMode==='chapter08-full'){
+      const cover=scene.add.rectangle(w/2,h/2,w,h,0x080e19,1)
+        .setDepth(depth-1).setScrollFactor(0).setInteractive();
+      objects.push(cover);
     }
     let viewport=null;
     // Native staging already owns/draws its real background in gameplay.
