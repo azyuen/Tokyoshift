@@ -320,10 +320,15 @@ export function showStoryStage(scene, {
       const ch6Car=meetCarLayout==='yokohamaGift' &&
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
-      const x=Number(sharedBay?.x??finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(sharedBay?.targetWidth??finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
+      const cinematicCar=stageMode==='chapter08-full' ? {
+        x:w*(carProps.length===1?.52:(i===0?.40:.76)),
+        targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
+        groundY:h*.73,
+      }:null;
+      const x=Number(cinematicCar?.x??sharedBay?.x??finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(cinematicCar?.targetWidth??sharedBay?.targetWidth??finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(sharedBay?.groundY??finaleCar?.y??ch6Car?.y??duelCar?.y??template?.car.tyreContactY??estimate?.groundY??c.groundY??layout.car.groundY);
+      const groundY=Number(cinematicCar?.groundY??sharedBay?.groundY??finaleCar?.y??ch6Car?.y??duelCar?.y??template?.car.tyreContactY??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
         (c.depth??(carInFront
@@ -454,9 +459,14 @@ export function showStoryStage(scene, {
       }):null;
       // Characters of a scene all share the same native ground/height:
       // only their horizontal slot or optional observer role differs.
-      const x=Number(a.x??assigned?.x??estimate?.x??anchor.x)+Number(a.offsetX||0);
-      const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
-      const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
+      const cinematicCast=stageMode==='chapter08-full' ? {
+        x:w*(actors.length===2?[.17,.30][i]:actors.length===3?[.15,.29,.85][i]:.22),
+        feetY:h*.73,
+        height:h*(a.role==='challenger'?.36:.39),
+      }:null;
+      const x=Number(cinematicCast?.x??a.x??assigned?.x??estimate?.x??anchor.x)+(cinematicCast?0:Number(a.offsetX||0));
+      const feet=Number(cinematicCast?.feetY??assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
+      const height=Number(cinematicCast?.height??assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
         (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (aruken?arukenPoseHeight(a.pose):1);
       const layer=Number(template
         ? (a.role==='chapter01RepairSayaka'?portraitDepth-3:portraitDepth+i)
