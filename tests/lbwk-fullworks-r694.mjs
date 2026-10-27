@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { LBWK_CATALOG,LBWK_FULL_WORKS_STATE,LBWK_HERO_BOOST,getLbwkConversionQuote } from '../src/data/lbwkFullWorks.js';
 import { LBWK_CONVERSIONS } from '../src/data/lbwkConversions.js';
 import { cars } from '../src/data/cars.js';
-import { engines } from '../src/data/engines.js';
+import { engines } from '../src/data/engines.js?v=20261026-r687';
 import { getBuiltCar } from '../src/vehicles/VehiclePerformance.js';
 import { GINZA_LISTINGS } from '../src/data/centralTokyo.js';
 
