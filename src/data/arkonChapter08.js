@@ -76,7 +76,7 @@ export const ARKON_CHAPTER_08={
       presentationMode:'openingSwipe',pages:[
         {speaker:'caller',text:'Aruken Denzaki? Your Liberty Walk Z has attracted some serious attention.'},
         {speaker:'player',text:'I hope they liked the engineering underneath it.'},
-        {speaker:'caller',text:'We represent a group investing in specialist automotive engineering. We'd like you at our Shinagawa invitational.'},
+        {speaker:'caller',text:"We represent a group investing in specialist automotive engineering. We'd like you at our Shinagawa invitational."},
         {speaker:'player',text:'Send the rules. I do not race blind.'},
       ]},
     manga('JUST ONE EVENING',[
