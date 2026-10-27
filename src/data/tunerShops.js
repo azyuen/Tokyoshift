@@ -19,7 +19,7 @@ export const TUNER_SHOPS = {
     mapLabel: 'TUNER SHOP', label: 'LIBERTY WALK', fullName: 'LIBERTY WALK',
     specialty: 'FULL WORKS', mechanicId: 'arkonDen',
     heroCarId: 'libertyWalk240z', donorCarId: '240z',
-    donorLabel: 'DATSUN 240Z', buildCost: 22000000,
+    donorLabel: 'DATSUN 240Z', buildCost: 6064000, // Display fallback; quote recalculated at checkout
     backgroundKey: 'tunerShopGinzaLbwkBg',
     backgroundPath: 'assets/Locations/TunerShops/ginza_lbwk_day.png',
     phaseBackgrounds: {
