@@ -3,7 +3,7 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r672';
+} from './StoryScript.js?v=20261027-ch8';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261025-r683';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
 import { showStoryStage } from '../ui/StoryStage.js?v=20261025-r685';
