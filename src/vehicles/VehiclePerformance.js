@@ -43,6 +43,9 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engine = clone(engineConfig || {});
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
+    // Ginza full-works and Denzaki one-off have factory-sealed NOS hardware.
+    // Do not apply player parts or strip their authored three-shot system.
+    if (config.lbwkFullWorks || config.arkonOneOff) return { car: config, engine };
     config.nosPower = 0;
     config.nosShots = 0;
     config.nosShotDurationSeconds = 1.0;
