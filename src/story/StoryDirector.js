@@ -6,7 +6,8 @@ import {
 } from './StoryScript.js?v=20261027-ch8';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261027-trio';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261027-ch8';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261028-full';
+import {showArukenChapter08Meet} from '../ui/ArukenChapter08Meet.js?v=20261028-pilot';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261025-r684';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261025-r686';
@@ -894,6 +895,18 @@ export class StoryDirector {
             this.error='CHAPTER 09 REFUSAL CANNOT BE RECORDED';return;
           }
           saveSessionState(scene.registry);this.advance();continue;
+        }
+        if(type==='ARKON_CH8_MEET'){
+          if(this.session.id!=='arkonChapter08' || !['GarageScene','MeetScene'].includes(sceneName(scene))){
+            this.error='CHAPTER 08 INVITATIONAL UNAVAILABLE';return;
+          }
+          this.clearStage();
+          this.wait={kind:'dialogue',index};
+          const meet=showArukenChapter08Meet(scene,step.index,()=>{
+            if(this.session?.index===index && this.wait?.index===index)this.advance();
+          });
+          if(!meet){this.wait=null;this.error='CHAPTER 08 MEET UI UNAVAILABLE';}
+          return;
         }
         if(type==='ARKON_CH8_RACE'){
           if(this.session.id!=='arkonChapter08' ||
