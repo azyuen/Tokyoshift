@@ -21,7 +21,6 @@ const ENTRIES = Object.freeze({
   renownMazda787B:  { kw:535, nm:630, mass:830,  grip:1.62, load:1.48, axle:.65, clutch:1040, launch:7350, gears:[3.10,2.18,1.59,1.22,.87], final:3.63 },
   essoToyotaGtOne:  { kw:480, nm:690, mass:900,  grip:1.91, load:1.65, axle:.68, clutch:1250, launch:6600, gears:[3.47,2.37,1.70,1.29,.96,.74], final:3.49, spool:2.10 },
   calsonicR390:     { kw:510, nm:750, mass:1000, grip:1.92, load:1.65, axle:.68, clutch:1370, launch:6550, gears:[3.43,2.34,1.69,1.28,.95,.73], final:3.54, spool:2.10 },
-  libertyWalk240z:  { kw:445, nm:690, mass:1020, grip:1.79, load:1.55, axle:.60, clutch:1050, launch:6200, gears:[3.36,2.28,1.64,1.25,.96,.76], final:3.93, boost:1.18, turbo:.58, spool:2.20, offBoost:.59 },
 });
 const variants = Object.freeze({
   cleanMazda787B:'renownMazda787B',
@@ -51,32 +50,6 @@ function tuneCurve(engine, kw, nm) {
 }
 
 export function applyEndgameHeroCalibration(cars) {
-  // The story's original Aruken 240Z is deliberately untouched. Create a
-  // separate sealed collector using exactly the same authored body artwork.
-  if (!cars.libertyWalk240z) {
-    const donor=cars.arkonLibertyWalk240z;
-    const stock=cars['240z'];
-    if (!donor||!stock) throw Error('Liberty Walk 240Z requires story artwork and stock donor');
-    const original=engines[stock.engine];
-    if (!original) throw Error('Liberty Walk 240Z donor engine missing');
-    const newId='l28_liberty_walk';
-    const rpmFactor=8200/original.redlineRPM;
-    engines[newId]={
-      ...original,id:newId,name:'Tokyo SHIFT L-series turbo endurance special',
-      redlineRPM:8200,limiterRPM:8400,idleRPM:950,inertia:.17,
-      referenceBoostBar:1.18,offBoostTorqueFraction:.59,
-      engineering:undefined,
-      torqueCurve:original.torqueCurve.map(([rpm,torque])=>[Math.round(rpm*rpmFactor),torque]),
-    };
-    cars.libertyWalk240z={
-      ...donor,id:'libertyWalk240z',name:'Liberty Walk 240Z // Tokyo SHIFT',
-      shortName:'LB 240Z',description:'Sealed endgame L-series turbo special with authentic Liberty Walk bodywork.',
-      engine:newId,engineModel:'L-Series 2.8L Turbo // Tokyo SHIFT',
-      collector:true,tuningLocked:true,ginzaExclusive:true,storyBodyConversion:false,
-      nosPower:0,nosCapacitySeconds:0,
-      visual:{...donor.visual},
-    };
-  }
   const changed=new Set();
   for (const [id,p] of Object.entries(ENTRIES)) {
     const car=cars[id];
