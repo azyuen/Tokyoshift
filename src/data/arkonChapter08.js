@@ -57,7 +57,7 @@ const solo=(title,lines)=>({
 });
 const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
   {type:'CLEAR_STAGE'},
-  {type:'STAGE',backgroundId:bg,stageMode:'native',
+  {type:'STAGE',backgroundId:bg,stageMode:'chapter08-full',
     privateMeet:bg.startsWith('meet:'),composition:'car-behind-cast',
     vipParty,fadeInMs:vipParty?900:0,characters:cast,cars},
   {type:'HOLD_SCENE',label,
@@ -83,7 +83,7 @@ const party=(label,cast=partyCast)=>tableau(label,
   'meet:shibuyaScramble:night',cast,[{carId:'arkonLibertyWalk240z'}],true);
 const race=index=>[
   {type:'CLEAR_STAGE'},
-  {type:'ARKON_CH8_RACE',index},
+  {type:'ARKON_CH8_MEET',index},
   {type:'WAIT_SCENE',scene:'MeetScene'},
   {type:'ARKON_CH8_RETURN'},
 ];
