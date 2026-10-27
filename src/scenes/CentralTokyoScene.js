@@ -2751,11 +2751,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Standard rooms navigate between rooms. The Vault instead uses these
     // same three large bottom slots for its three legendary vehicles.
     const vault = this.ginzaRoom === 3;
-    const roomNames = [
-      'MOTOR GALLERY',
-      this.getGinzaDenzakiListing() ? 'PRESTIGE SALON // 240Z #16' : 'PRESTIGE SALON',
-      'PRIVATE VAULT',
-    ];
+    const roomNames = ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'];
+    if (this.getGinzaDenzakiListing()) roomNames[1] = 'PRESTIGE SALON // 240Z #16';
     (vault ? GINZA_VAULT_CARS : roomNames).forEach((item, index) => {
       const x = CARDS.x + 198 + index * 369;
       const selected = vault
