@@ -1,6 +1,6 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tokyo SHIFT · Stage Editor R703</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tokyo SHIFT · Stage Editor R704</title><style>
 :root{font-family:system-ui,Arial;background:#090d18;color:#f2f5ff}*{box-sizing:border-box}body{margin:0}header{padding:12px 16px;background:#151c2c;display:flex;gap:10px;align-items:center;flex-wrap:wrap}h1{font-size:18px;margin:0;color:#f6c75a}button,select,input{background:#242e43;border:1px solid #4d5a76;border-radius:7px;color:white;padding:9px;font:inherit}button{cursor:pointer}button.primary{background:#8b6524;border-color:#c99a3e}main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;padding:12px}.viewport{width:100%;aspect-ratio:1560/840;background:#161d2a;position:relative;overflow:hidden;touch-action:none;border:2px solid #586278}.viewport .bg{position:absolute;inset:0;background-size:100% 100%;opacity:.9}.ground{position:absolute;left:0;right:0;top:86%;border-top:2px dashed #ffe18d;pointer-events:auto;cursor:ns-resize;touch-action:none;z-index:100}.safe{position:absolute;left:4%;right:4%;bottom:3%;height:15%;border:1px dashed #80ccff;pointer-events:none}.obj{position:absolute;transform:translate(-50%,-100%);border:2px solid transparent;min-width:30px;min-height:30px;touch-action:none;user-select:none;cursor:move}.obj.selected{border-color:#ffd66e}.obj img{width:100%;height:100%;object-fit:contain;pointer-events:none}.obj.flipped img{transform:scaleX(-1)}.obj.hidden-object{display:none}.obj .handle{touch-action:none}.obj .layer-tag{position:absolute;left:0;top:-20px;background:#0c1528;color:#ffe18d;padding:2px 5px;font-size:11px;white-space:nowrap;pointer-events:none}.ground::after{content:'GROUND · drag';position:absolute;right:8px;top:-23px;background:#101b2a;color:#ffe18d;font-size:11px;padding:2px 5px}.obj .placeholder{width:100%;height:100%;background:#334a65b0;display:grid;place-items:center;text-align:center;font-size:clamp(9px,1.2vw,17px)}.obj .handle{position:absolute;right:-11px;bottom:-11px;background:#ffd66e;width:23px;height:23px;border:2px solid #111;border-radius:5px;cursor:nwse-resize}.panel{background:#151c2c;border:1px solid #343e54;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:9px}.panel label{font-size:13px;color:#c4cce0}.panel input[type=range]{width:100%;padding:0}.panel input[type=file]{width:100%;font-size:12px}.row{display:flex;gap:6px}.row>*{min-width:0;flex:1}.hint{font-size:12px;color:#aab7cf}textarea{width:100%;height:110px;background:#0a101d;color:#cce3ff;border:1px solid #44516c}footer{padding:8px 12px;color:#aab7cf;font-size:12px}@media(max-width:850px){main{grid-template-columns:1fr}.panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.panel>*{min-width:0}.viewport{min-height:190px}} </style></head><body>
-<header><h1>TOKYO SHIFT / STAGE EDITOR <small>R703</small></h1><select id="scene"><option value="garage">Ch08 · Opening garage</option><option value="reika">Ch08 · Reika challenge</option><option value="daikoku">Ch08 · Daikoku showdown</option><option value="shibuya">Ch08 · Shibuya showdown</option><option value="vip">Ch08 · Shibuya VIP party</option></select><button id="newScene">+ Scene</button><button id="repoAssets" class="primary">Load game artwork</button><button id="export" class="primary">Export all layouts</button><button id="import">Import layouts</button><input id="importFile" type="file" accept=".json,application/json" hidden></header>
+<header><h1>TOKYO SHIFT / STAGE EDITOR <small>R704</small></h1><select id="scene"><option value="garage">Ch08 · Opening garage</option><option value="reika">Ch08 · Reika challenge</option><option value="daikoku">Ch08 · Daikoku showdown</option><option value="shibuya">Ch08 · Shibuya showdown</option><option value="vip">Ch08 · Shibuya VIP party</option></select><button id="newScene">+ Scene</button><button id="repoAssets" class="primary">Load game artwork</button><button id="export" class="primary">Export all layouts</button><button id="import">Import layouts</button><input id="importFile" type="file" accept=".json,application/json" hidden></header>
 <main><div><div id="stage" class="viewport"><div id="bg" class="bg"></div><div id="ground" class="ground"></div><div class="safe"></div></div><p class="hint">Drag objects to move. Drag the gold corner to resize. Coordinates are relative to the 1560 × 840 game stage. Dashed gold = ground guide; blue = dialogue safe zone.</p></div><div class="panel">
 <label>Scene background image (optional screenshot)<input id="bgFile" type="file" accept="image/*"></label>
 <label>Selected object<select id="objects"></select></label><label>Objects in this scene (toggle visibility)</label><div id="objectList" style="max-height:210px;overflow:auto;border:1px solid #45516b;border-radius:7px;padding:6px"></div><div class="row"><button id="showAll">Show all</button><button id="hideOthers">Solo selected</button></div>
@@ -70,25 +70,52 @@ const sceneArtwork={
  shibuya:{background:'assets/Meet/Night/shibuya_scramble_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png','assets/Characters/Shinjuku/ren_kurosawa_idle.png'],car:hero240z,rivalCar:'assets/Cars/stock/evo5_stock_body.png'}
 };
 const assetUrl=path=>new URL(path,location.href).href;
-function probe(path){return new Promise(resolve=>{let img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=assetUrl(path)})}
+const rawUrl=path=>'https://raw.githubusercontent.com/azyuen/Tokyoshift/main/'+path;
+function resolveArtwork(path){
+ return new Promise(resolve=>{
+  const urls=[assetUrl(path),rawUrl(path)];
+  let idx=0;
+  const next=()=>{if(idx>=urls.length)return resolve(null);const url=urls[idx++],img=new Image();let done=false;
+   const timer=setTimeout(()=>{if(!done){done=true;next()}},6500);
+   img.onload=()=>{if(!done){done=true;clearTimeout(timer);resolve({url,width:img.naturalWidth,height:img.naturalHeight})}};
+   img.onerror=()=>{if(!done){done=true;clearTimeout(timer);next()}};
+   img.src=url;
+  };next();
+ });
+}
+let loadingArtwork=false;
 async function loadRepoArtwork(){
- $('assetStatus').textContent='Loading artwork directly from the game assets…';
- $('repoAssets').disabled=true;
- let loaded=0,missing=[];
+ if(loadingArtwork)return;
+ loadingArtwork=true;$('repoAssets').disabled=true;
+ const status=$('assetStatus');
+ status.textContent='Checking artwork files…';
  try{
+  const jobs=[];
   for(const [sceneId,config] of Object.entries(sceneArtwork)){
    const sc=scenes[sceneId];if(!sc)continue;
-   if(await probe(config.background)){sc.background=assetUrl(config.background);loaded++}else missing.push(config.background);
-   for(let i=0;i<sc.objects.length;i++){
-    const obj=sc.objects[i],path=i<config.actors.length?config.actors[i]:i===config.actors.length?config.car:config.rivalCar;
-    if(!path)continue;
-    if(await probe(path)){obj.image=assetUrl(path);obj.assetPath=path;fitImage(obj,obj.image);loaded++}else missing.push(path);
+   jobs.push({sceneId,background:true,path:config.background});
+   for(let i=0;i<Math.min(sc.objects.length,config.actors.length+2);i++){
+    const path=i<config.actors.length?config.actors[i]:i===config.actors.length?config.car:config.rivalCar;
+    if(path)jobs.push({sceneId,index:i,path});
    }
   }
+  let ok=0,fail=[];
+  const results=await Promise.all(jobs.map(async(job)=>{
+   const image=await resolveArtwork(job.path);
+   return {job,image};
+  }));
+  for(const {job,image} of results){
+   if(!image){fail.push(job.path);continue}
+   const sc=scenes[job.sceneId];if(!sc)continue;
+   if(job.background)sc.background=image.url;
+   else{const obj=sc.objects[job.index];if(!obj)continue;obj.image=image.url;obj.assetPath=job.path;
+    obj.ratio=image.height/image.width;obj.h=fittedHeight(obj)}
+   ok++;
+  }
   render();
-  $('assetStatus').textContent='Loaded '+loaded+' images.'+(missing.length?' Missing '+missing.length+' files (first: '+missing[0]+').':' All requested files found.')+' Car preview shows body only; wheel layers are separate.';
- }catch(e){$('assetStatus').textContent='Artwork error: '+String(e.message||e)}
- finally{$('repoAssets').disabled=false}
+  status.textContent='Artwork: '+ok+'/'+jobs.length+' loaded'+(fail.length?'. Missing: '+fail.slice(0,3).join(', '):'. All files found.')+'. Using GitHub fallback when necessary.';
+ }catch(err){status.textContent='Artwork loader error: '+(err?.stack||err)}
+ finally{loadingArtwork=false;$('repoAssets').disabled=false}
 }
 $('repoAssets').onclick=loadRepoArtwork;
 loadRepoArtwork();
