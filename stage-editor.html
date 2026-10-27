@@ -36,9 +36,9 @@ $('copy').onclick=()=>{let data=exported();$('output').value=data;navigator.clip
 
 const sceneArtwork={
  garage:{background:'assets/Garage/shinonome_workshop_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png'],car:'assets/Cars/stock/rx7fc_stock_body.png'},
- reika:{background:'assets/Meet/shinagawa_tennozu_isle_day.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Shinagawa/reika_tachibana_idle.png'],car:'assets/Cars/stock/rx7fc_stock_body.png'},
- daikoku:{background:'assets/Meet/daikoku_pa_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Daikoku/tetsuo_mori_idle.png'],car:'assets/Cars/stock/3000gt_stock_body.png'},
- shibuya:{background:'assets/Meet/shibuya_scramble_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Shinjuku/ren_kurosawa_idle.png'],car:'assets/Cars/stock/evo5_stock_body.png'}
+ reika:{background:'assets/Meet/Night/shinagawa_tennozu_isle_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Shinagawa/reika_tachibana_idle.png'],car:'assets/Cars/stock/rx7fc_stock_body.png'},
+ daikoku:{background:'assets/Meet/Night/daikoku_pa_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Daikoku/tetsuo_mori_idle.png'],car:'assets/Cars/stock/3000gt_stock_body.png'},
+ shibuya:{background:'assets/Meet/Night/shibuya_scramble_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Shinjuku/ren_kurosawa_idle.png'],car:'assets/Cars/stock/evo5_stock_body.png'}
 };
 const assetUrl=path=>new URL(path,location.href).href;
 function probe(path){return new Promise(resolve=>{let img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=assetUrl(path)})}
