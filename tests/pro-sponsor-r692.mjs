@@ -47,7 +47,8 @@ test('Exhibition race is first season only and uses the story 240Z with ordinary
   const race = src('src/scenes/RaceScene.js');
   const panel = src('src/ui/ProSeasonPanel.js');
   assert.match(coordinator, /season === 1/);
-  assert.match(coordinator, /arkonLibertyWalk240z/);
+  assert.match(coordinator, /arkonGinza240z/);
+  assert.ok(cars.arkonGinza240z.arkonOneOff);
   assert.match(coordinator, /selectedOpponentBuildState/);
   assert.match(coordinator, /proSponsorRaceComplete/);
   assert.match(race, /this.raceMode === 'PRO_SPONSOR'/);
