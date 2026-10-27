@@ -3,7 +3,7 @@ import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=2026102
 // Sayaka and Aruken remain close, even as his new circle unsettles her.
 // Three player-driven races resolve honestly; the gala ends in a signed risk,
 // not a manufactured mechanical failure, breakup or Chapter 09 cliff event.
-const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
+const A='arkonDen',S='sayakaFujieda',V='storyVipShibuya';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='homeNormal')=>['right',text,pose];
 const vip=(text,pose='idle')=>['right',text,pose];
