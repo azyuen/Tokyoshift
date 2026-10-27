@@ -1314,6 +1314,17 @@ export class StoryDirector {
           });
           return;
         }
+        if(type==='RETREAT_STORY_ACTOR'){
+          if(!scene._storyDirectorStage?.retreatActor){
+            this.error='STORY ACTOR RETREAT UNAVAILABLE';return;
+          }
+          this.wait={kind:'dialogue',index};
+          scene._storyDirectorStage.retreatActor(step.actorId,()=>{
+            if(this.session?.index===index && this.wait?.index===index)
+              this.advance();
+          });
+          return;
+        }
         if(type==='FADE_STORY_ACTOR'){
           if(!scene._storyDirectorStage?.fadeActor){
             this.error='STORY ACTOR FADE UNAVAILABLE';return;
