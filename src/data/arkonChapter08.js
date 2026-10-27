@@ -84,6 +84,7 @@ const party=(label,cast=partyCast)=>tableau(label,
 const race=index=>[
   {type:'CLEAR_STAGE'},
   {type:'ARKON_CH8_MEET',index},
+  {type:'ARKON_CH8_RACE',index},
   {type:'WAIT_SCENE',scene:'MeetScene'},
   {type:'ARKON_CH8_RETURN'},
 ];
