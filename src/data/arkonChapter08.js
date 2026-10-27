@@ -23,6 +23,34 @@ const manga=(title,lines,right=S,left=A,forceFormal=false)=>{
     })),
   };
 };
+// Reusable three-character manga layout: Sayaka | Aruken | promoter.
+// Center speaks as 'center'; the engine dims the other two automatically.
+const trio=(title,lines)=>({
+  type:'MANGA',title,characters:{left:S,center:A,right:V},
+  pages:lines.map(([speaker,text,pose])=>({
+    speaker:speaker==='left'?'center':speaker==='right'&&pose!=='ginzaDress'?'right':'left',
+    text,
+    leftPose:'devIdle',
+    centerPose:speaker==='left'?(pose||'ginzaSuit'):'ginzaSuit',
+    rightPose:'idle',
+  })),
+});
+const galaSayakaPose=(text,pose)=>{
+  if(/incredible|clean up|nice|lovely|thank you|of course/i.test(text))return 'devLaughing';
+  if(/never mind|tired|little different|good luck/i.test(text))return 'devSad';
+  if(/dangerous|everything|risk|deadline|contract|worried|careful|choice/i.test(text))return 'devScowl';
+  if(/doubt|wonder|what|if|how/i.test(text))return 'devUnsure';
+  return 'devDisappointed';
+};
+// Keep the scene geography: Sayaka on left, Aruken on right.
+const intimate=(title,lines)=>({
+  type:'MANGA',title,characters:{left:S,right:A},
+  pages:lines.map(([speaker,text,pose])=>({
+    speaker:speaker==='right'?'left':'right',text,
+    leftPose:speaker==='right'?galaSayakaPose(text,pose):'devIdle',
+    rightPose:speaker==='left'?(pose||'ginzaSuit'):'ginzaSuit',
+  })),
+});
 const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
   {type:'CLEAR_STAGE'},
   {type:'STAGE',backgroundId:bg,stageMode:'native',
@@ -205,19 +233,22 @@ export const ARKON_CHAPTER_08={
       say("Of course.",'ginzaDress'),
     ]),
     ...party('SHIBUYA // THE VIP CIRCLE'),
-    manga('THE PERFECT INTRODUCTION',[
+    trio('THE PERFECT INTRODUCTION',[
       vip("Aruken Denzaki. The man behind the Liberty Walk. A pleasure at last.",'storyTalking'),
       ark("Good evening. I was hoping to meet your team.",'ginzaSuit'),
       vip("Our partners have followed your work closely. We'd like to make you an offer.",'storyTalking'),
       ark("I'm listening.",'devSerious'),
-    ],V),
-    manga('THE CONVERSATIONS',[
+    ]),
+    trio('THE CONVERSATIONS',[
       say("They seem very interested in deadlines and guarantees.",'ginzaDress'),
       ark("They're investors. That's how they talk.",'ginzaSuit'),
       say("Just remember you don't need to prove anything at any cost.",'ginzaDress'),
       ark("I know. I'll read every page.",'ginzaSuit'),
     ]),
-    ...party('SHIBUYA // A PRIVATE PROPOSAL'),
+    ...party('SHIBUYA // A PRIVATE PROPOSAL',[
+      {id:A,pose:'ginzaSuit',role:'player'},
+      {id:V,pose:'idle',role:'observer'},
+    ]),
     manga('THE OFFER',[
       vip("Three bespoke super builds. Six months. Fully funded by our investors.",'storyTalking'),
       ark("Three? In six months?",'devSerious'),
@@ -231,7 +262,11 @@ export const ARKON_CHAPTER_08={
       ark("I need to review the terms.",'devSerious'),
       vip("Of course. Our partners make their final commitment tonight.",'storyTalking'),
     ],V),
-    manga('THE MAN WITH THE PORSCHE',[
+    ...party('SHIBUYA // THE DEBRIEF',[
+      {id:S,pose:'devIdle',role:'companion'},
+      {id:A,pose:'ginzaSuit',role:'player'},
+    ]),
+    intimate('THE MAN WITH THE PORSCHE',[
       say("Well? How did it go?",'ginzaDress'),
       ark("Three custom super builds. Six months. Full funding.",'ginzaSuit'),
       say("Six months? That's barely enough time to develop one properly.",'ginzaDress'),
@@ -253,7 +288,7 @@ export const ARKON_CHAPTER_08={
       ark("I intend to prove it.",'devSerious'),
       say("To whom?",'ginzaDress'),
     ]),
-    manga('EVERYTHING HAS CHANGED',[
+    intimate('EVERYTHING HAS CHANGED',[
       ark("Sayaka, this could change everything.",'devSerious'),
       say("I know. That's what worries me.",'ginzaDress'),
       ark("You don't think I can do it?",'devNervous'),
@@ -271,7 +306,7 @@ export const ARKON_CHAPTER_08={
       vip("Mr Denzaki? Our partners are ready to finalise the arrangement.",'storyTalking'),
       ark("Already? Right. Just a moment.",'ginzaSuit'),
     ],V),
-    manga('ANOTHER TIME',[
+    intimate('ANOTHER TIME',[
       ark("This is it. Everything I've been working towards.",'ginzaSuit'),
       say("I know.",'ginzaDress'),
       ark("I should probably go.",'ginzaSuit'),
@@ -284,11 +319,13 @@ export const ARKON_CHAPTER_08={
       say("Nothing. Good luck.",'ginzaDress'),
       ark("Thanks. I'll need it.",'ginzaSuit'),
     ]),
-    {type:'HOLD_SCENE',label:'SAYAKA WAITS',
-      caption:'SHIBUYA // THE MUSIC CONTINUES',revealMs:600},
-    {type:'FADE_STORY_ACTOR',actorId:S,ms:2200},
-    {type:'HOLD_SCENE',label:'SHE IS GONE',
-      caption:'SHIBUYA // THE MUSIC CONTINUES',revealMs:450},
+    // Her last words lead directly into the silent stage departure.
+    ...party('SHIBUYA // SAYAKA LEAVES',[
+      {id:S,pose:'devSad',role:'companion',offsetX:-45},
+      {id:A,pose:'ginzaSuit',role:'player'},
+      {id:V,pose:'idle',role:'observer'},
+    ]),
+    {type:'RETREAT_STORY_ACTOR',actorId:S},
     manga('THE GUARANTEES',[
       vip("Everything is prepared, Mr Denzaki.",'storyTalking'),
       ark("I want final authority over engineering safety and sign-off.",'devSerious'),
