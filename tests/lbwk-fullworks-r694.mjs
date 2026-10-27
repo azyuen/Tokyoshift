@@ -6,6 +6,8 @@ import { LBWK_CONVERSIONS } from '../src/data/lbwkConversions.js';
 import { cars } from '../src/data/cars.js';
 import { engines } from '../src/data/engines.js?v=20261026-r687';
 import { getBuiltCar } from '../src/vehicles/VehiclePerformance.js';
+import { estimateElapsed } from '../src/vehicles/PerformanceEstimate.js';
+import { TUNER_OPTION_BY_ID } from '../src/data/tunerShops.js';
 import { GINZA_LISTINGS } from '../src/data/centralTokyo.js';
 
 const source = path => readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -87,4 +89,25 @@ test('Live conversion quote is applied at confirmation and at final payment; no 
   assert.match(scene,/lbwkPartsCredit/);
   assert.match(scene,/nosInstalled: Boolean\(this.shop.cosmeticOnly\)/);
   assert.match(source('src/vehicles/VehiclePerformance.js'),/config\.lbwkFullWorks \|\| config\.arkonOneOff/);
+});
+
+test('402m estimates: full works beats donor Lv3; regional-stack comparison is reported',()=>{
+  for(const build of LBWK_CATALOG){
+    const ordinary=getBuiltCar(build.donor,LBWK_FULL_WORKS_STATE);
+    const region=getBuiltCar(build.donor,{
+      ...LBWK_FULL_WORKS_STATE,
+      specialistTuning:Object.keys(TUNER_OPTION_BY_ID),
+    });
+    const final=getBuiltCar(build.id,{immutable:true});
+    const ordinaryS=estimateElapsed(ordinary.car,ordinary.engine,0,402.336);
+    const regionS=estimateElapsed(region.car,region.engine,0,402.336);
+    const finalS=estimateElapsed(final.car,final.engine,0,402.336);
+    console.log('LBWK_R694_SIM',JSON.stringify({
+      build:build.id,ordinaryS:+ordinaryS.toFixed(2),
+      regionS:+regionS.toFixed(2),lbwkS:+finalS.toFixed(2),
+      kw:final.car.powerKW,nm:final.car.torqueNm,
+    }));
+    assert.ok(finalS<ordinaryS,
+      build.id+' conversion must beat its own fully upgraded regular donor');
+  }
 });
