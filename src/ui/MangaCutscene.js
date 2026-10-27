@@ -290,23 +290,23 @@ function restoreScene(scene, state) {
   });
 }
 
-function frameFor(scene, side) {
+function frameFor(scene, side, threePerson = false) {
   const width = Number(scene.scale.width || scene.cameras.main.width || 1560);
   const height = Number(scene.scale.height || scene.cameras.main.height || 840);
   // Keep the whole silhouette comfortably within the staging area. Earlier
   // cutscenes set their centre at 42% of screen height, which elevated every
   // character relative to the dialogue gutter and cropped hair unnecessarily.
   const frameHeight = Math.min(620, Math.max(450, height * 0.76));
-  const frameWidth = Math.min(550, Math.max(410, width * 0.35));
+  const frameWidth = threePerson ? Math.min(380, width * 0.275) : Math.min(550, Math.max(410, width * 0.35));
   const y = height * 0.50;
 
   if (side === 'left') {
-    return { x: width * 0.28, y, frameWidth, frameHeight };
+    return { x: width * (threePerson ? 0.17 : 0.28), y, frameWidth, frameHeight };
   }
   if (side === 'right') {
-    return { x: width * 0.72, y, frameWidth, frameHeight };
+    return { x: width * (threePerson ? 0.83 : 0.72), y, frameWidth, frameHeight };
   }
-  return { x: width * 0.50, y, frameWidth: Math.min(700, frameWidth * 1.10), frameHeight };
+  return { x: width * 0.50, y, frameWidth: threePerson ? frameWidth : Math.min(700, frameWidth * 1.10), frameHeight };
 }
 
 function actorLabel(scene, context, page, side, characterId, rivalContext = false) {
@@ -461,7 +461,7 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
     frameWidth: frame.width,
     frameHeight: frame.height,
     side,
-    flipInward: !actor?.ginzaArkonFaceSayaka,
+    flipInward: !(actor?.ginzaArkonFaceSayaka || actor?.chapter08ArukenFlip),
   });
 
   image
@@ -530,12 +530,15 @@ function replaceActorProfile(
     return controller.actors[side];
   }
 
-  const frame = frameFor(scene, side);
+  const threePerson = Boolean(context.definition?.characters?.center);
+  const frame = frameFor(scene, side, threePerson);
   // Ginza's Arkon cameo should face Sayaka, not away from her. Derive this
   // from the authored scene and character rather than flipping all right-side
   // manga actors in unrelated career cutscenes.
   const ginzaArkonFaceSayaka = side === 'right' && characterId === 'arkonDen' &&
     String(context.definition?.id || '').startsWith('ginzaMicro_');
+  const chapter08ArukenFlip = characterId === 'arkonDen' &&
+    String(context.definition?.id || '').startsWith('arkonChapter08-') && side === 'right';
   const profile = createCharacterProfile(scene, {
     characterId,
     pose,
@@ -545,7 +548,7 @@ function replaceActorProfile(
     frameHeight: frame.frameHeight,
     side,
     depth: BASE_DEPTH + (side === 'center' ? 18 : 15),
-    flipInward: !ginzaArkonFaceSayaka,
+    flipInward: !(ginzaArkonFaceSayaka || chapter08ArukenFlip),
     dimmed,
     // Manga characters are staged as full silhouettes. Profile cards keep
     // their rectangular masks; cutscenes intentionally let hair/arms/poses
@@ -597,6 +600,7 @@ function replaceActorProfile(
     rivalContext: Boolean(rivalContext),
     playerCharacterId: context.playerCharacterId,
     ginzaArkonFaceSayaka,
+    chapter08ArukenFlip,
   };
   return controller.actors[side];
 }
