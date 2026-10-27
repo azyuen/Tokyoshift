@@ -1882,7 +1882,6 @@ export default class TunerShopScene extends Phaser.Scene {
     add(141,donor.name+'  >  '+hero.name,'8px');
     add(206,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
     add(251,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
-    add(303,'FULL WORKS CONVERSION','9px','#ffe2a3');
     const quote=this.getLbwkCurrentQuote();
     add(315,'FULL LV3 + 3 NOS SHOTS / DENZAKI TUNE','8px','#ffe2a3');
     add(352,'Your purchased parts are credited. The resulting LBWK collector is sealed and fully upgraded.','8px');
