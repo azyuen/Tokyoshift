@@ -142,6 +142,38 @@ export function showStoryStage(scene, {
       if(tween)motionTweens.push(tween);
       else{travel.x=distance;position();onComplete();}
     },
+    retreatActor(actorId,onComplete=()=>{}) {
+      // Reusable static-sprite depth retreat: three automatic dissolves.
+      // No walking animation or dialogue confirmations required.
+      const target=actorImages.get(actorId);
+      if(!target?.active){onComplete();return;}
+      const startX=target.x,startY=target.y,startScale=target.scaleX;
+      const frames=[
+        {x:startX-44,y:startY-4,scale:startScale*.82,alpha:.78},
+        {x:startX+20,y:startY-28,scale:startScale*.62,alpha:.55},
+        {x:startX-65,y:startY-49,scale:startScale*.42,alpha:0},
+      ];
+      let i=0;
+      const next=()=>{
+        if(!alive||!target.active){onComplete();return;}
+        if(i>=frames.length){target.setVisible(false);onComplete();return;}
+        const f=frames[i++];
+        const tween=scene.tweens?.add?.({
+          targets:target,alpha:0,duration:380,ease:'Sine.InOut',
+          onComplete:()=>{
+            if(!alive||!target.active){onComplete();return;}
+            target.setPosition(f.x,f.y).setScale(f.scale).setAlpha(0);
+            const appear=scene.tweens?.add?.({
+              targets:target,alpha:f.alpha,duration:480,ease:'Sine.InOut',
+              onComplete:next,
+            });
+            if(appear)motionTweens.push(appear);else next();
+          },
+        });
+        if(tween)motionTweens.push(tween);else next();
+      };
+      next();
+    },
     fadeActor(actorId,duration=900,onComplete=()=>{}) {
       const target=actorImages.get(actorId);
       if(!target?.active){pendingFades.push({actorId,duration,onComplete});return;}
@@ -415,7 +447,7 @@ export function showStoryStage(scene, {
       }):null;
       // Characters of a scene all share the same native ground/height:
       // only their horizontal slot or optional observer role differs.
-      const x=Number(assigned?.x??estimate?.x??a.x??anchor.x);
+      const x=Number(a.x??assigned?.x??estimate?.x??anchor.x)+Number(a.offsetX||0);
       const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
       const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
         (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (aruken?arukenPoseHeight(a.pose):1);
