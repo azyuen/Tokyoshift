@@ -26,6 +26,7 @@ export const TUNER_SHOPS = {
       day: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
       night: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
     },
+    // Legacy UI switch: displays the special full-works donor selector, not a purely cosmetic conversion.
     tuningOptions: [], cosmeticOnly: true,
   },
   ODAIBA: {
