@@ -19,13 +19,14 @@ export const TUNER_SHOPS = {
     mapLabel: 'TUNER SHOP', label: 'LIBERTY WALK', fullName: 'LIBERTY WALK',
     specialty: 'FULL WORKS', mechanicId: 'arkonDen',
     heroCarId: 'libertyWalk240z', donorCarId: '240z',
-    donorLabel: 'DATSUN 240Z', buildCost: 22000000,
+    donorLabel: 'DATSUN 240Z', buildCost: 6064000, // Display fallback; quote recalculated at checkout
     backgroundKey: 'tunerShopGinzaLbwkBg',
     backgroundPath: 'assets/Locations/TunerShops/ginza_lbwk_day.png',
     phaseBackgrounds: {
       day: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
       night: { key: 'tunerShopGinzaLbwkBg', path: 'assets/Locations/TunerShops/ginza_lbwk_day.png' },
     },
+    // Legacy UI switch: displays the special full-works donor selector, not a purely cosmetic conversion.
     tuningOptions: [], cosmeticOnly: true,
   },
   ODAIBA: {

@@ -1,7 +1,7 @@
 import {effectiveFinalDrive} from './Transmission.js?v=20261026-r687';
 import {estimateElapsed} from './PerformanceEstimate.js?v=20261026-r687';
 import Engine,{refreshEngineOutput} from './Engine.js?v=20261026-r687';
-import { cars } from '../data/cars.js?v=20261026-r687';
+import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
@@ -43,6 +43,9 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engine = clone(engineConfig || {});
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
+    // Ginza full-works and Denzaki one-off have factory-sealed NOS hardware.
+    // Do not apply player parts or strip their authored three-shot system.
+    if (config.lbwkFullWorks || config.arkonOneOff) return { car: config, engine };
     config.nosPower = 0;
     config.nosShots = 0;
     config.nosShotDurationSeconds = 1.0;

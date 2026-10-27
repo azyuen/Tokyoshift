@@ -271,6 +271,9 @@ export const AUTO_MARKET_LISTINGS = [
 ];
 
 export const GINZA_LISTINGS = [
+  // The original Denzaki one-off (RB26, #16) is a separate Ginza collector,
+  // NOT the player's L-series LBWK 240Z (#52 artwork pending).
+  {carId:'arkonGinza240z',price:125000000,collectionLabel:'DENZAKI RB26 240Z #16',rarity:'ULTRA RARE'},
   { carId: 'essoToyotaGtOne', price: 240000000, collectionLabel: 'ESSO GT-ONE', rarity: 'LEGENDARY' },
   { carId: 'cleanToyotaGtOne', price: 240000000, collectionLabel: 'GT-ONE CLEAN BODY', rarity: 'LEGENDARY' },
   { carId: 'calsonicR390', price: 230000000, collectionLabel: 'CALSONIC R390 GT1', rarity: 'LEGENDARY' },
@@ -349,13 +352,14 @@ export const GINZA_LISTINGS = [
 ];
 
 export function getGinzaCollectorState(carId) {
+  const sealedNos = carId === 'arkonGinza240z';
   return {
     stock: false,
     acquiredVia: 'ginzaMotorGallery',
     collector: true,
     immutable: true,
     tuningLocked: true,
-    nosInstalled: false,
+    nosInstalled: sealedNos,
     tuneLevel: 0,
     tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
     drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },

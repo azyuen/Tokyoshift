@@ -4,7 +4,7 @@ import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
 import { addCollectorExpansion } from './collectorExpansion.js';
 import { applyHeroCarAssets } from './heroCarAssets.js';
 import { registerLbwkHeroCars } from './lbwkHeroCars.js';
-import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261026-r687';
+import { applyEndgameHeroCalibration } from './endgameHeroCalibration.js?v=20261027-r694';
 
 const base = {
   wheelRadius: 0.305,
@@ -2286,8 +2286,10 @@ cars.arkonLibertyWalk240z={
   storyBodyConversion:true,
   visual:{
     ...cars['240z'].visual,
-    assetStem:'liberty_walk_240z_hero',
-    bodyPath:'assets/Cars/hero/liberty_walk_240z_hero_body.png',
+    // Aruken's personal black/gold #16 240Z. Career's player conversion
+    // deliberately uses the different white/red #52 body asset.
+    assetStem:'liberty_walk_aruken240z_hero',
+    bodyPath:'assets/Cars/hero/liberty_walk_aruken240z_hero_body.png',
     paintPath:null,overlayPath:null,singleBody:true,
     stockBodyKit:false,stockSpoiler:false,
     modularAssetRoot:null,singleLayerModular:false,

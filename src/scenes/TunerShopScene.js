@@ -1,10 +1,11 @@
 import { LBWK_CONVERSIONS } from '../data/lbwkConversions.js';
+import { LBWK_CATALOG, getLbwkConversionQuote } from '../data/lbwkFullWorks.js?v=20261027-r694';
 import {recordArkonCh7TunerVisit,claimArkonCh7FirstVisitScene} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r684';
 import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars } from '../data/cars.js?v=20261026-r687';
+import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
@@ -389,7 +390,7 @@ export default class TunerShopScene extends Phaser.Scene {
           fontFamily:BODY_FONT,fontSize:'14px',color:'#b5c6cd',
           lineSpacing:3
         }).setDepth(32);
-      this.lbwkChoices=[{id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},...LBWK_CONVERSIONS];
+      this.lbwkChoices=LBWK_CATALOG;
       this.lbwkBrowseObjects=[];
       this.lbwkChoices.forEach((g,i)=>{
         const y=SIDE.y+149+i*46;
@@ -577,6 +578,16 @@ export default class TunerShopScene extends Phaser.Scene {
     return obj;
   }
 
+  getLbwkCurrentQuote() {
+    if (!this.shop?.cosmeticOnly) return null;
+    const build=LBWK_CATALOG.find(item=>item.id===this.shop.heroCarId);
+    const carId=this.getCurrentCarId();
+    const state=getBaseCarId(carId)===build?.donor
+      ? (this.registry.get('carStates')||{})[carId]||{}
+      : {};
+    return getLbwkConversionQuote(build,state);
+  }
+
   showHeroMode() {
     if (this.conversionInProgress) return;
     this.mode = 'HERO';
@@ -603,7 +614,8 @@ export default class TunerShopScene extends Phaser.Scene {
     const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
     const donorEligible = currentIsDonor && (this.shop.cosmeticOnly || donorState.stock !== false);
     const heroOwned = owned.includes(this.shop.heroCarId);
-    const cost = Number(this.shop.buildCost || 0);
+    const cost = this.shop.cosmeticOnly ? (this.getLbwkCurrentQuote()?.total || 0)
+      : Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
 
     if (this.shop.cosmeticOnly) {
@@ -649,7 +661,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.shop.heroCarId=g.id;
     this.shop.donorCarId=g.donor;
     this.shop.donorLabel=cars[g.donor]?.name || g.donor.toUpperCase();
-    this.shop.buildCost=g.cost;
+    this.shop.buildCost=getLbwkConversionQuote(g)?.fullPrice || 0;
     this.clearPopup();
     this.showHeroMode();
   }
@@ -664,10 +676,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.addPopup(this.add.text(780,160,'LIBERTY WALK // FULL WORKS',{
       fontFamily:PIXEL_FONT,fontSize:'14px',color:'#ffe2a3'
     }).setOrigin(0.5).setDepth(152));
-    const choices=[
-      {id:'libertyWalk240z',donor:'240z',name:'LBWK 240Z',cost:22000000},
-      ...LBWK_CONVERSIONS
-    ];
+    const choices=LBWK_CATALOG;
     choices.forEach((g,i)=>{
       const y=215+i*56;
       const chosen=this.shop.heroCarId===g.id;
@@ -676,7 +685,7 @@ export default class TunerShopScene extends Phaser.Scene {
         .setStrokeStyle(1,chosen?0xffd889:0x627786,1)
         .setInteractive({useHandCursor:true}).setDepth(152));
       this.addPopup(this.add.text(780,y,
-        g.name+'   //   '+Number(g.cost).toLocaleString('en-US')+' YEN',
+        g.name+'   //   FROM '+money(getLbwkConversionQuote(g)?.fullPrice||0),
         {fontFamily:PIXEL_FONT,fontSize:'9px',color:chosen?'#ffe2a3':'#dce7eb'}
       ).setOrigin(0.5).setDepth(153));
       b.on('pointerdown',()=>this.selectLbwkBuild(g));
@@ -1873,12 +1882,16 @@ export default class TunerShopScene extends Phaser.Scene {
     add(141,donor.name+'  >  '+hero.name,'8px');
     add(206,'POWER  '+donor.powerKW+' > '+hero.powerKW+' kW','9px');
     add(251,'TORQUE '+donor.torqueNm+' > '+hero.torqueNm+' Nm','9px');
-    add(303,'FULL WORKS CONVERSION','9px','#ffe2a3');
-    add(347,'Your car is permanently replaced by the sealed LBWK hero build. Existing modifications are not carried over.','8px');
-    add(469,'BUILD COST  '+money(this.shop.buildCost),'9px','#ffe2a3');
+    const quote=this.getLbwkCurrentQuote();
+    add(315,'FULL LV3 + 3 NOS SHOTS / DENZAKI TUNE','8px','#ffe2a3');
+    add(352,'Your purchased parts are credited. The resulting LBWK collector is sealed and fully upgraded.','8px');
+    add(421,'ALL PARTS   '+money(quote?.fullPartsCost||0),'8px');
+    add(444,'INSTALLED CREDIT  -'+money(quote?.installedCredit||0),'8px','#a9ddc0');
+    add(467,'LBWK PREMIUM  '+money(quote?.specialistPremium||0),'8px');
+    add(495,'TO PAY  '+money(quote?.total||0),'9px','#ffe2a3');
     const cash=Number(this.registry.get('cash')||0);
     const owned=(this.registry.get('ownedCarIds')||[]).includes(hero.id);
-    const ready=cash>=Number(this.shop.buildCost||0)&&!owned;
+    const ready=Boolean(quote)&&cash>=quote.total&&!owned;
     const makeAction=(y,label,enabled,handler,highlight=false)=>{
       const box=this.addDynamic(this.add.rectangle(SIDE.x+SIDE.w/2,SIDE.y+y,
         SIDE.w-56,43,highlight?0x392916:0x111d26,1)
@@ -1922,11 +1935,13 @@ export default class TunerShopScene extends Phaser.Scene {
       color: '#fff1d5',
     }).setOrigin(0.5).setDepth(152));
 
+    const quotedPrice=this.shop.cosmeticOnly
+      ? (this.getLbwkCurrentQuote()?.total || 0) : Number(this.shop.buildCost||0);
     this.addPopup(this.add.text(
       780,
       392,
       this.shop.donorLabel + ' will be permanently rebuilt as\n' +
-        cars[this.shop.heroCarId].name + '.\n\nBUILD COST  ' + money(this.shop.buildCost),
+        cars[this.shop.heroCarId].name + '.\n\nBUILD COST  ' + money(quotedPrice),
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -1985,7 +2000,10 @@ export default class TunerShopScene extends Phaser.Scene {
     if (this.conversionInProgress) return;
 
     const cash = Number(this.registry.get('cash') || 0);
-    const cost = Math.max(0, Number(this.shop.buildCost || 0));
+    const quote=this.shop.cosmeticOnly ? this.getLbwkCurrentQuote() : null;
+    if(this.shop.cosmeticOnly && !quote) return;
+    const cost = Math.max(0, this.shop.cosmeticOnly ? quote.total
+      : Number(this.shop.buildCost || 0));
     if (cash < cost) return;
 
     this.conversionInProgress = true;
@@ -2102,8 +2120,12 @@ export default class TunerShopScene extends Phaser.Scene {
     if (this.shop.cosmeticOnly && !isTunerShopUnlocked(this.registry, this.regionId)) return false;
 
     const cash = Number(this.registry.get('cash') || 0);
-    const cost = Math.max(0, Number(this.shop.buildCost || 0));
-    if (cash < cost) return false;
+    const quote=this.shop.cosmeticOnly
+      ? getLbwkConversionQuote(LBWK_CATALOG.find(item=>item.id===heroId),donorState)
+      : null;
+    if(this.shop.cosmeticOnly && !quote) return false;
+    const cost=Math.max(0,this.shop.cosmeticOnly?quote.total:Number(this.shop.buildCost||0));
+    if(cash<cost) return false;
 
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
     const donorLocation = locations[donorId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
@@ -2120,6 +2142,10 @@ export default class TunerShopScene extends Phaser.Scene {
       immutable: true,
       tuningLocked: true,
       acquiredVia: 'tuner-shop',
+      nosInstalled: Boolean(this.shop.cosmeticOnly),
+      lbwkFullWorks: Boolean(this.shop.cosmeticOnly),
+      lbwkPartsCredit: quote?.installedCredit || 0,
+      lbwkPremiumPaid: quote?.specialistPremium || 0,
       tunerShopId: this.shop.id,
       convertedFrom: donorId,
       builtAt: Date.now(),

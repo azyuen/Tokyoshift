@@ -15,7 +15,7 @@ import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsor
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
+import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
 import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import {
@@ -55,7 +55,7 @@ import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261021-r628';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261027-r694';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -2458,7 +2458,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
 
   getGinzaListings() {
-    return getGinzaRoomStock(GINZA_LISTINGS.filter(item => cars[item.carId]),
+    // The one-off is a late-career discovery, not a spoiler in Ginza before
+    // the player meets its owner at Pro Season registration.
+    const introduced = this.registry.get('gameMode') !== 'arkonStory' &&
+      hasSeenCutscene(this.registry, 'proSponsorEpilogue');
+    return getGinzaRoomStock(GINZA_LISTINGS.filter(item => cars[item.carId] &&
+      (item.carId !== 'arkonGinza240z' || introduced)),
       Date.now(), this.devCentralRefreshOffsets?.showroom || 0);
   }
 
@@ -2943,7 +2948,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const isCuratedGinzaListing = GINZA_LISTINGS.some(
       item => item?.carId === listing?.carId
     );
-    if (!car || !isCuratedGinzaListing) return;
+    if (!car || !isCuratedGinzaListing ||
+        (listing.carId === 'arkonGinza240z' &&
+          (this.registry.get('gameMode') === 'arkonStory' ||
+            !hasSeenCutscene(this.registry,'proSponsorEpilogue')))) return;
 
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     if (owned.includes(listing.carId)) return;
