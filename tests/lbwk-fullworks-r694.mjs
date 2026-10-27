@@ -90,8 +90,10 @@ test('Aruken RB26 one-off is separate from story body and career 240Z, sold at G
   assert.ok(listing);
   assert.ok(listing.price>=100000000);
   const scene=source('src/scenes/CentralTokyoScene.js');
-  assert.match(scene,/item.carId !== 'arkonGinza240z' \|\| introduced/);
-  assert.match(scene,/proSponsorEpilogue/);
+  assert.match(scene,/item.carId !== 'arkonGinza240z'/);
+  assert.match(scene,/getGinzaDenzakiListing\(\)/);
+  assert.match(scene,/this.ginzaPrestigeOneOff/);
+  assert.doesNotMatch(scene,/!hasSeenCutscene\(this.registry,'proSponsorEpilogue'\)/);
 });
 
 test('Live conversion quote is applied at confirmation and at final payment; no flat fee still charged',()=>{
@@ -105,6 +107,13 @@ test('Live conversion quote is applied at confirmation and at final payment; no 
 });
 
 test('402m estimates: full works beats donor Lv3; regional-stack comparison is reported',()=>{
+  // The game runs in Phaser, but these Node physics tests have no canvas.
+  // Match the deterministic subset used by the shared vehicle physics.
+  globalThis.Phaser ??= {};
+  globalThis.Phaser.Math ??= {
+    Clamp: (v,min,max) => Math.max(min,Math.min(max,v)),
+    Linear: (a,b,t) => a+(b-a)*t,
+  };
   for(const build of LBWK_CATALOG){
     const ordinary=getBuiltCar(build.donor,LBWK_FULL_WORKS_STATE);
     const region=getBuiltCar(build.donor,{
