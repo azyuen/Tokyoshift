@@ -123,7 +123,7 @@ async function loadRepoArtwork(){
    if(!image){fail.push(job.path);continue}
    const sc=scenes[job.sceneId];if(!sc)continue;
    if(job.background)sc.background=image.url;
-   else{const obj=sc.objects[job.index];if(!obj)continue;obj.image=image.url;obj.assetPath=job.path;
+   else{const obj=sc.objects[job.index];if(!obj)continue;if(obj.assetPath&&obj.assetPath!==job.path)continue;obj.image=image.url;obj.assetPath=job.path;
     obj.ratio=image.height/image.width;obj.h=fittedHeight(obj)}
    ok++;
   }
