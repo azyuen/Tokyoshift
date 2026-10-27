@@ -1,6 +1,6 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tokyo SHIFT · Stage Editor R705</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tokyo SHIFT · Stage Editor R706</title><style>
 :root{font-family:system-ui,Arial;background:#090d18;color:#f2f5ff}*{box-sizing:border-box}body{margin:0}header{padding:12px 16px;background:#151c2c;display:flex;gap:10px;align-items:center;flex-wrap:wrap}h1{font-size:18px;margin:0;color:#f6c75a}button,select,input{background:#242e43;border:1px solid #4d5a76;border-radius:7px;color:white;padding:9px;font:inherit}button{cursor:pointer}button.primary{background:#8b6524;border-color:#c99a3e}main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;padding:12px}.viewport{width:100%;aspect-ratio:1560/840;background:#161d2a;position:relative;overflow:hidden;touch-action:none;border:2px solid #586278}.viewport .bg{position:absolute;inset:0;background-size:100% 100%;opacity:.9}.ground{position:absolute;left:0;right:0;top:86%;border-top:2px dashed #ffe18d;pointer-events:auto;cursor:ns-resize;touch-action:none;z-index:100}.safe{position:absolute;left:4%;right:4%;bottom:3%;height:15%;border:1px dashed #80ccff;pointer-events:none}.obj{position:absolute;transform:translate(-50%,-100%);border:2px solid transparent;min-width:30px;min-height:30px;touch-action:none;user-select:none;cursor:move}.obj.selected{border-color:#ffd66e}.obj img{width:100%;height:100%;object-fit:contain;pointer-events:none}.obj.flipped img{transform:scaleX(-1)}.obj.hidden-object{display:none}.obj .handle{touch-action:none}.obj .layer-tag{position:absolute;left:0;top:-20px;background:#0c1528;color:#ffe18d;padding:2px 5px;font-size:11px;white-space:nowrap;pointer-events:none}.ground::after{content:'GROUND · drag';position:absolute;right:8px;top:-23px;background:#101b2a;color:#ffe18d;font-size:11px;padding:2px 5px}.obj .placeholder{width:100%;height:100%;background:#334a65b0;display:grid;place-items:center;text-align:center;font-size:clamp(9px,1.2vw,17px)}.obj .handle{position:absolute;right:-11px;bottom:-11px;background:#ffd66e;width:23px;height:23px;border:2px solid #111;border-radius:5px;cursor:nwse-resize}.panel{background:#151c2c;border:1px solid #343e54;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:9px}.panel label{font-size:13px;color:#c4cce0}.panel input[type=range]{width:100%;padding:0}.panel input[type=file]{width:100%;font-size:12px}.row{display:flex;gap:6px}.row>*{min-width:0;flex:1}.hint{font-size:12px;color:#aab7cf}textarea{width:100%;height:110px;background:#0a101d;color:#cce3ff;border:1px solid #44516c}footer{padding:8px 12px;color:#aab7cf;font-size:12px}@media(max-width:850px){main{grid-template-columns:1fr}.panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.panel>*{min-width:0}.viewport{min-height:190px}} </style></head><body>
-<header><h1>TOKYO SHIFT / STAGE EDITOR <small>R705</small></h1><select id="scene"><option value="garage">Ch08 · Opening garage</option><option value="reika">Ch08 · Reika challenge</option><option value="daikoku">Ch08 · Daikoku showdown</option><option value="shibuya">Ch08 · Shibuya showdown</option><option value="vip">Ch08 · Shibuya VIP party</option></select><button id="newScene">+ Scene</button><button id="repoAssets" class="primary">Load game artwork</button><button id="export" class="primary">Export all layouts</button><button id="import">Import layouts</button><input id="importFile" type="file" accept=".json,application/json" hidden></header>
+<header><h1>TOKYO SHIFT / STAGE EDITOR <small>R706</small></h1><select id="scene"><option value="garage">Ch08 · Opening garage</option><option value="reika">Ch08 · Reika challenge</option><option value="daikoku">Ch08 · Daikoku showdown</option><option value="shibuya">Ch08 · Shibuya showdown</option><option value="vip">Ch08 · Shibuya VIP party</option></select><button id="newScene">+ Scene</button><button id="repoAssets" class="primary">Load game artwork</button><button id="export" class="primary">Export all layouts</button><button id="import">Import layouts</button><input id="importFile" type="file" accept=".json,application/json" hidden></header>
 <main><div><div id="stage" class="viewport"><div id="bg" class="bg"></div><div id="ground" class="ground"></div><div class="safe"></div></div><p class="hint">Drag objects to move. Drag the gold corner to resize. Coordinates are relative to the 1560 × 840 game stage. Dashed gold = ground guide; blue = dialogue safe zone.</p></div><div class="panel">
 <label>Scene background image (optional screenshot)<input id="bgFile" type="file" accept="image/*"></label>
 <label>Selected object<select id="objects"></select></label><label>Objects in this scene (toggle visibility)</label><div id="objectList" style="max-height:210px;overflow:auto;border:1px solid #45516b;border-radius:7px;padding:6px"></div><div class="row"><button id="showAll">Show all</button><button id="hideOthers">Solo selected</button></div>
@@ -11,7 +11,7 @@
 <label>Feet / bottom Y <span id="yValue"></span><input id="y" type="range" min="0" max="100" step=".1"></label>
 <label>Size (aspect ratio locked) <span id="wValue"></span><input id="w" type="range" min="3" max="85" step=".1"></label>
 <label>Calculated height <span id="hValue"></span> · Original image ratio preserved</label>
-<label>Layer <input id="z" type="number" min="0" max="99"></label><div class="row"><button id="back">Send backward</button><button id="front">Bring forward</button></div><label><input id="flip" type="checkbox"> Flip horizontally</label><label>Ground guide <span id="groundValue">86%</span><input id="groundSlider" type="range" min="45" max="100" value="86" step=".5"></label>
+<label>Layer <input id="z" type="number" min="0" max="99"></label><div class="row"><button id="back">Send backward</button><button id="front">Bring forward</button></div><label><input id="flip" type="checkbox"> Flip horizontally</label><label>Ground guide <span id="groundValue">80.36%</span><input id="groundSlider" type="range" min="45" max="100" value="80.36" step=".5"></label>
 <div class="row"><button id="reset">Reset scene</button><button id="copy">Copy JSON</button></div>
 <textarea id="output" readonly placeholder="Exported scene layout appears here"></textarea>
 <p id="assetStatus" class="hint">Click “Load game artwork” to populate the real Chapter 8 backgrounds, characters and stock car bodies from the repository.</p><p class="hint">Chapter 8 scripted cast/cars are prepopulated. Background crowds are a separate optional template, since the story's population flag is not enabled in every scene. All changes remain in this browser until exported. Export JSON for implementation in the game. Images are optional; the editor uses placeholders when no sprite is supplied.</p>
@@ -19,13 +19,24 @@
 <script>
 const $=id=>document.getElementById(id), stage=$('stage');let seq=0,selected=0;
 const make=(name,x,y,w,h,z=1)=>({id:'obj'+(++seq),name,x,y,w,h,z,image:null,assetPath:null,flipX:false,visible:true,ratio:h/w});
+const meetPreset=(rival,car)=>[
+make('Aruken',36.31887985546523,91.95774352521761,23.4,65.18571428571428,2),
+make('Sayaka',23.03794037940379,91.78997588340148,22.8,63.51428571428572,2),
+make(rival,63.410117434507676,91.28667295795324,23.4,65.18571428571428,2),
+make('Liberty Walk 240Z',9.015356820234874,81.2206144489882,73.28906955736224,46.06741515034198,1),
+make(car,90.72448057813912,81.38838209080424,74,46.51428571428571,1)
+].map((o,i)=>({...o,flipX:i===2||i===4,ratio:i<3?1.5:0.3384615384615385}));
 const defaults=()=>({
-garage:{background:null,objects:[make('Aruken',17,73,13,39),make('Sayaka',30,73,13,39),make('Liberty Walk 240Z',52,79,43,30)]},
-reika:{background:null,objects:[make('Aruken',15,73,13,39),make('Sayaka',29,73,13,39),make('Reika',85,73,13,36),make('Liberty Walk 240Z',40,73,33,29),make('FC3S',76,73,30,29)]},
-daikoku:{background:null,objects:[make('Aruken',15,73,13,39),make('Sayaka',29,73,13,39),make('Tetsuo',85,73,13,36),make('Liberty Walk 240Z',40,73,33,29),make('3000GT',76,73,30,29)]},
-shibuya:{background:null,objects:[make('Aruken',15,73,13,39),make('Sayaka',29,73,13,39),make('Ren',85,73,13,36),make('Liberty Walk 240Z',40,73,33,29),make('Evo V',76,73,30,29)]},
+garage:{background:null,objects:[
+make('Aruken',40.7169357609069,88.55448156585796,22.033423667570005,61.378823073945014,3),
+make('Sayaka',23.613878392305047,88.61093437965089,21.6,60.17142857142858,2),
+make('Liberty Walk 240Z',54.018779342723,67.57781229138568,63.798122065727696,40.10167672702883,1)
+]},
+reika:{background:null,objects:meetPreset('Reika','FC3S')},
+daikoku:{background:null,objects:meetPreset('Tetsuo','3000GT')},
+shibuya:{background:null,objects:meetPreset('Ren','Evo V')},
 vip:{background:null,objects:[make('Aruken',15,73,13,39),make('Sayaka',29,73,13,39),make('VIP promoter',85,73,13,36),make('Liberty Walk 240Z',52,73,43,30)]}
-});let scenes=defaults(),key='garage',groundY=86;
+});let scenes=defaults(),key='garage',groundY=80.36070042990455;
 function active(){return scenes[key].objects[selected]}
 function fittedHeight(o){return Math.max(1,o.w*(o.ratio||o.h/o.w)*1560/840)}
 function fitImage(o,path){if(!path)return;const im=new Image();im.onload=()=>{o.ratio=im.naturalHeight/im.naturalWidth;o.h=fittedHeight(o);render()};im.src=path}
@@ -63,7 +74,7 @@ const hero240z='assets/Cars/hero/liberty_walk_aruken240z_hero_body.png';
 const crowdPaths=['Shinjuku/ren_kurosawa_idle.png','Ginza/kaede_tachibana_idle.png','Ginza/emi_saionji_idle.png','Shinjuku/sora_kanzaki_idle.png','Shinjuku/daigo_arakawa_idle.png','Shinjuku/rin_amamiya_idle.png'];
 $('populateCrowd').onclick=()=>{const slots=[9,17,34,41,65,72,87,93];for(let i=0;i<8;i++){let path='assets/Characters/'+crowdPaths[i%crowdPaths.length],o=make('Background guest '+(i+1),slots[i],i%2?66:64,7,17,1);o.assetPath=path;o.image=assetUrl(path);o.flipX=i%2===1;scenes[key].objects.push(o);fitImage(o,o.image)}selected=scenes[key].objects.length-1;render()};
 const sceneArtwork={
- garage:{background:'assets/Garage/shinonome_workshop_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png'],car:hero240z},
+ garage:{background:'assets/Garage/shinonome_warehouse_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png'],car:hero240z},
  reika:{background:'assets/Meet/Night/shinagawa_tennozu_isle_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png','assets/Characters/Shinagawa/reika_tachibana_idle.png'],car:hero240z,rivalCar:'assets/Cars/stock/rx7fc_stock_body.png'},
  daikoku:{background:'assets/Meet/Night/daikoku_pa_night.png',actors:['assets/Characters/Main/arkon_den_idle.png','assets/Characters/Main/home_sayaka_fujieda_normal.png','assets/Characters/Daikoku/tetsuo_mori_idle.png'],car:hero240z,rivalCar:'assets/Cars/stock/3000gt_stock_body.png'},
  vip:{background:'assets/Meet/Night/shibuya_scramble_night.png',actors:['assets/Characters/Main/arkon_den_suit.png','assets/Characters/Main/home_sayaka_fujieda_normal.png','assets/Characters/Shinjuku/ren_kurosawa_idle.png'],car:hero240z},
