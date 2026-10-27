@@ -13,14 +13,16 @@ const methods = source.slice(
 assert.ok(methods.startsWith('  getGinzaListings() {'), 'Ginza listing methods must exist');
 assert.ok(methods.includes('  getGinzaDenzakiListing() {'), 'permanent listing helper must exist');
 assert.ok(methods.includes('  getGinzaActiveListing() {'), 'active listing helper must exist');
+// Extract the *actual* methods into a probe class; class methods do not use
+// commas between declarations (unlike an object-literal method list).
 const build = new Function('cars','GINZA_LISTINGS','getGinzaRoomStock',
-  'return ({' + methods + '});');
-const makeScene = (gameMode = 'career') => ({
-  ...build(cars,GINZA_LISTINGS,getGinzaRoomStock),
-  registry: { get: key=>key==='gameMode'?gameMode:undefined },
-  ginzaRoom:2, ginzaPrestigeOneOff:true,
-  devCentralRefreshOffsets:null,
-});
+  'return new (class GinzaProbe {' + methods + '})();');
+const makeScene = (gameMode = 'career') => Object.assign(
+  build(cars,GINZA_LISTINGS,getGinzaRoomStock), {
+    registry: { get: key=>key==='gameMode'?gameMode:undefined },
+    ginzaRoom:2, ginzaPrestigeOneOff:true,
+    devCentralRefreshOffsets:null,
+  });
 
 test('The player can browse a permanent ¥125m Aruken 240Z in Prestige Salon without Pro sponsor flag',()=>{
   const scene=makeScene();
