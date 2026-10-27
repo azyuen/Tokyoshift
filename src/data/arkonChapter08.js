@@ -32,17 +32,19 @@ const tableau=(label,bg,cast,cars=[],vipParty=false)=>[
     caption:vipParty?'SHIBUYA // THE PRIVATE NIGHT':'ARUKEN DENZAKI // THE PRICE OF AMBITION',
     revealMs:vipParty?650:0},
 ];
-const ordinary=[{id:A,pose:'storyIdle'},{id:S,pose:'homeNormal',role:'observer'}];
+const ordinary=[{id:A,pose:'storyIdle',facing:'right'},{id:S,pose:'homeNormal',role:'observer',facing:'left'}];
+const school=[{id:A,pose:'storyIdle',facing:'right'},{id:S,pose:'oshiageHappy',role:'observer',facing:'left'}];
+const close=[{id:A,pose:'storyIdle',facing:'right'},{id:S,pose:'homeNormal',role:'observer',facing:'left',offsetX:-32}];
 const hq=(label,cast=ordinary)=>tableau(label,'workshop:shinonomeWarehouseStrip:night',
   cast,[{carId:'arkonLibertyWalk240z'}]);
 const meet=(label,venue,rival,car)=>tableau(label,'meet:'+venue+':night',[
-  {id:A,pose:'storyConfident',role:'player'},
-  {id:S,pose:'homeHappy',role:'companion'},
+  {id:A,pose:'storyConfident',role:'player',facing:'right'},
+  {id:S,pose:'homeHappy',role:'companion',facing:'left'},
   {id:rival,pose:'idle',role:'challenger'},
 ],[{carId:'arkonLibertyWalk240z'},{carId:car}]);
 const partyCast=[
-  {id:A,pose:'ginzaSuit',role:'player'},
-  {id:S,pose:'ginzaDress',role:'companion'},
+  {id:A,pose:'ginzaSuit',role:'player',facing:'right'},
+  {id:S,pose:'ginzaDress',role:'companion',facing:'left'},
   {id:V,pose:'idle',role:'observer'},
 ];
 const party=(label,cast=partyCast)=>tableau(label,
@@ -59,7 +61,7 @@ export const ARKON_CHAPTER_08={
   steps:[
     {type:'SET_FLAG',key:'arkonStoryChapter',value:8},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter08Together',timeOfDay:'night'},
-    ...hq('WAREHOUSE HQ // A FAMILIAR VISITOR'),
+    ...hq('WAREHOUSE HQ // A FAMILIAR VISITOR',school),
     manga('THE AFTERNOON COFFEE',[
       say("Well, well. Still here?",'homeHappy'),
       ark("I was beginning to think you missed my company.",'storyConfidentSmirk'),
@@ -97,7 +99,7 @@ export const ARKON_CHAPTER_08={
       ark("Point taken.",'storySheepish'),
     ]),
     ...race(0),
-    ...tableau('SHINAGAWA // THE AFTERMATH','meet:shinagawaTennozu:night',ordinary,
+    ...tableau('SHINAGAWA // THE AFTERMATH','meet:shinagawaTennozu:night',school,
       [{carId:'arkonLibertyWalk240z'}]),
     manga('WELL CONNECTED',[
       ark("They asked who built the Z. They were interested in the engineering.",'storyConfident'),
@@ -110,7 +112,7 @@ export const ARKON_CHAPTER_08={
     ]),
     {type:'LOCATION',scene:'GarageScene',
       data:{crewMode:false,workshopLocationId:'shinonomeWarehouseStrip'}},
-    ...hq('WAREHOUSE HQ // THE WORK DOES NOT STOP'),
+    ...hq('WAREHOUSE HQ // THE WORK DOES NOT STOP',close),
     manga('ANOTHER SHORT VISIT',[
       ark("Sayaka, they want to establish a private engineering programme. Bespoke performance cars, international clients, real development budgets.",'storyConfident'),
       say("And they want you to lead it? Aruken, that's wonderful!",'homeHappy'),
@@ -303,10 +305,9 @@ export const ARKON_CHAPTER_08={
       vip('Excellent. Welcome aboard.'),
     ],V),
     {type:'ARKON_CH8_CONTRACT'},
-    ...party('SHIBUYA // SURROUNDED BY EVERYONE',[
-      {id:A,pose:'ginzaSuit',role:'player'},
-      {id:V,pose:'idle',role:'observer'},
-    ]),
+    ...tableau('SHIBUYA // ALONE WITH THE Z','meet:shibuyaScramble:night',[
+      {id:A,pose:'ginzaSuit',role:'player',facing:'right'},
+    ],[{carId:'arkonLibertyWalk240z'}]),
     manga('THE PRICE OF AMBITION',[
       ark("Three cars. Six months.",'devNervous'),
       ark("I can do this.",'devSerious'),
