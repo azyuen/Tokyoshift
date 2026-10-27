@@ -90,8 +90,10 @@ test('Aruken RB26 one-off is separate from story body and career 240Z, sold at G
   assert.ok(listing);
   assert.ok(listing.price>=100000000);
   const scene=source('src/scenes/CentralTokyoScene.js');
-  assert.match(scene,/item.carId !== 'arkonGinza240z' \|\| introduced/);
-  assert.match(scene,/proSponsorEpilogue/);
+  assert.match(scene,/item.carId !== 'arkonGinza240z'/);
+  assert.match(scene,/getGinzaDenzakiListing\(\)/);
+  assert.match(scene,/this.ginzaPrestigeOneOff/);
+  assert.doesNotMatch(scene,/!hasSeenCutscene\(this.registry,'proSponsorEpilogue'\)/);
 });
 
 test('Live conversion quote is applied at confirmation and at final payment; no flat fee still charged',()=>{
