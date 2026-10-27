@@ -2458,7 +2458,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
 
   getGinzaListings() {
-    return getGinzaRoomStock(GINZA_LISTINGS.filter(item => cars[item.carId]),
+    // The one-off is a late-career discovery, not a spoiler in Ginza before
+    // the player meets its owner at Pro Season registration.
+    const introduced = this.registry.get('gameMode') !== 'arkonStory' &&
+      hasSeenCutscene(this.registry, 'proSponsorEpilogue');
+    return getGinzaRoomStock(GINZA_LISTINGS.filter(item => cars[item.carId] &&
+      (item.carId !== 'arkonGinza240z' || introduced)),
       Date.now(), this.devCentralRefreshOffsets?.showroom || 0);
   }
 
@@ -2943,7 +2948,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const isCuratedGinzaListing = GINZA_LISTINGS.some(
       item => item?.carId === listing?.carId
     );
-    if (!car || !isCuratedGinzaListing) return;
+    if (!car || !isCuratedGinzaListing ||
+        (listing.carId === 'arkonGinza240z' &&
+          (this.registry.get('gameMode') === 'arkonStory' ||
+            !hasSeenCutscene(this.registry,'proSponsorEpilogue')))) return;
 
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     if (owned.includes(listing.carId)) return;
