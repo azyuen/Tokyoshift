@@ -324,7 +324,7 @@ export function showStoryStage(scene, {
       const cinematicCar=stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
-        groundY:h*.73,
+        groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
       }:null;
       const x=Number(cinematicCar?.x??sharedBay?.x??finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
       const targetWidth=Number(cinematicCar?.targetWidth??sharedBay?.targetWidth??finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
