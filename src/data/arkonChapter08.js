@@ -1,4 +1,4 @@
-import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261026-audit';
+import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=20261027-ch8';
 // Chapter 08 dialogue revision — bespoke super builds and understated Sayaka arc.
 // Sayaka and Aruken remain close, even as his new circle unsettles her.
 // Three player-driven races resolve honestly; the gala ends in a signed risk,
