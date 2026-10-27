@@ -50,7 +50,7 @@ export function polishArukenPresentation(script){
         if(id==='sayakaFujieda'){
           if(closingTime&&page[key]==='ginzaDress')page[key]='homeNormal';
           page[key]=uniform[page[key]]||page[key];
-          if(actor?.pose==='ginzaDress')page[key]='ginzaDress';
+          if(actor?.pose==='ginzaDress' && script.id!=='arkonChapter08')page[key]='ginzaDress';
           else if(String(actor?.pose).startsWith('home')&&String(page[key]).startsWith('oshiage'))
             page[key]=/Happy|Relaxed|Confident/.test(page[key])?'homeHappy':
               /Serious|Concerned|Reviewing/.test(page[key])?'homeSerious':'homeNormal';
