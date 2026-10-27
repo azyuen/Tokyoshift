@@ -10,7 +10,7 @@ export function showArukenChapter08Meet(scene,index,onRace){
   const add=o=>{objects.push(o);return o;};
   let active=true;
   const panel=(x,y,pw,ph,color=0x142337)=>add(scene.add.rectangle(x,y,pw,ph,color,.97).setStrokeStyle(2,0x74b9cb).setDepth(depth+1).setScrollFactor(0));
-  add(scene.add.rectangle(w/2,h/2,w,h,0x07121e,.88).setDepth(depth).setScrollFactor(0).setInteractive());
+  add(scene.add.rectangle(w/2,h/2,w,h,0x07121e,.30).setDepth(depth).setScrollFactor(0).setInteractive());
   const topH=h*.69,sideW=Math.max(240,w*.26);
   panel((w-sideW)/2,topH/2,w-sideW-20,topH-18,0x17283b);
   panel(w-sideW/2-6,h/2,sideW-12,h-18);
