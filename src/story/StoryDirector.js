@@ -4,7 +4,7 @@ import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
 } from './StoryScript.js?v=20261027-ch8';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261025-r683';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261027-trio';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
 import { showStoryStage } from '../ui/StoryStage.js?v=20261027-ch8';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
