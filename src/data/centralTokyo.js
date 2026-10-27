@@ -352,13 +352,14 @@ export const GINZA_LISTINGS = [
 ];
 
 export function getGinzaCollectorState(carId) {
+  const sealedNos = carId === 'arkonGinza240z';
   return {
     stock: false,
     acquiredVia: 'ginzaMotorGallery',
     collector: true,
     immutable: true,
     tuningLocked: true,
-    nosInstalled: false,
+    nosInstalled: sealedNos,
     tuneLevel: 0,
     tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
     drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },
