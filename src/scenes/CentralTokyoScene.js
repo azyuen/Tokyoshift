@@ -15,7 +15,7 @@ import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsor
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
+import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
 import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import {
@@ -55,7 +55,7 @@ import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261021-r628';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261027-r694';
 import {
   saveSessionState,
   recordCarAcquisition,
