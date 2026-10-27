@@ -1,6 +1,6 @@
 import { LBWK_CONVERSIONS } from './lbwkConversions.js';
 // Liberty Walk Ginza — isolated feature configuration.
-// The location remains unavailable to ordinary profiles until a future story unlock.
+// Career profiles gain access after the first Pro Season sponsor send-off.
 export const LBWK_GINZA = Object.freeze({
   id: 'ginzaLibertyWalk',
   region: 'centralTokyo',
@@ -13,12 +13,12 @@ export const LBWK_GINZA = Object.freeze({
   decals: false,
   outrightSales: false,
 });
-// Only the 240Z is enabled until the other hero art is ready.
+// All eight full-works donor models are enabled; sealed conversions include NOS.
 export const LBWK_BUILDS = Object.freeze([
   { id: 'libertyWalk240z', model: '240z', enabled: true },
   ...LBWK_CONVERSIONS.map(({ id, donor }) => ({ id, model: donor, enabled: true })),
 ]);
-// Only the developer profile may preview this location until the story gate exists.
+// The preview helper does not itself authorize ownership or purchase.
 // Do not use this flag as an ownership or purchase authorisation check.
 export function canPreviewLbwkGinza(isDeveloperProfile, storyUnlocked = false) {
   return Boolean(isDeveloperProfile || storyUnlocked);
