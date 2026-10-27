@@ -107,6 +107,13 @@ test('Live conversion quote is applied at confirmation and at final payment; no 
 });
 
 test('402m estimates: full works beats donor Lv3; regional-stack comparison is reported',()=>{
+  // The game runs in Phaser, but these Node physics tests have no canvas.
+  // Match the deterministic subset used by the shared vehicle physics.
+  globalThis.Phaser ??= {};
+  globalThis.Phaser.Math ??= {
+    Clamp: (v,min,max) => Math.max(min,Math.min(max,v)),
+    Linear: (a,b,t) => a+(b-a)*t,
+  };
   for(const build of LBWK_CATALOG){
     const ordinary=getBuiltCar(build.donor,LBWK_FULL_WORKS_STATE);
     const region=getBuiltCar(build.donor,{
