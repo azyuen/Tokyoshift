@@ -38,7 +38,7 @@ export function startProSponsorRace(scene) {
       hasSeenCutscene(scene.registry, 'proSponsorRaceComplete')) return false;
   const registry = scene.registry;
   const playerCarId = selectOwnedCar(registry);
-  if (!playerCarId || !cars.arkonLibertyWalk240z) {
+  if (!playerCarId || !cars.arkonGinza240z) {
     scene.proError = 'AN OWNED CAR IS REQUIRED FOR THE SPONSOR EXHIBITION';
     scene.renderLocation?.(strip);
     return false;
@@ -50,19 +50,14 @@ export function startProSponsorRace(scene) {
   registry.set('selectedCarId', playerCarId);
   registry.set('crewSpaceActive', false);
   registry.set('selectedRacePlayerCharacterId', null);
-  registry.set('selectedOpponentCarId', 'arkonLibertyWalk240z');
+  registry.set('selectedOpponentCarId', 'arkonGinza240z');
   registry.set('selectedOpponentCharacterId', 'arkonDen');
   registry.set('selectedOpponentEncounterRating', 5);
   registry.set('selectedOpponentEncounterAi', null);
-  // Reuse Aruken's actual Story Mode 240Z body, with a legal full shop tune.
-  // His race obeys the same physics and tuning rules as the player's car.
-  registry.set('selectedOpponentBuildState', {
-    tuning: {engine:3,intake:3,ecu:3,turbo:3,intercooler:3},
-    drivetrainTuning: {clutch:3,gearbox:3,differential:3,suspension:3},
-    chassisTuning: {tyres:3,weightReduction:3},
-    exhaustNosTuning: {headers:3,exhaust:3,muffler:3,nosKit:2,nitrousShot:2},
-    nosInstalled: true, buildRating: 5,
-  });
+  // Aruken's rebuilt RB26 #16 is a sealed one-off, not the ordinary 240Z
+  // tuneable in his story or the player's separate #52 full-works conversion.
+  // A no-stakes loss here never blocks his sponsorship or the Pro Season.
+  registry.set('selectedOpponentBuildState', null);
   registry.set('selectedOpponentBuildRating', null);
   registry.set('selectedOpponentBuildArchetype', null);
   registry.set('selectedRaceCategory', 'PRO_SPONSOR');
