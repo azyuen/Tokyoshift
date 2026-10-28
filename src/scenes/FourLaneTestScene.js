@@ -1,4 +1,4 @@
-import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill } from '../data/tokyoChampionship.js?v=20261012-champaudit';
+import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r607';
@@ -1651,11 +1651,23 @@ export default class FourLaneTestScene extends RaceScene {
         else if(this.champMode==='CHAMP_CREW')next=settleChampionshipCrewHeat(c.activeChampionship,{carId:this.playerCarId,won:own?.placing===1,opponentId:this.champHeat.opponent.id});
         else next=settleChampionshipFourWideHeat(c.activeChampionship,this.champHeat.id,this.runners.map(r=>({id:r.id,finishSeconds:r.disqualified?null:r.finishSeconds,disqualified:Boolean(r.disqualified)})));
         const changes={...c,activeChampionship:next};
-        if(next.completed&&!c.activeChampionship.completed){
-          changes.championshipHistory=[...(c.championshipHistory||[]),{id:next.id,season:next.season,championId:next.championId,points:next.points}].slice(-20);
-        }
-        saveProTransaction(this.registry,{proCircuit:changes});
-        outcome={status:'CHAMP_SAVED',nextStage:next.stage};
+        const award=next.completed?settleTokyoChampionship(changes):null;
+        if(award?.error)throw Error(award.error);
+        // Commit championship result, title, trophy record and cash together.
+        // Reopening the saved finale can never pay again.
+        saveProTransaction(this.registry,{
+          proCircuit:award?.circuit||changes,
+          ...(award&&!award.alreadySettled?{
+            cash:Number(this.registry.get('cash')||0)+award.cashPrize,
+          }:{})
+        });
+        const rows=championshipStandings(next);
+        outcome={status:'CHAMP_SAVED',nextStage:next.stage,
+          completed:next.completed,
+          playerPlace:rows.findIndex(r=>r.id==='player:driver')+1,
+          championName:rows[0]?.name||'CHAMPION',
+          playerChampion:next.championId==='player:driver',
+          cashPrize:award?.cashPrize||0};
       } catch(error){console.error('[Tokyo SHIFT] Championship settlement failed',error);outcome={status:'ERROR'};}
       this.showChampionshipRaceResult(standings,outcome);
       return;
@@ -1842,13 +1854,26 @@ export default class FourLaneTestScene extends RaceScene {
   showChampionshipRaceResult(standings,outcome){
     const ok=outcome?.status==='CHAMP_SAVED';
     const own=standings.find(r=>r.id==='player:driver');
+    const final=ok&&outcome.completed;
+    const title=!ok?'RESULT NOT SAVED // RETRY':
+      final?(outcome.playerChampion?'TOKYO CHAMPION':'TOKYO CHAMPIONSHIP // COMPLETE'):
+      'TOKYO CHAMPIONSHIP // HEAT RECORDED';
+    const detail=final?
+      'OVERALL #'+outcome.playerPlace+' / 16  //  CHAMPION '+outcome.championName:
+      'HEAT #'+(own?.placing||'?')+' / '+standings.length+'  //  NEXT '+(outcome?.nextStage||'RETRY');
     this.add.rectangle(780,360,1560,720,0x0b0a0d,.93).setDepth(300).setScrollFactor(0);
-    this.add.text(780,180,ok?'TOKYO CHAMPIONSHIP // RESULT SAVED':'RESULT NOT SAVED // RETRY',{fontFamily:'Rajdhani',fontSize:'42px',color:'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
-    this.add.text(780,310,'FINISH #'+(own?.placing||'?')+' / '+standings.length+'    NEXT: '+(outcome?.nextStage||'RETRY'),{fontFamily:'Rajdhani',fontSize:'30px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
-    this.add.text(780,470,'TAP TO RETURN TO THE CHAMPIONSHIP',{fontFamily:'Rajdhani',fontSize:'25px',color:'#ffffff'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,175,title,{fontFamily:'Rajdhani',fontSize:'45px',
+      color:outcome?.playerChampion?'#f6d18a':'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,310,detail,{fontFamily:'Rajdhani',fontSize:'28px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    if(final)this.add.text(780,392,'OFFICIAL PRIZE  ¥'+Number(outcome.cashPrize||0).toLocaleString('en-US'),{
+      fontFamily:'Rajdhani',fontSize:'24px',color:'#f6d18a'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,482,ok?'CONTINUE TO CHAMPIONSHIP RESULTS':'RETURN TO RETRY THE UNSAVED HEAT',{
+      fontFamily:'Rajdhani',fontSize:'25px',color:'#ffffff'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
     let armed=false;
     this.time.delayedCall(350,()=>{armed=true;});
-    this.add.rectangle(780,360,1560,720,0xffffff,.001).setDepth(302).setScrollFactor(0).setInteractive().on('pointerdown',()=>{if(armed)this.returnToDrag();});
+    this.add.rectangle(780,360,1560,720,0xffffff,.001).setDepth(302).setScrollFactor(0).setInteractive().on('pointerdown',()=>{
+      if(armed)this.returnToDrag(true);
+    });
   }
 
   promptCrewForfeit() {
@@ -1860,9 +1885,10 @@ export default class FourLaneTestScene extends RaceScene {
     });
   }
 
-  returnToDrag() {
+  returnToDrag(openChampionship=false) {
     this.scene.start('CentralTokyoScene',{
       locationId:'tokyoDragComplex',
+      autoOpenTokyoChampionship:Boolean(openChampionship&&this.champMode),
       autoOpenProCrewFixture:Boolean(this.proCrew&&
         this.registry.get('proCircuit')?.activeCrewEvent),
     });
