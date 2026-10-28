@@ -133,3 +133,24 @@ test('open driver briefing is payable once and retains captured offer across pha
   assert.match(scene,/entryError:this\._proDriverError/);
   assert.match(driverBrief,/ENTRY NOT SAVED/);
 });
+
+test('R713 installed PWA loads fresh changed modules without resetting asset cache',()=>{
+  const boot=source('src/main.js'),version=JSON.parse(source('version.json'));
+  const index=source('index.html'),sw=source('sw.js');
+  assert.equal(version.build,'R713');
+  assert.match(index,/id="build-stamp">R713/);
+  assert.match(index,/main\.js\?v=20261029-r713/);
+  assert.match(boot,/CentralTokyoScene\.js\?v=20261029-r713/);
+  assert.match(boot,/FourLaneTestScene\.js\?v=20261029-r713/);
+  assert.match(sw,/const BUILD = 'R713'/);
+  // Preserve the asset cache so large graphics are not downloaded afresh.
+  assert.match(sw,/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
+  for(const file of ['src/scenes/CentralTokyoScene.js',
+    'src/scenes/FourLaneTestScene.js','src/ui/ProSeasonPanel.js',
+    'src/ui/ProDriverBriefing.js','src/data/proDriverBriefing.js']){
+    const code=source(file);
+    for(const imported of code.split('\n').filter(l=>
+      /proSeason\.js|ProSeasonPanel\.js|ProDriverBriefing\.js|ProVictoryResults\.js|WorldClock\.js|proDriverBriefing\.js/.test(l)))
+      assert.match(imported,/v=20261029-r713/,'stale imported URL in '+file);
+  }
+});
