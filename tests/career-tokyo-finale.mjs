@@ -14,6 +14,7 @@ import {
   TOKYO_CHAMPIONSHIP_PURSES,
 } from '../src/data/tokyoChampionship.js';
 import {getOfficeTrophyRecord,getOfficeTrophyLines} from '../src/data/officeTrophies.js';
+import {GINZA_LISTINGS, MARKET_BASE_PRICES} from '../src/data/centralTokyo.js';
 const race=readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');
 const panel=readFileSync(new URL('../src/ui/ProSeasonPanel.js',import.meta.url),'utf8');
 const venue=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
@@ -57,6 +58,23 @@ function complete(c,knockoutWins,crewWins,fourPlace) {
   c.activeChampionship=s;
   return c;
 }
+
+test('endgame prizes scale tenfold by placing, remain progressive, and fund collector goals',()=>{
+  assert.equal(TOKYO_CHAMPIONSHIP_PURSES.length,16);
+  assert.deepEqual(TOKYO_CHAMPIONSHIP_PURSES,[
+    10000000,5000000,3000000,1750000,
+    1000000,1000000,1000000,1000000,
+    500000,500000,500000,500000,500000,500000,500000,500000,
+  ]);
+  assert.ok(TOKYO_CHAMPIONSHIP_PURSES.every((p,i,a)=>
+    Number.isSafeInteger(p)&&p>=0&&(i===0||p<=a[i-1])));
+  const leastCollector=Math.min(...GINZA_LISTINGS.map(car=>car.price));
+  assert.equal(leastCollector,28000000);
+  assert.ok(TOKYO_CHAMPIONSHIP_PURSES[0]<leastCollector,
+    'one title must not purchase even the cheapest collector car unaided');
+  assert.ok(TOKYO_CHAMPIONSHIP_PURSES[0]>
+    MARKET_BASE_PRICES.r34,'title winner should be able to afford a strong standard car');
+});
 
 test('Tokyo seeding values 70% Driver + 30% Crew results and locks a season snapshot',()=>{
   const c=registered();
