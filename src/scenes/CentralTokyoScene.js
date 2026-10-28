@@ -3792,7 +3792,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
   startProBracket(event, build, storyConfirmed = false) {
     if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
-    if (pro.activeTournament || pro.activeCrewEvent || (!isOpenCircuitAvailable(pro)&&pro.calendar.round >= 8) || this.registry.get('competitionState')?.active) return;
+    if (pro.activeTournament || pro.activeCrewEvent || pro.activeTimedEvent ||
+        (pro.activeChampionship&&!pro.activeChampionship.completed) ||
+        (!isOpenCircuitAvailable(pro)&&pro.calendar.round >= 8) ||
+        this.registry.get('competitionState')?.active) return;
     const access = getProCircuitAccess(this.registry);
     const isDev = isArkonDen(this.registry);
     if (!event || (!access.unlocked && !isDev)) return;
@@ -3817,10 +3820,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }else{
       if(pro.seasonStatus!=='ACTIVE')return;
       const rules = getProfessionalRoundEvents(pro.calendar.round).driver;
-      if (event.id !== rules.id || rules.format !== 'KNOCKOUT' || rules.stock) return;
-      if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
-      if (rules.noNos && build.nosInstalled) return;
-      if (rules.drivetrain && proDriveClass(getCarMagazineMeta(build.carId)?.drivetrain) !== proDriveClass(rules.drivetrain)) return;
+      if (event.id !== rules.id || rules.format !== 'KNOCKOUT') return;
+      // Stock-class knockout rounds use the SAME installed-part scrutineering
+      // as the event card; never silently reject a legal factory-stock car.
+      const eligibility=getProfessionalCarEligibility(build.carId,build.state,rules);
+      if(!eligibility.eligible){
+        this.proError=eligibility.reasons.join(' / ');
+        this.renderLocation(this.activeLocationId);
+        return;
+      }
     }
 
     if (!storyConfirmed) {
@@ -3915,8 +3923,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       briefingRules: {
         maxPowerKW:Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
         noNos:Boolean(event.noNos),
-        stock:Boolean(event.stock),
-        drivetrain:String(event.drivetrain||'').toUpperCase(),
+        stock:Boolean(event.stock||(!openCircuit&&event.seasonRules?.stock)),
+        drivetrain:String(event.drivetrain||(!openCircuit&&event.seasonRules?.drivetrain)||'').toUpperCase(),
       },
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
