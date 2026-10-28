@@ -1,7 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261021-r628';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261029-r713';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r607';
+import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261029-r713';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -33,7 +33,7 @@ import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=2026101
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20261029-r713';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
