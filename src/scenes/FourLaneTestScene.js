@@ -159,6 +159,8 @@ export default class FourLaneTestScene extends RaceScene {
     }
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
     this.crewFourWide=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='FOUR_WIDE';
+    this.crewTechnical=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='TECHNICAL';
+    this.crewRelay=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='RELAY';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
     if(this.proCrew) {
@@ -1445,6 +1447,8 @@ export default class FourLaneTestScene extends RaceScene {
       outcome?.status === 'NO_EVENT';
     const titleText = failure ? 'RACE COMPLETE'
       : this.crewFourWide ? 'PLACE '+(outcome?.place||4)
+      : this.crewTechnical ? 'CONSISTENCY RUN'
+      : this.crewRelay ? 'RELAY LEG RECORDED'
       : this.proCrew ? outcome?.tied?'HEAT DRAW':outcome?.won ? 'HEAT WIN' : 'HEAT LOSS'
       : champion ? 'CHAMPION'
       : advanced ? 'QUALIFIED'
@@ -1530,7 +1534,10 @@ export default class FourLaneTestScene extends RaceScene {
       : 'FOUR-WIDE OPEN';
     label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
-      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'PREPARE NEXT HEAT':'REVIEW FIXTURE')) : advanced
+      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewTechnical?'SCORE IS THREE-RUN SPREAD':
+        this.crewRelay?'SCORE IS TOTAL RELAY TIME':
+        this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+
+        ' // '+(outcome.heatNumber<3?'PREPARE NEXT HEAT':'REVIEW FIXTURE')) : advanced
       ? 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  NEXT: ' + nextStage
       : 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  ' +
         (failure ? 'RESULT NOT SAVED' : 'EVENT FINISHED'), 10, '#e0a0a4');
