@@ -416,10 +416,19 @@ export default class RaceScene extends Phaser.Scene {
       Boolean(cars[this.selectedCarId]?.ginzaDemo &&
         this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
 
-    const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
+    let storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
       || this.registry.get('district')
       || 'ODAIBA';
+    // An already-running, pre-R457 Shinagawa regional/crew heat may still
+    // have Sayaka as its opponent in the live registry. Remap only these
+    // racing categories; Chapter 08 and other scripted Sayaka drives remain.
+    if (String(raceRegionForRivals).toUpperCase() === 'SHINAGAWA' &&
+        ['TUNER_TEAM', 'CREW_BATTLE'].includes(this.registry.get('selectedRaceCategory')) &&
+        storedOpponentCharacterId === 'sayakaFujieda') {
+      storedOpponentCharacterId = 'reikaTachibana';
+      this.registry.set('selectedOpponentCharacterId', storedOpponentCharacterId);
+    }
     const regionRivals = getRivalCharacterOrderForRegion(raceRegionForRivals);
     const fallbackOpponentCharacterId =
       regionRivals.find(id => id !== this.playerCharacterId)
