@@ -81,7 +81,8 @@ import {
   createStreetShowdownRounds,
   STREET_SHOWDOWN_CASH_ENTRY_FEES,
   getStreetShowdownCouponEntryFee,
-} from '../data/streetShowdowns.js?v=20261016-showdown-fees';
+} from '../data/streetShowdowns.js?v=20261029-r716';
+import { rollStreetShowdownCouponPrize, getStreetShowdownCouponPool } from '../data/streetShowdownCouponHunt.js?v=20261029-r716';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
@@ -4004,8 +4005,12 @@ export default class MeetScene extends Phaser.Scene {
     const playerState = (this.registry.get('carStates') || {})[playerCarId] || {};
     const playerDifficulty = this.registry.get('playerDifficulty') || 'STANDARD';
     const refreshToken = this.getCompetitionRefreshToken();
-    const preferCouponPrize =
-      Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
+    // 60% of new Showdown invitations pay a single car coupon; the entry
+    // price formula and three-heat win requirement remain unchanged.
+    const preferCouponPrize = rollStreetShowdownCouponPrize(
+      () => Phaser.Math.FloatBetween(0,1)
+    );
+    const couponCarPool=getStreetShowdownCouponPool(this.selectedMeetLocation);
 
     const usedCharacters = [];
     const raceTypes = Array.from({ length: 3 }, () =>
@@ -4017,7 +4022,7 @@ export default class MeetScene extends Phaser.Scene {
     const wins = Math.max(0, Number(this.registry.get('wins') || 0));
     const generatePrizeRounds = prizeType => createStreetShowdownRounds({
       garageTier, wins, playerCarId, playerState, playerDifficulty, raceTypes,
-      prizeType, baseCashPrize: settings.cashPrize,
+      prizeType, baseCashPrize: settings.cashPrize, couponCarPool,
       seed: ['street-showdown', this.selectedMeetLocation, refreshToken, playerCarId].join(':'),
     });
     let prizeType = preferCouponPrize ? 'COUPON' : 'CASH';
@@ -4084,7 +4089,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R20261016-fees',
+      balanceVersion: 'R716-60pct-regional-coupons',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -4107,7 +4112,7 @@ export default class MeetScene extends Phaser.Scene {
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
       !this.isCompetitionOfferRosterValid(current) ||
-      current?.balanceVersion !== 'R20261016-fees' ||
+      current?.balanceVersion !== 'R716-60pct-regional-coupons' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
