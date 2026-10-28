@@ -233,6 +233,16 @@ function draw(s,state,options){
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
   addProHeatSubtitle(s,add,{heat:stageNo,total:stageTotal,y:136,size:16});
+  if(options.entryError){
+    // Registration failures must be visible on the same paddock page,
+    // not look like a button that simply refreshes with no action.
+    const notice=add(s.add.text(790,158,
+      'ENTRY NOT SAVED // '+String(options.entryError).slice(0,120),{
+        fontFamily:PIXEL,fontSize:'13px',color:'#ffb5b9',
+        backgroundColor:'#200b16ec',padding:{x:15,y:9},
+      }).setOrigin(.5,0).setDepth(248));
+    fit(notice,1040);
+  }
 
   // Compact opponent panel. The nested portrait parallelogram uses the
   // identical slope as the outer card and a dark, professional black outline.
