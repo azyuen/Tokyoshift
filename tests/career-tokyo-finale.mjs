@@ -58,6 +58,30 @@ function complete(c,knockoutWins,crewWins,fourPlace) {
   return c;
 }
 
+test('Tokyo seeding values 70% Driver + 30% Crew results and locks a season snapshot',()=>{
+  const c=registered();
+  const initial=c.activeChampionship;
+  const player=initial.entrants.find(e=>e.id===PLAYER);
+  assert.equal(player.seasonSeedScore,1);
+  assert.equal(initial.entrants.filter(e=>e.characterId).length,7);
+  const key='pro:driver:01';
+  assert.ok(c.drivers[key]);
+  const drivers=Object.keys(c.drivers).sort(),teams=Object.keys(c.teams).sort();
+  const team=c.teams[teams[drivers.indexOf(key)]];
+  assert.ok(team);
+  c.activeChampionship=null;
+  c.drivers[key].seasonPoints=120;
+  team.seasonPoints=120;
+  const next=createProvisionalChampionship(c);
+  assert.ok(next.championship,next.error);
+  const selected=next.championship.entrants.find(e=>e.id===key);
+  assert.ok(selected,'top season performer enters Tokyo draw');
+  assert.equal(selected.seasonSeedScore,2.3);
+  assert.equal(selected.seed,1);
+  // The old created draw never changes after standings move.
+  assert.equal(initial.entrants.find(e=>e.id===PLAYER).seasonSeedScore,1);
+});
+
 test('championship retains 16 entrants and all three actual scoring stages',()=>{
   const c=complete(registered(),true,3,1);
   const rows=championshipStandings(c.activeChampionship);
