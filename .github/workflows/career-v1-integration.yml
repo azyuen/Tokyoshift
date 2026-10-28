@@ -1,0 +1,34 @@
+name: Career v1 integration audit
+on:
+  push:
+    branches: [feature/career-v1-completion]
+    paths:
+      - 'src/data/tokyoChampionship.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/OfficePanel.js'
+      - 'tests/career-tokyo-finale.mjs'
+      - '.github/workflows/career-v1-integration.yml'
+  workflow_dispatch:
+jobs:
+  progression-and-economy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Season, championship, rewards, and saves
+        run: node --test tests/career-pro-third-option.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs tests/tokyoChampionship.simulation.test.js tests/proSeason.simulation.test.js
+  established-pro-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Open Circuit, professional cups, season and sponsor compatibility
+        run: node --test tests/prestige-trophies-r583.mjs tests/pro-tournament-phase2.mjs tests/pro-sponsor-r692.mjs tests/pro-ranking-sponsor-r628.mjs
