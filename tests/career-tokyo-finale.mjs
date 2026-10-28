@@ -91,6 +91,25 @@ test('true Tokyo Champion receives durable title and correct purse exactly once'
   assert.equal(officeRecord.careerCompleted,won);
 });
 
+test('legacy won Tokyo titles migrate and never count twice on reward recovery',()=>{
+  const c=complete(registered(),true,3,1);
+  assert.equal(c.activeChampionship.championId,PLAYER);
+  // Simulate a completed old save with history but no dedicated v1 counters.
+  c.championshipHistory=[{id:c.activeChampionship.id,season:c.season,
+    championId:PLAYER,completed:true}];
+  delete c.tokyoChampionWins;delete c.careerCompleted;
+  delete c.championshipSettledIds;
+  const restored=normaliseProCircuitState(c);
+  assert.equal(restored.tokyoChampionWins,1);
+  assert.equal(restored.careerCompleted,true);
+  const award=settleTokyoChampionship(restored);
+  assert.ok(award.circuit,award.error);
+  assert.equal(award.circuit.tokyoChampionWins,1);
+  assert.equal(award.circuit.championshipHistory.length,1);
+  assert.equal(award.circuit.championshipSettledIds.length,1);
+  assert.equal(settleTokyoChampionship(award.circuit).cashPrize,0);
+});
+
 test('losing final cannot award unearned Tokyo Champion status',()=>{
   const c=complete(registered(),false,0,4);
   assert.notEqual(c.activeChampionship.championId,PLAYER);
