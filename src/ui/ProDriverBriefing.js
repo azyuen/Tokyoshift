@@ -325,7 +325,7 @@ function draw(s,state,options){
     if(unpaid){close();options.onCancel?.();}
     else openForfeit();
   },{grey:true});
-  const eligibleGridLabel = unpaid?'GO TO GRID // '+cash(state.entryFee):'NEXT HEAT';
+  const eligibleGridLabel = unpaid?(state.entryFee===0?'GO TO GRID // SPONSORED':'GO TO GRID // '+cash(state.entryFee)):'NEXT HEAT';
   btn(1368,779,246,54,eligibility.eligible
     ? eligibleGridLabel : 'INELIGIBLE CAR SETUP',()=>{
     if(!eligibility.eligible)return;
@@ -513,7 +513,7 @@ function draw(s,state,options){
   function openForfeit(){
     showCompactProForfeit(s,{
       title:'FORFEIT DRIVER EVENT?',
-      message:'The entry fee is not refunded. Remaining rounds count as losses and Daichi will restore stored upgrades.',
+      message:'Remaining rounds count as losses and Daichi will restore stored upgrades. Aruken covers new professional entries.',
       onConfirm:()=>{close();options.onForfeit?.();},
     });
   }

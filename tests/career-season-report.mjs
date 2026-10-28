@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createDefaultProCircuitState} from '../src/data/proCircuit.js';
 import {
   completeSeasonRound,getProQualification,getProfessionalSeasonReport,
-  nextProfessionalSeason,startProfessionalSeason,forfeitProfessionalSeason,
+  nextProfessionalSeason,startProfessionalSeason,forfeitProfessionalSeason,claimProfessionalSeasonBonus,
 } from '../src/data/proSeason.js';
 
 const venue=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
@@ -55,7 +55,9 @@ test('qualified finished season has standings, records and explicit Tokyo entry'
   assert.deepEqual(duplicate,c,'last-round report is idempotent');
   assert.ok(nextProfessionalSeason(c).error,'qualified season cannot skip championship');
   c.activeChampionship={id:'tokyo:s1',season:1,completed:true,championId:'player:driver'};
-  const reset=nextProfessionalSeason(c);
+  const paid=claimProfessionalSeasonBonus(c);
+  assert.ok(paid.circuit);
+  const reset=nextProfessionalSeason(paid.circuit);
   assert.ok(reset.circuit,reset.error);
   assert.equal(reset.circuit.season,2);
   assert.equal(reset.circuit.seasonStatus,'OPEN');
@@ -72,7 +74,9 @@ test('failed finished season reports shortfall and safely reopens the circuit',(
   assert.equal(report.canEnterTokyo,false);
   assert.equal(report.driverShortfall,0);
   assert.equal(report.crewShortfall,40);
-  const reset=nextProfessionalSeason(c);
+  const paid=claimProfessionalSeasonBonus(c);
+  assert.ok(paid.circuit);
+  const reset=nextProfessionalSeason(paid.circuit);
   assert.ok(reset.circuit,reset.error);
   assert.equal(reset.circuit.seasonStatus,'OPEN');
   assert.equal(reset.circuit.calendar.archives.length,1);

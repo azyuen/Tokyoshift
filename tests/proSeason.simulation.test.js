@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createDefaultProCircuitState } from '../src/data/proCircuit.js';
 import {
   PRO_SEASON_LENGTH, PRO_SEASON_CALENDAR, PRO_QUALIFICATION,
-  completeSeasonRound, getProQualification, nextProfessionalSeason,
+  completeSeasonRound, getProQualification, nextProfessionalSeason, claimProfessionalSeasonBonus,
   getProfessionalCarEligibility, getFactoryStockStatus,
   scoreProfessionalTimedRuns,
 } from '../src/data/proSeason.js';
@@ -61,7 +61,9 @@ for(const [name,plan] of Object.entries(plans)) {
       assert.ok(nextProfessionalSeason(state).error,'qualified season cannot skip championship');
       state.activeChampionship={id:'tokyo:s1',season:1,completed:true};
     }
-    const next=nextProfessionalSeason(state);
+    const paid=claimProfessionalSeasonBonus(state);
+    assert.ok(paid.circuit,'season bonuses must settle before rollover');
+    const next=nextProfessionalSeason(paid.circuit);
     assert.ok(next.circuit,'season rollover should succeed');
     assert.equal(next.circuit.season,2);
     assert.equal(next.circuit.calendar.round,0);

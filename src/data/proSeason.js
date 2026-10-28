@@ -10,9 +10,9 @@ import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getStage3CalibrationEligibility } from './stage3Calibration.js?v=20261026-r687';
 
 export const PRO_SEASON_LENGTH = 8;
-export const OPEN_CIRCUIT_CREW_FEE = 35000;
-export const OPEN_CIRCUIT_TROPHY_FEE = 45000;
-export const OPEN_CIRCUIT_TROPHY_PRIZE = 90000;
+export const OPEN_CIRCUIT_CREW_FEE = 0;
+export const OPEN_CIRCUIT_TROPHY_FEE = 0;
+export const OPEN_CIRCUIT_TROPHY_PRIZE = 450000;
 // Cooldown is event-based, never real-world time. Two other completed open
 // events are needed after a trophy attempt before the next one is offered.
 export const OPEN_CIRCUIT_TROPHY_COOLDOWN = 2;
@@ -93,6 +93,8 @@ export function forfeitProfessionalSeason(raw) {
   if(c.seasonStatus!=='ACTIVE'&&
     !(c.seasonStatus==='COMPLETE'&&getProQualification(c).qualified))
     return {error:'NO ACTIVE SEASON TO FORFEIT'};
+  const pending=getProfessionalSeasonBonus(c);
+  if(pending&&!pending.claimed)return {error:'COLLECT SEASON RANKING AWARDS FIRST'};
   const result={season:c.season,forfeited:true,roundsCompleted:c.calendar.round,
     driverPoints:c.playerDriver.seasonPoints,crewPoints:c.playerTeam.seasonPoints};
   c.calendar={round:0,history:[],result:null,
@@ -132,8 +134,8 @@ export function getProSeasonSkillTier(round,slot=0,invitation=false) {
   const field=PRO_SKILL_FIELDS[phase];
   return field[Math.abs(Math.floor(slot)+Math.max(0,Math.floor(Number(round)||0))*3)%field.length];
 }
-export const PRO_INVITATIONAL_DRIVER_FEE=90000;
-export const PRO_INVITATIONAL_DRIVER_PRIZE=250000;
+export const PRO_INVITATIONAL_DRIVER_FEE=0;
+export const PRO_INVITATIONAL_DRIVER_PRIZE=1250000;
 const PRO_INVITATIONAL_DRIVER_ROUNDS=Object.freeze([0,2,3,5,7]);
 export function getProInvitationalDiscipline(raw) {
   const c=normaliseProCircuitState(raw),q=getProQualification(c);
@@ -289,6 +291,10 @@ export function completeProfessionalTimedEvent(raw) {
   const summary={id:event.id,discipline:'DRIVER',format:event.format,
     placing:result.tied?1:result.won?1:2,points,playerScore:result.playerScore,
     rivalScore:result.rivalScore,tied:result.tied,won:result.won};
+  const rankBefore=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver')?.seed||32;
+  const sponsor=getProPrizeWithBonus(result.won?475000:result.tied?250000:100000,rankBefore);
+  Object.assign(summary,{cashPrize:sponsor.totalPrize,sponsorBonus:sponsor.bonusCash,
+    sponsorPercent:sponsor.bonusPercent,rankBefore});
   // Apply the player's standing before generating the round's final table.
   // completeSeasonRound handles AI standings, not the player's points.
   c.playerDriver.entered++;
@@ -300,7 +306,7 @@ export function completeProfessionalTimedEvent(raw) {
   const next=completeSeasonRound(c,summary,[]);
   if(next.calendar.round===c.calendar.round)return {error:'SEASON ROUND NOT ADVANCED'};
   next.activeTimedEvent=null;
-  return {circuit:next,summary};
+  return {circuit:next,summary,cashPrize:summary.cashPrize};
 }
 export function getProfessionalTimedEventResult(raw) {
   const c=normaliseProCircuitState(raw),e=c.activeTimedEvent;
@@ -324,6 +330,33 @@ export function getProQualification(raw) {
     qualified,roundsRemaining,driverEventsNeeded,crewEventsNeeded,
     qualificationPossible:qualified||driverEventsNeeded+crewEventsNeeded<=roundsRemaining};
 }
+// Separate once-per-season awards make Driver and Crew rankings valuable
+// beyond championship qualification. No game balance, physics or AI changes.
+export const PRO_SEASON_RANKING_PRIZES=Object.freeze({
+  first:1500000,top3:1000000,top5:600000,top10:300000,
+});
+export function getProfessionalSeasonBonus(raw) {
+  const c=normaliseProCircuitState(raw),r=c.calendar.result;
+  if(c.seasonStatus!=='COMPLETE'||c.calendar.round!==PRO_SEASON_LENGTH||
+     !r||r.season!==c.season)return null;
+  const rank=(rows,id)=>Array.isArray(rows)?rows.findIndex(x=>x?.id===id)+1:0;
+  const payout=n=>n===1?PRO_SEASON_RANKING_PRIZES.first:
+    n>1&&n<=3?PRO_SEASON_RANKING_PRIZES.top3:
+    n>3&&n<=5?PRO_SEASON_RANKING_PRIZES.top5:
+    n>5&&n<=10?PRO_SEASON_RANKING_PRIZES.top10:0;
+  const driverRank=rank(r.drivers,'player:driver'),crewRank=rank(r.teams,'player:team');
+  const driverPrize=payout(driverRank),crewPrize=payout(crewRank);
+  return {season:c.season,driverRank,crewRank,driverPrize,crewPrize,
+    total:driverPrize+crewPrize,claimed:c.seasonBonusClaimed.includes(c.season)};
+}
+export function claimProfessionalSeasonBonus(raw) {
+  const c=normaliseProCircuitState(raw),award=getProfessionalSeasonBonus(c);
+  if(!award)return {error:'SEASON STANDINGS NOT FINAL'};
+  if(award.claimed)return {circuit:c,cashPrize:0,alreadyClaimed:true,award};
+  c.seasonBonusClaimed=[...c.seasonBonusClaimed,c.season].slice(-250);
+  return {circuit:c,cashPrize:award.total,alreadyClaimed:false,award};
+}
+
 // A read-only season report shared by the header and final standings.
 // Keep championship qualification separate from a season that has actually
 // finished all eight rounds: reaching the targets early does not end a season.
@@ -346,9 +379,10 @@ export function getProfessionalSeasonReport(raw) {
     crewShortfall:Math.max(0,q.crewRequired-q.crew),
     canEnterTokyo:completed&&q.qualified,
     eventCount:c.calendar.history.length,
+    seasonBonus:getProfessionalSeasonBonus(c),
   };
 }
-export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
+export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:0,prizeCash:1050000,prizes:[1050000,450000,200000,50000],fixtures:3,squadSize:5,fieldSize:3});
 
 // Professional cars must pass the SAME class rules as the player's car.
 // Select at registration and save the resulting legal build; never give a
@@ -392,8 +426,8 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
 }
 // A genuine third official event choice, using existing player-driven crew modes.
 // Deliberately separate from Open Circuit trophies and the normal crew slot.
-export const PRO_ALT_CREW_ENTRY_FEE = 90000;
-export const PRO_ALT_CREW_PRIZES = Object.freeze([250000,115000,50000,0]);
+export const PRO_ALT_CREW_ENTRY_FEE = 0;
+export const PRO_ALT_CREW_PRIZES = Object.freeze([1250000,575000,250000,50000]);
 export function getAlternativeProCrewFormat(round) {
   const standard=getProfessionalRoundEvents(round).crew.format;
   return {DUEL:'FOUR_WIDE',RELAY:'TECHNICAL',TECHNICAL:'DUEL',FOUR_WIDE:'RELAY'}[standard]||'DUEL';
@@ -504,6 +538,8 @@ export function nextProfessionalSeason(raw) {
      !c.championshipSettledIds.includes(c.activeChampionship.id))
     return {error:'CLAIM TOKYO CHAMPIONSHIP AWARDS BEFORE STARTING NEXT SEASON'};
   if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
+  const award=getProfessionalSeasonBonus(c);
+  if(award&&!award.claimed)return {error:'COLLECT SEASON RANKING AWARDS BEFORE STARTING THE NEXT SEASON'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
   if(c.activeChampionship?.completed){
@@ -580,7 +616,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
       return {error:'TRI-DRIVE NEEDS ONE FWD, ONE RWD AND ONE AWD CAR'};
   }
   const alternative=seasonChoice==='alternative';
-  const fee=openCircuit?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):
+  const fee=openCircuit?(trophy?.entryFee??OPEN_CIRCUIT_CREW_FEE):
     alternative?PRO_ALT_CREW_ENTRY_FEE:CREW_SERIES.entryFee;
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
   const id=(trophyId?'trophy:'+trophyId:alternative?'crewAlt':'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
@@ -605,8 +641,8 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     openCircuit,trophyId:trophy?.id||null,
     round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,
     history:[],fixture:null,entryFee:fee,prizes:trophy?
-      [c.trophyWins[trophy.id]?trophy.repeatCash:trophy.prizeCash,90000,40000,0]:
-      openCircuit?[70000,30000,15000,0]:alternative?[...PRO_ALT_CREW_PRIZES]:[...CREW_SERIES.prizes],
+      [c.trophyWins[trophy.id]?trophy.repeatCash:trophy.prizeCash,450000,200000,50000]:
+      openCircuit?[350000,150000,75000,35000]:alternative?[...PRO_ALT_CREW_PRIZES]:[...CREW_SERIES.prizes],
     difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-fee};
 }
@@ -641,7 +677,7 @@ export function getCrewFixture(raw) {
       t.entrants.some(e => !e || typeof e.id !== 'string' || !Array.isArray(e.drivers) || e.drivers.length !== 3 || e.drivers.some(d => !d || !cars[d.carId] || !Number.isFinite(d.performance) || !Number.isFinite(d.skill))) ||
       new Set(t.entrants.map(e => e.id)).size !== 4 || !t.entrants.some(e => e.id === PLAYER) ||
       !Array.isArray(t.history) || t.history.length !== t.round ||
-      !Array.isArray(t.prizes) || t.prizes.length !== 4 || t.prizes.some(n => !Number.isFinite(n) || n < 0 || n > 500000) ||
+      !Array.isArray(t.prizes) || t.prizes.length !== 4 || t.prizes.some(n => !Number.isFinite(n) || n < 0 || n > 3000000) ||
       (t.squadIds.length < 3 || t.squadIds.length > 5)&&t.squadIds.length!==7 || new Set(t.squadIds).size !== t.squadIds.length ||
       t.schedule[t.round].length !== 2 || t.schedule[t.round].some(p => !Array.isArray(p) || p.length !== 2 || p.some(id => !t.entrants.some(e => e.id === id))) ||
       new Set(t.schedule[t.round].flat()).size !== 4) return null;
@@ -747,11 +783,12 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     c.playerTeam.entered++;
     const points=t.openCircuit?0:[2,7,13,20][wins];
     c.playerTeam.seasonPoints+=points;
-    const baseCashPrize=t.openCircuit?(t.trophyId?(wins===3?OPEN_CIRCUIT_TROPHY_PRIZE:0):
-      [0,15000,30000,70000][wins]):
-      Math.floor((t.seasonChoice==='alternative'
-        ?[0,PRO_ALT_CREW_PRIZES[2],PRO_ALT_CREW_PRIZES[1],PRO_ALT_CREW_PRIZES[0]][wins]
-        :[0,40000,90000,210000][wins])*(c.crewSeriesWins>0?.65:1));
+    const baseCashPrize=t.openCircuit?(t.trophyId?
+      [35000,t.prizes[2],t.prizes[1],t.prizes[0]][wins]:
+      [35000,75000,150000,350000][wins]):
+      (t.seasonChoice==='alternative'
+        ?[50000,PRO_ALT_CREW_PRIZES[2],PRO_ALT_CREW_PRIZES[1],PRO_ALT_CREW_PRIZES[0]][wins]
+        :[50000,200000,450000,1050000][wins]);
     const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
     const cashPrize=sponsor?.totalPrize??baseCashPrize;
     if(wins===3&&!t.openCircuit)c.crewSeriesWins++;
@@ -773,8 +810,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   for(const round of t.history)for(const match of round.fixtures)elo(table[match.ids[0]],table[match.ids[1]],match.score[0]>=2);
   const result=getCrewSeriesTable(t),place=result.findIndex(r=>r.id===PLAYER)+1;
   result.forEach((r,i)=>{table[r.id].entered++;if(!t.openCircuit)table[r.id].seasonPoints+=[20,15,10,5][i];});
-  const baseCashPrize=t.openCircuit?t.prizes[place-1]:
-    Math.floor(t.prizes[place-1]*(c.crewSeriesWins>0?.65:1));
+  const baseCashPrize=Math.max(35000,t.prizes[place-1]);
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
   const cashPrize=sponsor?.totalPrize??baseCashPrize;
   if(place===1&&!t.openCircuit)c.crewSeriesWins++;
@@ -845,7 +881,8 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
   // Accept the actual paid baseline from the race scene (including Easy-mode
   // multipliers); never calculate sponsor money from the event's entry fee.
   const baseCashPrize=roundsWon===roundCount?
-    Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):0;
+    Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):
+    Math.max(30000,Math.floor(Math.max(0,Number(state.prizeCash||0))*.12));
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
   const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,

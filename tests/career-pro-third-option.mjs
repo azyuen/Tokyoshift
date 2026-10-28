@@ -48,9 +48,10 @@ test('each of eight rounds has three genuine offers with guaranteed Driver and C
     assert.equal(getProDriverInvitationRules(round).format,'KNOCKOUT');
   }
   assert.deepEqual(PRO_QUALIFICATION,{driver:60,crew:40});
-  assert.ok(PRO_INVITATIONAL_DRIVER_FEE>0);
+  assert.equal(PRO_INVITATIONAL_DRIVER_FEE,0);
   assert.ok(PRO_INVITATIONAL_DRIVER_PRIZE>0);
-  assert.ok(PRO_ALT_CREW_ENTRY_FEE>CREW_SERIES.entryFee);
+  assert.equal(PRO_ALT_CREW_ENTRY_FEE,0);
+  assert.equal(CREW_SERIES.entryFee,0);
   assert.ok(PRO_ALT_CREW_PRIZES[0]>CREW_SERIES.prizes[0]);
 });
 

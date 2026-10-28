@@ -45,7 +45,7 @@ test('open driver payout adds exact sponsor cash but never awards qualification 
   assert.equal(settleLegacySeasonEvent(result,state,3,90000).openCircuitTick,1);
 });
 
-test('official Season pays sponsor commission without adding bonus points and zero-prize defeats still pay zero',()=>{
+test('official Season pays sponsor commission without extra points and completed defeats earn cash',()=>{
   const rounds=Array(3).fill({characterId:'unknown',encounterRating:3});
   const c=createDefaultProCircuitState();
   c.playerDriver.rating=2500;
@@ -60,7 +60,7 @@ test('official Season pays sponsor commission without adding bonus points and ze
   assert.equal(season.playerDriver.seasonPoints,20);
   const lose=settleLegacySeasonEvent(createDefaultProCircuitState(),
     {...state,proSeasonId:'open:sponsor:loss',openCircuit:true},0,0);
-  assert.equal(lose.lastTournament.cashPrize,0);
+  assert.equal(lose.lastTournament.cashPrize,30000);
   assert.equal(lose.lastTournament.sponsorBonus,0);
 });
 
@@ -94,8 +94,8 @@ test('open crew sponsor bonus uses CREW rank and settles only on completed paid 
   const complete=settleCrewSeriesFixture(registry.get('proCircuit'),fixture.id);
   assert.equal(complete.status,'COMPLETE');
   assert.equal(complete.summary.rankBefore,1);
-  assert.equal(complete.cashPrize,140000);
-  assert.equal(complete.summary.sponsorBonus,70000);
+  assert.equal(complete.cashPrize,700000);
+  assert.equal(complete.summary.sponsorBonus,350000);
   assert.equal(complete.summary.sponsorPercent,100);
   assert.equal(complete.circuit.playerTeam.seasonPoints,0);
   assert.equal(complete.circuit.calendar.round,0);
@@ -115,7 +115,7 @@ test('season crew #1 receives double the paid sprint purse but only 20 season po
   const squad=getCrewSeriesUnits(registry).slice(0,3).map(u=>u.id);
   const entry=registerCrewSeries(registry,squad);
   assert.equal(entry.circuit.activeCrewEvent.openCircuit,false);
-  assert.equal(entry.cash,425000); // 75k entry remains unchanged
+  assert.equal(entry.cash,500000); // Aruken funds professional entry
   registry.set('proCircuit',entry.circuit);
   const initialFixture=getCrewFixture(entry.circuit);
   const prepared=preparePlayerCrewFixture(registry,squad,initialFixture.id);
@@ -131,8 +131,8 @@ test('season crew #1 receives double the paid sprint purse but only 20 season po
   const fixture=getCrewFixture(registry.get('proCircuit'));
   const earned=settleCrewSeriesFixture(registry.get('proCircuit'),fixture.id);
   assert.equal(earned.status,'COMPLETE');
-  assert.equal(earned.cashPrize,420000);
-  assert.equal(earned.summary.sponsorBonus,210000);
+  assert.equal(earned.cashPrize,2100000);
+  assert.equal(earned.summary.sponsorBonus,1050000);
   assert.equal(earned.summary.sponsorPercent,100);
   assert.equal(earned.circuit.calendar.round,1);
   assert.equal(earned.circuit.playerTeam.seasonPoints,20);

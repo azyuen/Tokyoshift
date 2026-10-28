@@ -1,14 +1,14 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261029-r713';
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261029-r714';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261029-r714';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261022-r635';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261029-r714';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
 import { showProVictoryResults } from './ProVictoryResults.js?v=20261029-r713';
 const FONT='"Rajdhani", sans-serif';
@@ -166,7 +166,7 @@ export function drawCrewSidebar(s,event,side) {
   // if a day/night offer happens to rotate at a five-minute boundary.
   const crewFormat=f?.format||t?.format||event.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
-  const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):event.entryFee||CREW_SERIES.entryFee;
+  const fee=t?.entryFee??(open?(event.trophyId?trophy?.entryFee??OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):event.entryFee??CREW_SERIES.entryFee);
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
     !(c.activeChampionship&&!c.activeChampionship.completed)&&!s.registry.get('competitionState')?.active&&
@@ -212,7 +212,8 @@ export function drawCrewSidebar(s,event,side) {
     '1ST  '+cash(prizes[0])+' // 2ND  '+cash(prizes[1]),
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
-  drawProEventSidebarDetails(s,side,lines);
+  drawProEventSidebarDetails(s,side,[fee===0?'ARUKEN SPONSORSHIP // ENTRY COVERED':
+    'LEGACY PAID ENTRY  '+cash(fee),...lines]);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
@@ -315,7 +316,7 @@ export function confirmCrewForfeit(s) {
   if(!event)return;
   return showCompactProForfeit(s,{
     title:'FORFEIT CREW EVENT?',
-    message:'The entry fee is not refunded. Remaining heats are lost, and this competition cannot be resumed.',
+    message:'Aruken covers event entry. Remaining heats are lost, and this competition cannot be resumed.',
     onConfirm:()=>{
       const out=forfeitCrewSeries(s.registry,event.id);
       if(out.error){s.proError=out.error;return;}
@@ -550,7 +551,22 @@ export function showSeasonRecords(s,complete=false) {
     ': DRIVER #'+(last.drivers?.findIndex(r=>r.id==='player:driver')+1||'—')+
     ' · CREW #'+(last.teams?.findIndex(r=>r.id==='player:team')+1||'—'),17);
 
-  o.btn(300,768,390,'CLOSE REPORT',o.close);
+  const award=finished?getProfessionalSeasonBonus(c):null;
+  if(award) {
+    o.label(90,715,'SEASON RANKING AWARDS  ·  DRIVER #'+award.driverRank+
+      '  '+cash(award.driverPrize)+'  //  CREW #'+award.crewRank+'  '+cash(award.crewPrize)+
+      '  //  TOTAL '+cash(award.total)+(award.claimed?'  ·  CLAIMED':''),17).setColor('#f1cd84');
+  }
+  if(award&&!award.claimed) {
+    o.btn(300,768,390,'COLLECT '+cash(award.total),()=>{
+      const out=claimProfessionalSeasonBonus(circuit(s));
+      if(out.error)return;
+      if(commit(s,{proCircuit:out.circuit,
+        cash:Number(s.registry.get('cash')||0)+out.cashPrize})){
+        o.close();showSeasonRecords(s,true);
+      }
+    });
+  } else o.btn(300,768,390,'CLOSE REPORT',o.close);
   if(!finished)return;
   if(report.canEnterTokyo&&!c.activeChampionship?.completed) {
     o.btn(1090,768,600,c.activeChampionship?
@@ -839,7 +855,7 @@ export function showProSeasonWithdrawal(s){
   dialog=seasonConfirm(s,{
     title:'FORFEIT CURRENT SEASON?',
     description:`Season ${c.season} · ${c.calendar.round}/8 rounds completed. This action cannot be undone.`,
-    details:'Current-season points and any active professional event are lost without a refund. Cars, crew, money and permanent trophies remain yours.',
+    details:'Current-season points and any active professional event are lost. Cars, crew, money and permanent trophies remain yours.',
     confirmLabel:'CONFIRM FORFEIT',
     onConfirm:()=>{
       const next=forfeitProfessionalSeason(circuit(s));

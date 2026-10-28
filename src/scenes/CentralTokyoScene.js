@@ -1,14 +1,14 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261029-r713';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261029-r714';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261029-r713';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261029-r713';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261029-r714';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261029-r713';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261029-r713';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261029-r714';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261029-r714';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
@@ -50,7 +50,7 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
-} from '../data/proCircuit.js?v=20261021-r628';
+} from '../data/proCircuit.js?v=20261029-r714';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261021-r628';
@@ -3029,7 +3029,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const rotation=getOpenCircuitRotation();
       const driverBase=PRO_DRAG_EVENTS[rotation.rotationIndex%PRO_DRAG_EVENTS.length];
       const driver={...driverBase,requiredWins:0,openCircuit:true,
-        entryFee:Math.round(driverBase.entryFee*.55/1000)*1000,
+        entryFee:0,
         prizeCash:Math.round(driverBase.prizeCash*.6/1000)*1000};
       const crewFormat=getOpenCircuitCrewFormat(rotation,pro.openCircuitTick);
       const crewLabel={DUEL:'CREW CLUB SPRINT',RELAY:'CREW RELAY',
@@ -3277,7 +3277,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 136,
-        event.seasonEnd?'RESULTS READY':event.trophySlotClosed?'':'ENTRY ' + money(event.entryFee),
+        event.seasonEnd?'RESULTS READY':event.trophySlotClosed?'':event.entryFee===0?'ARUKEN SPONSORED':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
