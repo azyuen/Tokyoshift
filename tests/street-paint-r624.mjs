@@ -96,12 +96,13 @@ test('Oshiage has three actual buttons, named selection and two-page street cata
   }
 });
 
-test('R624 PWA rollout keeps save keys and original engineering untouched',()=>{
+test('current PWA rollout keeps save keys and original engineering untouched',()=>{
   const html=source('index.html'),sw=source('sw.js'),main=source('src/main.js');
-  assert.match(html,/R624/);
-  assert.match(sw,/R624/);
-  assert.match(main,/OshiageScene\.js\?v=20261020-r624/);
-  assert.match(main,/MeetScene\.js\?v=20261020-r624/);
-  assert.match(main,/CentralTokyoScene\.js\?v=20261020-r624/);
+  const build=JSON.parse(source('version.json')).build;
+  assert.ok(html.includes('id="build-stamp">'+build+'</div>'));
+  assert.ok(sw.includes("const BUILD = '"+build+"';"));
+  assert.match(main,/OshiageScene\.js\?v=\d{8}-r\d+/);
+  assert.match(main,/MeetScene\.js\?v=\d{8}-r\d+/);
+  assert.match(main,/CentralTokyoScene\.js\?v=\d{8}-r\d+/);
   assert.match(source('src/state/GameState.js'),/export const SAVE_KEY = 'tokyoShiftSaveState'/);
 });

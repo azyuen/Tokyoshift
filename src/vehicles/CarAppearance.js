@@ -205,6 +205,14 @@ function restoreSingleLayerDarkDetails(scene, car) {
   if (!visual.singleLayerModular) return false;
   const keys = getCarTextureKeys(car);
   if (!scene.textures.exists(keys.body)) return false;
+  // Rebuilding this full-resolution buffer on each workshop visit can freeze
+  // mobile browsers. An already-prepared texture stays valid for the cached
+  // source image, so use it rather than allocating another pixel array.
+  const safeKey = keys.body + '_rgbaSafe';
+  if (scene.textures.exists(safeKey)) {
+    visual.runtimeBodyTextureKey = safeKey;
+    return true;
+  }
 
   const source = scene.textures.get(keys.body).getSourceImage();
   const width = Number(source?.naturalWidth || source?.width || 0);
@@ -229,12 +237,12 @@ function restoreSingleLayerDarkDetails(scene, car) {
       if (px[i + 3] > 0) px[i + 3] = Math.max(px[i + 3], 1);
     }
     ctx.putImageData(imageData, 0, 0);
-    const texture = scene.textures.createCanvas(keys.body + '_rgbaSafe', width, height);
+    const texture = scene.textures.createCanvas(safeKey, width, height);
     const tctx = texture.getContext();
     tctx.clearRect(0, 0, width, height);
     tctx.drawImage(canvas, 0, 0);
     texture.refresh();
-    visual.runtimeBodyTextureKey = keys.body + '_rgbaSafe';
+    visual.runtimeBodyTextureKey = safeKey;
     return true;
   } catch (e) {
     return false;
@@ -247,6 +255,14 @@ function deriveModularTexturesFromPreview(scene, car) {
 
   const keys = getCarTextureKeys(car);
   if (!scene.textures.exists(keys.body)) return false;
+  // The six derived canvases are shared between scenes. Splitting the same
+  // full-resolution source pixels on every paint-room entry caused stalls
+  // on memory-constrained devices.
+  const derivedKeys = [
+    keys.paint, keys.overlay, keys.bodyKitPaint, keys.bodyKit,
+    keys.spoilerPaint, keys.spoiler,
+  ];
+  if (derivedKeys.every(key => scene.textures.exists(key))) return true;
 
   const source = scene.textures.get(keys.body).getSourceImage();
   const width = Number(source?.naturalWidth || source?.width || 0);
