@@ -21,6 +21,7 @@ const scene=source('src/scenes/CentralTokyoScene.js');
 const driverBrief=source('src/ui/ProDriverBriefing.js');
 const crewPanel=source('src/ui/ProSeasonPanel.js');
 const race=source('src/scenes/FourLaneTestScene.js');
+const victory=source('src/ui/ProVictoryResults.js');
 
 function withEpoch(fn) {
   const previous=globalThis.localStorage;
@@ -97,6 +98,9 @@ test('technical UI and race cutscene do not call a single fast run a victory',()
   assert.match(crewPanel,/currentFormat==='TECHNICAL'\?'RUN RECORDED'/);
   assert.match(race,/this.crewTechnical \? 'CONSISTENCY RUN'/);
   assert.match(race,/SCORE IS THREE-RUN SPREAD/);
+  assert.match(victory,/CONSISTENCY SPREAD/);
+  assert.match(victory,/precision\|\|relay\?'RECORDED'/);
+  assert.match(crewPanel,/format:summary.format\|\|round.format/);
 });
 
 test('opponent briefing hides private power/torque and shows only event class rules',()=>{
