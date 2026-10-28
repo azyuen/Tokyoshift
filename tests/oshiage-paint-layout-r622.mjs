@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { ensureDerivedModularCarTextures, getCarTextureKeys } from '../src/vehicles/CarAppearance.js';
 
 const source = readFileSync(new URL('../src/scenes/OshiageScene.js',import.meta.url),'utf8');
 const layout = readFileSync(new URL('../src/ui/ShowdownLayout.js',import.meta.url),'utf8');
@@ -51,4 +52,39 @@ test('existing background nudge and paint transaction remain untouched',()=>{
   assert.match(apply,/saveSessionState\(this\.registry\)/);
   assert.match(apply,/setCarBodyPaint\(this\.paintObjects, paintColor\)/);
   assert.match(main,/OshiageScene\.js\?v=20261020-r62[234]/);
+});
+
+test('already-derived car layers are not reprocessed on paint-room entry',()=>{
+  const car = { id: 'ae86', visual: { deriveModularFromPreview: true } };
+  const keys = getCarTextureKeys(car);
+  const existing = new Set(Object.values(keys));
+  const scene = { textures: {
+    exists: key => existing.has(key),
+    get: () => { throw new Error('Cached derivation must not read source pixels'); },
+  } };
+  assert.doesNotThrow(() => ensureDerivedModularCarTextures(scene, { ae86: car }));
+});
+
+test('single-layer RGBA-safe texture is reused instead of regenerated',()=>{
+  const car = { id: 'example', visual: { singleLayerModular: true } };
+  const keys = getCarTextureKeys(car);
+  const safe = keys.body + '_rgbaSafe';
+  const scene = { textures: {
+    exists: key => key === keys.body || key === safe,
+    get: () => { throw new Error('Cached safe buffer must not be rebuilt'); },
+  } };
+  assert.doesNotThrow(() => ensureDerivedModularCarTextures(scene, { example: car }));
+  assert.equal(car.visual.runtimeBodyTextureKey, safe);
+});
+
+test('paint navigation prepares only visible cars and loads one phase background',()=>{
+  const prepare = source.slice(source.indexOf('  prepareVisibleCarTextures() {'),
+    source.indexOf('  showLocation('));
+  assert.match(prepare,/add\(this\.selectedCar\(\)\.car\)/);
+  assert.match(prepare,/this\.getEliteLineup\(venueId\)\.forEach/);
+  assert.doesNotMatch(prepare,/Object\.entries\(cars\)/);
+  assert.match(source,/this\.room === 'paint' \? \[this\.phase\] : \['day', 'night'\]/);
+  assert.match(source,/this\.prepareVisibleCarTextures\(\)/);
+  const clear = source.slice(source.indexOf('  clearView() {'),source.indexOf('  drawShell() {'));
+  assert.match(clear,/this\.entryTween\.stop\(\);[\s\S]*this\.paintBusy = false/);
 });
