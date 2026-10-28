@@ -949,6 +949,27 @@ function migrateShinagawaSayakaRecruit(entry) {
   return { ...entry, characterId: 'reikaTachibana' };
 }
 
+// Old saved 3v3 events can hold a frozen opponent/lineup snapshot, unlike
+// freshly generated crew battles. Correct the identity in those snapshots
+// without resetting scores, heat order, car setup or the player's tuned loan.
+function migrateLegacyShinagawaCrewBattle(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return state;
+  const region = String(state.regionId || '').toUpperCase();
+  const rounds = Array.isArray(state.rounds) ? state.rounds.map(round =>
+    region === 'SHINAGAWA' && round?.characterId === 'sayakaFujieda'
+      ? { ...round, characterId: 'reikaTachibana' } : round
+  ) : state.rounds;
+  const lineup = Array.isArray(state.lineup) ? state.lineup.map(unit =>
+    String(unit?.regionId || unit?.id || '').toUpperCase() === 'SHINAGAWA' &&
+    unit?.characterId === 'sayakaFujieda'
+      ? { ...unit, characterId: 'reikaTachibana',
+          carId: unit.carId === 'crew__sayakaFujieda'
+            ? 'crew__reikaTachibana' : unit.carId }
+      : unit
+  ) : state.lineup;
+  return { ...state, rounds, lineup };
+}
+
 export function normaliseState(input = {}) {
   // Retired EVO IX owned cars/coupons are migrated before any IDs are filtered,
   // registered or copied into persistent workshop/competition state.
@@ -1633,10 +1654,7 @@ export function normaliseState(input = {}) {
             Math.floor(Number(input.crewBattleIntroVisits[region]) || 0))),
         ])
     ),
-    crewBattleState:
-      input.crewBattleState && typeof input.crewBattleState === 'object'
-        ? input.crewBattleState
-        : null,
+    crewBattleState: migrateLegacyShinagawaCrewBattle(input.crewBattleState),
     crewSpaceActive: Boolean(input.crewSpaceActive),
     crewPreviousCarId: input.crewPreviousCarId ? remapLoanCarId(String(input.crewPreviousCarId)) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
