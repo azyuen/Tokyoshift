@@ -360,6 +360,10 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
   }
   candidates.sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
   const chosen=candidates[0];
+  // A low-power class may have only one viable model. Two independent drivers
+  // can legitimately race the same model; never strand a paid professional
+  // event by insisting on a different make/model.
+  if(!chosen&&excludedId)return getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed,null);
   return chosen?{carId:chosen.carId,state:chosen.state,powerKW:chosen.powerKW,skillTier:skill}:null;
 }
 // A genuine third official event choice, using existing player-driven crew modes.
