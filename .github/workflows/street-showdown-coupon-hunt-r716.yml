@@ -1,0 +1,34 @@
+name: R716 Street Showdown coupon hunting
+on:
+  push:
+    branches: [feature/street-showdown-coupon-hunt-r716, main]
+    paths:
+      - 'src/data/streetShowdownCouponHunt.js'
+      - 'src/data/streetShowdowns.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/ui/OfficeCouponHuntPanel.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'version.json'
+      - 'sw.js'
+      - 'tests/street-showdown-coupon-hunt-r716.mjs'
+      - '.github/workflows/street-showdown-coupon-hunt-r716.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  coupon-economy-and-office:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks for changed modules
+        run: |
+          for f in src/data/streetShowdownCouponHunt.js src/data/streetShowdowns.js src/scenes/MeetScene.js src/scenes/GarageScene.js src/ui/OfficeCouponHuntPanel.js src/main.js tests/street-showdown-coupon-hunt-r716.mjs; do node --check "$f"; done
+      - name: Coupon probability, matchmaking, region map and release regressions
+        run: |
+          node --import ./tests/ci-phaser-math.mjs --test tests/street-showdown-coupon-hunt-r716.mjs tests/meet-rival-cars-and-profiles-r500.mjs tests/region-crew-tuning-r529.mjs
