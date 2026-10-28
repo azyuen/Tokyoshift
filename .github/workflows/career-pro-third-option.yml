@@ -1,0 +1,27 @@
+name: Career v1 professional event choices
+on:
+  push:
+    branches: [feature/career-v1-completion]
+    paths:
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/career-pro-third-option.mjs'
+      - '.github/workflows/career-pro-third-option.yml'
+  workflow_dispatch:
+jobs:
+  season-options:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check src/data/proSeason.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check tests/career-pro-third-option.mjs
+      - name: Verify official three-choice event setup
+        run: node --test tests/career-pro-third-option.mjs
