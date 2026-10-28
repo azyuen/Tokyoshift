@@ -6,7 +6,7 @@ import {
 } from './StoryScript.js?v=20261028-r696';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261027-trio';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261028-r697';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261028-r708';
 import {showArukenChapter08Meet} from '../ui/ArukenChapter08Meet.js?v=20261028-pilot';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261025-r684';
