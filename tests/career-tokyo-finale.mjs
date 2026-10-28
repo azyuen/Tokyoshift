@@ -133,6 +133,29 @@ test('true Tokyo Champion receives durable title and correct purse exactly once'
   assert.equal(officeRecord.careerCompleted,won);
 });
 
+test('a genuine overall Tokyo winner gets ¥10m once, and an unclaimed final blocks rollover',()=>{
+  const c=complete(registered(),true,3,1);
+  assert.equal(c.activeChampionship.championId,PLAYER,
+    'strongest three-stage player result must actually win the Championship');
+  assert.match(nextProfessionalSeason(c).error,/CLAIM TOKYO CHAMPIONSHIP AWARDS/);
+  const award=settleTokyoChampionship(c);
+  assert.ok(award.circuit,award.error);
+  assert.equal(award.result.playerPlace,1);
+  assert.equal(award.cashPrize,10000000);
+  assert.equal(award.circuit.tokyoChampionWins,1);
+  const withCash=5000+award.cashPrize;
+  assert.equal(withCash,10005000);
+  const reload=normaliseProCircuitState(JSON.parse(JSON.stringify(award.circuit)));
+  const repeated=settleTokyoChampionship(reload);
+  assert.equal(repeated.cashPrize,0);
+  assert.equal(repeated.circuit.championshipSettledIds.length,1);
+  const next=nextProfessionalSeason(reload);
+  assert.ok(next.circuit,next.error);
+  assert.equal(next.circuit.tokyoChampionWins,1);
+  assert.equal(next.circuit.championshipHistory.length,1);
+  assert.match(panel,/VIEW CHAMPIONSHIP AWARDS/);
+});
+
 test('legacy won Tokyo titles migrate and never count twice on reward recovery',()=>{
   const c=complete(registered(),true,3,1);
   assert.equal(c.activeChampionship.championId,PLAYER);
