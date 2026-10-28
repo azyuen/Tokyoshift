@@ -121,7 +121,13 @@ export function drawSeasonHeader(s,stage) {
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
 export function drawCrewSidebar(s,event,side) {
-  const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c),short=t?!!t.short:!event.trophyId;
+  const c=circuit(s),active=c.activeCrewEvent;
+  // Two official crew choices can coexist on the cards, but only the
+  // registered choice may show a Resume button. Legacy saves are standard.
+  const open=isOpenCircuitAvailable(c);
+  const t=active&&(open||
+    (event.seasonChoice||'standard')===(active.seasonChoice||'standard'))?active:null;
+  const f=t?getCrewFixture(c):null,short=t?!!t.short:!event.trophyId;
   if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
     text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
@@ -129,14 +135,13 @@ export function drawCrewSidebar(s,event,side) {
     button(s,side.x+side.w/2,side.y+574,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
   const access=getProCircuitAccess(s.registry);
-  const open=isOpenCircuitAvailable(c);
   const rotation=getOpenCircuitRotation();
   const trophy=event.trophyId?getOpenCircuitTrophy(c,rotation):null;
   // Use the format of the selected card; never change it midway through drawing
   // if a day/night offer happens to rotate at a five-minute boundary.
   const crewFormat=f?.format||t?.format||event.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
-  const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
+  const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):event.entryFee||CREW_SERIES.entryFee;
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
     !(c.activeChampionship&&!c.activeChampionship.completed)&&!s.registry.get('competitionState')?.active&&
@@ -145,8 +150,10 @@ export function drawCrewSidebar(s,event,side) {
     Number(s.registry.get('cash')||0)>=fee;
   // Match the right-panel header typography of individual driver events.
   const crewTitle=t?.trophyId||event.trophyId?event.label:
-    short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
-      (t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label;
+    short?(event.seasonChoice==='alternative'?event.label:
+      ((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
+      (t?.format||crewFormat)==='RELAY'?'CREW RELAY':
+      (t?.format||crewFormat)==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW CLUB SPRINT')):CREW_SERIES.label;
   drawProEventSidebarTitle(s,side,crewTitle);
   const formatBrief=crewFormat==='FOUR_WIDE'?'3 FOUR-WIDE HEATS':
     crewFormat==='RELAY'?'3-LEG TEAM RELAY':'3 HEAD-TO-HEAD HEATS';
@@ -155,6 +162,7 @@ export function drawCrewSidebar(s,event,side) {
     'DRIVE THREE DIFFERENT CARS',
     'SMALLEST TIME DIFFERENCE WINS',
   ];
+  const prizes=t?.prizes||event.prizes||CREW_SERIES.prizes;
   const lines=event.trophyId&&!short?[
     '3 FIXTURES // 9 HEATS',
     event.trophyId==='triDrive'?'REQUIRES FWD + RWD + AWD':
@@ -164,25 +172,26 @@ export function drawCrewSidebar(s,event,side) {
   ]:short?[
     ...(crewFormat==='TECHNICAL'?technicalBrief:[formatBrief,'CHOOSE THREE DRIVERS']),
     'ENTRY  '+cash(t?.entryFee||fee),
-    '3 WINS  '+cash(open?70000:210000),
-    '2 WINS  '+cash(open?30000:90000),
-    '1 WIN  '+cash(open?15000:40000),
+    '3 WINS  '+cash(prizes[0]),
+    '2 WINS  '+cash(prizes[1]),
+    '1 WIN  '+cash(prizes[2]),
   ]:[
     '3 FIXTURES // 9 HEATS',
     'CHOOSE THREE DRIVERS',
-    'ENTRY  '+cash(CREW_SERIES.entryFee),
-    '1ST  ¥210,000 // 2ND  ¥90,000',
+    'ENTRY  '+cash(fee),
+    '1ST  '+cash(prizes[0])+' // 2ND  '+cash(prizes[1]),
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
   drawProEventSidebarDetails(s,side,lines);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
+    active&&!t?'FINISH YOUR ACTIVE EVENT FIRST':
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
     t?'RESUME EVENT BRIEFING':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
-    ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),
+    ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null,event.seasonChoice||'standard'),
     t?!!f:canEnter);
   return true;
 }
@@ -228,11 +237,12 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
          circuit(s).activeTimedEvent){s.proError='FINISH ACTIVE EVENT FIRST';return;}
       // Re-register against the saved profile at the actual payment moment.
       const verified=registerCrewSeries(s.registry,pending.squadIds,
-        pending.assignments,pending.trophyId,getOpenCircuitRotation());
+        pending.assignments,pending.trophyId,getOpenCircuitRotation(),pending.seasonChoice);
       if(verified.error){s.proError=verified.error;return;}
       const savedEvent=verified.circuit.activeCrewEvent;
       if(savedEvent.id!==pending.circuit.activeCrewEvent.id||
          savedEvent.format!==pending.circuit.activeCrewEvent.format||
+         savedEvent.seasonChoice!==pending.circuit.activeCrewEvent.seasonChoice||
          savedEvent.entryFee!==pending.circuit.activeCrewEvent.entryFee){
         s.proError='EVENT OFFER CHANGED — CANCEL AND REOPEN';
         return;
@@ -258,14 +268,14 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
     },
   });
 }
-export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null) {
+export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null,seasonChoice='standard') {
   if(circuit(s).activeCrewEvent)return showCrewFixture(s);
   const units=getCrewSeriesUnits(s.registry,assignments);
   const squadIds=units.map(u=>u.id);
   const out=registerCrewSeries(s.registry,squadIds,assignments,
-    trophyId,getOpenCircuitRotation());
+    trophyId,getOpenCircuitRotation(),seasonChoice);
   if(out.error){s.proError=out.error;redraw(s);return;}
-  const pending={circuit:out.circuit,squadIds,assignments,trophyId};
+  const pending={circuit:out.circuit,squadIds,assignments,trophyId,seasonChoice};
   s._pendingCrewRegistration=pending;
   showUnpaidCrewBriefing(s,pending,[]);
 }
