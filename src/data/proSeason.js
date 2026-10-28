@@ -355,7 +355,7 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
       const difference=Math.abs(Math.log(Math.max(.1,ratio)));
       const developed=rules?.stock?0:Object.values(state.tuning||{}).reduce((a,b)=>a+Number(b||0),0);
       candidates.push({carId,state,powerKW:check.powerKW,
-        score:difference+(developed===0&&!rules?.stock?.15:0)});
+        score:difference+(!rules?.stock&&developed===0?0.15:0)});
     }
   }
   candidates.sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
@@ -500,6 +500,8 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonCh
   if(!['standard','alternative'].includes(seasonChoice))return 'UNKNOWN SEASON EVENT';
   if(seasonChoice==='alternative'&&(isOpenCircuitAvailable(c)||c.seasonStatus!=='ACTIVE'))
     return 'ALTERNATIVE CREW EVENT ONLY AVAILABLE IN PRO SEASON';
+  if(seasonChoice==='alternative'&&getProInvitationalDiscipline(c)!=='TEAM')
+    return 'CREW INVITATIONAL NOT OFFERED THIS ROUND';
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
   if(c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(!isOpenCircuitAvailable(c)&&c.seasonStatus!=='ACTIVE')return 'FINISH THE CHAMPIONSHIP';
@@ -546,8 +548,10 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
-  const selected=(trophy?teamsPool:teamsPool.sort((a,b)=>
-    Math.abs(a.rating-c.playerTeam.rating)-Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
+  const selected=(trophy||alternative?
+    teamsPool.sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id)):
+    teamsPool.sort((a,b)=>Math.abs(a.rating-c.playerTeam.rating)-
+      Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
   const teams=[{id:PLAYER,name:'YOUR CREW',rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
   const entrants=teams.map((r,i)=>({...r,seed:i+1,drivers:[0,1,2].map(n=>
     opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
