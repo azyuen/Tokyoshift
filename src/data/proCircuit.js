@@ -142,6 +142,9 @@ export function createDefaultProCircuitState() {
     lastTournament: null,
     activeChampionship: null,
     championshipHistory: [],
+    championshipSettledIds: [], // Permanent once-only reward ledger.
+    tokyoChampionWins: 0,
+    careerCompleted: false,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
     trophyHistory: [],
     championshipWins: { DRIVER: 0, TEAM: 0 },
@@ -215,6 +218,10 @@ export function normaliseProCircuitState(raw) {
       !Array.isArray(source.lastTournament) ? source.lastTournament : null,
     activeChampionship: source.activeChampionship && typeof source.activeChampionship === 'object' && !Array.isArray(source.activeChampionship) ? source.activeChampionship : null,
     championshipHistory: Array.isArray(source.championshipHistory) ? source.championshipHistory.filter(x => x && typeof x === 'object').slice(-20) : [],
+    championshipSettledIds: Array.isArray(source.championshipSettledIds)?
+      [...new Set(source.championshipSettledIds.filter(id=>typeof id==='string'&&id.startsWith('tokyo:s')))].slice(-250):[],
+    tokyoChampionWins: boundedInteger(source.tokyoChampionWins,0,0,10000),
+    careerCompleted: Boolean(source.careerCompleted)||boundedInteger(source.tokyoChampionWins,0,0,10000)>0,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
       t.id, boundedInteger(trophies[t.id], 0, 0, 10000),
     ])),
