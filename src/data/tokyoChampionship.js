@@ -34,11 +34,25 @@ export function createProvisionalChampionship(raw) {
       characterId:r.characterId||null,rating:r.rating,seed:0}))];
   entrants.sort((a,b)=>b.rating-a.rating||hash(c.season+':'+a.id)-hash(c.season+':'+b.id));
   entrants.forEach((r,i)=>r.seed=i+1);
+  // Around 75% Elite in the 16-car opener, the others Expert.
+  // Snapshot skill tiers so old saves and completed brackets never reroll.
+  const opposition=entrants.filter(r=>r.id!==PLAYER);
+  opposition.forEach((r,i)=>r.skillTier=i<Math.round(opposition.length*.75)?5:4);
   return {championship:{schema:1,id:'tokyo:s'+c.season,season:c.season,
-    rosterType:'PROVISIONAL',stage:'KNOCKOUT',entrants,
+    rosterType:'TOKYO_CHAMPIONSHIP',stage:'KNOCKOUT',entrants,
     knockout:{round:0,results:[]},crew:{results:[]},fourWide:{results:[]},
     points:Object.fromEntries(entrants.map(r=>[r.id,{knockout:0,crew:0,fourWide:0}])),
     completed:false,championId:null}};
+}
+// Decisive semifinal/final opposition is always Elite, with no hidden
+// physics changes. Existing PROVISIONAL saves retain their original tiers.
+export function getChampionshipOpponentSkill(state,entrantId,stage='KNOCKOUT',round=0) {
+  if(!state||state.rosterType==='PROVISIONAL')return null;
+  const entrant=state.entrants?.find(r=>r.id===entrantId);
+  if(!entrant||entrant.id===PLAYER)return null;
+  if((stage==='KNOCKOUT'&&round>=2)||
+     (stage==='FOUR_WIDE'&&round>=1))return 5;
+  return entrant.skillTier===4?4:5;
 }
 export function championshipStandings(state) {
   if(!state?.entrants)return [];
