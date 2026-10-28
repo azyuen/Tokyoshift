@@ -346,7 +346,7 @@ export function showStoryStage(scene, {
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
       const authoredCar=chapter08Layout?.cars?.[i];
-      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
+      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*.91,targetWidth:w*authoredCar[2]/100*.58} : stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
         groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
@@ -384,7 +384,7 @@ export function showStoryStage(scene, {
               (scene.registry.get('carStates')||{})[c.carId]||{}));
         }
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
-          x,groundY:template?.kind==='meet'?575:groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
+          x,groundY:authoredCar?groundY:(template?.kind==='meet'?575:groundY),targetWidth,depth:layer,flipX:authoredCar?authoredCar[3]:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
           garageGeometry:garagePanel||Boolean(template),
         });
@@ -503,7 +503,8 @@ export function showStoryStage(scene, {
       const sprite=addImage(a.asset,x,feet,null,height,layer,
         a.fadeInMs ? 0 : 1,true);
       if(sprite){
-        if(authoredCast?sprite.setFlipX(authoredCast[4]):a.flipX)sprite.setFlipX(true);
+        if(authoredCast)sprite.setFlipX(Boolean(authoredCast[4]));
+        else if(a.flipX)sprite.setFlipX(true);
         actorImages.set(a.id,sprite);
         if(duel && a.approach && scene.tweens?.add){
           // Daigo's shameless attempt to get closer to Sayaka happens while
