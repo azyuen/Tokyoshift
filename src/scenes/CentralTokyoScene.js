@@ -7,7 +7,7 @@ import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261027-r692';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
@@ -3119,23 +3119,37 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
       seasonRules: rules.driver,
       label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };
-    // During each active round, all three cards are real racing choices.
-    // The third uses another already-supported crew format, not a placeholder
-    // trophy panel. Completed seasons still retain the championship/results slot.
+    // Rotating Elite Invitational: five Driver/three Crew starting rounds,
+    // adapting deterministically when one point requirement falls behind.
+    const invitationalDiscipline=getProInvitationalDiscipline(pro);
     const alternateFormat=getAlternativeProCrewFormat(round);
     const alternateCrew={...CREW_SERIES,id:'crewAlt',team:true,
       seasonChoice:'alternative',format:alternateFormat,
-      label:'CREW '+alternateFormat.replaceAll('_','-')+' INVITATIONAL',
+      label:'ELITE CREW '+alternateFormat.replaceAll('_','-'),
       entryFee:PRO_ALT_CREW_ENTRY_FEE,prizeCash:PRO_ALT_CREW_PRIZES[0],
       prizes:[...PRO_ALT_CREW_PRIZES],requiredWins:0};
+    const inviteRules=getProDriverInvitationRules(round);
+    const alternateDriver={...PRO_DRAG_EVENTS[2],id:inviteRules.id,
+      label:'ELITE DRIVER INVITATIONAL',seasonChoice:'alternative',
+      seasonRules:inviteRules,requiredWins:0,
+      entryFee:PRO_INVITATIONAL_DRIVER_FEE,prizeCash:PRO_INVITATIONAL_DRIVER_PRIZE,
+      maxPowerKW:inviteRules.maxPowerKW,noNos:Boolean(inviteRules.noNos)};
     const special={id:'specialSlot',
       label:proCircuitSpecialEligible(this.registry)?'TOKYO CHAMPIONSHIP':'MINOR TROPHIES',
       specialSlot:true,entryFee:0,requiredWins:0};
     const choices=[driver,{...CREW_SERIES,seasonChoice:'standard',
       format:rules.crew.format,requiredWins:0},
-      round<8&&pro.seasonStatus==='ACTIVE'?alternateCrew:special];
-    if (legacy?.active && legacy.proEvent) {
-      choices[0] = { ...(driverPool.find(e => e.id === legacy.eventId) || primary), entryFee: legacy.entryFee || 0 };
+      round<8&&pro.seasonStatus==='ACTIVE'?
+        (invitationalDiscipline==='DRIVER'?alternateDriver:alternateCrew):special];
+    if(legacy?.active&&legacy.proEvent&&!legacy.openCircuit){
+      const activeIndex=legacy.eventId===inviteRules.id?2:0;
+      const base=choices[activeIndex];
+      choices[activeIndex]={...base,id:legacy.eventId,
+        label:legacy.briefingLabel||base.label,
+        entryFee:legacy.entryFee??base.entryFee,
+        prizeCash:legacy.prizeCash??base.prizeCash,
+        seasonChoice:activeIndex===2?'alternative':'standard',
+        seasonRules:activeIndex===2?inviteRules:rules.driver};
     }
     if (pro.activeTournament) choices[0] = fourWide;
     if (round >= 8 && !proCircuitSpecialEligible(this.registry)) {
@@ -3264,7 +3278,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? ((event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? (event.seasonChoice==='alternative'?'ELITE CREW // 20 POINTS MAX':(event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonChoice==='alternative'?'ELITE DRIVER // 20 POINTS MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3819,8 +3833,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if(!actual||actual.trophyCooldown||actual.team||actual.entryFee!==event.entryFee)return;
     }else{
       if(pro.seasonStatus!=='ACTIVE')return;
-      const rules = getProfessionalRoundEvents(pro.calendar.round).driver;
-      if (event.id !== rules.id || rules.format !== 'KNOCKOUT') return;
+      const official=getProfessionalRoundEvents(pro.calendar.round).driver;
+      const rules=event.seasonChoice==='alternative'?
+        getProDriverInvitationRules(pro.calendar.round):official;
+      const card=this.getProDragEvents().find(e=>e.id===event.id&&!e.team);
+      if(!card||card.entryFee!==event.entryFee||event.id!==rules.id||
+        rules.format!=='KNOCKOUT')return;
       // Stock-class knockout rounds use the SAME installed-part scrutineering
       // as the event card; never silently reject a legal factory-stock car.
       const eligibility=getProfessionalCarEligibility(build.carId,build.state,rules);
@@ -3872,14 +3890,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
       : [];
     const rivals = [...rotatedMigrated, ...genericOrder].slice(0, event.trophyId ? 5 : 3);
 
-    const rounds = event.opponentRatings.map((rating, index) => {
+    const seasonRules=!openCircuit?event.seasonRules:null;
+    const rounds = event.opponentRatings.map((originalRating, index) => {
       const characterId = rivals[index % rivals.length];
-      const mainRivalRound = this.buildDragMainRivalRound(
-        characterId,
-        event,
-        build,
-        index
-      );
+      const rating=openCircuit?originalRating:
+        getProSeasonSkillTier(pro.calendar.round,index,event.seasonChoice==='alternative');
+      const mainRivalRound=openCircuit?this.buildDragMainRivalRound(
+        characterId,event,build,index):null;
+      const professionalBuild=!openCircuit?
+        getProfessionalOpponentBuild(seasonRules,Number(build.car?.powerKW||0),rating,
+          'pro:s'+pro.season+':r'+pro.calendar.round+':'+event.id+':'+index,build.carId):null;
       const baseAi = getEncounterAi(rating);
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
 
@@ -3897,8 +3917,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       return {
         characterId,
         opponentName:characters[characterId]?.name||null,
-        carId: event.opponentCars[index % event.opponentCars.length],
-        paintColor: selectMixedCarPaint(event.opponentCars[index % event.opponentCars.length],
+        carId: professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
+        opponentBuildState:professionalBuild?.state||null,
+        paintColor: selectMixedCarPaint(professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
           {region:'SHINJUKU', characterId, seed: index + pro.eventTick * 31})?.color ??
           [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
@@ -3911,6 +3932,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
         raceType: 'Standing Start',
       };
     });
+    if(!openCircuit&&rounds.some(r=>!r.opponentBuildState)){
+      this.proError='NO CLASS-LEGAL PROFESSIONAL OPPONENT AVAILABLE';
+      this.renderLocation(this.activeLocationId);
+      return;
+    }
 
     const state = {
       active: true,
@@ -3921,8 +3947,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       eventId: event.id,
       briefingLabel: event.label,
       briefingRules: {
-        maxPowerKW:Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
-        noNos:Boolean(event.noNos),
+        maxPowerKW:Number.isFinite(event.seasonRules?.maxPowerKW)?event.seasonRules.maxPowerKW:
+          Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
+        noNos:Boolean(event.seasonRules?.noNos||event.noNos),
         stock:Boolean(event.stock||(!openCircuit&&event.seasonRules?.stock)),
         drivetrain:String(event.drivetrain||(!openCircuit&&event.seasonRules?.drivetrain)||'').toUpperCase(),
       },
