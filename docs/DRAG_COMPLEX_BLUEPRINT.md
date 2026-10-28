@@ -1,5 +1,8 @@
 # TOKYO SHIFT — Drag Complex Professional Circuit Blueprint (v1)
 
+> **Economy revision R714 (29 October 2026):** The established Aruken sponsorship covers all **new** professional competition registrations (entry fee ¥0) across Open Circuit, professional season and Prestige Trophies. Standard professional purses have been increased approximately fivefold, with completion payouts even for eliminated/lower-placed entrants; prestige first-win purses are 5× and repeats approximately 3×. The Tokyo Championship placing purse stays unchanged. Separate final Driver and Crew ranking awards are claimable once per completed eight-round season (1st ¥1.5m; 2nd–3rd ¥1m; 4th–5th ¥600k; 6th–10th ¥300k in each ranking). Existing committed fee/prize snapshots remain valid. This revision supersedes earlier fee/purse figures below, which are retained as historical documentation.
+
+
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 

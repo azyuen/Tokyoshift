@@ -52,6 +52,7 @@ test('knockout elimination awards no trophy or cash even on fifth stage',()=>{
   assert.equal(c.lastTournament.placing,2);
   assert.equal(c.trophyWins.shutoSpeed,0);
   assert.equal(c.trophyHistory[0].placing,2);
+  assert.ok(c.lastTournament.cashPrize>0,'eliminated professional earns a completion purse');
 });
 
 test('short legacy duels remain three rounds after trophy expansion',()=>{
@@ -72,7 +73,7 @@ test('Masters invitation and saved mixed crew gauntlet use DUEL, RELAY, FOUR-WID
   const ids=getCrewSeriesUnits(registry).slice(0,3).map(u=>u.id);
   const registered=registerCrewSeries(registry,ids,{},'tokyoMasters');
   assert.ok(registered.circuit,registered.error);
-  assert.equal(registered.cash,475000);
+  assert.equal(registered.cash,600000);
   registry.set('proCircuit',registered.circuit);
   for(const [round,format] of ['DUEL','RELAY','FOUR_WIDE'].entries()){
     const f=getCrewFixture(registry.get('proCircuit'));
@@ -99,7 +100,7 @@ test('Masters invitation and saved mixed crew gauntlet use DUEL, RELAY, FOUR-WID
     registry.set('proCircuit',out.circuit);
     if(round===2){
       assert.equal(out.summary.placing,1);
-      assert.equal(out.cashPrize,375000);
+      assert.equal(out.cashPrize,1875000);
       assert.equal(out.circuit.trophyWins.tokyoMasters,1);
       assert.equal(out.circuit.trophyHistory.at(-1).driverIds.length,3);
     }
@@ -110,7 +111,7 @@ test('repeat winners have reduced prizes and eligibility never moves the officia
   let c=createDefaultProCircuitState();
   c.trophyWins.shutoSpeed=1;
   assert.equal(getOpenCircuitTrophy(c).firstWin,false);
-  assert.equal(getOpenCircuitTrophy(c).repeatCash,85000);
+  assert.equal(getOpenCircuitTrophy(c).repeatCash,255000);
   c=finishOpenCircuitEvent(c,{id:'repeat:shuto',placing:1,trophyId:'shutoSpeed',cashPrize:85000});
   assert.equal(c.trophyWins.shutoSpeed,2);
   assert.equal(c.trophyHistory.at(-1).cashPrize,85000);
