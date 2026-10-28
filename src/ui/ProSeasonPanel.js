@@ -197,9 +197,14 @@ export function drawCrewSidebar(s,event,side) {
   ]:short?[
     ...(crewFormat==='TECHNICAL'?technicalBrief:[formatBrief,'CHOOSE THREE DRIVERS']),
     'ENTRY  '+cash(t?.entryFee||fee),
-    '3 WINS  '+cash(prizes[0]),
-    '2 WINS  '+cash(prizes[1]),
-    '1 WIN  '+cash(prizes[2]),
+    ...(crewFormat==='TECHNICAL'?
+      ['BEST THREE-RUN SPREAD  '+cash(prizes[0]),
+       'A SINGLE FAST RUN DOES NOT WIN']:
+      crewFormat==='RELAY'?
+      ['LOWEST COMBINED THREE-LEG TIME  '+cash(prizes[0])]:
+      ['3 WINS  '+cash(prizes[0]),
+       '2 WINS  '+cash(prizes[1]),
+       '1 WIN  '+cash(prizes[2])]),
   ]:[
     '3 FIXTURES // 9 HEATS',
     'CHOOSE THREE DRIVERS',
