@@ -728,6 +728,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const relayWon=playerFinished&&(!opponentFinished||ownTotal<opponentTotal-0.000001);
   const technical=f.format==='TECHNICAL';
   const technicalScore=getCrewTechnicalScore(f.prepared.heats);
+  const {ownSpread,opponentSpread}=technicalScore;
   const technicalWon=technicalScore.won;
   const fourWidePoints=f.prepared.heats.reduce((sum,h)=>sum+(Number.isInteger(h.place)&&h.place>=1&&h.place<=4?4-h.place:0),0);
   // Three personally driven four-lane heats: 0–9 placing points.
@@ -896,7 +897,7 @@ export function settlePlayerCrewHeat(raw,heatId,results) {
   const own=results?.find(r=>r.id==='player'),other=results?.find(r=>r.id==='ai-1');
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
     (r.finishSeconds===null||
-      (typeof r.finishSeconds==='number'&&!r.disqualified&&
+      (typeof r.finishSeconds==='number'&&
        Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
     if(!valid(own)||!valid(other)||
     (fourWide&&(!Array.isArray(results)||results.length!==4||
