@@ -61,7 +61,7 @@ test('qualifying, semifinal and final all work, award prize exactly once', () =>
   assert.equal(circuit.eventTick,1);
   assert.equal(circuit.completedEventIds.length,1);
   assert.equal(circuit.playerDriver.entered,1);
-  assert.equal(circuit.playerDriver.seasonPoints,32);
+  assert.equal(circuit.playerDriver.seasonPoints,20); // Current eight-round qualification scale (60/40).
   assert.equal(circuit.qualified,true);
   assert.equal(circuit.activeTournament,null);
   assert.deepEqual(circuit.lastTournament,final.summary);
