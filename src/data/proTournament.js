@@ -8,8 +8,8 @@ import { characters } from './characters.js?v=20261007-r411';
 
 export const FOUR_WIDE_CUP = Object.freeze({
   id: 'fourWideOpen', label: 'TOKYO FOUR-WIDE OPEN',
-  entrants: 16, qualifyPerHeat: 2, entryFee: 90000,
-  prizeCash: Object.freeze([320000, 170000, 90000, 50000]),
+  entrants: 16, qualifyPerHeat: 2, entryFee: 0,
+  prizeCash: Object.freeze([1600000, 850000, 450000, 250000]),
   stageNames: Object.freeze(['QUALIFYING', 'SEMIFINAL', 'FINAL']),
 });
 
@@ -211,7 +211,7 @@ function settleCompletedEvent(circuit, t) {
   }
   const place = eventPlacement(t);
   const payout = place <= 4 ? FOUR_WIDE_CUP.prizeCash[place-1] :
-    place <= 8 ? 12000 : 0;
+    place <= 8 ? 60000 : 35000;
   // Repeats remain worthwhile but deliberately avoid easy limitless farming.
   const baseCashPrize = Math.floor(payout *
     (next.eventTick > 0 ? .70 : 1));
