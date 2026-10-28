@@ -494,8 +494,8 @@ export function showStoryStage(scene, {
       const x=Number(cinematicCast?.x??a.x??assigned?.x??estimate?.x??anchor.x)+(cinematicCast?0:Number(a.offsetX||0));
       const feet=Number(cinematicCast?.feetY??assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
       const height=Number(cinematicCast?.height??assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
-        (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (aruken?arukenPoseHeight(a.pose):1);
-      const layer=Number(template
+        (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (authoredCast?1:(aruken?arukenPoseHeight(a.pose):1));
+      const layer=Number(authoredCast ? depth+10+authoredCast[3] : template
         ? (a.role==='chapter01RepairSayaka'?portraitDepth-3:portraitDepth+i)
         : (a.depth??(carInFront
           ?Math.min(portraitDepth+i,estimate?.depth??portraitDepth+i)
