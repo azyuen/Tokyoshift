@@ -559,7 +559,11 @@ export function showSeasonRecords(s,complete=false) {
       o.close();showTokyoChampionship(s);
     });
   } else {
-    o.btn(1090,768,600,'RETURN TO OPEN CIRCUIT',()=>{
+    const needsAward=Boolean(c.activeChampionship?.completed&&
+      c.activeChampionship.stage==='COMPLETE'&&
+      !c.championshipSettledIds.includes(c.activeChampionship.id));
+    o.btn(1090,768,600,needsAward?'VIEW CHAMPIONSHIP AWARDS':'RETURN TO OPEN CIRCUIT',()=>{
+      if(needsAward){o.close();showTokyoChampionship(s);return;}
       if(s.registry.get('competitionState')?.active)return;
       const out=nextProfessionalSeason(circuit(s));
       if(out.error){o.label(90,714,out.error,18);return;}
