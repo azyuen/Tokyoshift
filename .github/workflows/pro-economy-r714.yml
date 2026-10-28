@@ -1,0 +1,37 @@
+name: R714 Aruken-sponsored professional economy
+on:
+  push:
+    branches: [feature/pro-economy-r714, main]
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proTournament.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'version.json'
+      - 'tests/pro-economy-r714.mjs'
+      - '.github/workflows/pro-economy-r714.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  economy-and-career-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate changed module syntax
+        run: |
+          for f in src/data/proCircuit.js src/data/proSeason.js src/data/proTournament.js src/data/centralTokyo.js src/scenes/CentralTokyoScene.js src/scenes/FourLaneTestScene.js src/ui/ProSeasonPanel.js src/ui/ProDriverBriefing.js src/ui/ProCrewBattleLineup.js src/main.js tests/pro-economy-r714.mjs; do node --check "$f"; done
+      - name: Economy payouts, legacy registration and eight-round career
+        run: |
+          node --import ./tests/ci-phaser-math.mjs --test tests/pro-economy-r714.mjs tests/career-season-report.mjs tests/proSeason.simulation.test.js tests/pro-ranking-sponsor-r628.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs tests/open-circuit-beta-r712.mjs tests/pro-crew-heat-r589.mjs tests/career-tokyo-finale.mjs
