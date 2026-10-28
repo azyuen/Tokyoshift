@@ -1,9 +1,10 @@
+import { getChapter08EditorLayout } from '../story/Chapter08EditorLayouts.js?v=20261028-parity1';
 // Scene-local authored tableau over whichever real venue/gameplay screen is active.
 // Uses canonical character assets; cars/backgrounds are explicit texture references.
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261028-pilot';
 import { cars as carCatalog } from '../data/cars.js?v=20261026-r687';
 import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
-import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261023-r663';
+import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261028-parity1';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
@@ -214,28 +215,7 @@ export function showStoryStage(scene, {
   };
   // Approved Chapter 08 editor compositions (R707 export). These apply only to
   // full-screen Chapter 08 tableaux; all other story/gameplay geometry is unchanged.
-  const chapter08Layout=stageMode==='chapter08-full' ? (()=>{
-    const id=String(actualBackgroundId||'');
-    if(vipParty)return {
-      cast:[[43.54561878952123,89.60899653979241,65.18571428571428,3,false],
-            [32.97395984979134,91.29672515136784,65.18571428571428,4,false],
-            [68.46883468834685,93.79259725280485,69.71533101045297,2,true]],
-      cars:[[49.470641373080404,81.22061444898814,73.4,false]]
-    };
-    if(id.includes('shinonomeWarehouseStrip'))return {
-      cast:[[40.7169357609069,88.55448156585796,61.378823073945014,3,false],
-            [23.613878392305047,88.61093437965089,60.17142857142858,2,false]],
-      cars:[[54.11267605633802,71.93742592062779,63.798122065727696,false]]
-    };
-    if(id.includes('shinagawaTennozu')||id.includes('daikokuPA')||id.includes('shibuyaScramble'))return {
-      cast:[[36.31887985546523,91.95774352521761,65.18571428571428,2,false],
-            [23.03794037940379,91.78997588340148,63.51428571428572,2,false],
-            [63.410117434507676,91.28667295795324,65.18571428571428,2,true]],
-      cars:[[9.015356820234874,81.2206144489882,73.28906955736224,false],
-            [90.72448057813912,81.38838209080424,74,true]]
-    };
-    return null;
-  })() : null;
+  const chapter08Layout=stageMode==='chapter08-full' ? getChapter08EditorLayout(actualBackgroundId,vipParty) : null;
   const draw = () => {
     if (!alive || !scene.sys?.isActive?.()) return;
     const w = scene.scale?.width || 1560, h = scene.scale?.height || 840;
@@ -346,7 +326,7 @@ export function showStoryStage(scene, {
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
       const authoredCar=chapter08Layout?.cars?.[i];
-      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*.91,targetWidth:w*authoredCar[2]/100*.58} : stageMode==='chapter08-full' ? {
+      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
         groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
@@ -386,6 +366,7 @@ export function showStoryStage(scene, {
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
           x,groundY:authoredCar?groundY:(template?.kind==='meet'?575:groundY),targetWidth,depth:layer,flipX:authoredCar?authoredCar[3]:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
+          editorCanvas:Boolean(authoredCar),
           garageGeometry:garagePanel||Boolean(template),
         });
         if(duel)carImages.set(i,carObjects);

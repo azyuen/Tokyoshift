@@ -16,13 +16,13 @@ export function preloadStoryCar(scene,car,cacheBust='20261022-r642') {
 
 export function renderStoryCar(scene,car,{
   x=1030,groundY=720,targetWidth=1000,depth=8,flipX=false,
-  paintColor=0xffffff,shadow=true,garageGeometry=false,
+  paintColor=0xffffff,shadow=true,garageGeometry=false,editorCanvas=false,
 }={}) {
   if(!scene?.textures || !car?.visual)return [];
   const textureKey=getCarBodyTextureKey(scene,car);
   if(!scene.textures.exists(textureKey))return [];
   const bodySource=scene.textures.get(textureKey).getSourceImage();
-  const scale=getCarBodyScaleForWidth(scene,car,targetWidth);
+  const scale=editorCanvas ? targetWidth/Math.max(1,bodySource?.naturalWidth||bodySource?.width||1) : getCarBodyScaleForWidth(scene,car,targetWidth);
   // Customer tuning in Canal Yard uses the Garage's tyre contact solver,
   // not the cinematic renderer's approximate body-centre equation.
   const wheelSource=car.visual.wheelKey && scene.textures.exists(car.visual.wheelKey)
@@ -33,7 +33,7 @@ export function renderStoryCar(scene,car,{
   const maxContact=wheelFit
     ? Math.max(wheelFit.rear.offsetY+wheelContact(wheelFit.rear),
       wheelFit.front.offsetY+wheelContact(wheelFit.front)) : 0;
-  const bodyY=garageGeometry && wheelFit
+  const bodyY=editorCanvas ? groundY-(bodySource?.naturalHeight||bodySource?.height||0)*scale*.5 : garageGeometry && wheelFit
     ? (car.visual.referenceStandard
       ? groundY+Number(car.visual.renderOffsetY||0)*scale
       : groundY-maxContact)
@@ -42,7 +42,7 @@ export function renderStoryCar(scene,car,{
       scale,referenceStandard:Boolean(car.visual.referenceStandard),
       bodyRenderOffsetY:Number(car.visual.bodyRenderOffsetY||0),
     });
-  const drawX=getReferenceRightX(car,x,scale);
+  const drawX=editorCanvas ? x : getReferenceRightX(car,x,scale);
   const objects=[];
   const add=obj=>{if(obj)objects.push(obj);return obj;};
   if(shadow)add(scene.add.ellipse(x,groundY-5,Math.max(250,targetWidth*.83),
