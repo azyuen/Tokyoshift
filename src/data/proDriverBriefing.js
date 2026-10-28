@@ -1,5 +1,5 @@
 // R605 — Persistent Open Circuit driver + trophy event briefings.
-import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261021-r631';
+import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261029-r713';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { getExhaustNosTuning } from './secondaryTuning.js?v=20261026-r687';
