@@ -2230,7 +2230,12 @@ export default class MeetScene extends Phaser.Scene {
     const savedRounds = (this.registry.get('tunerTeamChallenges') || {})[key]?.rounds;
     const oldShinagawaDriver = key === 'SHINAGAWA' &&
       Array.isArray(savedRounds) &&
-      savedRounds.some(round => round?.characterId === 'sayakaFujieda');
+      savedRounds.some(round =>
+        round?.characterId === 'sayakaFujieda' ||
+        (round?.characterId === 'reikaTachibana' &&
+          round?.carId !== getRegionalRivalSignatureCarId(
+            key, 'reikaTachibana', round.carId))
+      );
     if (oldShinagawaDriver) return generated;
     // Reuse saved opponents and their stage on resume, unless recruitment
     // made a previous roster illegal; this preserves mid-run continuity.
