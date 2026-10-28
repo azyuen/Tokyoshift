@@ -1,7 +1,7 @@
-import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
+import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
@@ -70,6 +70,7 @@ export function drawSeasonHeader(s,stage) {
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
+  const report=getProfessionalSeasonReport(c);
   // Rank and sponsorship remain visible through both Open Circuit and Season.
   // Season controls remain beside the main race entries on the right.
   const height=openCircuit?169:c.activeChampionship?236:213;
@@ -78,8 +79,11 @@ export function drawSeasonHeader(s,stage) {
   if(openCircuit){
     // Open Circuit is a persistent professional ladder, not a season table.
     // Show both rankings and independent, cash-only appearance commissions.
-    text(s,x,y,'PRO RANKINGS',19,{color:'#f5e9e5'});
-    text(s,x+w-2,y+5,'OPEN CIRCUIT',12,{color:'#aab8c1'}).setOrigin(1,0);
+    text(s,x,y,report.completed?'SEASON '+c.season+' COMPLETE':'PRO RANKINGS',19,
+      {color:'#f5e9e5'});
+    text(s,x+w-2,y+5,report.completed?
+      (report.canEnterTokyo?'TOKYO QUALIFIED':'NOT QUALIFIED'):'OPEN CIRCUIT',12,
+      {color:report.completed?'#ecc88d':'#aab8c1'}).setOrigin(1,0);
     s.addContent(s.add.rectangle(x+w/2,y+42,1,67,0x51606b,.85).setDepth(40));
     for(const item of [
       {x,record:driver,label:'DRIVER'},
@@ -93,8 +97,10 @@ export function drawSeasonHeader(s,stage) {
     const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,34,0x40242a,.96)
       .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
       .setInteractive({useHandCursor:true}));
-    text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
-    expand.on('pointerdown',()=>showProRankings(s));
+    text(s,x+w/2,expandY,report.completed?
+      'VIEW FINAL SEASON REPORT  ▼':'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,
+      {color:'#f5e9e5'}).setOrigin(.5);
+    expand.on('pointerdown',()=>report.completed?showSeasonRecords(s,true):showProRankings(s));
     if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b'});
     return;
   }
@@ -117,26 +123,50 @@ export function drawSeasonHeader(s,stage) {
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
+  } else {
+    const status=report.completed?
+      (report.canEnterTokyo?'TOKYO QUALIFIED // VIEW SEASON REPORT':'SEASON COMPLETE // VIEW REPORT'):
+      report.qualified?'TARGETS MET // FINISH ALL 8 ROUNDS':
+      !report.qualificationPossible?'TOKYO QUALIFICATION OUT OF REACH':
+      'NEED '+report.driverEventsNeeded+' DRIVER + '+report.crewEventsNeeded+
+        ' CREW EVENTS // '+report.roundsRemaining+' LEFT';
+    text(s,x,y+148,status,14,{color:report.qualificationPossible?'#ecc88d':'#ec969b'});
   }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
 export function drawCrewSidebar(s,event,side) {
-  const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c),short=t?!!t.short:!event.trophyId;
+  const c=circuit(s),active=c.activeCrewEvent;
+  // Two official crew choices can coexist on the cards, but only the
+  // registered choice may show a Resume button. Legacy saves are standard.
+  const open=isOpenCircuitAvailable(c);
+  const t=active&&(open||
+    (event.seasonChoice||'standard')===(active.seasonChoice||'standard'))?active:null;
+  const f=t?getCrewFixture(c):null,short=t?!!t.short:!event.trophyId;
   if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
-    text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
-    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
-    button(s,side.x+side.w/2,side.y+574,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
+    const report=getProfessionalSeasonReport(c);
+    text(s,side.x+20,side.y+207,report.canEnterTokyo?'TOKYO QUALIFIED':'SEASON COMPLETE',21,
+      {color:report.canEnterTokyo?'#f3cf8d':'#f5e9e5'});
+    text(s,side.x+20,side.y+255,
+      'EIGHT PROFESSIONAL ROUNDS COMPLETE\n\n'+
+      'DRIVER  '+report.driver+'/'+report.driverRequired+' PTS  //  #'+report.driverStanding+'\n'+
+      'CREW    '+report.crew+'/'+report.crewRequired+' PTS  //  #'+report.crewStanding+'\n\n'+
+      (report.canEnterTokyo?'CHAMPIONSHIP ENTRY UNLOCKED':
+        'MISSED BY '+report.driverShortfall+' DRIVER / '+report.crewShortfall+' CREW PTS')+
+      '\n\nVIEW FINAL STANDINGS AND NEXT STEPS',
+      16,{lineSpacing:6,wordWrap:{width:side.w-40}});
+    button(s,side.x+side.w/2,side.y+574,side.w-36,
+      'VIEW OFFICIAL SEASON REPORT',()=>showSeasonRecords(s,true));
+    return true;
   }
   const access=getProCircuitAccess(s.registry);
-  const open=isOpenCircuitAvailable(c);
   const rotation=getOpenCircuitRotation();
   const trophy=event.trophyId?getOpenCircuitTrophy(c,rotation):null;
   // Use the format of the selected card; never change it midway through drawing
   // if a day/night offer happens to rotate at a five-minute boundary.
   const crewFormat=f?.format||t?.format||event.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
-  const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
+  const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):event.entryFee||CREW_SERIES.entryFee;
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
     !(c.activeChampionship&&!c.activeChampionship.completed)&&!s.registry.get('competitionState')?.active&&
@@ -145,8 +175,10 @@ export function drawCrewSidebar(s,event,side) {
     Number(s.registry.get('cash')||0)>=fee;
   // Match the right-panel header typography of individual driver events.
   const crewTitle=t?.trophyId||event.trophyId?event.label:
-    short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
-      (t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label;
+    short?(event.seasonChoice==='alternative'?event.label:
+      ((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
+      (t?.format||crewFormat)==='RELAY'?'CREW RELAY':
+      (t?.format||crewFormat)==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW CLUB SPRINT')):CREW_SERIES.label;
   drawProEventSidebarTitle(s,side,crewTitle);
   const formatBrief=crewFormat==='FOUR_WIDE'?'3 FOUR-WIDE HEATS':
     crewFormat==='RELAY'?'3-LEG TEAM RELAY':'3 HEAD-TO-HEAD HEATS';
@@ -155,6 +187,7 @@ export function drawCrewSidebar(s,event,side) {
     'DRIVE THREE DIFFERENT CARS',
     'SMALLEST TIME DIFFERENCE WINS',
   ];
+  const prizes=t?.prizes||event.prizes||CREW_SERIES.prizes;
   const lines=event.trophyId&&!short?[
     '3 FIXTURES // 9 HEATS',
     event.trophyId==='triDrive'?'REQUIRES FWD + RWD + AWD':
@@ -164,25 +197,26 @@ export function drawCrewSidebar(s,event,side) {
   ]:short?[
     ...(crewFormat==='TECHNICAL'?technicalBrief:[formatBrief,'CHOOSE THREE DRIVERS']),
     'ENTRY  '+cash(t?.entryFee||fee),
-    '3 WINS  '+cash(open?70000:210000),
-    '2 WINS  '+cash(open?30000:90000),
-    '1 WIN  '+cash(open?15000:40000),
+    '3 WINS  '+cash(prizes[0]),
+    '2 WINS  '+cash(prizes[1]),
+    '1 WIN  '+cash(prizes[2]),
   ]:[
     '3 FIXTURES // 9 HEATS',
     'CHOOSE THREE DRIVERS',
-    'ENTRY  '+cash(CREW_SERIES.entryFee),
-    '1ST  ¥210,000 // 2ND  ¥90,000',
+    'ENTRY  '+cash(fee),
+    '1ST  '+cash(prizes[0])+' // 2ND  '+cash(prizes[1]),
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
   drawProEventSidebarDetails(s,side,lines);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
+    active&&!t?'FINISH YOUR ACTIVE EVENT FIRST':
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
     t?'RESUME EVENT BRIEFING':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
-    ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),
+    ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null,event.seasonChoice||'standard'),
     t?!!f:canEnter);
   return true;
 }
@@ -228,11 +262,12 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
          circuit(s).activeTimedEvent){s.proError='FINISH ACTIVE EVENT FIRST';return;}
       // Re-register against the saved profile at the actual payment moment.
       const verified=registerCrewSeries(s.registry,pending.squadIds,
-        pending.assignments,pending.trophyId,getOpenCircuitRotation());
+        pending.assignments,pending.trophyId,getOpenCircuitRotation(),pending.seasonChoice);
       if(verified.error){s.proError=verified.error;return;}
       const savedEvent=verified.circuit.activeCrewEvent;
       if(savedEvent.id!==pending.circuit.activeCrewEvent.id||
          savedEvent.format!==pending.circuit.activeCrewEvent.format||
+         savedEvent.seasonChoice!==pending.circuit.activeCrewEvent.seasonChoice||
          savedEvent.entryFee!==pending.circuit.activeCrewEvent.entryFee){
         s.proError='EVENT OFFER CHANGED — CANCEL AND REOPEN';
         return;
@@ -258,14 +293,14 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
     },
   });
 }
-export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null) {
+export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null,seasonChoice='standard') {
   if(circuit(s).activeCrewEvent)return showCrewFixture(s);
   const units=getCrewSeriesUnits(s.registry,assignments);
   const squadIds=units.map(u=>u.id);
   const out=registerCrewSeries(s.registry,squadIds,assignments,
-    trophyId,getOpenCircuitRotation());
+    trophyId,getOpenCircuitRotation(),seasonChoice);
   if(out.error){s.proError=out.error;redraw(s);return;}
-  const pending={circuit:out.circuit,squadIds,assignments,trophyId};
+  const pending={circuit:out.circuit,squadIds,assignments,trophyId,seasonChoice};
   s._pendingCrewRegistration=pending;
   showUnpaidCrewBriefing(s,pending,[]);
 }
@@ -459,73 +494,241 @@ export function showProRankings(s) {
 }
 
 export function showSeasonRecords(s,complete=false) {
-  const c=circuit(s),o=overlay(s,`SEASON ${c.season} // ${complete?'FINAL STANDINGS':'PROFESSIONAL RECORD'}`);
+  const c=circuit(s),report=getProfessionalSeasonReport(c);
+  const finished=report.completed;
+  const heading=finished?
+    (report.canEnterTokyo?'TOKYO CHAMPIONSHIP // QUALIFIED':'PRO SEASON // NOT QUALIFIED'):
+    ('PRO SEASON // ROUND '+(report.roundsCompleted+1)+' OF 8');
+  const o=overlay(s,'SEASON '+c.season+' // '+heading);
+  o.label(90,110,finished?
+    (report.canEnterTokyo?'EIGHT ROUNDS COMPLETE · TOKYO CHAMPIONSHIP UNLOCKED':
+      'EIGHT ROUNDS COMPLETE · RETURN TO THE OPEN CIRCUIT TO PREPARE'):
+    (report.qualified?'POINT TARGETS MET · FINISH ALL EIGHT ROUNDS':
+      'EARN DRIVER AND CREW POINTS TO QUALIFY FOR TOKYO'),19)
+    .setColor(report.canEnterTokyo?'#f1cd84':'#b8c7cf');
+
   for(const [kind,x] of [['DRIVER',90],['TEAM',810]]) {
-    o.label(x,125,kind+' SEASON POINTS',25);
+    o.label(x,151,kind+' SEASON POINTS',25);
     const rows=getSeasonStandings(c,kind),player=kind==='TEAM'?'player:team':'player:driver';
-    rows.slice(0,6).forEach((r,i)=>o.label(x,182+i*48,`${i+1}. ${r.id===player?'YOU':r.name||characters[r.characterId]?.name||r.id}  ${r.seasonPoints}`,20));
-    const mine=rows.find(r=>r.id===player);o.label(x,487,`YOUR STANDING #${rows.indexOf(mine)+1} · ${mine.seasonPoints} PTS`,22);
+    rows.slice(0,6).forEach((r,i)=>o.label(x,192+i*44,
+      (i+1)+'. '+(r.id===player?'YOU':r.name||characters[r.characterId]?.name||r.id)+
+      '  '+r.seasonPoints+' PTS',19).setColor(r.id===player?'#f2d396':'#e8e1df'));
+    const position=kind==='TEAM'?report.crewStanding:report.driverStanding;
+    const points=kind==='TEAM'?report.crew:report.driver;
+    o.label(x,483,'YOUR STANDING #'+(position||'—')+' · '+points+' PTS',23)
+      .setColor('#f2d396');
   }
-  const q=getProQualification(c);o.label(90,533,`TOKYO QUALIFICATION: DRIVER ${q.driver}/${q.driverRequired} · CREW ${q.crew}/${q.crewRequired} · ${q.qualified?'QUALIFIED':'NOT YET'}`,20);
-  const outlook=q.qualified?'TOKYO CHAMPIONSHIP QUALIFIED'
-    :!q.qualificationPossible?'QUALIFICATION NO LONGER POSSIBLE THIS SEASON'
-    :`MINIMUM REMAINING ENTRIES: ${q.driverEventsNeeded} DRIVER + ${q.crewEventsNeeded} CREW · ${q.roundsRemaining} ROUNDS LEFT`;
-  o.label(90,560,outlook,19);
-  o.label(90,595,'EVENT HISTORY: '+(c.calendar.history.map(h=>h.label+' #'+h.placing).join(' / ')||'No completed events yet.'),18);
-  const last=c.calendar.archives.at(-1);if(last)o.label(90,642,`PREVIOUS SEASON ${last.season}: DRIVER #${last.drivers.findIndex(r=>r.id==='player:driver')+1} · CREW #${last.teams.findIndex(r=>r.id==='player:team')+1}`,18);
-  o.btn(310,758,390,'RETURN',o.close);
-  if(complete && (q.qualified || c.activeChampionship))o.btn(1090,696,600,c.activeChampionship?'VIEW TOKYO CHAMPIONSHIP':'ENTER TOKYO CHAMPIONSHIP',()=>{
-    if(!c.activeChampionship){const result=createProvisionalChampionship(c);if(result.error){o.label(90,690,result.error,18);return;}const next={...c,activeChampionship:result.championship};if(!commit(s,{proCircuit:next}))return;}
-    o.close();showTokyoChampionship(s);
-  });
-  if(complete&&q.qualified&&!c.activeChampionship?.completed){
-    o.label(760,748,'COMPLETE THE CHAMPIONSHIP OR WITHDRAW FROM THE SEASON',16);
-    o.btn(1090,620,600,'WITHDRAW / FORFEIT SEASON',()=>{o.close();showProSeasonWithdrawal(s);});
+
+  o.label(90,532,'TOKYO QUALIFICATION   DRIVER '+report.driver+'/'+report.driverRequired+
+    '  ·  CREW '+report.crew+'/'+report.crewRequired,21);
+  const outlook=report.canEnterTokyo?
+    'QUALIFIED · YOUR TOKYO CHAMPIONSHIP INVITATION IS READY':
+    finished?'NOT QUALIFIED · SHORT BY '+report.driverShortfall+' DRIVER / '+
+      report.crewShortfall+' CREW POINTS':
+    !report.qualificationPossible?'QUALIFICATION MATHEMATICALLY OUT OF REACH THIS SEASON':
+    report.qualified?'POINT REQUIREMENTS MET · COMPLETE THE REMAINING ROUNDS':
+    'MINIMUM STILL NEEDED: '+report.driverEventsNeeded+' DRIVER + '+
+      report.crewEventsNeeded+' CREW EVENTS · '+report.roundsRemaining+' ROUNDS LEFT';
+  o.label(90,564,outlook,19).setColor(report.canEnterTokyo?'#f1cd84':
+    !report.qualificationPossible?'#eaa0a4':'#c4d0da');
+
+  const entries=c.calendar.history.map((h,i)=>
+    (i+1)+'. '+String(h.label||h.discipline||'PRO EVENT').slice(0,18)+
+      '  '+Number(h.points||0)+'PT');
+  o.label(90,602,'OFFICIAL EVENT RESULTS',18).setColor('#aab8c1');
+  o.label(90,626,entries.slice(0,4).join('   /   ')||'NO COMPLETED EVENTS',17);
+  if(entries.length>4)o.label(90,650,entries.slice(4,8).join('   /   '),17);
+
+  const last=c.calendar.archives.at(-1);
+  if(last)o.label(90,692,'PREVIOUS SEASON '+last.season+
+    ': DRIVER #'+(last.drivers?.findIndex(r=>r.id==='player:driver')+1||'—')+
+    ' · CREW #'+(last.teams?.findIndex(r=>r.id==='player:team')+1||'—'),17);
+
+  o.btn(300,768,390,'CLOSE REPORT',o.close);
+  if(!finished)return;
+  if(report.canEnterTokyo&&!c.activeChampionship?.completed) {
+    o.btn(1090,768,600,c.activeChampionship?
+      'RESUME TOKYO CHAMPIONSHIP':'ENTER TOKYO CHAMPIONSHIP',()=>{
+      // Repeated presses and reloads cannot recreate a saved championship.
+      const current=circuit(s);
+      if(!current.activeChampionship){
+        const result=createProvisionalChampionship(current);
+        if(result.error){o.label(90,714,result.error,18);return;}
+        if(!commit(s,{proCircuit:{...current,activeChampionship:result.championship}}))return;
+      }
+      o.close();showTokyoChampionship(s);
+    });
+  } else {
+    const needsAward=Boolean(c.activeChampionship?.completed&&
+      c.activeChampionship.stage==='COMPLETE'&&
+      !c.championshipSettledIds.includes(c.activeChampionship.id));
+    o.btn(1090,768,600,needsAward?'VIEW CHAMPIONSHIP AWARDS':'RETURN TO OPEN CIRCUIT',()=>{
+      if(needsAward){o.close();showTokyoChampionship(s);return;}
+      if(s.registry.get('competitionState')?.active)return;
+      const out=nextProfessionalSeason(circuit(s));
+      if(out.error){o.label(90,714,out.error,18);return;}
+      if(commit(s,{proCircuit:out.circuit})){o.close();redraw(s);}
+    });
   }
-  if(complete&&(!q.qualified||c.activeChampionship?.completed))o.btn(1100,758,570,'RETURN TO OPEN CIRCUIT',()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
 }
 
-/** Championship lobby: each stage launches the live race scene and saves after every heat. */
+/** One unified sixteen-entrant championship: live stage results, durable
+ *  payout and true podium. Never award or score from presentation alone. */
 export function showTokyoChampionship(s) {
-  const c=circuit(s),state=c.activeChampionship;
+  let c=circuit(s),state=c.activeChampionship;
   if(!state){showSeasonRecords(s,c.calendar.round>=8);return;}
-  const o=overlay(s,'TOKYO CHAMPIONSHIP // PROVISIONAL 16');
-  o.label(90,110,'STAGE '+state.stage+' · SEASON '+state.season+' · '+(state.completed?'FINAL RESULTS':'CHAMPIONSHIP IN PROGRESS'),23);
+
+  // Recover a completed legacy save that reached the result page before
+  // once-only awards existed; the transition is safe to call repeatedly.
+  if(state.completed){
+    const award=settleTokyoChampionship(c);
+    if(award.error){s.proError=award.error;redraw(s);return;}
+    if(!award.alreadySettled) {
+      if(!commit(s,{proCircuit:award.circuit,
+        cash:Number(s.registry.get('cash')||0)+award.cashPrize}))return;
+      c=award.circuit;state=c.activeChampionship;
+    }
+  }
+
   const rows=championshipStandings(state);
-  rows.forEach((r,i)=>{
-    const x=i<8?90:810,y=178+(i%8)*60;
-    o.label(x,y,(i+1)+'. '+(r.id==='player:driver'?'YOU':r.name)+'  '+r.total+' PTS',20);
-  });
+  const mine=rows.find(r=>r.id==='player:driver');
+  const myPlace=rows.indexOf(mine)+1;
+  const complete=Boolean(state.completed);
+  const winner=complete&&state.championId==='player:driver';
+  const o=overlay(s,complete?
+    (winner?'TOKYO CHAMPION // OFFICIAL RESULTS':'TOKYO CHAMPIONSHIP // FINAL STANDINGS'):
+    'TOKYO CHAMPIONSHIP // FINAL SIXTEEN');
+  const stageName={KNOCKOUT:'STAGE 1 / 3 — INDIVIDUAL KNOCKOUTS',
+    CREW:'STAGE 2 / 3 — CREW BATTLES',
+    FOUR_WIDE:'STAGE 3 / 3 — FOUR-WIDE FINALS',
+    COMPLETE:'CHAMPIONSHIP COMPLETE'};
+  o.label(90,105,stageName[state.stage]||'CHAMPIONSHIP IN PROGRESS',22)
+    .setColor(complete?'#f6d18a':'#d7e8ef');
+  o.label(90,142,complete?
+    ('YOUR FINISH  #'+myPlace+'/16   ·   TOTAL '+mine.total+' PTS'+
+      (winner?'   ·   TOKYO CHAMPION':'   ·   CHAMPION '+rows[0].name)):
+    'THREE STAGES · KO 20 PTS + CREW 20 PTS + FOUR-WIDE 40 PTS MAX',19)
+    .setColor(complete?'#f6d18a':'#b8c7cf');
+
+  for(const [i,entry] of rows.entries()){
+    const x=i<8?90:810,y=197+(i%8)*51;
+    const own=entry.id==='player:driver';
+    const name=own?'YOU':String(entry.name||entry.id).slice(0,19);
+    o.label(x,y,(i+1)+'. '+name,18)
+      .setColor(own?'#f5d18b':i<3?'#f0e6e4':'#d4dce2');
+    o.label(x+328,y,'KO '+entry.knockout+
+      ' · CR '+entry.crew+' · 4W '+entry.fourWide+'  =  '+entry.total,17)
+      .setColor(own?'#f5d18b':'#9db6c5');
+  }
+
   const heat=state.stage==='KNOCKOUT'?getChampionshipKnockoutHeat(state):
     state.stage==='CREW'?getChampionshipCrewHeat(state):
     state.stage==='FOUR_WIDE'?getChampionshipFourWideHeat(state):null;
-  o.label(90,690,state.completed?'CHAMPION: '+(rows[0]?.name||'UNKNOWN'):
-    heat?'NEXT: '+(state.stage==='KNOCKOUT'?'KNOCKOUT ROUND '+(heat.round+1)+' vs '+heat.opponent?.name:
-      state.stage==='CREW'?'CREW HEAT '+(heat.index+1)+' vs '+heat.opponent?.name:
-      'FOUR-LANE '+['QUALIFIER','SEMIFINAL','FINAL'][heat.round]):
-    'STAGE TRANSITION PENDING',21);
-  o.btn(300,766,390,'SAVE / RETURN',o.close);
-  if(heat && !state.completed){
-    const mode=state.stage==='KNOCKOUT'?'CHAMP_KO':state.stage==='CREW'?'CHAMP_CREW':'CHAMP_FOUR';
-    const units=state.stage==='CREW'?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&!heat.usedCarIds.includes(u.carId)):[];
-    const carId=state.stage==='CREW'?units[0]?.carId:s.registry.get('selectedCarId');
-    if(state.stage==='CREW'){
-      o.label(790,515,'SELECT A DISTINCT CREW CAR',18);
-      units.slice(0,5).forEach((u,i)=>o.btn(970,558+i*43,340,u.name+' / '+(cars[u.carId]?.shortName||u.carId),()=>{
-        o.close();startChampionshipRace(s,mode,u.carId);
-      }));
-      if(!units.length)o.label(790,650,'NO ELIGIBLE CREW CARS AVAILABLE',18);
-    }else o.btn(1110,762,570,'DRIVE CHAMPIONSHIP HEAT',()=>{o.close();startChampionshipRace(s,mode,carId);});
+  const next=heat?(state.stage==='KNOCKOUT'?
+      'KNOCKOUT ROUND '+(heat.round+1)+'/4 · VS '+heat.opponent?.name:
+      state.stage==='CREW'?'CREW HEAT '+(heat.index+1)+'/3 · VS '+heat.opponent?.name:
+      'FOUR-WIDE '+['QUALIFIER','SEMIFINAL','FINAL'][heat.round]):null;
+  const paid=c.championshipHistory.find(h=>h.id===state.id);
+  o.label(90,633,complete?
+    'OFFICIAL PODIUM · 1ST '+rows[0].name+'  ·  2ND '+rows[1].name+
+      '  ·  3RD '+rows[2].name:
+    (next?'UP NEXT · '+next:'STAGE COMPLETED · RESULTS ARE SAVED'),19)
+    .setColor(complete?'#f5d18b':'#b8c7cf');
+  if(complete){
+    o.label(90,678,'YOUR CHAMPIONSHIP PRIZE  ¥'+
+      Number(paid?.cashPrize??TOKYO_CHAMPIONSHIP_PURSES[myPlace-1]??0).toLocaleString('en-US')+
+      (winner?'  ·  PERMANENT TOKYO CHAMPION TITLE EARNED':
+        '  ·  RETURN FOR ANOTHER SEASON'),19).setColor('#f6d18a');
+  }else{
+    o.label(90,681,'EACH HEAT IS SAVED · A LOSS IN ONE STAGE DOES NOT END THE CHAMPIONSHIP',18)
+      .setColor('#b8c7cf');
   }
+
+  o.btn(310,768,390,'SAVE / RETURN',o.close);
+  if(heat&&!complete){
+    const mode=state.stage==='KNOCKOUT'?'CHAMP_KO':
+      state.stage==='CREW'?'CHAMP_CREW':'CHAMP_FOUR';
+    if(mode==='CHAMP_CREW'){
+      const eligible=getCrewSeriesUnits(s.registry).filter(u=>
+        u.validAssignment&&!heat.usedCarIds.includes(u.carId));
+      o.btn(1090,768,600,'SELECT CREW CAR / DRIVE HEAT',()=>{
+        o.close();showChampionshipCrewSelection(s);
+      });
+      if(!eligible.length)o.label(810,709,'NO ELIGIBLE UNIQUE CREW CAR — CHECK GARAGE',18)
+        .setColor('#e89d9f');
+    }else{
+      const carId=state.driverCarId||s.registry.get('selectedCarId');
+      o.btn(1090,768,600,'DRIVE CHAMPIONSHIP HEAT',()=>{
+        startChampionshipRace(s,mode,carId);
+      });
+      if(state.driverCarId)o.label(810,709,'REGISTERED DRIVER CAR · '+
+        (cars[state.driverCarId]?.shortName||state.driverCarId),17);
+    }
+  }else if(complete){
+    o.btn(1090,768,600,'CONTINUE PROFESSIONAL CAREER',()=>{
+      o.close();showSeasonRecords(s,true);
+    });
+  }
+  // These simple story beats run only on genuine saved outcomes; there are
+  // no rewards or state changes inside the cutscene.
+  if(complete)playMangaCutscene(s,winner?
+    'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
+  else if(state.stage==='KNOCKOUT'&&!(state.knockout?.results?.length))
+    playMangaCutscene(s,'tokyoChampionshipOpening');
 }
 
-function startChampionshipRace(s,mode,carId){
+function showChampionshipCrewSelection(s) {
+  const c=circuit(s),state=c.activeChampionship;
+  const heat=getChampionshipCrewHeat(state);
+  if(!heat){showTokyoChampionship(s);return;}
+  const o=overlay(s,'TOKYO CHAMPIONSHIP // CREW CAR REGISTRATION');
+  o.label(90,116,'HEAT '+(heat.index+1)+'/3  ·  '+heat.opponent.name,24);
+  o.label(90,167,'DRIVE A DIFFERENT REGISTERED CREW CAR IN EACH HEAT. NO REUSED CARS.',19);
+  const units=getCrewSeriesUnits(s.registry).filter(u=>
+    u.validAssignment&&!heat.usedCarIds.includes(u.carId));
+  units.slice(0,7).forEach((unit,i)=>{
+    const x=i%2===0?435:1135,y=261+Math.floor(i/2)*105;
+    o.btn(x,y,610,unit.name+'  /  '+(cars[unit.carId]?.shortName||unit.carId),()=>{
+      if(startChampionshipRace(s,'CHAMP_CREW',unit.carId))o.close();
+    });
+  });
+  if(!units.length)o.label(90,326,'NO ELIGIBLE CREW CAR — RETURN TO THE GARAGE',22);
+  o.btn(290,763,390,'BACK TO STANDINGS',()=>{
+    o.close();showTokyoChampionship(s);
+  });
+}
+
+function startChampionshipRace(s,mode,carId) {
+  const c=circuit(s),state=c.activeChampionship;
+  const expected={KNOCKOUT:'CHAMP_KO',CREW:'CHAMP_CREW',FOUR_WIDE:'CHAMP_FOUR'}[state?.stage];
   const owned=s.registry.get('ownedCarIds')||[];
-  if(!carId||!cars[carId]||cars[carId].ginzaDemo||!owned.includes(carId)){
-    s.proError='SELECT AN OWNED CAR BEFORE STARTING THE CHAMPIONSHIP HEAT';
-    redraw(s);return;
+  if(!state||state.completed||expected!==mode||
+     !carId||!cars[carId]||cars[carId].ginzaDemo||!owned.includes(carId)){
+    s.proError='SELECT AN ELIGIBLE OWNED CAR FOR THE ACTIVE CHAMPIONSHIP HEAT';
+    return false;
   }
+  if(mode==='CHAMP_CREW') {
+    const heat=getChampionshipCrewHeat(state);
+    const valid=getCrewSeriesUnits(s.registry).some(u=>
+      u.carId===carId&&u.validAssignment&&!heat?.usedCarIds.includes(carId));
+    if(!heat||!valid){s.proError='REGISTER A DIFFERENT ELIGIBLE CREW CAR';return false;}
+  }else{
+    const heat=mode==='CHAMP_KO'?getChampionshipKnockoutHeat(state):
+      getChampionshipFourWideHeat(state);
+    if(!heat){s.proError='NO ACTIVE CHAMPIONSHIP HEAT';return false;}
+    if(state.driverCarId&&state.driverCarId!==carId){
+      s.proError='USE YOUR REGISTERED CHAMPIONSHIP DRIVER CAR';return false;
+    }
+    if(!state.driverCarId){
+      // Lock the driver's car for both individual and four-wide stages,
+      // without an entry fee or a duplicate registration.
+      if(!commit(s,{proCircuit:{...c,
+        activeChampionship:{...state,driverCarId:carId}}}))return false;
+    }
+  }
+  s.proError=null;
   s.scene.start('FourLaneTestScene',{mode,carId});
+  return true;
 }
 
 

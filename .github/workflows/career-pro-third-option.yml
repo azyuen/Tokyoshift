@@ -1,0 +1,46 @@
+name: Career v1 professional event choices
+on:
+  push:
+    branches: [feature/career-v1-completion]
+    paths:
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'src/data/tokyoChampionship.js'
+      - 'src/data/officeTrophies.js'
+      - 'src/data/cutscenes.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/OfficePanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/career-pro-third-option.mjs'
+      - 'tests/career-season-report.mjs'
+      - 'tests/career-tokyo-finale.mjs'
+      - 'tests/tokyoChampionship.simulation.test.js'
+      - 'tests/proSeason.simulation.test.js'
+      - 'tests/ci-phaser-math.mjs'
+      - '.github/workflows/career-pro-third-option.yml'
+  workflow_dispatch:
+jobs:
+  season-options:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check src/data/proSeason.js
+          node --check src/data/proCircuit.js
+          node --check src/data/tokyoChampionship.js
+          node --check src/data/officeTrophies.js
+          node --check src/data/cutscenes.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/ui/OfficePanel.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check tests/career-pro-third-option.mjs
+          node --check tests/career-season-report.mjs
+          node --check tests/career-tokyo-finale.mjs
+      - name: Verify professional choices, qualification and season reports
+        run: node --test tests/career-pro-third-option.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs tests/tokyoChampionship.simulation.test.js

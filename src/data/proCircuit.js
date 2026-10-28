@@ -142,6 +142,9 @@ export function createDefaultProCircuitState() {
     lastTournament: null,
     activeChampionship: null,
     championshipHistory: [],
+    championshipSettledIds: [], // Permanent once-only reward ledger.
+    tokyoChampionWins: 0,
+    careerCompleted: false,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
     trophyHistory: [],
     championshipWins: { DRIVER: 0, TEAM: 0 },
@@ -168,6 +171,13 @@ export function normaliseProCircuitState(raw) {
   const source = safeObject(raw);
   const trophies = safeObject(source.trophyWins);
   const championships = safeObject(source.championshipWins);
+  // Existing fully recorded unified Tokyo titles predate the v1 dedicated
+  // trophy counter. Restore that fact without granting any unearned titles
+  // from obsolete, separate Driver/Crew championship placeholders.
+  const legacyTokyoTitles=Array.isArray(source.championshipHistory)?
+    source.championshipHistory.filter(h=>h&&h.championId==='player:driver'&&
+      (!h.id||String(h.id).startsWith('tokyo:s'))).length:0;
+  const tokyoTitles=boundedInteger(source.tokyoChampionWins,legacyTokyoTitles,0,10000);
   // Existing careers have already entered seasons implicitly. Preserve their
   // progress rather than moving them back into the new OPEN pre-season state.
   const legacySeasonStarted = Number(source.calendar?.round || 0) > 0 ||
@@ -215,6 +225,10 @@ export function normaliseProCircuitState(raw) {
       !Array.isArray(source.lastTournament) ? source.lastTournament : null,
     activeChampionship: source.activeChampionship && typeof source.activeChampionship === 'object' && !Array.isArray(source.activeChampionship) ? source.activeChampionship : null,
     championshipHistory: Array.isArray(source.championshipHistory) ? source.championshipHistory.filter(x => x && typeof x === 'object').slice(-20) : [],
+    championshipSettledIds: Array.isArray(source.championshipSettledIds)?
+      [...new Set(source.championshipSettledIds.filter(id=>typeof id==='string'&&id.startsWith('tokyo:s')))].slice(-250):[],
+    tokyoChampionWins: tokyoTitles,
+    careerCompleted: Boolean(source.careerCompleted)||tokyoTitles>0,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
       t.id, boundedInteger(trophies[t.id], 0, 0, 10000),
     ])),

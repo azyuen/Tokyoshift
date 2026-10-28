@@ -2,6 +2,7 @@ import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20261011-r479';
 import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261011-r479';
 import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
+import { getOfficeTrophyLines, getOfficeTrophyRecord } from '../data/officeTrophies.js?v=20261029-career1';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r574';
@@ -377,12 +378,21 @@ export function showOfficePanel(scene) {
     x: 0.115, y: 0.285, w: 0.17, h: 0.24,
     onActivate: () => showCarHistoryLedger(scene),
   });
+  const trophyRecord=getOfficeTrophyRecord(scene.registry.get('proCircuit'));
+  if(trophyRecord.titles){
+    const shelf=point(frame,0.84,0.655);
+    const title=add(scene.add.text(shelf.x,shelf.y,
+      'TOKYO CHAMPION\n'+trophyRecord.titles+' TITLE'+(trophyRecord.titles>1?'S':''),
+      {fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f8dda2',align:'center',
+        backgroundColor:'#211a13dd',padding:{x:10,y:7}})
+      .setOrigin(.5).setDepth(207).setInteractive({useHandCursor:true}));
+    title.on('pointerdown',()=>showOfficePopup(scene,'TROPHY CASE',
+      getOfficeTrophyLines(scene.registry.get('proCircuit'))));
+  }
   addHotspot(scene, add, frame, {
     x: 0.84, y: 0.52, w: 0.25, h: 0.37,
-    onActivate: () => showOfficePopup(scene, 'TROPHY CASE', [
-      'NO TROPHIES YET',
-      'Event trophies will appear here as those events are introduced.',
-    ]),
+    onActivate: () => showOfficePopup(scene,'TROPHY CASE',
+      getOfficeTrophyLines(scene.registry.get('proCircuit'))),
   });
   addHotspot(scene, add, frame, {
     // Exact bottom-right CAR COUPONS register: sign + coupon cards.

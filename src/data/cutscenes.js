@@ -1052,6 +1052,64 @@ export const CUTSCENES = {
 
   // Reveal Sayaka's practical strategy experience after Ginza and a legitimate
   // seven-member crew. She is a family friend, NOT the player's father's strategist.
+  // Lightweight, skippable Career v1 Championship milestones. The official
+  // result and rewards are already saved before any victory dialogue appears.
+  tokyoChampionshipOpening: {
+    id: 'tokyoChampionshipOpening',
+    category: 'TOKYO CHAMPIONSHIP / CAREER',
+    testerLabel: 'Tokyo Championship — The Final Sixteen',
+    title: 'TOKYO CHAMPIONSHIP // THE FINAL SIXTEEN',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'track', text: "Eight professional rounds. You and the crew earned your place among Tokyo's final sixteen." },
+      { speaker: 'right', pose: 'idle', text: "We've made it this far. What do we need to win?" },
+      { speaker: 'left', pose: 'track', text: "Three stages: individual knockouts, crew battles and four-wide racing. Every point counts, even if we lose a heat." },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'win',
+        text: "The cars are ready. You focus on the driving. I'll keep the workshop running!" },
+      { speaker: 'right', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "Then let's make this count.", emphasis: true },
+    ],
+    finalActionLabel: 'VIEW THE CHAMPIONSHIP',
+  },
+  tokyoChampionshipVictory: {
+    id: 'tokyoChampionshipVictory',
+    category: 'TOKYO CHAMPIONSHIP / CAREER',
+    testerLabel: 'Tokyo Champion — Career Finale',
+    title: 'TOKYO SHIFT // TOKYO CHAMPION',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'win', text: "TOKYO CHAMPION! Do you remember the first car in that little garage? Look how far we've come!" },
+      { speaker: 'right', pose: 'win', text: "Seven regions, seven crew mates, the Open Circuit, the Pro Season... We all worked for this." },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', pose: 'trackHappy',
+        text: "And today, the strategy held together. Every driver on this team contributed. I'm proud of you." },
+      { speaker: 'right', leftCharacter: 'sayakaFujieda', pose: 'win',
+        text: "Couldn't have done it without any of you." },
+      { speaker: 'left', leftCharacter: 'arkonDen', pose: 'normal',
+        text: "Well driven. Looks like backing your team was a pretty good decision." },
+      { speaker: 'right', leftCharacter: 'arkonDen', pose: 'idle',
+        text: "Thanks, Aruken. There's still a lot more racing to do." },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', pose: 'trackHappy',
+        text: "Exactly. Enjoy the trophy tonight. Tomorrow, we defend it.", emphasis: true },
+    ],
+    finalActionLabel: 'CONTINUE AS TOKYO CHAMPION',
+  },
+  tokyoChampionshipDefeat: {
+    id: 'tokyoChampionshipDefeat',
+    category: 'TOKYO CHAMPIONSHIP / CAREER',
+    testerLabel: 'Tokyo Championship — Final Result',
+    title: 'TOKYO CHAMPIONSHIP // FINAL RESULTS',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'track', text: "That's the final result. We didn't take the title this season." },
+      { speaker: 'right', pose: 'idle', text: "I know. But we learned exactly what it takes to race with the best." },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'win',
+        text: "And the garage isn't going anywhere. We'll come back with the crew and try again." },
+    ],
+    finalActionLabel: 'PREPARE FOR NEXT SEASON',
+  },
   proCircuitStrategistReveal: {
     id: 'proCircuitStrategistReveal',
     category: 'PRO CIRCUIT / STORY',
@@ -1249,6 +1307,9 @@ export const CUTSCENE_ORDER = [
   'dragComplexInvitation',
   'competitionIntroduction',
   'competitionChampion',
+  'tokyoChampionshipOpening',
+  'tokyoChampionshipVictory',
+  'tokyoChampionshipDefeat',
 ];
 
 export function getCutscene(id) {

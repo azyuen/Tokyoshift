@@ -21,24 +21,53 @@ export function createProvisionalChampionship(raw) {
   const c=normaliseProCircuitState(raw);
   if(!canEnterTokyoChampionship(c))return {error:'COMPLETE EIGHT ROUNDS AND REACH 60 DRIVER / 40 CREW POINTS'};
   if(c.activeChampionship)return {error:'CHAMPIONSHIP ALREADY ACTIVE'};
-  const rivals=getProCircuitDriverSeeds(c).filter(r=>r.id!==PLAYER);
-  // Preserve main regional rivals in the provisional roster; actual season
-  // qualification will replace this selection in releases 2A/2B.
-  const regional=rivals.filter(r=>r.characterId);
-  const remaining=rivals.filter(r=>!r.characterId);
-  const field=[...regional.sort((a,b)=>b.rating-a.rating),
-    ...remaining.sort((a,b)=>b.rating-a.rating)].slice(0,15);
+  // Season standings determine the Championship draw (70% Driver,
+  // 30% Crew), while persistent ratings break ties. Driver/team IDs
+  // are paired using the same canonical roster mapping as season simulation.
+  const driverIds=Object.keys(c.drivers).sort(),teamIds=Object.keys(c.teams).sort();
+  const teamByDriver=Object.fromEntries(driverIds.map((id,index)=>
+    [id,c.teams[teamIds[index]]||null]));
+  const seedScore=(driver,team)=>Number((
+    .7*Math.max(0,Number(driver?.seasonPoints)||0)/60+
+    .3*Math.max(0,Number(team?.seasonPoints)||0)/40).toFixed(6));
+  const rivals=getProCircuitDriverSeeds(c).filter(r=>r.id!==PLAYER).map(r=>({
+    ...r,seasonSeedScore:seedScore(c.drivers[r.id],teamByDriver[r.id]),
+  }));
+  const bySeason=(a,b)=>b.seasonSeedScore-a.seasonSeedScore||
+    b.rating-a.rating||a.id.localeCompare(b.id);
+  // Seven established regional rivals remain recognisable in the finale;
+  // the remaining eight places go to the best professional season qualifiers.
+  const regional=rivals.filter(r=>r.characterId).sort(bySeason);
+  const remaining=rivals.filter(r=>!r.characterId).sort(bySeason);
+  const field=[...regional,...remaining].slice(0,15);
   if(field.length!==15)return {error:'INSUFFICIENT CHAMPIONSHIP RIVALS'};
-  const entrants=[{id:PLAYER,name:'YOU',rating:c.playerDriver.rating,seed:0},
+  const entrants=[{id:PLAYER,name:'YOU',rating:c.playerDriver.rating,seed:0,
+      seasonSeedScore:seedScore(c.playerDriver,c.playerTeam)},
     ...field.map(r=>({id:r.id,name:r.name||characters[r.characterId]?.name||r.id,
-      characterId:r.characterId||null,rating:r.rating,seed:0}))];
-  entrants.sort((a,b)=>b.rating-a.rating||hash(c.season+':'+a.id)-hash(c.season+':'+b.id));
+      characterId:r.characterId||null,rating:r.rating,seed:0,
+      seasonSeedScore:r.seasonSeedScore}))];
+  entrants.sort((a,b)=>b.seasonSeedScore-a.seasonSeedScore||b.rating-a.rating||
+    hash(c.season+':'+a.id)-hash(c.season+':'+b.id));
   entrants.forEach((r,i)=>r.seed=i+1);
+  // Around 75% Elite in the 16-car opener, the others Expert.
+  // Snapshot skill tiers so old saves and completed brackets never reroll.
+  const opposition=entrants.filter(r=>r.id!==PLAYER);
+  opposition.forEach((r,i)=>r.skillTier=i<Math.round(opposition.length*.75)?5:4);
   return {championship:{schema:1,id:'tokyo:s'+c.season,season:c.season,
-    rosterType:'PROVISIONAL',stage:'KNOCKOUT',entrants,
+    rosterType:'TOKYO_CHAMPIONSHIP',stage:'KNOCKOUT',entrants,
     knockout:{round:0,results:[]},crew:{results:[]},fourWide:{results:[]},
     points:Object.fromEntries(entrants.map(r=>[r.id,{knockout:0,crew:0,fourWide:0}])),
     completed:false,championId:null}};
+}
+// Decisive semifinal/final opposition is always Elite, with no hidden
+// physics changes. Existing PROVISIONAL saves retain their original tiers.
+export function getChampionshipOpponentSkill(state,entrantId,stage='KNOCKOUT',round=0) {
+  if(!state||state.rosterType==='PROVISIONAL')return null;
+  const entrant=state.entrants?.find(r=>r.id===entrantId);
+  if(!entrant||entrant.id===PLAYER)return null;
+  if((stage==='KNOCKOUT'&&round>=2)||
+     (stage==='FOUR_WIDE'&&round>=1))return 5;
+  return entrant.skillTier===4?4:5;
 }
 export function championshipStandings(state) {
   if(!state?.entrants)return [];
@@ -49,6 +78,67 @@ export function championshipStandings(state) {
   }).sort((a,b)=>b.total-a.total||b.fourWide-a.fourWide||
     b.knockout-a.knockout||a.seed-b.seed);
 }
+// Tokyo Championship placing prizes are ten times the originally approved
+// Championship payout scale: prestigious enough to move toward a ¥28m+ collector car, but
+// not enough to purchase the rarest Ginza legends after one successful season.
+// BASE purses only; no duplicate sponsor/difficulty multipliers. Awards are
+// written once alongside the authoritative three-stage final standings.
+export const TOKYO_CHAMPIONSHIP_PURSES=Object.freeze([
+  10000000,5000000,3000000,1750000,
+  1000000,1000000,1000000,1000000,
+  500000,500000,500000,500000,500000,500000,500000,500000,
+]);
+
+export function getTokyoCareerRecord(raw) {
+  const c=normaliseProCircuitState(raw);
+  const history=[...c.championshipHistory].filter(r=>r&&r.championId);
+  const last=history.at(-1)||null;
+  return {titles:c.tokyoChampionWins,careerCompleted:c.careerCompleted,
+    appearances:history.length,last,history};
+}
+
+/** Pure and idempotent. Caller must save circuit and cash in ONE transaction. */
+export function settleTokyoChampionship(raw) {
+  const c=normaliseProCircuitState(raw),state=c.activeChampionship;
+  if(!state||!state.completed||state.stage!=='COMPLETE'||
+     !state.id?.startsWith('tokyo:s')||state.season!==c.season)
+    return {error:'CHAMPIONSHIP RESULT NOT FINAL'};
+  if(c.championshipSettledIds.includes(state.id))
+    return {circuit:c,cashPrize:0,alreadySettled:true,
+      result:c.championshipHistory.find(r=>r.id===state.id)||null};
+  const standings=championshipStandings(state);
+  if(standings.length!==16||standings[0].id!==state.championId||
+     !standings.some(r=>r.id===PLAYER)||
+     standings.some(r=>!Number.isFinite(r.total)))
+    return {error:'CHAMPIONSHIP STANDINGS INVALID'};
+  const playerPlace=standings.findIndex(r=>r.id===PLAYER)+1;
+  const won=state.championId===PLAYER;
+  const cashPrize=TOKYO_CHAMPIONSHIP_PURSES[playerPlace-1]||0;
+  const podium=standings.slice(0,3).map((r,index)=>({
+    place:index+1,id:r.id,name:r.name,points:r.total,
+    knockout:r.knockout,crew:r.crew,fourWide:r.fourWide,
+  }));
+  const legacyWinAlreadyRecorded=won&&c.championshipHistory.some(r=>
+    r?.championId===PLAYER&&(r.id===state.id||
+      (r.season===state.season&&(!r.id||r.completed))));
+  const result={id:state.id,season:state.season,completed:true,
+    championId:state.championId,championName:standings[0].name,
+    playerPlace,playerPoints:standings[playerPlace-1].total,
+    playerChampion:won,cashPrize,podium,
+    points:clone(state.points)};
+  c.championshipSettledIds=[...c.championshipSettledIds,state.id].slice(-250);
+  // Older versions already recorded the outcome when the final heat saved;
+  // replace that record instead of adding a duplicate entry for this season.
+  const history=c.championshipHistory.filter(r=>
+    r?.id!==state.id&&!(r?.season===state.season&&r?.championId===state.championId));
+  c.championshipHistory=[...history,result].slice(-20);
+  if(won){
+    if(!legacyWinAlreadyRecorded)c.tokyoChampionWins++;
+    c.careerCompleted=true;
+  }
+  return {circuit:c,cashPrize,alreadySettled:false,result};
+}
+
 export function scoreChampionshipStage(raw,stage,placements) {
   const state=clone(raw);
   if(!state||state.completed||state.stage!==stage||!['KNOCKOUT','FOUR_WIDE'].includes(stage))throw Error('CHAMPIONSHIP STAGE MISMATCH');

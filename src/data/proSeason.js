@@ -117,6 +117,39 @@ export const PRO_SEASON_CALENDAR = Object.freeze([
   {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
 ]);
 export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
+
+// End-game ladder. Skill tiers use the existing AI engine unchanged:
+// 3 Skilled, 4 Expert, 5 Elite. The short repeating fields avoid rerolls.
+const PRO_SKILL_FIELDS=Object.freeze([
+  Object.freeze([4,4,5,4,3,4,4,5,4,4]), // first two rounds: rare Skilled
+  Object.freeze([4,5,4,5,4,5,4,5,4,5]),
+  Object.freeze([5,4,5,5,4,5,4,5,5,4]),
+  Object.freeze([5,5,5,4,5,5,5,4]),
+]);
+export function getProSeasonSkillTier(round,slot=0,invitation=false) {
+  if(invitation)return [5,5,4,5,5][Math.abs(Math.floor(slot))%5];
+  const phase=Math.min(3,Math.max(0,Math.floor((Number(round)||0)/2)));
+  const field=PRO_SKILL_FIELDS[phase];
+  return field[Math.abs(Math.floor(slot)+Math.max(0,Math.floor(Number(round)||0))*3)%field.length];
+}
+export const PRO_INVITATIONAL_DRIVER_FEE=90000;
+export const PRO_INVITATIONAL_DRIVER_PRIZE=250000;
+const PRO_INVITATIONAL_DRIVER_ROUNDS=Object.freeze([0,2,3,5,7]);
+export function getProInvitationalDiscipline(raw) {
+  const c=normaliseProCircuitState(raw),q=getProQualification(c);
+  // Predictable 5-driver/3-crew starting schedule; if one qualification
+  // requirement is materially further away, offer the lagging discipline.
+  if(q.driverEventsNeeded>q.crewEventsNeeded+1)return 'DRIVER';
+  if(q.crewEventsNeeded>q.driverEventsNeeded+1)return 'TEAM';
+  return PRO_INVITATIONAL_DRIVER_ROUNDS.includes(c.calendar.round)?'DRIVER':'TEAM';
+}
+export function getProDriverInvitationRules(round) {
+  const regular=getProfessionalRoundEvents(round).driver;
+  return {id:'proDriverInvitational',format:'KNOCKOUT',
+    maxPowerKW:regular.maxPowerKW?Math.max(regular.maxPowerKW,380):undefined,
+    noNos:false};
+}
+
 // Scrutineering checks the actual installed parts, not just horsepower.
 // Cosmetic paint/wheels, ownership metadata and unused saved presets do not
 // affect factory specification. Missing/legacy states default to stock.
@@ -216,8 +249,14 @@ export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=
   if(!eligibility.eligible)return {error:eligibility.reasons.join(' / ')};
   if(!Number.isSafeInteger(entryFee)||entryFee<0)return {error:'INVALID ENTRY FEE'};
   const id='timed:s'+c.season+':r'+c.calendar.round;
+  const opponentRating=getProSeasonSkillTier(c.calendar.round,0,false);
+  const challenger=getProfessionalOpponentBuild(rules,eligibility.powerKW,
+    opponentRating,id+':timed',carId);
+  if(!challenger)return {error:'NO LEGAL PROFESSIONAL OPPONENT FOR THIS CLASS'};
   c.activeTimedEvent={id,format:rules.format,carId,round:c.calendar.round,
-    entryFee,carState:JSON.parse(JSON.stringify(carState)),attempts:[],rivalAttempts:[]};
+    entryFee,carState:JSON.parse(JSON.stringify(carState)),
+    opponentRating,opponentCarId:challenger.carId,opponentCarState:challenger.state,
+    attempts:[],rivalAttempts:[]};
   return {circuit:c,event:c.activeTimedEvent};
 }
 export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rivalResult) {
@@ -285,7 +324,80 @@ export function getProQualification(raw) {
     qualified,roundsRemaining,driverEventsNeeded,crewEventsNeeded,
     qualificationPossible:qualified||driverEventsNeeded+crewEventsNeeded<=roundsRemaining};
 }
+// A read-only season report shared by the header and final standings.
+// Keep championship qualification separate from a season that has actually
+// finished all eight rounds: reaching the targets early does not end a season.
+export function getProfessionalSeasonReport(raw) {
+  const c=normaliseProCircuitState(raw),q=getProQualification(c);
+  const completed=c.calendar.round===PRO_SEASON_LENGTH&&c.seasonStatus==='COMPLETE';
+  const driverRows=getSeasonStandings(c);
+  const crewRows=getSeasonStandings(c,'TEAM');
+  const playerDriver=driverRows.findIndex(r=>r.id==='player:driver');
+  const playerTeam=crewRows.findIndex(r=>r.id==='player:team');
+  return {
+    season:c.season,completed,
+    outcome:completed?(q.qualified?'QUALIFIED':'NOT_QUALIFIED'):
+      !q.qualificationPossible?'UNREACHABLE':'IN_PROGRESS',
+    ...q,
+    roundsCompleted:c.calendar.round,
+    driverStanding:playerDriver<0?null:playerDriver+1,
+    crewStanding:playerTeam<0?null:playerTeam+1,
+    driverShortfall:Math.max(0,q.driverRequired-q.driver),
+    crewShortfall:Math.max(0,q.crewRequired-q.crew),
+    canEnterTokyo:completed&&q.qualified,
+    eventCount:c.calendar.history.length,
+  };
+}
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
+
+// Professional cars must pass the SAME class rules as the player's car.
+// Select at registration and save the resulting legal build; never give a
+// rival an invisible power, drivetrain or NOS exemption.
+const PRO_RIVAL_CARS=Object.freeze([
+  'ae86','ek9','fc3s','galant','gc8','r32','s2000','rx7fd',
+  'jza80','evo6','r34','jzx100','dc2','crx','240z','gdb','z33',
+]);
+export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',excludedId=null) {
+  const skill=Math.max(3,Math.min(5,Math.floor(Number(rating)||4)));
+  const candidates=[];
+  for(const carId of PRO_RIVAL_CARS){
+    if(carId===excludedId||!cars[carId])continue;
+    // Stock events use genuine stock vehicles; non-stock opponents can bring
+    // developed builds as long as the actual configured car passes scrutineering.
+    const snapshots=rules?.stock?[{}]:
+      [skill,4,3].map((buildRating,i)=>createRivalBuildState(cars[carId],buildRating,{
+        seed:String(seed)+':'+carId+':'+i,raceType:'Standing Start',
+        noNos:Boolean(rules?.noNos)}));
+    if(!rules?.stock)snapshots.push({});
+    for(const state of snapshots){
+      const check=getProfessionalCarEligibility(carId,state,rules);
+      if(!check.eligible)continue;
+      const target=Math.max(1,Number(playerPowerKW)||check.powerKW);
+      const ratio=check.powerKW/target;
+      // Avoid a wildly overpowering rival, even if the class is open.
+      if(ratio>1.15)continue;
+      const difference=Math.abs(Math.log(Math.max(.1,ratio)));
+      const developed=rules?.stock?0:Object.values(state.tuning||{}).reduce((a,b)=>a+Number(b||0),0);
+      candidates.push({carId,state,powerKW:check.powerKW,
+        score:difference+(!rules?.stock&&developed===0?0.15:0)});
+    }
+  }
+  candidates.sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
+  const chosen=candidates[0];
+  // A low-power class may have only one viable model. Two independent drivers
+  // can legitimately race the same model; never strand a paid professional
+  // event by insisting on a different make/model.
+  if(!chosen&&excludedId)return getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed,null);
+  return chosen?{carId:chosen.carId,state:chosen.state,powerKW:chosen.powerKW,skillTier:skill}:null;
+}
+// A genuine third official event choice, using existing player-driven crew modes.
+// Deliberately separate from Open Circuit trophies and the normal crew slot.
+export const PRO_ALT_CREW_ENTRY_FEE = 90000;
+export const PRO_ALT_CREW_PRIZES = Object.freeze([250000,115000,50000,0]);
+export function getAlternativeProCrewFormat(round) {
+  const standard=getProfessionalRoundEvents(round).crew.format;
+  return {DUEL:'FOUR_WIDE',RELAY:'TECHNICAL',TECHNICAL:'DUEL',FOUR_WIDE:'RELAY'}[standard]||'DUEL';
+}
 const clone=x=>JSON.parse(JSON.stringify(x));
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const value=(s,k,d=null)=>(typeof s?.get==='function'?s.get(k):s?.[k])??d;
@@ -384,15 +496,27 @@ export function completeSeasonRound(raw,summary,participants=[]) {
 }
 export function nextProfessionalSeason(raw) {
   const c=normaliseProCircuitState(raw);
+  // Never let a fully simulated old Championship disappear before its
+  // once-only title/purse ledger has been committed. Lightweight historical
+  // completed stubs without a scored stage still migrate normally.
+  if(c.activeChampionship?.completed&&
+     c.activeChampionship.stage==='COMPLETE'&&
+     !c.championshipSettledIds.includes(c.activeChampionship.id))
+    return {error:'CLAIM TOKYO CHAMPIONSHIP AWARDS BEFORE STARTING NEXT SEASON'};
   if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
   if(c.activeChampionship?.completed){
-    // Keep completed championship results across seasons. Ginza vault access
-    // must not vanish after the next professional calendar begins.
-    c.championshipHistory = [...(c.championshipHistory || []),
-      { season:c.activeChampionship.season, completed:true,
-        championId:c.activeChampionship.championId }].slice(-20);
+    // Championship awards are settled before the season rolls over.
+    // Do not append a second, incomplete history row for the same result.
+    const complete=c.activeChampionship;
+    if(!c.championshipHistory.some(r=>r.id===complete.id||
+      (r.season===complete.season&&r.championId===complete.championId))){
+      // Backwards-compatible record for older completed, unawarded saves.
+      c.championshipHistory=[...c.championshipHistory,
+        {id:complete.id,season:complete.season,completed:true,
+          championId:complete.championId}].slice(-20);
+    }
     c.activeChampionship=null;
   }
   c.season++;
@@ -411,30 +535,39 @@ export function getCrewSeriesUnits(source,assignments={}) {
       skill,performance:p.index.standing,powerKW:p.car.powerKW,drivetrain:getCarMagazineMeta(cars[carId].crewBaseCarId||carId)?.drivetrain||'RWD'};
   });
 }
-export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
+export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonChoice='standard') {
   const c=normaliseProCircuitState(value(source,'proCircuit'));
+  if(!['standard','alternative'].includes(seasonChoice))return 'UNKNOWN SEASON EVENT';
+  if(seasonChoice==='alternative'&&(isOpenCircuitAvailable(c)||c.seasonStatus!=='ACTIVE'))
+    return 'ALTERNATIVE CREW EVENT ONLY AVAILABLE IN PRO SEASON';
+  if(seasonChoice==='alternative'&&getProInvitationalDiscipline(c)!=='TEAM')
+    return 'CREW INVITATIONAL NOT OFFERED THIS ROUND';
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
   if(c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(!isOpenCircuitAvailable(c)&&c.seasonStatus!=='ACTIVE')return 'FINISH THE CHAMPIONSHIP';
   if(c.calendar.round>=PRO_SEASON_LENGTH&&!isOpenCircuitAvailable(c))return 'BEGIN THE NEXT SEASON';
   if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))
     return 'CREW FORMAT NOT AVAILABLE';
-  if(Number(value(source,'cash',0))<(isOpenCircuitAvailable(c)?OPEN_CIRCUIT_CREW_FEE:CREW_SERIES.entryFee))return 'INSUFFICIENT CASH';
+  if(Number(value(source,'cash',0))<(isOpenCircuitAvailable(c)?OPEN_CIRCUIT_CREW_FEE:seasonChoice==='alternative'?PRO_ALT_CREW_ENTRY_FEE:CREW_SERIES.entryFee))return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
   if((squadIds.length<3||squadIds.length>5)&&squadIds.length!==7||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
   if(new Set(chosen.map(u=>u.carId)).size!==chosen.length)return 'REGISTER A DISTINCT CAR FOR EACH DRIVER';
   return null;
 }
-function opponentBuild(id,rating,slot) {
+function opponentBuild(id,rating,slot,skillTier=null) {
   const rng=seasonRandom(id+':'+slot),pool=['ae86','ek9','fc3s','galant','r32','s2000','rx7fd','jza80'];
   const carId=pool[Math.floor(rng()*pool.length)],level=clamp(Math.round(2+(rating-1400)/220),1,5);
   const state=createRivalBuildState(cars[carId],level,{seed:id+':'+slot,raceType:'Standing Start'});
-  return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,skill:clamp(.72+(rating-1200)/1800,.65,.97)};
+  const tier=skillTier||Math.max(3,Math.min(5,Math.round(3+(rating-1400)/250)));
+  return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,
+    skill:tier===5?.93:tier===4?.85:.79,skillTier:tier};
 }
-export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,rotation=null) {
-  const error=crewSeriesEligibility(source,squadIds,assignments);if(error)return {error};
+export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,rotation=null,seasonChoice='standard') {
+  const error=crewSeriesEligibility(source,squadIds,assignments,seasonChoice);if(error)return {error};
   const c=normaliseProCircuitState(value(source,'proCircuit'));
   const openCircuit=isOpenCircuitAvailable(c);
+  if(seasonChoice==='alternative'&&(openCircuit||trophyId))
+    return {error:'INVALID ALTERNATIVE CREW ENTRY'};
   const trophy=trophyId&&openCircuit?getOpenCircuitTrophy(c,rotation):null;
   if(trophyId&&(!trophy?.available||trophy.id!==trophyId||
     !['TEAM','MIXED'].includes(trophy.discipline)))return {error:'TROPHY ROTATION OR COOLDOWN CHANGED'};
@@ -446,26 +579,34 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     if(squadIds.length===3&&(new Set(drives).size!==3||!['FWD','RWD','AWD'].every(d=>drives.includes(d))))
       return {error:'TRI-DRIVE NEEDS ONE FWD, ONE RWD AND ONE AWD CAR'};
   }
-  const fee=openCircuit?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
+  const alternative=seasonChoice==='alternative';
+  const fee=openCircuit?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):
+    alternative?PRO_ALT_CREW_ENTRY_FEE:CREW_SERIES.entryFee;
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
-  const id=(trophyId?'trophy:'+trophyId:'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
+  const id=(trophyId?'trophy:'+trophyId:alternative?'crewAlt':'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
   const format=trophy?.formats?.[0]||(openCircuit?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
-    getProfessionalRoundEvents(c.calendar.round).crew.format);
+    alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
-  const selected=(trophy?teamsPool:teamsPool.sort((a,b)=>
-    Math.abs(a.rating-c.playerTeam.rating)-Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
+  const selected=(trophy||alternative?
+    teamsPool.sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id)):
+    teamsPool.sort((a,b)=>Math.abs(a.rating-c.playerTeam.rating)-
+      Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
   const teams=[{id:PLAYER,name:'YOUR CREW',rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
-  const entrants=teams.map((r,i)=>({...r,seed:i+1,drivers:[0,1,2].map(n=>opponentBuild(r.id,r.rating,n))}));
+  const entrants=teams.map((r,i)=>({...r,seed:i+1,drivers:[0,1,2].map(n=>
+    opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
+      getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null))}));
   const ids=entrants.map(t=>t.id),schedule=[[[ids[0],ids[3]],[ids[1],ids[2]]],[[ids[0],ids[2]],[ids[3],ids[1]]],[[ids[0],ids[1]],[ids[2],ids[3]]]];
   const units=getCrewSeriesUnits(source,assignments);
   const registeredCars=Object.fromEntries(squadIds.map(id=>[id,units.find(u=>u.id===id).carId]));
   c.activeCrewEvent={schema:1,short:!trophy,format,formats:trophy?.formats||null,id,eventId:CREW_SERIES.id,
-    label:trophy?.label||CREW_SERIES.label,openCircuit,trophyId:trophy?.id||null,
+    seasonChoice:alternative?'alternative':'standard',
+    label:trophy?.label||(alternative?'CREW '+format.replace('_',' ')+' INVITATIONAL':CREW_SERIES.label),
+    openCircuit,trophyId:trophy?.id||null,
     round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,
     history:[],fixture:null,entryFee:fee,prizes:trophy?
       [c.trophyWins[trophy.id]?trophy.repeatCash:trophy.prizeCash,90000,40000,0]:
-      openCircuit?[70000,30000,15000,0]:[...CREW_SERIES.prizes],
+      openCircuit?[70000,30000,15000,0]:alternative?[...PRO_ALT_CREW_PRIZES]:[...CREW_SERIES.prizes],
     difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-fee};
 }
@@ -595,7 +736,9 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     c.playerTeam.seasonPoints+=points;
     const baseCashPrize=t.openCircuit?(t.trophyId?(wins===3?OPEN_CIRCUIT_TROPHY_PRIZE:0):
       [0,15000,30000,70000][wins]):
-      Math.floor([0,40000,90000,210000][wins]*(c.crewSeriesWins>0?.65:1));
+      Math.floor((t.seasonChoice==='alternative'
+        ?[0,PRO_ALT_CREW_PRIZES[2],PRO_ALT_CREW_PRIZES[1],PRO_ALT_CREW_PRIZES[0]][wins]
+        :[0,40000,90000,210000][wins])*(c.crewSeriesWins>0?.65:1));
     const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
     const cashPrize=sponsor?.totalPrize??baseCashPrize;
     if(wins===3&&!t.openCircuit)c.crewSeriesWins++;
@@ -604,7 +747,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
       c.eventTick++;
       c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
     }
-    const summary={id:t.id,label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
+    const summary={id:t.id,label:t.seasonChoice==='alternative'?t.label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
       ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,fourWidePoints,ownTotal,opponentTotal,ownSpread,opponentSpread,
       sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
@@ -691,7 +834,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
   const baseCashPrize=roundsWon===roundCount?
     Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):0;
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
-  const summary={id,label:trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
+  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
     ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
