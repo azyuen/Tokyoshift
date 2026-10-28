@@ -180,9 +180,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.ginzaVaultIndex = loanIndex < 0 ? 0 : loanIndex;
     this.ginzaStockBody = GINZA_VAULT_CARS[this.ginzaVaultIndex]?.stock === loanVariant;
     this.ginzaRotationKey = -1;
-    // The Denzaki one-off is a permanent Prestige Salon selection, not a
-    // 30-minute random rotation. Default to the feature when Room 2 opens.
-    this.ginzaPrestigeOneOff = data?.ginzaPrestigeOneOff !== false;
     this.ginzaOwnerDressed = isGinzaLoanActive(this.registry) && isNamedArkonDen(this.registry);
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
@@ -2469,18 +2466,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
 
   getGinzaListings() {
-    // The one-off is *never* inserted into the two rotating showroom pools.
-    // It has a permanent, named feature selection in the Prestige Salon.
-    return getGinzaRoomStock(GINZA_LISTINGS.filter(item => cars[item.carId] &&
-      item.carId !== 'arkonGinza240z'),
+    // Aruken's RB26 240Z is an occasional Prestige rotation entry, never
+    // a permanent selector and never a Room 1 vehicle. Story Mode cannot
+    // browse or purchase the separate Career-only collector.
+    const listings = GINZA_LISTINGS.filter(item =>
+      cars[item.carId] &&
+      (item.carId !== 'arkonGinza240z' ||
+        this.registry.get('gameMode') !== 'arkonStory')
+    );
+    return getGinzaRoomStock(listings,
       Date.now(), this.devCentralRefreshOffsets?.showroom || 0);
-  }
-
-  getGinzaDenzakiListing() {
-    if (this.registry.get('gameMode') === 'arkonStory') return null;
-    return cars.arkonGinza240z
-      ? GINZA_LISTINGS.find(item => item.carId === 'arkonGinza240z') || null
-      : null;
   }
 
   getGinzaActiveListing() {
@@ -2488,37 +2483,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const carId = getGinzaVaultCar(this.ginzaVaultIndex, this.ginzaStockBody);
       return GINZA_LISTINGS.find(item => item.carId === carId) || null;
     }
-    if (this.ginzaRoom === 2 && this.ginzaPrestigeOneOff) {
-      return this.getGinzaDenzakiListing() || this.getGinzaListings()[1] || null;
-    }
     return this.getGinzaListings()[this.ginzaRoom - 1] || null;
-  }
-
-  drawGinzaPrestigeSelector() {
-    if (this.ginzaRoom !== 2 || !this.getGinzaDenzakiListing() ||
-        isGinzaLoanActive(this.registry)) return;
-    const y = STAGE.y + 49;
-    const choices = [
-      { x:STAGE.x + 320, label:'ROTATING PRESTIGE', oneOff:false },
-      { x:STAGE.x + 805, label:'DENZAKI 240Z #16  //  ¥125M', oneOff:true },
-    ];
-    choices.forEach(item => {
-      const selected = this.ginzaPrestigeOneOff === item.oneOff;
-      const hit = this.addContent(this.add.rectangle(
-        item.x,y,430,42,selected?0x352819:0x101b25,0.95
-      ).setStrokeStyle(2,selected?0xf1c46c:0x648096,1)
-        .setDepth(34).setInteractive({useHandCursor:true}));
-      this.addContent(this.add.text(item.x,y,item.label,{
-        fontFamily:PIXEL_FONT,fontSize:'9px',
-        color:selected?'#ffedc0':'#d2e3ec'
-      }).setOrigin(0.5).setDepth(35));
-      hit.on('pointerdown',()=>{
-        if(sceneCutsceneActive(this)||this.ginzaCarFading ||
-            this.ginzaPrestigeOneOff===item.oneOff) return;
-        this.ginzaPrestigeOneOff=item.oneOff;
-        this.renderLocation(this.activeLocationId);
-      });
-    });
   }
 
   ginzaScene(kind, args = {}, onComplete = null) {
@@ -2666,9 +2631,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const labels = ['', 'MOTOR GALLERY', 'PRESTIGE SALON', 'INVITATION VAULT'];
     this.drawNavigation(labels[this.ginzaRoom], this.ginzaRoom === 3
       ? 'PRIVATE COLLECTION // THREE LE MANS LEGENDS'
-      : this.ginzaRoom === 2 && this.ginzaPrestigeOneOff
-        ? 'GINZA EXCLUSIVE // DENZAKI RB26 240Z // PERMANENT FEATURE'
-        : 'HAND-CURATED // NEW CAR EVERY 30 MINUTES');
+      : 'HAND-CURATED // NEW CAR EVERY 30 MINUTES');
     if (isGinzaLoanActive(this.registry)) {
       // Normally room navigation lives behind the vault car selectors.
       // Make the other two rooms' temporary lockout explicit and visible.
@@ -2734,9 +2697,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.ginzaHeroObjects = [];
-    // On-screen switch: the one-off is always findable without waiting for
-    // random showroom rotation, but ordinary premium listings still rotate.
-    this.drawGinzaPrestigeSelector();
     if (listing && cars[listing.carId]) {
       // Common plinth centre in all three rooms; reduce hero size by 10%.
       const stageX = STAGE.x + STAGE.w * 0.50;
@@ -2760,7 +2720,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // same three large bottom slots for its three legendary vehicles.
     const vault = this.ginzaRoom === 3;
     const roomNames = ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'];
-    if (this.getGinzaDenzakiListing()) roomNames[1] = 'PRESTIGE SALON // 240Z #16';
     (vault ? GINZA_VAULT_CARS : roomNames).forEach((item, index) => {
       const x = CARDS.x + 198 + index * 369;
       const selected = vault
@@ -3003,10 +2962,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const isCuratedGinzaListing = GINZA_LISTINGS.some(
       item => item?.carId === listing?.carId
     );
-    // Sale is allowed to any Career driver who has legitimately entered
-    // Ginza. Do not silently gate this ¥125m offer behind Pro Season or the
-    // thirty-minute showcase rotation.
+    // Sale is restricted to the actual displayed offer; an earlier
+    // confirmation dialog must not bypass the 30-minute stock rotation.
     if (!car || !isCuratedGinzaListing ||
+        this.getGinzaActiveListing()?.carId !== listing.carId ||
         (listing.carId === 'arkonGinza240z' &&
           this.registry.get('gameMode') === 'arkonStory')) return;
 
