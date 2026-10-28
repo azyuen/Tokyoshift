@@ -3229,6 +3229,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       fontSize: '11px',
       color: '#8fe7ff',
     }).setDepth(33));
+    if(isOpen) this.addContent(this.add.text(
+      CARDS.x + CARDS.w - 18,CARDS.y + 15,
+      'DRIVER / CREW: DAY-NIGHT  ·  TROPHIES: FULL DAY',
+      {fontFamily:PIXEL_FONT,fontSize:'9px',color:'#b6c6d0'}
+    ).setOrigin(1,0).setDepth(33));
 
     this.selectedEventIndex = Phaser.Math.Clamp(
       this.selectedEventIndex,
