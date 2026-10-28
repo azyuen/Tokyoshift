@@ -13,6 +13,8 @@ on:
       - 'tests/career-tokyo-finale.mjs'
       - 'tests/tokyoChampionship.simulation.test.js'
       - 'tests/proSeason.simulation.test.js'
+      - 'tests/pro-tournament-phase2.mjs'
+      - 'tests/prestige-trophies-r583.mjs'
       - 'tests/ci-phaser-math.mjs'
       - '.github/workflows/career-v1-integration.yml'
   workflow_dispatch:
