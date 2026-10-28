@@ -1,7 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261021-r628';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261029-r713';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r607';
+import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261029-r713';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -33,7 +33,7 @@ import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=2026101
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20261029-r713';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
@@ -159,6 +159,8 @@ export default class FourLaneTestScene extends RaceScene {
     }
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
     this.crewFourWide=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='FOUR_WIDE';
+    this.crewTechnical=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='TECHNICAL';
+    this.crewRelay=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='RELAY';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
     if(this.proCrew) {
@@ -1445,6 +1447,8 @@ export default class FourLaneTestScene extends RaceScene {
       outcome?.status === 'NO_EVENT';
     const titleText = failure ? 'RACE COMPLETE'
       : this.crewFourWide ? 'PLACE '+(outcome?.place||4)
+      : this.crewTechnical ? 'CONSISTENCY RUN'
+      : this.crewRelay ? 'RELAY LEG RECORDED'
       : this.proCrew ? outcome?.tied?'HEAT DRAW':outcome?.won ? 'HEAT WIN' : 'HEAT LOSS'
       : champion ? 'CHAMPION'
       : advanced ? 'QUALIFIED'
@@ -1530,7 +1534,10 @@ export default class FourLaneTestScene extends RaceScene {
       : 'FOUR-WIDE OPEN';
     label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
-      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'PREPARE NEXT HEAT':'REVIEW FIXTURE')) : advanced
+      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewTechnical?'SCORE IS THREE-RUN SPREAD':
+        this.crewRelay?'SCORE IS TOTAL RELAY TIME':
+        this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+
+        ' // '+(outcome.heatNumber<3?'PREPARE NEXT HEAT':'REVIEW FIXTURE')) : advanced
       ? 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  NEXT: ' + nextStage
       : 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  ' +
         (failure ? 'RESULT NOT SAVED' : 'EVENT FINISHED'), 10, '#e0a0a4');

@@ -1,0 +1,36 @@
+name: Open Circuit R712 beta fixes
+on:
+  push:
+    branches: [fix/open-circuit-r711-beta]
+    paths:
+      - 'src/environment/WorldClock.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProVictoryResults.js'
+      - 'tests/open-circuit-beta-r712.mjs'
+      - 'tests/pro-crew-heat-r589.mjs'
+      - '.github/workflows/open-circuit-beta-r712.yml'
+  workflow_dispatch:
+jobs:
+  beta-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check patched module syntax
+        run: |
+          node --check src/environment/WorldClock.js
+          node --check src/data/proSeason.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/ProDriverBriefing.js
+          node --check src/ui/ProVictoryResults.js
+          node --check tests/open-circuit-beta-r712.mjs
+      - name: Test beta fixes and existing competition flows
+        run: node --import ./tests/ci-phaser-math.mjs --test tests/open-circuit-beta-r712.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-crew-heat-r589.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs

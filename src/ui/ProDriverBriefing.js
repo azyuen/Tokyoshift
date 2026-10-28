@@ -14,7 +14,7 @@ import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
   getDriverPowerPartLevelInfo, setDriverPowerPartLevels,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261021-r631';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261029-r713';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -175,14 +175,10 @@ function draw(s,state,options){
   const carState=options.preparedCarState||carStates[state.playerCarId]||{};
   const unpaid=Boolean(state.briefingEntryPending);
   const fallback=options.event||{};
-  let performance=null,oppPerformance=null;
+  let performance=null;
   try{performance=getVehiclePerformance(getBaseCarId(state.playerCarId),carState);}
   catch(err){console.warn('[Tokyo SHIFT] Driver briefing performance unavailable',err);}
-  try{oppPerformance=getVehiclePerformance(getBaseCarId(round.carId),round.opponentBuildState||{});}
-  catch(err){console.warn('[Tokyo SHIFT] Driver opponent performance unavailable',err);}
   const playerPower=Number(performance?.car?.powerKW||playerCar.powerKW||0);
-  const opponentPower=Number(oppPerformance?.car?.powerKW||oppCar.powerKW||0);
-  const opponentTorque=Number(oppPerformance?.car?.torqueNm||oppCar.torqueNm||0);
   const eligibility=driverBriefingEligibility(state,carState,playerPower,
     s.registry.get('ownedCarIds')||[],fallback);
   const circuit=options.previewCircuit||s.registry.get('proCircuit')||{};
@@ -237,6 +233,16 @@ function draw(s,state,options){
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
   addProHeatSubtitle(s,add,{heat:stageNo,total:stageTotal,y:136,size:16});
+  if(options.entryError){
+    // Registration failures must be visible on the same paddock page,
+    // not look like a button that simply refreshes with no action.
+    const notice=add(s.add.text(790,158,
+      'ENTRY NOT SAVED // '+String(options.entryError).slice(0,120),{
+        fontFamily:PIXEL,fontSize:'13px',color:'#ffb5b9',
+        backgroundColor:'#200b16ec',padding:{x:15,y:9},
+      }).setOrigin(.5,0).setDepth(248));
+    fit(notice,1040);
+  }
 
   // Compact opponent panel. The nested portrait parallelogram uses the
   // identical slope as the outer card and a dark, professional black outline.
@@ -286,13 +292,15 @@ function draw(s,state,options){
   // The driver name aligns with the portrait's TOP horizontal, not its centre.
   fit(text(231,684,rivalName,18,'#ffffff'),239);
   fit(text(231,708,String(oppCar.name||round.carId).toUpperCase(),14,'#7fe0f1'),247);
-  text(231,733,'POWER',10,'#b1cddb',true);
-  text(326,730,Math.round(opponentPower)+' KW',15);
-  text(231,753,'TORQUE',10,'#b1cddb',true);
-  text(326,750,Math.round(opponentTorque)+' NM',15);
-  text(231,775,'DRIVE',10,'#b1cddb',true);
-  text(326,771,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
-    oppCar.drivetrain),15);
+  // Show ONLY official restrictions, never the rival's private build data.
+  // The rules appear both here and on Hiroshi's second briefing page.
+  const rule=eligibility.rules;
+  text(231,733,'CLASS CAP',10,'#b1cddb',true);
+  text(326,730,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+  text(231,753,'NOS',10,'#b1cddb',true);
+  text(326,750,rule.noNos?'PROHIBITED':'PERMITTED',15);
+  text(231,775,'CLASS',10,'#b1cddb',true);
+  text(326,771,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
   // Approximately a third of a preview car-length left and slightly higher.
   safeCarPreview(round.carId,545,743,211,225,round.opponentBuildState||{});
 
@@ -370,6 +378,7 @@ function draw(s,state,options){
           ['OPPONENT CAR',String(oppCar.name||round.carId).toUpperCase()],
           ['POWER LIMIT',eligibility.rules.maxPowerKW==null?'OPEN':eligibility.rules.maxPowerKW+' KW MAX'],
           ['NOS',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
+          ['CLASS',eligibility.rules.stock?'FACTORY STOCK':eligibility.rules.drivetrain||'OPEN'],
           ['PRIZE',cash(state.prizeCash)],
           ['STATUS',eligibility.eligible?'ELIGIBLE':eligibility.problems.join(' / '),
             eligibility.eligible?'#81efc4':'#ffb6ba'],

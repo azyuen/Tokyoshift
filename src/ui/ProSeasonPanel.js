@@ -1,16 +1,16 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261029-r713';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
+import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261022-r635';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
-import { showProVictoryResults } from './ProVictoryResults.js?v=20261022-r635';
+import { showProVictoryResults } from './ProVictoryResults.js?v=20261029-r713';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -197,9 +197,14 @@ export function drawCrewSidebar(s,event,side) {
   ]:short?[
     ...(crewFormat==='TECHNICAL'?technicalBrief:[formatBrief,'CHOOSE THREE DRIVERS']),
     'ENTRY  '+cash(t?.entryFee||fee),
-    '3 WINS  '+cash(prizes[0]),
-    '2 WINS  '+cash(prizes[1]),
-    '1 WIN  '+cash(prizes[2]),
+    ...(crewFormat==='TECHNICAL'?
+      ['BEST THREE-RUN SPREAD  '+cash(prizes[0]),
+       'A SINGLE FAST RUN DOES NOT WIN']:
+      crewFormat==='RELAY'?
+      ['LOWEST COMBINED THREE-LEG TIME  '+cash(prizes[0])]:
+      ['3 WINS  '+cash(prizes[0]),
+       '2 WINS  '+cash(prizes[1]),
+       '1 WIN  '+cash(prizes[2])]),
   ]:[
     '3 FIXTURES // 9 HEATS',
     'CHOOSE THREE DRIVERS',
@@ -399,7 +404,7 @@ export function showCrewFixture(s,selection=null) {
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
     prepared.heats.forEach((h,i)=>{
       o.label(120,241+i*90,`HEAT ${i+1} · ${h.name} / ${cars[h.carId]?.shortName}`,22);
-      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${t.format==='FOUR_WIDE'?'PLACE '+h.place+' / 4':h.tied?'DRAW':h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
+      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${currentFormat==='TECHNICAL'?'RUN RECORDED':currentFormat==='RELAY'?'LEG RECORDED':currentFormat==='FOUR_WIDE'?'PLACE '+h.place+' / 4':h.tied?'DRAW':h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
     });
     if(prepared.revealed<3){
       o.btn(990,677,620,'DRIVE HEAT '+(prepared.revealed+1)+' / 3',()=>{
@@ -413,11 +418,9 @@ export function showCrewFixture(s,selection=null) {
     } else {
       const wins=prepared.heats.filter(h=>h.won).length;
       const technical=currentFormat==='TECHNICAL';
-      const playerFinishedTech=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&Number.isFinite(h.ownSeconds)&&h.ownSeconds>0);
-      const opponentFinishedTech=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&Number.isFinite(h.opponentSeconds)&&h.opponentSeconds>0);
-      const ownSpread=playerFinishedTech?Math.max(...prepared.heats.map(h=>h.ownSeconds))-Math.min(...prepared.heats.map(h=>h.ownSeconds)):null;
-      const opponentSpread=opponentFinishedTech?Math.max(...prepared.heats.map(h=>h.opponentSeconds))-Math.min(...prepared.heats.map(h=>h.opponentSeconds)):null;
-      const technicalWon=playerFinishedTech&&(!opponentFinishedTech||ownSpread<opponentSpread-0.000001);
+      const technicalScore=getCrewTechnicalScore(prepared.heats);
+      const {ownSpread,opponentSpread}=technicalScore;
+      const technicalWon=technicalScore.won;
       const relay=currentFormat==='RELAY';
       const ownTotal=prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
       const opponentTotal=prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
@@ -428,7 +431,7 @@ export function showCrewFixture(s,selection=null) {
       const fourWidePoints=prepared.heats.reduce((sum,h)=>sum+(h.place?4-h.place:0),0);
       o.label(130,568,fourWide?'FOUR-WIDE TOTAL '+fourWidePoints+' / 9 POINTS · '+(fourWidePoints>=8?'TOP TIER':fourWidePoints>=5?'SECOND TIER':fourWidePoints>=2?'THIRD TIER':'FOURTH TIER')
         :technical
-        ? 'PRECISION '+(technicalWon?'VICTORY':'DEFEAT')+' // '+(ownSpread===null?'DNF':ownSpread.toFixed(3)+'s')+' vs '+(opponentSpread===null?'DNF':opponentSpread.toFixed(3)+'s')
+        ? 'CONSISTENCY '+(technicalWon?'VICTORY':technicalScore.tied?'DRAW':'DEFEAT')+' // SPREAD '+(ownSpread===null?'DNF':ownSpread.toFixed(3)+'s')+' vs '+(opponentSpread===null?'DNF':opponentSpread.toFixed(3)+'s')
         : relay
         ? 'RELAY '+(relayWon?'VICTORY':'DEFEAT')+' // '+(playerFinished?ownTotal.toFixed(3)+'s':'DNF')+' vs '+(opponentFinished?opponentTotal.toFixed(3)+'s':'DNF')
         : `FIXTURE ${wins>=2?'VICTORY':'DEFEAT'} // ${wins} – ${3-wins}`,36);
@@ -452,7 +455,10 @@ function showCrewResult(s,out,round={}){
     carIds:round.carIds||round.heats?.map(h=>h.carId)||[],
     heats:round.heats||[],
     wins:summary.heatWins??out.wins,rounds:3,
-    fourWidePoints:round.format==='FOUR_WIDE'?summary.fourWidePoints:undefined,
+    format:summary.format||round.format||'DUEL',
+    ownSpread:summary.ownSpread,opponentSpread:summary.opponentSpread,
+    ownTotal:summary.ownTotal,opponentTotal:summary.opponentTotal,
+    fourWidePoints:(summary.format||round.format)==='FOUR_WIDE'?summary.fourWidePoints:undefined,
     cashPrize:out.cashPrize,sponsorBonus:summary.sponsorBonus||0,
     sponsorPercent:summary.sponsorPercent||0,points:summary.points||0,
     rankBefore:summary.rankBefore,rankAfter:summary.rankAfter,

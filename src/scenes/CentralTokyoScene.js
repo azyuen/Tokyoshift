@@ -1,14 +1,14 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261022-r635';
-import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261022-r635';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261029-r713';
+import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261029-r713';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261029-r713';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261027-r692';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261029-r713';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261029-r713';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
@@ -70,7 +70,7 @@ import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { getWorldPhase, getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
+import { getWorldPhase, getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   applyMarketPriceDifficulty,
@@ -450,12 +450,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
             this.ginzaRotationKey !== Math.floor(Date.now() / GINZA_ROTATION_MS)) {
           this.renderLocation(this.activeLocationId);
         }
-        // Driver/crew offers change at five-minute slot boundaries, even if
-        // DAY/NIGHT has not flipped yet. Never interrupt modal or manga UI.
+        // Driver/crew offers change only at DAY/NIGHT boundaries.
+        // Never interrupt an unpaid driver briefing or manga UI.
         if (this.activeLocationId === 'tokyoDragComplex' &&
             isOpenCircuitAvailable(this.registry.get('proCircuit')) &&
             this.proOpenRotationKey !== getOpenCircuitRotation().rotationIndex &&
-            !this._proOverlayClose && !this._proSeasonConfirmClose &&
+            !this._proOverlayClose && !this._pendingProDriverBriefing &&
+            !this._proSeasonConfirmClose &&
             !sceneCutsceneActive(this)) this.renderLocation(this.activeLocationId);
       },
     });
@@ -3022,7 +3023,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getProDragEvents() {
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const legacy = this.registry.get('competitionState');
-    // Open Circuit offers rotate with WorldClock (six slots per day/night).
+    // Open Circuit offers rotate only at each day/night transition.
     // Existing in-progress events keep their saved identities and fixtures.
     if (isOpenCircuitAvailable(pro)) {
       const rotation=getOpenCircuitRotation();
@@ -3228,6 +3229,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       fontSize: '11px',
       color: '#8fe7ff',
     }).setDepth(33));
+    if(isOpen) this.addContent(this.add.text(
+      CARDS.x + CARDS.w - 18,CARDS.y + 15,
+      'DRIVER / CREW: DAY-NIGHT  ·  TROPHIES: FULL DAY',
+      {fontFamily:PIXEL_FONT,fontSize:'9px',color:'#b6c6d0'}
+    ).setOrigin(1,0).setDepth(33));
 
     this.selectedEventIndex = Phaser.Math.Clamp(
       this.selectedEventIndex,
@@ -3648,20 +3654,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const definition=pending?.event||PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
     const fail=message=>{
-      this.proError=message;
-      this.renderLocation(this.activeLocationId);
-      if(this._pendingProDriverBriefing||isOpenDriverBriefing(this.registry.get('competitionState')))
-        this.showOpenCircuitDriverBriefing();
+      // Do not silently refresh after a refused entry.
+      this.proError=String(message||'ENTRY COULD NOT BE SAVED');
+      this._proDriverError=this.proError;
+      this.showOpenCircuitDriverBriefing();
     };
     showProDriverBriefing(this,{
       state:pending?.state||null,
       preparedCarState:pending?.preparedCarState||null,
       previewCircuit:pending?.adviceCircuit||null,
-      event:definition,initialDialogue,
+      event:definition,initialDialogue,entryError:this._proDriverError||null,
       proAccess:getProCircuitAccess(this.registry).unlocked,
       onCancel:()=>{
         if(!pending)return;
         this._pendingProDriverBriefing=null;
+        this._proDriverError=null;
         this.proError=null;
         this.renderLocation(this.activeLocationId);
       },
@@ -3731,11 +3738,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
           return;
         }
         if(pending){
-          // Recheck the currently available official event at the moment of
-          // payment. A stale day/night offer or changed save pays nothing.
-          const live=this.getProDragEvents().find(e=>e.id===pending.event.id&&
-            usesPrepaidDriverBriefing(e)&&e.entryFee===pending.event.entryFee);
-          if(!live){fail('EVENT OFFER CHANGED — CANCEL AND REOPEN REGISTRATION');return;}
+          // The accepted offer remains reserved while the player adjusts
+          // the car, even if day changes to night. The transaction still
+          // checks cash, ownership, saved rules and competing registrations.
           if(this.registry.get('competitionState')?.active){
             fail('ANOTHER COMPETITION IS ALREADY ACTIVE');return;
           }
@@ -3750,6 +3755,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           try{saveProTransaction(this.registry,transaction.changes);}
           catch(error){fail(error.message);return;}
           this._pendingProDriverBriefing=null; // Payment cannot happen twice.
+          this._proDriverError=null;
           this.setProDuelRaceContext(transaction.changes.competitionState);
         }else{
           this.registry.set('selectedCarId',carId);
@@ -3949,6 +3955,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     };
 
     if(prepareBeforePay && isOpenDriverBriefing(state)){
+      this._proDriverError=null;
       // A brand-new entry remains strictly unpaid until final scrutineering.
       // No registry/session writes, fee deductions, eventTick or cooldown
       // changes happen until the player confirms by proceeding to the grid.

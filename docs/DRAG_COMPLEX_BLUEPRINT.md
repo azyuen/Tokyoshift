@@ -3,6 +3,27 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## Beta R712 Open Circuit scheduling and clarity — 2026-10-29
+
+- **Driver and Crew Open Circuit offers:** refresh only at each ordinary WorldClock
+  DAY/NIGHT transition (15-minute phases), not every five minutes. The ongoing
+  paid or unpaid driver event preserves the offer it was registered under.
+- **Prestige trophy invitations:** rotate only after a full day+night cycle
+  (30 minutes); deterministic empty schedule on every fourth complete cycle.
+  Existing trophy cooldowns and unlock rules still apply.
+- **Crew Technical:** a consistency fixture, NOT fastest-ET knockout. Three
+  separately driven car runs are recorded; the team with the smallest spread
+  (slowest minus fastest finish time) wins. DNF/DQ cannot produce a clean spread.
+  In-progress races describe each attempt as RUN RECORDED.
+- **Opponent intelligence:** the driver briefing names and displays the rival
+  car but hides private power, torque and drivetrain. The official event
+  power limit, NOS restriction and factory/class requirement are public in
+  the compact opponent preview and steward's rules page.
+- **Registration:** an unpaid briefing does not expire merely because the
+  day/night offer rotates. Entry still validates car, funds and event
+  ownership before one atomic payment. Refusals show a visible reason.
+- R711 remains the production version until a separate hotfix release is approved.
+
 ## Career v1 endgame balance — adopted 2026-10-29 (current implementation on completion branch)
 
 This addendum supersedes older 100/40 points proposals and earlier notes that the
