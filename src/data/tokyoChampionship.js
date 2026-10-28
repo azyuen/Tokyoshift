@@ -101,6 +101,9 @@ export function settleTokyoChampionship(raw) {
     place:index+1,id:r.id,name:r.name,points:r.total,
     knockout:r.knockout,crew:r.crew,fourWide:r.fourWide,
   }));
+  const legacyWinAlreadyRecorded=won&&c.championshipHistory.some(r=>
+    r?.championId===PLAYER&&(r.id===state.id||
+      (r.season===state.season&&(!r.id||r.completed))));
   const result={id:state.id,season:state.season,completed:true,
     championId:state.championId,championName:standings[0].name,
     playerPlace,playerPoints:standings[playerPlace-1].total,
@@ -113,7 +116,7 @@ export function settleTokyoChampionship(raw) {
     r?.id!==state.id&&!(r?.season===state.season&&r?.championId===state.championId));
   c.championshipHistory=[...history,result].slice(-20);
   if(won){
-    c.tokyoChampionWins++;
+    if(!legacyWinAlreadyRecorded)c.tokyoChampionWins++;
     c.careerCompleted=true;
   }
   return {circuit:c,cashPrize,alreadySettled:false,result};
