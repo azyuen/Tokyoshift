@@ -32,7 +32,7 @@ import {
   hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
   getCarBodyTextureKey, getCarBodyScaleForWidth, createCarBodyLayers, setCarBodyPaint,
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
+} from '../vehicles/CarAppearance.js?v=20261028-paint-stall';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
@@ -207,7 +207,10 @@ export default class OshiageScene extends Phaser.Scene {
 
   queueViewAssets() {
     let queued = 0;
-    for (const phase of ['day', 'night']) {
+    // The paint booth backdrops are several MB each. Load only the visible
+    // day/night variant when entering; the phase watcher loads the opposite
+    // variant if the in-game time changes.
+    for (const phase of (this.room === 'paint' ? [this.phase] : ['day', 'night'])) {
       const background = this.backgroundAsset(this.activeLocationId, phase);
       queued += this.queueImage(background.key, background.path);
     }
@@ -283,10 +286,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
     playMusic('meet');
     this.drawShell();
-    ensureDerivedModularCarTextures(this, Object.fromEntries(
-      Object.entries(cars).filter(([, car]) =>
-        car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey))
-    ));
+    this.prepareVisibleCarTextures();
     this.renderView();
     if (this.registry.get('gameMode')!=='arkonStory' &&
         this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
@@ -321,6 +321,9 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.entryTween) {
       this.entryTween.stop();
       this.entryTween = null;
+      // A view refresh can interrupt the entrance animation. Never leave
+      // every paint control permanently locked after that interruption.
+      this.paintBusy = false;
     }
     this.tweens.killTweensOf(this.content);
     this.content.forEach(o => o?.destroy?.());
@@ -371,21 +374,31 @@ export default class OshiageScene extends Phaser.Scene {
     });
     return { rect: r, label: t };
   }
+  prepareVisibleCarTextures() {
+    // Avoid reprocessing the complete unlocked/previously visited car roster
+    // whenever the player enters Custom Works. Only stage cars need their
+    // derived layers ready for the current view.
+    const visible = {};
+    const add = car => { if (car) visible[car.id] = car; };
+    add(this.selectedCar().car);
+    if (this.activeLocationId === 'oshiageSkytreeMeet' &&
+        getOshiageEliteProgress(this.registry).complete) {
+      const venueId = this.meetAlternative ? 'plaza' : 'underpass';
+      this.getEliteLineup(venueId).forEach(opponent => add(cars[opponent?.carId]));
+    }
+    ensureDerivedModularCarTextures(this, visible);
+  }
   loadAndRender(afterLoad) {
     const queued = this.queueViewAssets();
     if (!queued) {
-      ensureDerivedModularCarTextures(this, Object.fromEntries(
-        Object.entries(cars).filter(([, car]) => car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
-      )));
+      this.prepareVisibleCarTextures();
       this.renderView();
       afterLoad?.();
       return;
     }
     startSceneLoading(this, 'LOADING OSHIAGE', queued);
     this.load.once('complete', () => {
-      ensureDerivedModularCarTextures(this, Object.fromEntries(
-        Object.entries(cars).filter(([, car]) => car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
-      )));
+      this.prepareVisibleCarTextures();
       this.renderView();
       finishSceneLoading('OSHIAGE READY');
       afterLoad?.();
