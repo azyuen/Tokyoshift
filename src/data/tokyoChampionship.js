@@ -63,6 +63,62 @@ export function championshipStandings(state) {
   }).sort((a,b)=>b.total-a.total||b.fourWide-a.fourWide||
     b.knockout-a.knockout||a.seed-b.seed);
 }
+// Tokyo Championship rewards are a single, atomic state transition once
+// the *real* three-stage leaderboard is complete. These are BASE purses;
+// no additional difficulty or sponsor multiplier is implied.
+export const TOKYO_CHAMPIONSHIP_PURSES=Object.freeze([
+  1000000,500000,300000,175000,
+  100000,100000,100000,100000,
+  50000,50000,50000,50000,50000,50000,50000,50000,
+]);
+
+export function getTokyoCareerRecord(raw) {
+  const c=normaliseProCircuitState(raw);
+  const history=[...c.championshipHistory].filter(r=>r&&r.championId);
+  const last=history.at(-1)||null;
+  return {titles:c.tokyoChampionWins,careerCompleted:c.careerCompleted,
+    appearances:history.length,last,history};
+}
+
+/** Pure and idempotent. Caller must save circuit and cash in ONE transaction. */
+export function settleTokyoChampionship(raw) {
+  const c=normaliseProCircuitState(raw),state=c.activeChampionship;
+  if(!state||!state.completed||state.stage!=='COMPLETE'||
+     !state.id?.startsWith('tokyo:s')||state.season!==c.season)
+    return {error:'CHAMPIONSHIP RESULT NOT FINAL'};
+  if(c.championshipSettledIds.includes(state.id))
+    return {circuit:c,cashPrize:0,alreadySettled:true,
+      result:c.championshipHistory.find(r=>r.id===state.id)||null};
+  const standings=championshipStandings(state);
+  if(standings.length!==16||standings[0].id!==state.championId||
+     !standings.some(r=>r.id===PLAYER)||
+     standings.some(r=>!Number.isFinite(r.total)))
+    return {error:'CHAMPIONSHIP STANDINGS INVALID'};
+  const playerPlace=standings.findIndex(r=>r.id===PLAYER)+1;
+  const won=state.championId===PLAYER;
+  const cashPrize=TOKYO_CHAMPIONSHIP_PURSES[playerPlace-1]||0;
+  const podium=standings.slice(0,3).map((r,index)=>({
+    place:index+1,id:r.id,name:r.name,points:r.total,
+    knockout:r.knockout,crew:r.crew,fourWide:r.fourWide,
+  }));
+  const result={id:state.id,season:state.season,completed:true,
+    championId:state.championId,championName:standings[0].name,
+    playerPlace,playerPoints:standings[playerPlace-1].total,
+    playerChampion:won,cashPrize,podium,
+    points:clone(state.points)};
+  c.championshipSettledIds=[...c.championshipSettledIds,state.id].slice(-250);
+  // Older versions already recorded the outcome when the final heat saved;
+  // replace that record instead of adding a duplicate entry for this season.
+  const history=c.championshipHistory.filter(r=>
+    r?.id!==state.id&&!(r?.season===state.season&&r?.championId===state.championId));
+  c.championshipHistory=[...history,result].slice(-20);
+  if(won){
+    c.tokyoChampionWins++;
+    c.careerCompleted=true;
+  }
+  return {circuit:c,cashPrize,alreadySettled:false,result};
+}
+
 export function scoreChampionshipStage(raw,stage,placements) {
   const state=clone(raw);
   if(!state||state.completed||state.stage!==stage||!['KNOCKOUT','FOUR_WIDE'].includes(stage))throw Error('CHAMPIONSHIP STAGE MISMATCH');
