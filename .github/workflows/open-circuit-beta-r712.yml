@@ -10,6 +10,7 @@ on:
       - 'src/ui/ProSeasonPanel.js'
       - 'src/ui/ProDriverBriefing.js'
       - 'tests/open-circuit-beta-r712.mjs'
+      - 'tests/pro-season-crew.mjs'
       - '.github/workflows/open-circuit-beta-r712.yml'
   workflow_dispatch:
 jobs:
