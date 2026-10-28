@@ -137,22 +137,19 @@ test('legacy Sayaka recruitment invitations are updated without changing other r
   assert.equal(normaliseState(newState).crewMembers.SHINAGAWA.characterId, 'reikaTachibana');
 });
 
-test('fresh Shinagawa regional and crew events never field Sayaka', async () => {
+test('fresh Shinagawa regional and crew events never field Sayaka', () => {
   const regional = buildTunerTeamChallengeRounds('SHINAGAWA');
   assert.equal(regional.length, 7);
   assert.ok(regional.some(r => r.characterId === 'reikaTachibana' && r.carId === 'fc3s'));
   assert.equal(regional.some(r => r.characterId === 'sayakaFujieda'), false);
+  // Crew builder uses the full vehicle-performance estimator. Provide the
+  // minimal Phaser math surface that the browser supplies at runtime.
+  globalThis.Phaser ??= {};
+  globalThis.Phaser.Math ??= {
+    Clamp: (v,min,max) => Math.max(min,Math.min(max,v)),
+    Linear: (a,b,t) => a+(b-a)*t,
+  };
   const crew = buildRegionalCrewBattleRounds('SHINAGAWA');
-  if (crew.length !== 3) {
-    const { getCrewEventCarSetup, getCrewBattleHeatRule } = await import('../src/data/crewBattleRules.js');
-    const { createRivalBuildState } = await import('../src/data/rivalBuilds.js');
-    const { cars } = await import('../src/data/cars.js');
-    const tests = ['ek9','familia','a60','starion','mx5','fc3s'].map(id=>({
-      id, stock:getCrewEventCarSetup(id, {}, getCrewBattleHeatRule('SHINAGAWA',0)),
-      rated:getCrewEventCarSetup(id,createRivalBuildState(cars[id],2,{noNos:true}),getCrewBattleHeatRule('SHINAGAWA',0)),
-    }));
-    console.log('SHINAGAWA_CREW_DIAG',JSON.stringify(tests));
-  }
   assert.equal(crew.length, 3);
   assert.ok(crew.every(round => round.characterId !== 'sayakaFujieda'));
   assert.ok(crew.every(round => getRivalCharacterOrderForRegion('SHINAGAWA').includes(round.characterId)));
