@@ -209,10 +209,16 @@ function drawResults(s,options,cast,carMap){
   const wonCount=options.wins!=null?Number(options.wins):
     heats.filter(h=>h.won).length;
   const total=options.rounds||Math.max(3,heats.length);
-  label(844,277,crew&&Number.isFinite(options.fourWidePoints)?
+  const precision=crew&&options.format==='TECHNICAL';
+  const relay=crew&&options.format==='RELAY';
+  const threeTime=n=>Number.isFinite(n)?Number(n).toFixed(3)+'s':'DNF';
+  label(844,277,precision?
+    'CONSISTENCY SPREAD  '+threeTime(options.ownSpread)+' vs '+threeTime(options.opponentSpread):
+    relay?'COMBINED TIME  '+threeTime(options.ownTotal)+' vs '+threeTime(options.opponentTotal):
+    crew&&Number.isFinite(options.fourWidePoints)?
     'FOUR-WIDE TOTAL  '+options.fourWidePoints+' / 9':
-    'HEATS WON  '+wonCount+' / '+total,31);
-  const perfect=winner&&(crew?
+    'HEATS WON  '+wonCount+' / '+total,precision?25:31);
+  const perfect=winner&&!precision&&!relay&&(crew?
     Number(options.fourWidePoints)===9||heats.length===3&&wonCount===3:
     heats.length>=3&&wonCount===heats.length);
   if(perfect){
@@ -229,9 +235,11 @@ function drawResults(s,options,cast,carMap){
   rows.forEach((h,i)=>{
     const y=382+i*65,display=heatLabel(h,i,crew);
     panel(1167,y+21,702,55,0x0b1829,.84,0x3c4758,243);
-    add(s.add.rectangle(835,y+21,5,55,display.won?RED:0x606b80),244);
-    label(850,y+8,'HEAT '+display.number,19);
-    label(970,y+8,display.result,18,{color:display.won?'#ff6d81':'#d3d7e0'});
+    add(s.add.rectangle(835,y+21,5,55,
+      precision||relay?0x567e9b:display.won?RED:0x606b80),244);
+    label(850,y+8,(precision?'RUN ':relay?'LEG ':'HEAT ')+display.number,19);
+    label(970,y+8,precision||relay?'RECORDED':display.result,18,{
+      color:precision||relay?'#b3d5e8':display.won?'#ff6d81':'#d3d7e0'});
     label(1087,y+4,display.title,19);
     label(1087,y+29,display.clock,17,{color:'#b2bece'});
   });
