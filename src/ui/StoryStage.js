@@ -1,3 +1,4 @@
+import { getChapter08EditorLayout } from '../story/Chapter08EditorLayouts.js?v=20261028-parity1';
 // Scene-local authored tableau over whichever real venue/gameplay screen is active.
 // Uses canonical character assets; cars/backgrounds are explicit texture references.
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261028-pilot';
@@ -214,7 +215,7 @@ export function showStoryStage(scene, {
   };
   // Approved Chapter 08 editor compositions (R707 export). These apply only to
   // full-screen Chapter 08 tableaux; all other story/gameplay geometry is unchanged.
-  const chapter08Layout=stageMode==='chapter08-full' ? (()=>{
+  const oldChapter08Layout=stageMode==='chapter08-full' ? (()=>{
     const id=String(actualBackgroundId||'');
     if(vipParty)return {
       cast:[[43.54561878952123,89.60899653979241,65.18571428571428,3,false],
@@ -236,6 +237,7 @@ export function showStoryStage(scene, {
     };
     return null;
   })() : null;
+  const chapter08Layout=stageMode==='chapter08-full' ? getChapter08EditorLayout(actualBackgroundId,vipParty) : null;
   const draw = () => {
     if (!alive || !scene.sys?.isActive?.()) return;
     const w = scene.scale?.width || 1560, h = scene.scale?.height || 840;
@@ -346,7 +348,7 @@ export function showStoryStage(scene, {
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
       const authoredCar=chapter08Layout?.cars?.[i];
-      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*.91,targetWidth:w*authoredCar[2]/100*.58} : stageMode==='chapter08-full' ? {
+      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
         groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
