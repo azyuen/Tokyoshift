@@ -66,7 +66,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261023-r657';
+} from '../state/GameState.js?v=20261029-r715';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -92,7 +92,7 @@ import {
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
-} from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
+} from '../data/tunerChallenges.js?v=20261029-r715';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261023-r667';
