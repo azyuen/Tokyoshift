@@ -91,8 +91,12 @@ test('factory stock scrutineering catches tuning, nitrous and hidden legacy buil
     {engineTuning:{ecu:1}}, {drivetrainTuning:{gearbox:2}},
     {chassisTuning:{tyres:1}}, {exhaustNosTuning:{nosKit:1}},
     {exhaustNosTuning:{nitrousShot:1}}, {nosInstalled:true},
-    {tuneLevel:5}, {stage3Calibration:{gearBias:2}},
+    {tuneLevel:5},
   ])assert.equal(getFactoryStockStatus(state).stock,false,JSON.stringify(state));
+  // The approved vehicle model ignores calibration presets when the
+  // required Level III hardware is absent. An inert saved preference is
+  // not an installed modification and must not disqualify a factory car.
+  assert.equal(getFactoryStockStatus({stage3Calibration:{gearBias:2}}).stock,true);
 });
 test('time attack and consistency require three driven attempts',()=>{
   const own=[{finishSeconds:11,disqualified:false},{finishSeconds:10.8,disqualified:false},{finishSeconds:11.1,disqualified:false}];
