@@ -11,7 +11,7 @@ on:
       - 'src/ui/ProDriverBriefing.js'
       - 'src/ui/ProVictoryResults.js'
       - 'tests/open-circuit-beta-r712.mjs'
-      - 'tests/pro-season-crew.mjs'
+      - 'tests/pro-crew-heat-r589.mjs'
       - '.github/workflows/open-circuit-beta-r712.yml'
   workflow_dispatch:
 jobs:
@@ -33,4 +33,4 @@ jobs:
           node --check src/ui/ProVictoryResults.js
           node --check tests/open-circuit-beta-r712.mjs
       - name: Test beta fixes and existing competition flows
-        run: node --import ./tests/ci-phaser-math.mjs --test tests/open-circuit-beta-r712.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-season-crew.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs
+        run: node --import ./tests/ci-phaser-math.mjs --test tests/open-circuit-beta-r712.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-crew-heat-r589.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs
