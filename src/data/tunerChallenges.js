@@ -303,16 +303,21 @@ export function getTunerTeamChallengeState(source, regionId) {
     retryNotBefore: perfectComplete ? 0 : Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds)
       ? raw.rounds.map((round, index) => {
-          // Preserve progress, player hardware and driver identities in old
-          // saves, while migrating each rival's model to their signature car.
+          // Preserve the championship stage and its rewards while upgrading
+          // saved opponents. Old Shinagawa runs may still hold Sayaka in their
+          // seven-driver snapshot even though she is now story-only.
           if (!round) return round;
-          const carId = getRegionalRivalSignatureCarId(key, round.characterId, round.carId);
+          const characterId = key === 'SHINAGAWA' &&
+            round.characterId === 'sayakaFujieda'
+            ? 'reikaTachibana' : round.characterId;
+          const carId = getRegionalRivalSignatureCarId(key, characterId, round.carId);
           if (!['ODAIBA', 'SHINAGAWA'].includes(key)) {
             return carId === round.carId ? round : { ...round, carId };
           }
           const rating = REGION_DRIVER_RATINGS[key][index];
           return {
             ...round,
+            characterId,
             carId,
             encounterRating: rating,
             encounterAi: challengeAi(index, rating, key),
