@@ -219,3 +219,11 @@ test('Shinagawa migration does not replace Sayaka in story scenes or other event
   assert.equal(restored.crewBattleState.lineup[0].characterId, 'sayakaFujieda');
   assert.equal(CUTSCENES.openingSayakaKeys.characters.left, 'sayakaFujieda');
 });
+
+test('an already running Shinagawa race remaps the opponent and preserves Story Mode Sayaka', () => {
+  const race = readFileSync('src/scenes/RaceScene.js','utf8');
+  assert.match(race,/\['TUNER_TEAM', 'CREW_BATTLE'\]\.includes\(this\.registry\.get\('selectedRaceCategory'\)\)/);
+  assert.match(race,/storedOpponentCharacterId === 'sayakaFujieda'/);
+  assert.match(race,/storedOpponentCharacterId = 'reikaTachibana'/);
+  assert.match(race,/this\.registry\.set\('selectedOpponentCharacterId', storedOpponentCharacterId\)/);
+});
