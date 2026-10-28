@@ -324,6 +324,30 @@ export function getProQualification(raw) {
     qualified,roundsRemaining,driverEventsNeeded,crewEventsNeeded,
     qualificationPossible:qualified||driverEventsNeeded+crewEventsNeeded<=roundsRemaining};
 }
+// A read-only season report shared by the header and final standings.
+// Keep championship qualification separate from a season that has actually
+// finished all eight rounds: reaching the targets early does not end a season.
+export function getProfessionalSeasonReport(raw) {
+  const c=normaliseProCircuitState(raw),q=getProQualification(c);
+  const completed=c.calendar.round===PRO_SEASON_LENGTH&&c.seasonStatus==='COMPLETE';
+  const driverRows=getSeasonStandings(c);
+  const crewRows=getSeasonStandings(c,'TEAM');
+  const playerDriver=driverRows.findIndex(r=>r.id==='player:driver');
+  const playerTeam=crewRows.findIndex(r=>r.id==='player:team');
+  return {
+    season:c.season,completed,
+    outcome:completed?(q.qualified?'QUALIFIED':'NOT_QUALIFIED'):
+      !q.qualificationPossible?'UNREACHABLE':'IN_PROGRESS',
+    ...q,
+    roundsCompleted:c.calendar.round,
+    driverStanding:playerDriver<0?null:playerDriver+1,
+    crewStanding:playerTeam<0?null:playerTeam+1,
+    driverShortfall:Math.max(0,q.driverRequired-q.driver),
+    crewShortfall:Math.max(0,q.crewRequired-q.crew),
+    canEnterTokyo:completed&&q.qualified,
+    eventCount:c.calendar.history.length,
+  };
+}
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
 
 // Professional cars must pass the SAME class rules as the player's car.
