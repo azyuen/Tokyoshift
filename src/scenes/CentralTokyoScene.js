@@ -7,7 +7,7 @@ import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261027-r692';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
@@ -3119,10 +3119,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
       seasonRules: rules.driver,
       label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };
-    // Fixed positions: driver, crew, special/championship. Existing saved
-    // registrations remain resumable even when the calendar has advanced.
-    const choices = [driver, { ...CREW_SERIES, requiredWins: 0 },
-      { id: 'specialSlot', label: proCircuitSpecialEligible(this.registry) ? 'TOKYO CHAMPIONSHIP' : 'MINOR TROPHIES', specialSlot: true, entryFee: 0, requiredWins: 0 }];
+    // During each active round, all three cards are real racing choices.
+    // The third uses another already-supported crew format, not a placeholder
+    // trophy panel. Completed seasons still retain the championship/results slot.
+    const alternateFormat=getAlternativeProCrewFormat(round);
+    const alternateCrew={...CREW_SERIES,id:'crewAlt',team:true,
+      seasonChoice:'alternative',format:alternateFormat,
+      label:'CREW '+alternateFormat.replaceAll('_','-')+' INVITATIONAL',
+      entryFee:PRO_ALT_CREW_ENTRY_FEE,prizeCash:PRO_ALT_CREW_PRIZES[0],
+      prizes:[...PRO_ALT_CREW_PRIZES],requiredWins:0};
+    const special={id:'specialSlot',
+      label:proCircuitSpecialEligible(this.registry)?'TOKYO CHAMPIONSHIP':'MINOR TROPHIES',
+      specialSlot:true,entryFee:0,requiredWins:0};
+    const choices=[driver,{...CREW_SERIES,seasonChoice:'standard',
+      format:rules.crew.format,requiredWins:0},
+      round<8&&pro.seasonStatus==='ACTIVE'?alternateCrew:special];
     if (legacy?.active && legacy.proEvent) {
       choices[0] = { ...(driverPool.find(e => e.id === legacy.eventId) || primary), entryFee: legacy.entryFee || 0 };
     }
@@ -3253,7 +3264,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? 'CREW POINTS // 20 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? ((event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
