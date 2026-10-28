@@ -78,8 +78,8 @@ export function championshipStandings(state) {
   }).sort((a,b)=>b.total-a.total||b.fourWide-a.fourWide||
     b.knockout-a.knockout||a.seed-b.seed);
 }
-// Endgame Tokyo Championship rewards are deliberately ten times a regular
-// pro victory: prestigious enough to move toward a ¥28m+ collector car, but
+// Tokyo Championship placing prizes are ten times the originally approved
+// Championship payout scale: prestigious enough to move toward a ¥28m+ collector car, but
 // not enough to purchase the rarest Ginza legends after one successful season.
 // BASE purses only; no duplicate sponsor/difficulty multipliers. Awards are
 // written once alongside the authoritative three-stage final standings.
