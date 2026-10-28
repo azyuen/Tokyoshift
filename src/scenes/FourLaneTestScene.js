@@ -518,7 +518,7 @@ export default class FourLaneTestScene extends RaceScene {
       backgroundColor: '#061019dd', padding: { x: 13, y: 6 },
     }).setDepth(48).setOrigin(0.5).setScrollFactor(0);
     this.subheader = this.add.text(
-      780, 113, this.champMode ? 'PROVISIONAL CHAMPIONSHIP // LIVE RACE' : this.proCup
+      780, 113, this.champMode ? 'TOKYO CHAMPIONSHIP // LIVE RACE' : this.proCup
         ? 'TOP TWO ADVANCE  //  1/4 MILE'
         : this.proCrew ? 'YOU DRIVE // '+cars[this.playerCarId].shortName+' // WIN TWO HEATS FOR YOUR TEAM'
         : this.proDuel ? 'WIN TO ADVANCE // 1/4 MILE'
