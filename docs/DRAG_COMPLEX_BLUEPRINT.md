@@ -28,9 +28,23 @@ models are deployed and approved; career completion must preserve them.
   under the same stock/power/drivetrain/NOS restrictions as players, without
   hidden physics boosts. A real competition is required to validate difficulty
   beyond structural and simulation regression tests.
-- **Deferred:** full championship awards, Office trophy presentation, closing
-  cutscenes, full balance playthrough and visual acceptance testing remain
-  separate career-completion tasks.
+- **Career v1 Championship completion (development branch only):** Three
+  player-driven stages retain one cumulative 16-entrant leaderboard, with a
+  decisive 40-point four-wide stage. The final saved result awards ONE Tokyo
+  Champion title only to the overall winner, plus a once-only placing purse
+  (¥1m / ¥500k / ¥300k / ¥175k / ¥100k for 5–8 / ¥50k for 9–16).
+  The final result, podium, title ledger and prize are committed together and
+  survive reloads and future Pro Seasons. Five prestige trophies and Tokyo
+  titles appear in the Office from saved wins, without invented awards.
+  Simple existing-framework introduction, victory (Daichi, Sayaka, Aruken
+  cameo) and defeat scenes mark the milestones; no original story chapters
+  or race-engine physics are changed. New saves lock one driver car across
+  knockout and four-wide stages, and require distinct crew cars in the three
+  crew heats. Historical completed Tokyo titles are migrated without
+  double-counting.
+- **Still deferred:** full device/browser playthrough, richer cinematic art,
+  magazine championship coverage, and broad legacy-test investigation.
+  This branch is not approved for production deployment.
 
 ## 2026-10-18 R584 decision — prestige trophy tournaments (supersedes short R575 trophy event format)
 
