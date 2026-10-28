@@ -15,6 +15,9 @@ on:
       - 'tests/career-pro-third-option.mjs'
       - 'tests/career-season-report.mjs'
       - 'tests/career-tokyo-finale.mjs'
+      - 'tests/tokyoChampionship.simulation.test.js'
+      - 'tests/proSeason.simulation.test.js'
+      - 'tests/ci-phaser-math.mjs'
       - '.github/workflows/career-pro-third-option.yml'
   workflow_dispatch:
 jobs:
