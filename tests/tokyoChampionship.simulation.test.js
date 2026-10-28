@@ -7,7 +7,7 @@ import {
   getChampionshipKnockoutHeat, settleChampionshipKnockout,
   getChampionshipCrewHeat, settleChampionshipCrewHeat,
   getChampionshipFourWideHeat, settleChampionshipFourWideHeat,
-  championshipStandings,
+  championshipStandings, settleTokyoChampionship,
 } from '../src/data/tokyoChampionship.js';
 const PLAYER='player:driver';
 function qualifiedSeason() {
@@ -92,9 +92,15 @@ function runChampionship(koWin,crewWins,fourPlace) {
   assert.ok(state.points[PLAYER].crew>0);
   assert.ok(state.points[PLAYER].fourWide>0);
   c.activeChampionship=state;
-  c.championshipHistory=[{id:state.id,season:state.season,championId:state.championId}];
-  const next=nextProfessionalSeason(snapshot(c));
-  assert.ok(next.circuit,'completed championship permits rollover');
+  assert.match(nextProfessionalSeason(c).error,/CLAIM TOKYO CHAMPIONSHIP AWARDS/,
+    'new season must not bypass a pending real championship reward');
+  const paid=settleTokyoChampionship(c);
+  assert.ok(paid.circuit,paid.error);
+  assert.equal(paid.cashPrize>0,true);
+  assert.equal(settleTokyoChampionship(paid.circuit).cashPrize,0,
+    'a reload cannot award the same prize twice');
+  const next=nextProfessionalSeason(snapshot(paid.circuit));
+  assert.ok(next.circuit,'settled championship permits rollover');
   assert.equal(next.circuit.activeChampionship,null);
   assert.equal(next.circuit.championshipHistory.length,1);
   assert.equal(next.circuit.championshipHistory[0].id,id);
