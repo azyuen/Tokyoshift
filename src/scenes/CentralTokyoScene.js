@@ -7,7 +7,7 @@ import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261027-r692';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
@@ -3109,6 +3109,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
       return choices;
     }
     const round = pro.calendar.round;
+    if(round>=8){
+      const report=getProfessionalSeasonReport(pro);
+      // A finished season is a results ceremony, not a ninth event.
+      // Default to the qualification card once per scene; never force the
+      // selection back while the player browses Driver/Crew standings.
+      if(this._seasonReportSelected!==pro.season){
+        this._seasonReportSelected=pro.season;
+        this.selectedEventIndex=2;
+      }
+      return [
+        {id:'seasonDrivers',label:'DRIVER STANDINGS',seasonEnd:true,
+          reportDiscipline:'DRIVER',entryFee:0,requiredWins:0},
+        {id:'seasonCrews',label:'CREW STANDINGS',seasonEnd:true,
+          reportDiscipline:'TEAM',entryFee:0,requiredWins:0},
+        {id:'seasonResults',label:report.canEnterTokyo?'TOKYO QUALIFIED':'SEASON RESULTS',
+          seasonEnd:true,entryFee:0,requiredWins:0},
+      ];
+    }
     const driverPool = PRO_DRAG_EVENTS;
     const rules = getProfessionalRoundEvents(round);
     const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];
@@ -3152,11 +3170,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
         seasonRules:activeIndex===2?inviteRules:rules.driver};
     }
     if (pro.activeTournament) choices[0] = fourWide;
-    if (round >= 8 && !proCircuitSpecialEligible(this.registry)) {
-      choices[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true,
-        entryFee: 0, requiredWins: 0 };
-      if (!pro.activeCrewEvent && !pro.activeTournament && !legacy?.active) this.selectedEventIndex = 2;
-    }
     // Never overwrite the player's chosen card merely because a crew series
     // or another professional event is in progress.
     return choices;
@@ -3278,7 +3291,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? (event.seasonChoice==='alternative'?'ELITE CREW // 20 POINTS MAX':(event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonChoice==='alternative'?'ELITE DRIVER // 20 POINTS MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.seasonEnd?
+        (event.reportDiscipline==='DRIVER'?'DRIVER SEASON POINTS':
+          event.reportDiscipline==='TEAM'?'CREW SEASON POINTS':'OFFICIAL FINAL REPORT') :
+        event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? (event.seasonChoice==='alternative'?'ELITE CREW // 20 POINTS MAX':(event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonChoice==='alternative'?'ELITE DRIVER // 20 POINTS MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3288,7 +3304,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 136,
-        event.trophySlotClosed?'':'ENTRY ' + money(event.entryFee),
+        event.seasonEnd?'RESULTS READY':event.trophySlotClosed?'':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
