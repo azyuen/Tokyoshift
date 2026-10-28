@@ -1,4 +1,4 @@
-import { completeSeasonRound } from './proSeason.js?v=20261021-r628';
+import { completeSeasonRound, getProSeasonSkillTier } from './proSeason.js?v=20261021-r628';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
@@ -65,6 +65,7 @@ export function createFourWideTournament(proCircuit, carId) {
   const selected = selectEntrants(c, id);
   const players = selected.map((r, i) => ({
     id: r.id, seed: i + 1, rating: r.rating,
+    skillTier:r.id===PLAYER?null:getProSeasonSkillTier(c.calendar.round,i,false),
     name: r.id === PLAYER ? 'YOU' : String(r.name || characters[r.characterId]?.name || r.id),
     characterId: r.characterId || null,
   }));
