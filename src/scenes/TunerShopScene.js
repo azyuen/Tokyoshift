@@ -392,6 +392,7 @@ export default class TunerShopScene extends Phaser.Scene {
         }).setDepth(32);
       this.lbwkChoices=LBWK_CATALOG;
       this.lbwkBrowseObjects=[];
+      this.lbwkChoiceControls=[];
       this.lbwkChoices.forEach((g,i)=>{
         const y=SIDE.y+149+i*46;
         const selected=this.shop.heroCarId===g.id;
@@ -402,13 +403,13 @@ export default class TunerShopScene extends Phaser.Scene {
           selected?0x3a2d18:0x12202b,1)
           .setStrokeStyle(1,selected?0xffd889:0x627786,1)
           .setInteractive({useHandCursor:true}).setDepth(32);
-        this.add.text(SIDE.x+SIDE.w/2,y,label,{
+        const text=this.add.text(SIDE.x+SIDE.w/2,y,label,{
           fontFamily:PIXEL_FONT,fontSize:'9px',
           color:selected?'#ffe2a3':'#dce7eb'
         }).setOrigin(0.5).setDepth(33);
         b.on('pointerdown',()=>this.selectLbwkBuild(g));
-        this.lbwkBrowseObjects.push(b);
-        this.lbwkBrowseObjects.push(...this.children.list.slice(-1));
+        this.lbwkChoiceControls.push({id:g.id,button:b,text});
+        this.lbwkBrowseObjects.push(b,text);
       });
       const y=SIDE.y+SIDE.h-39;
       const map=this.add.rectangle(SIDE.x+SIDE.w/2,y,SIDE.w-56,40,0x111920,1)
@@ -499,6 +500,18 @@ export default class TunerShopScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(32);
 
     mapButton.on('pointerdown', () => this.openMap());
+  }
+
+  refreshLbwkChoiceHighlight() {
+    // The eight sidebar buttons are persistent scene objects, not part of
+    // clearDynamic(). Repaint them when the selected build changes so the
+    // original 240Z does not remain highlighted.
+    for (const item of this.lbwkChoiceControls || []) {
+      const selected = item.id === this.shop?.heroCarId;
+      item.button?.setFillStyle(selected ? 0x3a2d18 : 0x12202b, 1)
+        .setStrokeStyle(1, selected ? 0xffd889 : 0x627786, 1);
+      item.text?.setColor(selected ? '#ffe2a3' : '#dce7eb');
+    }
   }
 
   setTabStyle() {
@@ -595,6 +608,7 @@ export default class TunerShopScene extends Phaser.Scene {
     if (this.shop.cosmeticOnly) {
       (this.lbwkBrowseObjects||[]).forEach(o=>{o.setVisible(true);if(o.input)o.input.enabled=true;});
       this.lbwkIntroText?.setVisible(true);
+      this.refreshLbwkChoiceHighlight();
     }
     this.setTabStyle();
 
@@ -663,6 +677,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.shop.donorLabel=cars[g.donor]?.name || g.donor.toUpperCase();
     this.shop.buildCost=getLbwkConversionQuote(g)?.fullPrice || 0;
     this.clearPopup();
+    this.refreshLbwkChoiceHighlight();
     this.showHeroMode();
   }
 
