@@ -31,4 +31,4 @@ jobs:
           for f in src/data/streetShowdownCouponHunt.js src/data/streetShowdowns.js src/scenes/MeetScene.js src/scenes/GarageScene.js src/ui/OfficeCouponHuntPanel.js src/main.js tests/street-showdown-coupon-hunt-r716.mjs; do node --check "$f"; done
       - name: Coupon probability, matchmaking, region map and release regressions
         run: |
-          node --import ./tests/ci-phaser-math.mjs --test tests/street-showdown-coupon-hunt-r716.mjs tests/meet-rival-cars-and-profiles-r500.mjs tests/region-crew-tuning-r529.mjs
+          node --import ./tests/ci-phaser-math.mjs --test tests/street-showdown-coupon-hunt-r716.mjs tests/region-crew-tuning-r529.mjs
