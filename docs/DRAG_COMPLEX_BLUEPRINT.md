@@ -3,6 +3,35 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## Career v1 endgame balance — adopted 2026-10-29 (current implementation on completion branch)
+
+This addendum supersedes older 100/40 points proposals and earlier notes that the
+vehicle-engineering branch is unmerged. The latest production engineering and AI
+models are deployed and approved; career completion must preserve them.
+
+- **Qualification:** eight official competitions, one chosen per round; **60 Driver
+  Points plus 40 Crew Points** required to enter the unified Tokyo Championship.
+- **Three choices:** the regular Driver competition, the regular Crew competition,
+  and a genuine Elite Invitational rotating between Driver and Crew. Baseline
+  schedule uses five Driver/three Crew Invitational rounds; a significantly lagging
+  point requirement can change the third offered discipline for the current round.
+  Every round always retains a regular opportunity for each discipline.
+- **Professional field:** early rounds are mostly Expert (tier 4) with a few
+  Skilled (tier 3) and Elite (tier 5) opponents; later rounds trend to an Elite
+  majority. Elite Invitationals are mostly tier 5 from the start.
+- **Tokyo Championship:** a persistent 16-entrant field begins approximately
+  75% Elite, with Expert remaining in the opening stages. All opponents in
+  knockout semifinals/finals and four-wide semifinals/finals drive at Elite
+  skill (tier 5). Skill tiers are recorded when an event is created, or determined
+  by its saved stage; existing ongoing legacy saves retain their old behaviour.
+- **Cars:** Driver opponent cars are chosen from legal installed-part builds
+  under the same stock/power/drivetrain/NOS restrictions as players, without
+  hidden physics boosts. A real competition is required to validate difficulty
+  beyond structural and simulation regression tests.
+- **Deferred:** full championship awards, Office trophy presentation, closing
+  cutscenes, full balance playthrough and visual acceptance testing remain
+  separate career-completion tasks.
+
 ## 2026-10-18 R584 decision — prestige trophy tournaments (supersedes short R575 trophy event format)
 
 Five minor trophies are now standalone, persistent multi-stage competitions: Shuto Speed and Tokyo Technical are five driven knockout duels; Tri-Drive and Team Grand Prix are three saved 3v3 fixtures (nine driven heats); Tokyo Masters is a three-fixture crew invitational with DUEL / RELAY / FOUR_WIDE formats. They remain voluntary **Open Circuit** activity, award zero season/championship points, do not advance the eight-round calendar, and preserve completed trophy records and ownership. Only completion awards trophy wins; results and stages persist until completed or eliminated. Legacy three-round driver/crew races continue unchanged.
