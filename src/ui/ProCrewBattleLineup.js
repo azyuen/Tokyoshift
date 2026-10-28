@@ -275,7 +275,7 @@ function draw(s,opts){
       ['CAR RULE',crewRule],
       ['POWER LIMIT','NO GENERAL CAP'],
       ['NOS','ALLOWED'],
-      ['ENTRY FEE','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
+      ['ENTRY',Number(e.entryFee||0)===0?'ARUKEN SPONSORED':'¥'+Number(e.entryFee||0).toLocaleString('en-US')],
     ]},
   ];
   const toggleSteward=()=>{
@@ -431,7 +431,7 @@ function draw(s,opts){
     const ready=canConfirm();
     const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
-      unpaid?'GO TO GRID // ¥'+fee.toLocaleString('en-US'):'NEXT HEAT',()=>{
+      unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
       if(!canConfirm())return;
       close();opts.onConfirm?.([...selected]);
     },{primary:ready,disabled:!ready});
