@@ -1,4 +1,4 @@
-import { completeSeasonRound, getProSeasonSkillTier } from './proSeason.js?v=20261021-r628';
+import { completeSeasonRound, getProSeasonSkillTier } from './proSeason.js?v=20261029-r714';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
