@@ -90,9 +90,10 @@ test('Aruken RB26 one-off is separate from story body and career 240Z, sold at G
   assert.ok(listing);
   assert.ok(listing.price>=100000000);
   const scene=source('src/scenes/CentralTokyoScene.js');
-  assert.match(scene,/item.carId !== 'arkonGinza240z'/);
-  assert.match(scene,/getGinzaDenzakiListing\(\)/);
-  assert.match(scene,/this.ginzaPrestigeOneOff/);
+  assert.match(scene,/item.carId !== 'arkonGinza240z' \|\|/);
+  assert.match(scene,/getGinzaRoomStock\(listings/);
+  assert.match(scene,/this.getGinzaActiveListing\(\)\?\.carId !== listing.carId/);
+  assert.doesNotMatch(scene,/ginzaPrestigeOneOff|drawGinzaPrestigeSelector/);
   assert.doesNotMatch(scene,/!hasSeenCutscene\(this.registry,'proSponsorEpilogue'\)/);
 });
 
@@ -132,4 +133,40 @@ test('402m estimates: full works beats donor Lv3; regional-stack comparison is r
     assert.ok(finalS<ordinaryS,
       build.id+' conversion must beat its own fully upgraded regular donor');
   }
+});
+
+test('Liberty Walk selector updates every persistent sidebar highlight',()=>{
+  const scene = source('src/scenes/TunerShopScene.js');
+  assert.match(scene,/this.lbwkChoiceControls.push\(\{id:g.id,button:b,text\}\)/);
+  assert.match(scene,/this.refreshLbwkChoiceHighlight\(\)/);
+  const start=scene.indexOf('  refreshLbwkChoiceHighlight() {');
+  const end=scene.indexOf('  setTabStyle() {',start);
+  assert.ok(start>0 && end>start);
+  const method = scene.slice(start,end);
+  const refresh=new Function('return ({'+method+'}).refreshLbwkChoiceHighlight;')();
+  const controls = LBWK_CATALOG.map(g=>{
+    const button={
+      setFillStyle(color){this.fill=color;return this;},
+      setStrokeStyle(width,color){this.stroke=color;return this;},
+    };
+    const text={setColor(color){this.color=color;return this;}};
+    return {id:g.id,button,text};
+  });
+  const context={shop:{heroCarId:LBWK_CATALOG[0].id},lbwkChoiceControls:controls};
+  for(const build of LBWK_CATALOG){
+    context.shop.heroCarId=build.id;
+    refresh.call(context);
+    for(const item of controls){
+      const active=item.id===build.id;
+      assert.equal(item.button.fill,active?0x3a2d18:0x12202b,build.id+' '+item.id);
+      assert.equal(item.button.stroke,active?0xffd889:0x627786,build.id+' '+item.id);
+      assert.equal(item.text.color,active?'#ffe2a3':'#dce7eb',build.id+' '+item.id);
+    }
+  }
+  const choose=scene.slice(scene.indexOf('  selectLbwkBuild(g) {'),
+    scene.indexOf('  showLbwkBuildSelector() {'));
+  assert.match(choose,/this.refreshLbwkChoiceHighlight\(\)/);
+  const hero=scene.slice(scene.indexOf('  showHeroMode() {'),
+    scene.indexOf('  selectLbwkBuild(g) {'));
+  assert.match(hero,/this.refreshLbwkChoiceHighlight\(\)/);
 });
