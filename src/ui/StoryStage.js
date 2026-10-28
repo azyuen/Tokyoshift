@@ -212,6 +212,30 @@ export function showStoryStage(scene, {
     objects.push(image);
     return image;
   };
+  // Approved Chapter 08 editor compositions (R707 export). These apply only to
+  // full-screen Chapter 08 tableaux; all other story/gameplay geometry is unchanged.
+  const chapter08Layout=stageMode==='chapter08-full' ? (()=>{
+    const id=String(actualBackgroundId||'');
+    if(vipParty)return {
+      cast:[[43.54561878952123,89.60899653979241,65.18571428571428,3,false],
+            [32.97395984979134,91.29672515136784,65.18571428571428,4,false],
+            [68.46883468834685,93.79259725280485,69.71533101045297,2,true]],
+      cars:[[49.470641373080404,81.22061444898814,73.4,false]]
+    };
+    if(id.includes('shinonomeWarehouseStrip'))return {
+      cast:[[40.7169357609069,88.55448156585796,61.378823073945014,3,false],
+            [23.613878392305047,88.61093437965089,60.17142857142858,2,false]],
+      cars:[[54.11267605633802,71.93742592062779,63.798122065727696,false]]
+    };
+    if(id.includes('shinagawaTennozu')||id.includes('daikokuPA')||id.includes('shibuyaScramble'))return {
+      cast:[[36.31887985546523,91.95774352521761,65.18571428571428,2,false],
+            [23.03794037940379,91.78997588340148,63.51428571428572,2,false],
+            [63.410117434507676,91.28667295795324,65.18571428571428,2,true]],
+      cars:[[9.015356820234874,81.2206144489882,73.28906955736224,false],
+            [90.72448057813912,81.38838209080424,74,true]]
+    };
+    return null;
+  })() : null;
   const draw = () => {
     if (!alive || !scene.sys?.isActive?.()) return;
     const w = scene.scale?.width || 1560, h = scene.scale?.height || 840;
@@ -321,7 +345,8 @@ export function showStoryStage(scene, {
       const ch6Car=meetCarLayout==='yokohamaGift' &&
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
-      const cinematicCar=stageMode==='chapter08-full' ? {
+      const authoredCar=chapter08Layout?.cars?.[i];
+      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
         groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
@@ -331,7 +356,7 @@ export function showStoryStage(scene, {
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
       const groundY=Number(cinematicCar?.groundY??sharedBay?.groundY??finaleCar?.y??ch6Car?.y??duelCar?.y??template?.car.tyreContactY??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
-      const layer=Number(template?(vehicleDepth+i):
+      const layer=Number(authoredCar ? depth+3 : template?(vehicleDepth+i):
         (c.depth??(carInFront
           ?Math.max(vehicleDepth+i,estimate?.depth??vehicleDepth+i)
           :Math.min(vehicleDepth+i,estimate?.depth??vehicleDepth+i))));
@@ -460,7 +485,8 @@ export function showStoryStage(scene, {
       }):null;
       // Characters of a scene all share the same native ground/height:
       // only their horizontal slot or optional observer role differs.
-      const cinematicCast=stageMode==='chapter08-full' ? {
+      const authoredCast=chapter08Layout?.cast?.[i];
+       const cinematicCast=authoredCast ? {x:w*authoredCast[0]/100,feetY:h*authoredCast[1]/100,height:h*authoredCast[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(actors.length===2?[.17,.30][i]:actors.length===3?[.15,.29,.85][i]:.22),
         feetY:h*.73,
         height:h*(a.role==='challenger'?.36:.39),
@@ -477,7 +503,7 @@ export function showStoryStage(scene, {
       const sprite=addImage(a.asset,x,feet,null,height,layer,
         a.fadeInMs ? 0 : 1,true);
       if(sprite){
-        if(a.flipX)sprite.setFlipX(true);
+        if(authoredCast?sprite.setFlipX(authoredCast[4]):a.flipX)sprite.setFlipX(true);
         actorImages.set(a.id,sprite);
         if(duel && a.approach && scene.tweens?.add){
           // Daigo's shameless attempt to get closer to Sayaka happens while
