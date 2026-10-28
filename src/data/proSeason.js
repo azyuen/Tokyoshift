@@ -695,6 +695,23 @@ export function getCrewSeriesTable(t) {
   });
   return rows.sort((a,b)=>b.points-a.points||b.heatDifference-a.heatDifference||a.seed-b.seed);
 }
+// Technical crew competition is not an ET sprint. Both crews must complete
+// three different-car runs; only the spread (slowest ET minus fastest ET)
+// decides the fixture. A DNF/DQ is not a clean three-run series.
+export function getCrewTechnicalScore(heats=[]) {
+  const valid=(side,status)=>heats.length===3&&heats.every(h=>
+    h?.[status]==='FINISHED'&&Number.isFinite(h?.[side])&&h[side]>0);
+  const ownValid=valid('ownSeconds','ownStatus');
+  const opponentValid=valid('opponentSeconds','opponentStatus');
+  const spread=key=>Number((Math.max(...heats.map(h=>h[key]))-
+    Math.min(...heats.map(h=>h[key]))).toFixed(6));
+  const ownSpread=ownValid?spread('ownSeconds'):null;
+  const opponentSpread=opponentValid?spread('opponentSeconds'):null;
+  return {complete:heats.length===3&&heats.every(h=>h&&!h.pending),
+    ownSpread,opponentSpread,won:ownValid&&
+    (!opponentValid||ownSpread<opponentSpread-0.000001),
+    tied:ownValid&&opponentValid&&Math.abs(ownSpread-opponentSpread)<=0.000001};
+}
 export function settleCrewSeriesFixture(raw,fixtureId) {
   const c=normaliseProCircuitState(raw),f=getCrewFixture(c),t=clone(c.activeCrewEvent);
   if(!f||f.id!==fixtureId||f.prepared?.revealed!==3||c.completedEventIds.includes(t.id))return {circuit:c,status:'STALE',cashPrize:0};
@@ -710,13 +727,8 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const opponentTotal=f.prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
   const relayWon=playerFinished&&(!opponentFinished||ownTotal<opponentTotal-0.000001);
   const technical=f.format==='TECHNICAL';
-  // Technical rewards repeatability: smallest spread between fastest and
-  // slowest completed leg wins. All three legs must finish cleanly.
-  const spread=key=>Math.max(...f.prepared.heats.map(h=>h[key]))-
-    Math.min(...f.prepared.heats.map(h=>h[key]));
-  const ownSpread=playerFinished?spread('ownSeconds'):null;
-  const opponentSpread=opponentFinished?spread('opponentSeconds'):null;
-  const technicalWon=playerFinished&&(!opponentFinished||ownSpread<opponentSpread-0.000001);
+  const technicalScore=getCrewTechnicalScore(f.prepared.heats);
+  const technicalWon=technicalScore.won;
   const fourWidePoints=f.prepared.heats.reduce((sum,h)=>sum+(Number.isInteger(h.place)&&h.place>=1&&h.place<=4?4-h.place:0),0);
   // Three personally driven four-lane heats: 0–9 placing points.
   // Convert aggregate performance to the existing four crew prize tiers.
