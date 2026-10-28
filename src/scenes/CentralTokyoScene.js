@@ -450,12 +450,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
             this.ginzaRotationKey !== Math.floor(Date.now() / GINZA_ROTATION_MS)) {
           this.renderLocation(this.activeLocationId);
         }
-        // Driver/crew offers change at five-minute slot boundaries, even if
-        // DAY/NIGHT has not flipped yet. Never interrupt modal or manga UI.
+        // Driver/crew offers change only at DAY/NIGHT boundaries.
+        // Never interrupt an unpaid driver briefing or manga UI.
         if (this.activeLocationId === 'tokyoDragComplex' &&
             isOpenCircuitAvailable(this.registry.get('proCircuit')) &&
             this.proOpenRotationKey !== getOpenCircuitRotation().rotationIndex &&
-            !this._proOverlayClose && !this._proSeasonConfirmClose &&
+            !this._proOverlayClose && !this._pendingProDriverBriefing &&
+            !this._proSeasonConfirmClose &&
             !sceneCutsceneActive(this)) this.renderLocation(this.activeLocationId);
       },
     });
@@ -3022,7 +3023,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getProDragEvents() {
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const legacy = this.registry.get('competitionState');
-    // Open Circuit offers rotate with WorldClock (six slots per day/night).
+    // Open Circuit offers rotate only at each day/night transition.
     // Existing in-progress events keep their saved identities and fixtures.
     if (isOpenCircuitAvailable(pro)) {
       const rotation=getOpenCircuitRotation();
@@ -3648,20 +3649,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const definition=pending?.event||PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
     const fail=message=>{
-      this.proError=message;
-      this.renderLocation(this.activeLocationId);
-      if(this._pendingProDriverBriefing||isOpenDriverBriefing(this.registry.get('competitionState')))
-        this.showOpenCircuitDriverBriefing();
+      // Do not silently refresh after a refused entry.
+      this.proError=String(message||'ENTRY COULD NOT BE SAVED');
+      this._proDriverError=this.proError;
+      this.showOpenCircuitDriverBriefing();
     };
     showProDriverBriefing(this,{
       state:pending?.state||null,
       preparedCarState:pending?.preparedCarState||null,
       previewCircuit:pending?.adviceCircuit||null,
-      event:definition,initialDialogue,
+      event:definition,initialDialogue,entryError:this._proDriverError||null,
       proAccess:getProCircuitAccess(this.registry).unlocked,
       onCancel:()=>{
         if(!pending)return;
         this._pendingProDriverBriefing=null;
+        this._proDriverError=null;
         this.proError=null;
         this.renderLocation(this.activeLocationId);
       },
@@ -3731,11 +3733,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
           return;
         }
         if(pending){
-          // Recheck the currently available official event at the moment of
-          // payment. A stale day/night offer or changed save pays nothing.
-          const live=this.getProDragEvents().find(e=>e.id===pending.event.id&&
-            usesPrepaidDriverBriefing(e)&&e.entryFee===pending.event.entryFee);
-          if(!live){fail('EVENT OFFER CHANGED — CANCEL AND REOPEN REGISTRATION');return;}
+          // The accepted offer remains reserved while the player adjusts
+          // the car, even if day changes to night. The transaction still
+          // checks cash, ownership, saved rules and competing registrations.
           if(this.registry.get('competitionState')?.active){
             fail('ANOTHER COMPETITION IS ALREADY ACTIVE');return;
           }
@@ -3750,6 +3750,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           try{saveProTransaction(this.registry,transaction.changes);}
           catch(error){fail(error.message);return;}
           this._pendingProDriverBriefing=null; // Payment cannot happen twice.
+          this._proDriverError=null;
           this.setProDuelRaceContext(transaction.changes.competitionState);
         }else{
           this.registry.set('selectedCarId',carId);
@@ -3949,6 +3950,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     };
 
     if(prepareBeforePay && isOpenDriverBriefing(state)){
+      this._proDriverError=null;
       // A brand-new entry remains strictly unpaid until final scrutineering.
       // No registry/session writes, fee deductions, eventTick or cooldown
       // changes happen until the player confirms by proceeding to the grid.
