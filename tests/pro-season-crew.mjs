@@ -12,8 +12,7 @@ const physicalResult=(win=true)=>[{id:'player',finishSeconds:win?10:12,disqualif
 
 test('real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup',async()=>{
  const storage=new Map();globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)};
- const priorPhaser=globalThis.Phaser;
- globalThis.window={addEventListener(){}};globalThis.Phaser={Scene:class{},Math:priorPhaser?.Math||{Clamp:(x,min,max)=>Math.max(min,Math.min(max,x)),Linear:(a,b,t)=>a+(b-a)*t}};
+ globalThis.window={addEventListener(){}};globalThis.Phaser={Scene:class{}};
  const {default:Scene}=await import('../src/scenes/FourLaneTestScene.js');
  const s=source(),ids=enter(s),f=getCrewFixture(s.get('proCircuit'));
  s.set('proCircuit',preparePlayerCrewFixture(s,ids.slice(0,3),f.id).circuit);
@@ -27,9 +26,7 @@ test('real pro scene initializes exactly two crew cars and settles telemetry wit
  assert.equal(readSessionState().proCircuit.activeCrewEvent.fixture.revealed,1);
  assert.equal(s.get('selectedCarId'),'ae86');assert.equal(s.get('competitionState'),null);
  scene.showFourLaneResults();assert.equal(s.get('proCircuit').activeCrewEvent.fixture.revealed,1);
- delete globalThis.localStorage;
- if(priorPhaser===undefined)delete globalThis.Phaser;else globalThis.Phaser=priorPhaser;
- delete globalThis.window;
+ delete globalThis.localStorage;delete globalThis.Phaser;delete globalThis.window;
 });
 
 test('player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection',()=>{
