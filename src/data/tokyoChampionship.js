@@ -21,18 +21,33 @@ export function createProvisionalChampionship(raw) {
   const c=normaliseProCircuitState(raw);
   if(!canEnterTokyoChampionship(c))return {error:'COMPLETE EIGHT ROUNDS AND REACH 60 DRIVER / 40 CREW POINTS'};
   if(c.activeChampionship)return {error:'CHAMPIONSHIP ALREADY ACTIVE'};
-  const rivals=getProCircuitDriverSeeds(c).filter(r=>r.id!==PLAYER);
-  // Preserve main regional rivals in the provisional roster; actual season
-  // qualification will replace this selection in releases 2A/2B.
-  const regional=rivals.filter(r=>r.characterId);
-  const remaining=rivals.filter(r=>!r.characterId);
-  const field=[...regional.sort((a,b)=>b.rating-a.rating),
-    ...remaining.sort((a,b)=>b.rating-a.rating)].slice(0,15);
+  // Season standings determine the Championship draw (70% Driver,
+  // 30% Crew), while persistent ratings break ties. Driver/team IDs
+  // are paired using the same canonical roster mapping as season simulation.
+  const driverIds=Object.keys(c.drivers).sort(),teamIds=Object.keys(c.teams).sort();
+  const teamByDriver=Object.fromEntries(driverIds.map((id,index)=>
+    [id,c.teams[teamIds[index]]||null]));
+  const seedScore=(driver,team)=>Number((
+    .7*Math.max(0,Number(driver?.seasonPoints)||0)/60+
+    .3*Math.max(0,Number(team?.seasonPoints)||0)/40).toFixed(6));
+  const rivals=getProCircuitDriverSeeds(c).filter(r=>r.id!==PLAYER).map(r=>({
+    ...r,seasonSeedScore:seedScore(c.drivers[r.id],teamByDriver[r.id]),
+  }));
+  const bySeason=(a,b)=>b.seasonSeedScore-a.seasonSeedScore||
+    b.rating-a.rating||a.id.localeCompare(b.id);
+  // Seven established regional rivals remain recognisable in the finale;
+  // the remaining eight places go to the best professional season qualifiers.
+  const regional=rivals.filter(r=>r.characterId).sort(bySeason);
+  const remaining=rivals.filter(r=>!r.characterId).sort(bySeason);
+  const field=[...regional,...remaining].slice(0,15);
   if(field.length!==15)return {error:'INSUFFICIENT CHAMPIONSHIP RIVALS'};
-  const entrants=[{id:PLAYER,name:'YOU',rating:c.playerDriver.rating,seed:0},
+  const entrants=[{id:PLAYER,name:'YOU',rating:c.playerDriver.rating,seed:0,
+      seasonSeedScore:seedScore(c.playerDriver,c.playerTeam)},
     ...field.map(r=>({id:r.id,name:r.name||characters[r.characterId]?.name||r.id,
-      characterId:r.characterId||null,rating:r.rating,seed:0}))];
-  entrants.sort((a,b)=>b.rating-a.rating||hash(c.season+':'+a.id)-hash(c.season+':'+b.id));
+      characterId:r.characterId||null,rating:r.rating,seed:0,
+      seasonSeedScore:r.seasonSeedScore}))];
+  entrants.sort((a,b)=>b.seasonSeedScore-a.seasonSeedScore||b.rating-a.rating||
+    hash(c.season+':'+a.id)-hash(c.season+':'+b.id));
   entrants.forEach((r,i)=>r.seed=i+1);
   // Around 75% Elite in the 16-car opener, the others Expert.
   // Snapshot skill tiers so old saves and completed brackets never reroll.
