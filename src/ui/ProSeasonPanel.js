@@ -499,7 +499,7 @@ export function showSeasonRecords(s,complete=false) {
 export function showTokyoChampionship(s) {
   const c=circuit(s),state=c.activeChampionship;
   if(!state){showSeasonRecords(s,c.calendar.round>=8);return;}
-  const o=overlay(s,'TOKYO CHAMPIONSHIP // PROVISIONAL 16');
+  const o=overlay(s,'TOKYO CHAMPIONSHIP // 16 ENTRANTS');
   o.label(90,110,'STAGE '+state.stage+' · SEASON '+state.season+' · '+(state.completed?'FINAL RESULTS':'CHAMPIONSHIP IN PROGRESS'),23);
   const rows=championshipStandings(state);
   rows.forEach((r,i)=>{
