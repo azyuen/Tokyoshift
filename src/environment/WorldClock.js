@@ -54,11 +54,11 @@ function readWorldCycleEpoch(now = Date.now()) {
   return epoch;
 }
 
-// Open Circuit offers refresh six times during one COMPLETE day + night.
-// Each WorldClock phase is 15 minutes, so the complete cycle is 30 minutes,
-// with one new event rotation every five minutes. Trophy invitations refresh
-// only once at the start of each complete cycle (dayIndex), never per slot.
-export const OPEN_CIRCUIT_SLOTS_PER_DAY = 6;
+// Ordinary Open Circuit Driver/Crew offerings rotate only on the existing
+// 15-minute day/night boundary, not every five minutes. Trophy invitations
+// are slower: one full night+day (30-minute) cycle, with scheduled rest days.
+// Keep the clock epoch and phase lengths unchanged for existing PWA saves.
+export const OPEN_CIRCUIT_SLOTS_PER_DAY = WORLD_PHASES.length;
 export const WORLD_FULL_DAY_MS = WORLD_PHASE_DURATION_MS * WORLD_PHASES.length;
 export const OPEN_CIRCUIT_ROTATION_MS = WORLD_FULL_DAY_MS / OPEN_CIRCUIT_SLOTS_PER_DAY;
 
