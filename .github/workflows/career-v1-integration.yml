@@ -11,6 +11,9 @@ on:
       - 'src/ui/ProSeasonPanel.js'
       - 'src/ui/OfficePanel.js'
       - 'tests/career-tokyo-finale.mjs'
+      - 'tests/tokyoChampionship.simulation.test.js'
+      - 'tests/proSeason.simulation.test.js'
+      - 'tests/ci-phaser-math.mjs'
       - '.github/workflows/career-v1-integration.yml'
   workflow_dispatch:
 jobs:
@@ -31,4 +34,4 @@ jobs:
         with:
           node-version: '22'
       - name: Open Circuit, professional cups, season and sponsor compatibility
-        run: node --test tests/prestige-trophies-r583.mjs tests/pro-tournament-phase2.mjs tests/pro-sponsor-r692.mjs tests/pro-ranking-sponsor-r628.mjs
+        run: node --import ./tests/ci-phaser-math.mjs --test tests/prestige-trophies-r583.mjs tests/pro-tournament-phase2.mjs tests/pro-sponsor-r692.mjs tests/pro-ranking-sponsor-r628.mjs
