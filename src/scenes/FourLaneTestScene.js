@@ -1,5 +1,5 @@
-import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r628';
+import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill } from '../data/tokyoChampionship.js?v=20261012-champaudit';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r607';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
@@ -178,7 +178,11 @@ export default class FourLaneTestScene extends RaceScene {
         Math.abs((Number(cars[a]?.powerKW)||0)-playerPower)-
         Math.abs((Number(cars[b]?.powerKW)||0)-playerPower))[0]||'ae86';
       this.proDuelState=e?{active:true,proEvent:true,eventId:'timed',playerCarId:e.carId,
-        roundIndex:e.attempts.length,rounds:[0,1,2].map(()=>({carId:rival,encounterRating:3}))}:null;
+        roundIndex:e.attempts.length,rounds:[0,1,2].map(()=>({
+          carId:e.opponentCarId||rival,
+          encounterRating:e.opponentRating||3,
+          opponentBuildState:e.opponentCarState||null,
+        }))}:null;
     }
     this.proDuelInfo = this.proDuel ? getProfessionalDuelRound(this.proDuelState) : null;
     const circuit = this.registry.get('proCircuit') || {};
@@ -217,12 +221,28 @@ export default class FourLaneTestScene extends RaceScene {
       const ids=this.champMode==='CHAMP_FOUR' ? this.champHeat?.entrants.filter(id=>id!=='player:driver') : [this.champMode==='CHAMP_KO'?this.champHeat?.opponentId:this.champHeat?.opponent?.id];
       this.aiEntrants=(ids||[]).map(id=>this.champState?.entrants.find(e=>e.id===id)).filter(Boolean);
     }
+    // Build only the three cars in the current professional four-wide heat,
+    // using the same eligibility rules as the player. Repeated scene loads
+    // reconstruct the same legal builds from deterministic seeds.
+    this.proRivalBuilds=null;
+    if(this.proCup&&this.proHeat){
+      const round=circuit.calendar?.round||0;
+      const rules=getProfessionalRoundEvents(round).driver;
+      const ownState=(this.registry.get('carStates')||{})[this.playerCarId]||{};
+      const ownPower=getBuiltCar(this.playerCarId,ownState)?.car?.powerKW||0;
+      this.proRivalBuilds=Object.fromEntries(this.aiEntrants.map((e,i)=>[
+        e.id,getProfessionalOpponentBuild(rules,ownPower,
+          e.skillTier||Math.max(3,Math.min(5,Math.round(3+(e.rating-1400)/250))),
+          this.proHeat.id+':'+e.id,this.playerCarId),
+      ]));
+    }
     this.aiCarIds = this.champMode ? this.aiEntrants.map((e,i)=>['r34','evo6','rx7fd','s2000','r32','jza80'].filter(id=>cars[id]&&id!==this.playerCarId)[(e.seed+i)%['r34','evo6','rx7fd','s2000','r32','jza80'].filter(id=>cars[id]&&id!==this.playerCarId).length]) : this.proDuel
       ? (this.proDuelInfo ? [this.proDuelInfo.round.carId] : [])
       : this.aiEntrants.length === 3
         ? this.aiEntrants.map(e => {
             const available = candidates.filter(id => id !== this.playerCarId);
-            return available[proCupHash(this.proTournament.id + e.id) % available.length];
+            return this.proRivalBuilds?.[e.id]?.carId||
+              available[proCupHash(this.proTournament.id + e.id) % available.length];
           })
         : candidates.filter(id => id !== this.playerCarId).slice(0, 3);
     if(this.crewFourWide&&this.crewHeat) {
@@ -233,9 +253,14 @@ export default class FourLaneTestScene extends RaceScene {
       const opponent=this.crewHeat.opponent;
       const extras=rivals.filter(e=>e.name!==this.crewHeat.opponentName);
       this.aiCarIds=[opponent.carId,...extras.slice(0,2).map((e,i)=>e.drivers[this.crewHeat.index]?.carId||'ae86')];
-      this.aiEntrants=[{id:'ai-1',name:this.crewHeat.opponentName,rating:1400},
-        {id:'ai-2',name:extras[0]?.name||'RIVAL 2',rating:extras[0]?.rating||1400},
-        {id:'ai-3',name:extras[1]?.name||'RIVAL 3',rating:extras[1]?.rating||1400}];
+      this.aiEntrants=[{id:'ai-1',name:this.crewHeat.opponentName,
+        rating:1400,skillTier:opponent.skillTier||null,buildState:opponent.state},
+        {id:'ai-2',name:extras[0]?.name||'RIVAL 2',rating:extras[0]?.rating||1400,
+          skillTier:extras[0]?.drivers?.[this.crewHeat.index]?.skillTier||null,
+          buildState:extras[0]?.drivers?.[this.crewHeat.index]?.state},
+        {id:'ai-3',name:extras[1]?.name||'RIVAL 3',rating:extras[1]?.rating||1400,
+          skillTier:extras[1]?.drivers?.[this.crewHeat.index]?.skillTier||null,
+          buildState:extras[1]?.drivers?.[this.crewHeat.index]?.state}];
     }
     if (!this.proDuel && !this.champMode) while (this.aiCarIds.length < 3) this.aiCarIds.push('ae86');
   }
@@ -347,10 +372,15 @@ export default class FourLaneTestScene extends RaceScene {
     this.aiCarIds.forEach((id, index) => {
       const entrant = this.aiEntrants[index];
       const rivalRound = this.proDuel&&!this.crewFourWide ? this.proDuelInfo.round : null;
-      const rating = rivalRound ? Number(rivalRound.encounterRating || 4)
-        : entrant ? Math.max(2, Math.min(5,
-            Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
-      const state = (this.crewFourWide&&index===0?this.crewHeat.opponent.state:null) || rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
+      const championshipTier=this.champMode?
+        getChampionshipOpponentSkill(this.champState,entrant?.id,
+          this.champState?.stage,this.champHeat?.round||0):null;
+      const rating = championshipTier|| (rivalRound ? Number(rivalRound.encounterRating || 4)
+        : entrant?.skillTier|| (entrant ? Math.max(2, Math.min(5,
+            Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4));
+      const state = entrant?.buildState||this.proRivalBuilds?.[entrant?.id]?.state||
+        (this.crewFourWide&&index===0?this.crewHeat.opponent.state:null)||
+        rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
         seed: this.proCup ? this.proHeat.id + ':' + entrant.id
           : this.proTimed ? 'pro-timed:' + this.timedEvent.id + ':' + id
           : this.proDuel ? 'pro-duel:' + this.proDuelInfo.roundIndex + ':' + id
