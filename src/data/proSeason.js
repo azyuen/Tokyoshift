@@ -496,6 +496,13 @@ export function completeSeasonRound(raw,summary,participants=[]) {
 }
 export function nextProfessionalSeason(raw) {
   const c=normaliseProCircuitState(raw);
+  // Never let a fully simulated old Championship disappear before its
+  // once-only title/purse ledger has been committed. Lightweight historical
+  // completed stubs without a scored stage still migrate normally.
+  if(c.activeChampionship?.completed&&
+     c.activeChampionship.stage==='COMPLETE'&&
+     !c.championshipSettledIds.includes(c.activeChampionship.id))
+    return {error:'CLAIM TOKYO CHAMPIONSHIP AWARDS BEFORE STARTING NEXT SEASON'};
   if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
