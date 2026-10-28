@@ -1,7 +1,7 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
@@ -70,6 +70,7 @@ export function drawSeasonHeader(s,stage) {
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
+  const report=getProfessionalSeasonReport(c);
   // Rank and sponsorship remain visible through both Open Circuit and Season.
   // Season controls remain beside the main race entries on the right.
   const height=openCircuit?169:c.activeChampionship?236:213;
@@ -78,8 +79,11 @@ export function drawSeasonHeader(s,stage) {
   if(openCircuit){
     // Open Circuit is a persistent professional ladder, not a season table.
     // Show both rankings and independent, cash-only appearance commissions.
-    text(s,x,y,'PRO RANKINGS',19,{color:'#f5e9e5'});
-    text(s,x+w-2,y+5,'OPEN CIRCUIT',12,{color:'#aab8c1'}).setOrigin(1,0);
+    text(s,x,y,report.completed?'SEASON '+c.season+' COMPLETE':'PRO RANKINGS',19,
+      {color:'#f5e9e5'});
+    text(s,x+w-2,y+5,report.completed?
+      (report.canEnterTokyo?'TOKYO QUALIFIED':'NOT QUALIFIED'):'OPEN CIRCUIT',12,
+      {color:report.completed?'#ecc88d':'#aab8c1'}).setOrigin(1,0);
     s.addContent(s.add.rectangle(x+w/2,y+42,1,67,0x51606b,.85).setDepth(40));
     for(const item of [
       {x,record:driver,label:'DRIVER'},
@@ -93,8 +97,10 @@ export function drawSeasonHeader(s,stage) {
     const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,34,0x40242a,.96)
       .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
       .setInteractive({useHandCursor:true}));
-    text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
-    expand.on('pointerdown',()=>showProRankings(s));
+    text(s,x+w/2,expandY,report.completed?
+      'VIEW FINAL SEASON REPORT  ▼':'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,
+      {color:'#f5e9e5'}).setOrigin(.5);
+    expand.on('pointerdown',()=>report.completed?showSeasonRecords(s,true):showProRankings(s));
     if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b'});
     return;
   }
@@ -117,6 +123,14 @@ export function drawSeasonHeader(s,stage) {
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
+  } else {
+    const status=report.completed?
+      (report.canEnterTokyo?'TOKYO QUALIFIED // VIEW SEASON REPORT':'SEASON COMPLETE // VIEW REPORT'):
+      report.qualified?'TARGETS MET // FINISH ALL 8 ROUNDS':
+      !report.qualificationPossible?'TOKYO QUALIFICATION OUT OF REACH':
+      'NEED '+report.driverEventsNeeded+' DRIVER + '+report.crewEventsNeeded+
+        ' CREW EVENTS // '+report.roundsRemaining+' LEFT';
+    text(s,x,y+148,status,14,{color:report.qualificationPossible?'#ecc88d':'#ec969b'});
   }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
@@ -130,9 +144,20 @@ export function drawCrewSidebar(s,event,side) {
   const f=t?getCrewFixture(c):null,short=t?!!t.short:!event.trophyId;
   if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
-    text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
-    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
-    button(s,side.x+side.w/2,side.y+574,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
+    const report=getProfessionalSeasonReport(c);
+    text(s,side.x+20,side.y+207,report.canEnterTokyo?'TOKYO QUALIFIED':'SEASON COMPLETE',21,
+      {color:report.canEnterTokyo?'#f3cf8d':'#f5e9e5'});
+    text(s,side.x+20,side.y+255,
+      'EIGHT PROFESSIONAL ROUNDS COMPLETE\n\n'+
+      'DRIVER  '+report.driver+'/'+report.driverRequired+' PTS  //  #'+report.driverStanding+'\n'+
+      'CREW    '+report.crew+'/'+report.crewRequired+' PTS  //  #'+report.crewStanding+'\n\n'+
+      (report.canEnterTokyo?'CHAMPIONSHIP ENTRY UNLOCKED':
+        'MISSED BY '+report.driverShortfall+' DRIVER / '+report.crewShortfall+' CREW PTS')+
+      '\n\nVIEW FINAL STANDINGS AND NEXT STEPS',
+      16,{lineSpacing:6,wordWrap:{width:side.w-40}});
+    button(s,side.x+side.w/2,side.y+574,side.w-36,
+      'VIEW OFFICIAL SEASON REPORT',()=>showSeasonRecords(s,true));
+    return true;
   }
   const access=getProCircuitAccess(s.registry);
   const rotation=getOpenCircuitRotation();
