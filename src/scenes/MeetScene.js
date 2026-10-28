@@ -40,7 +40,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r657';
+import { saveSessionState } from '../state/GameState.js?v=20261029-r715';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r667';
@@ -104,7 +104,7 @@ import {
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
   getRegionalRivalSignatureCarId,
-} from '../data/tunerChallenges.js?v=20261015-signatures';
+} from '../data/tunerChallenges.js?v=20261029-r715';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
@@ -2223,6 +2223,20 @@ export default class MeetScene extends Phaser.Scene {
     const old = Array.isArray(state.rounds) ? state.rounds : [];
     const recruited = getRecruitedCrewCharacterIds(this.registry);
     const invalid = old.some(round => recruited.has(round?.characterId));
+    // The getter migrates old Sayaka snapshots for display, but their saved
+    // power/vehicle builds may refer to her retired RX-8. Rebuild the roster
+    // once from the approved current roster and Reika's signature FC3S.
+    // Keep championship stage, wins and rewards in the surrounding state.
+    const savedRounds = (this.registry.get('tunerTeamChallenges') || {})[key]?.rounds;
+    const oldShinagawaDriver = key === 'SHINAGAWA' &&
+      Array.isArray(savedRounds) &&
+      savedRounds.some(round =>
+        round?.characterId === 'sayakaFujieda' ||
+        (round?.characterId === 'reikaTachibana' &&
+          round?.carId !== getRegionalRivalSignatureCarId(
+            key, 'reikaTachibana', round.carId))
+      );
+    if (oldShinagawaDriver) return generated;
     // Reuse saved opponents and their stage on resume, unless recruitment
     // made a previous roster illegal; this preserves mid-run continuity.
     return invalid ? generated : Array.from({ length: TUNER_TEAM_CHALLENGE_STAGES },

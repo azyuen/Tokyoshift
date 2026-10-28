@@ -66,7 +66,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261023-r657';
+} from '../state/GameState.js?v=20261029-r715';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -92,7 +92,7 @@ import {
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
-} from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
+} from '../data/tunerChallenges.js?v=20261029-r715';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261023-r667';
@@ -416,10 +416,19 @@ export default class RaceScene extends Phaser.Scene {
       Boolean(cars[this.selectedCarId]?.ginzaDemo &&
         this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
 
-    const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
+    let storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
       || this.registry.get('district')
       || 'ODAIBA';
+    // An already-running, pre-R457 Shinagawa regional/crew heat may still
+    // have Sayaka as its opponent in the live registry. Remap only these
+    // racing categories; Chapter 08 and other scripted Sayaka drives remain.
+    if (String(raceRegionForRivals).toUpperCase() === 'SHINAGAWA' &&
+        ['TUNER_TEAM', 'CREW_BATTLE'].includes(this.registry.get('selectedRaceCategory')) &&
+        storedOpponentCharacterId === 'sayakaFujieda') {
+      storedOpponentCharacterId = 'reikaTachibana';
+      this.registry.set('selectedOpponentCharacterId', storedOpponentCharacterId);
+    }
     const regionRivals = getRivalCharacterOrderForRegion(raceRegionForRivals);
     const fallbackOpponentCharacterId =
       regionRivals.find(id => id !== this.playerCharacterId)
