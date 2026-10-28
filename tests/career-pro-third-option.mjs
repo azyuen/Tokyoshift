@@ -187,7 +187,7 @@ test('timed event registration saves legal opponent build and does not regenerat
   try{
     const state=createDefaultProCircuitState();
     state.seasonStatus='ACTIVE';state.calendar.round=1;
-    const result=registerProfessionalTimedEvent(state,'s2000',65000,{});
+    const result=registerProfessionalTimedEvent(state,'ae86',65000,{});
     assert.ok(result.circuit,result.error);
     const e=result.circuit.activeTimedEvent;
     assert.equal(e.round,1);
@@ -195,6 +195,6 @@ test('timed event registration saves legal opponent build and does not regenerat
     assert.ok(getProfessionalCarEligibility(e.opponentCarId,e.opponentCarState,
       PRO_SEASON_CALENDAR[1].driver).eligible);
     assert.deepEqual(normaliseProCircuitState(JSON.parse(JSON.stringify(result.circuit))).activeTimedEvent,e);
-    assert.ok(registerProfessionalTimedEvent(result.circuit,'s2000',65000,{}).error);
+    assert.ok(registerProfessionalTimedEvent(result.circuit,'ae86',65000,{}).error);
   }finally{delete globalThis.Phaser;}
 });
