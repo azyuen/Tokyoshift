@@ -78,13 +78,15 @@ export function championshipStandings(state) {
   }).sort((a,b)=>b.total-a.total||b.fourWide-a.fourWide||
     b.knockout-a.knockout||a.seed-b.seed);
 }
-// Tokyo Championship rewards are a single, atomic state transition once
-// the *real* three-stage leaderboard is complete. These are BASE purses;
-// no additional difficulty or sponsor multiplier is implied.
+// Endgame Tokyo Championship rewards are deliberately ten times a regular
+// pro victory: prestigious enough to move toward a ¥28m+ collector car, but
+// not enough to purchase the rarest Ginza legends after one successful season.
+// BASE purses only; no duplicate sponsor/difficulty multipliers. Awards are
+// written once alongside the authoritative three-stage final standings.
 export const TOKYO_CHAMPIONSHIP_PURSES=Object.freeze([
-  1000000,500000,300000,175000,
-  100000,100000,100000,100000,
-  50000,50000,50000,50000,50000,50000,50000,50000,
+  10000000,5000000,3000000,1750000,
+  1000000,1000000,1000000,1000000,
+  500000,500000,500000,500000,500000,500000,500000,500000,
 ]);
 
 export function getTokyoCareerRecord(raw) {
