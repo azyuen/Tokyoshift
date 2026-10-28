@@ -366,6 +366,7 @@ export function showStoryStage(scene, {
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
           x,groundY:authoredCar?groundY:(template?.kind==='meet'?575:groundY),targetWidth,depth:layer,flipX:authoredCar?authoredCar[3]:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
+          editorCanvas:Boolean(authoredCar),
           garageGeometry:garagePanel||Boolean(template),
         });
         if(duel)carImages.set(i,carObjects);
