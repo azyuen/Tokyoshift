@@ -500,11 +500,16 @@ export function nextProfessionalSeason(raw) {
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
   if(c.activeChampionship?.completed){
-    // Keep completed championship results across seasons. Ginza vault access
-    // must not vanish after the next professional calendar begins.
-    c.championshipHistory = [...(c.championshipHistory || []),
-      { season:c.activeChampionship.season, completed:true,
-        championId:c.activeChampionship.championId }].slice(-20);
+    // Championship awards are settled before the season rolls over.
+    // Do not append a second, incomplete history row for the same result.
+    const complete=c.activeChampionship;
+    if(!c.championshipHistory.some(r=>r.id===complete.id||
+      (r.season===complete.season&&r.championId===complete.championId))){
+      // Backwards-compatible record for older completed, unawarded saves.
+      c.championshipHistory=[...c.championshipHistory,
+        {id:complete.id,season:complete.season,completed:true,
+          championId:complete.championId}].slice(-20);
+    }
     c.activeChampionship=null;
   }
   c.season++;
