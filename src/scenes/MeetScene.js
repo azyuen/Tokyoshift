@@ -40,7 +40,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r657';
+import { saveSessionState } from '../state/GameState.js?v=20261029-r715';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r667';
@@ -104,7 +104,7 @@ import {
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
   getRegionalRivalSignatureCarId,
-} from '../data/tunerChallenges.js?v=20261015-signatures';
+} from '../data/tunerChallenges.js?v=20261029-r715';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
