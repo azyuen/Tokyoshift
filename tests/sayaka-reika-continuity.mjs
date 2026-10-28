@@ -13,7 +13,10 @@ import {
   isRecruitableRegionalCharacter,
   getCrewLoanCarId,
 } from '../src/data/crewRoster.js';
-import { getCrewCount, getCrewMembers } from '../src/data/crewSystem.js';
+import { getCrewCount, getCrewMembers, buildRegionalCrewBattleRounds } from '../src/data/crewSystem.js';
+import {
+  getTunerTeamChallengeState, buildTunerTeamChallengeRounds,
+} from '../src/data/tunerChallenges.js';
 import { CUTSCENES, getCutsceneIds } from '../src/data/cutscenes.js';
 import { createDefaultGameState, normaliseState } from '../src/state/GameState.js';
 
@@ -29,7 +32,7 @@ test('Reika replaces Sayaka in all Shinagawa racing and recruitment pools', () =
   assert.equal(isRecruitableRegionalCharacter('SHINAGAWA', 'sayakaFujieda'), false);
   assert.equal(isRecruitableRegionalCharacter('SHINAGAWA', 'reikaTachibana'), true);
   assert.equal(REGIONAL_CREW_ROSTERS.SHINAGAWA.members.length, 6);
-  assert.equal(REGIONAL_CREW_ROSTERS.SHINAGAWA.members.find(m => m.characterId === 'reikaTachibana')?.baseCarId, 'rx8');
+  assert.equal(REGIONAL_CREW_ROSTERS.SHINAGAWA.members.find(m => m.characterId === 'reikaTachibana')?.baseCarId, 'fc3s');
   assert.ok(Math.abs(characters.sayakaFujieda.age - characters.reikaTachibana.age) <= 5);
 });
 
@@ -132,4 +135,87 @@ test('legacy Sayaka recruitment invitations are updated without changing other r
   const newState = createDefaultGameState();
   newState.crewMembers.SHINAGAWA = { regionId: 'SHINAGAWA', characterId: 'reikaTachibana' };
   assert.equal(normaliseState(newState).crewMembers.SHINAGAWA.characterId, 'reikaTachibana');
+});
+
+test('fresh Shinagawa regional and crew events never field Sayaka', () => {
+  const regional = buildTunerTeamChallengeRounds('SHINAGAWA');
+  assert.equal(regional.length, 7);
+  assert.ok(regional.some(r => r.characterId === 'reikaTachibana' && r.carId === 'fc3s'));
+  assert.equal(regional.some(r => r.characterId === 'sayakaFujieda'), false);
+  const crew = buildRegionalCrewBattleRounds('SHINAGAWA');
+  assert.equal(crew.length, 3);
+  assert.ok(crew.every(round => round.characterId !== 'sayakaFujieda'));
+  assert.ok(crew.every(round => getRivalCharacterOrderForRegion('SHINAGAWA').includes(round.characterId)));
+  const reika = getCharacterVisualAsset('reikaTachibana', 'idle');
+  assert.equal(reika.path, 'assets/Characters/Shinagawa/reika_tachibana_idle.png');
+});
+
+test('saved regional Sayaka round migrates to Reika while retaining championship progress', () => {
+  const state = createDefaultGameState();
+  state.cash = 188800;
+  state.tunerTeamChallenges.SHINAGAWA = {
+    activeSession: true, firstAttemptStarted: true, stage: 5,
+    championEarned: false, perfectEarned: false,
+    rounds: [
+      ...buildTunerTeamChallengeRounds('SHINAGAWA').slice(0, 5),
+      { stageIndex: 5, regionId: 'SHINAGAWA',
+        characterId: 'sayakaFujieda', carId: 'rx8', encounterRating: 3,
+        opponentBuildState: { buildArchetype: 'obsolete', tuning: { engine: 1 } },
+      },
+      buildTunerTeamChallengeRounds('SHINAGAWA')[6],
+    ],
+  };
+  const restored = normaliseState(state);
+  const challenge = getTunerTeamChallengeState(restored, 'SHINAGAWA');
+  assert.equal(challenge.stage, 5);
+  assert.equal(challenge.activeSession, true);
+  assert.equal(challenge.rounds[5].characterId, 'reikaTachibana');
+  assert.equal(challenge.rounds[5].carId, 'fc3s');
+  assert.equal(restored.cash, 188800);
+  // The scene rebuilds a legacy roster's performance state from the current
+  // authored opponent/car mapping instead of reusing an old RX-8 tune.
+  const meet = readFileSync('src/scenes/MeetScene.js','utf8');
+  assert.match(meet,/savedRounds\.some\(round =>[\s\S]*?round\?\.characterId === 'sayakaFujieda'/);
+  assert.match(meet,/if \(oldShinagawaDriver\) return generated/);
+});
+
+test('legacy Shinagawa crew battle snapshot replaces Sayaka without resetting heats', () => {
+  const save = createDefaultGameState();
+  save.crewBattleState = {
+    active: true, regionId: 'SHINAGAWA', roundIndex: 1,
+    playerWins: 1, opponentWins: 0,
+    rounds: [
+      { characterId: 'akiraShimizu', carId: 'ek9' },
+      { characterId: 'sayakaFujieda', carId: 'rx8', opponentBuildState: { tuning: { engine: 2 } } },
+      { characterId: 'natsumiKagawa', carId: 'familia' },
+    ],
+    lineup: [
+      { id: 'SHINAGAWA', regionId: 'SHINAGAWA', characterId: 'sayakaFujieda', carId: 'crew__sayakaFujieda' },
+      { id: 'ODAIBA', regionId: 'ODAIBA', characterId: 'aoiShindou', carId: 'crew__aoiShindou' },
+      { id: 'SHINJUKU', regionId: 'SHINJUKU', characterId: 'emiSaionji', carId: 'crew__emiSaionji' },
+    ],
+  };
+  const restored = normaliseState(save).crewBattleState;
+  assert.equal(restored.roundIndex, 1);
+  assert.equal(restored.playerWins, 1);
+  assert.equal(restored.opponentWins, 0);
+  assert.equal(restored.rounds[1].characterId, 'reikaTachibana');
+  assert.equal(restored.rounds[1].carId, 'rx8'); // underway heat retains hardware
+  assert.equal(restored.rounds[1].opponentBuildState.tuning.engine, 2);
+  assert.equal(restored.lineup[0].characterId, 'reikaTachibana');
+  assert.equal(restored.lineup[0].carId, 'crew__reikaTachibana');
+  assert.equal(restored.lineup[1].characterId, 'aoiShindou');
+});
+
+test('Shinagawa migration does not replace Sayaka in story scenes or other events', () => {
+  const original = createDefaultGameState();
+  original.crewBattleState = {
+    active: true, regionId: 'ODAIBA', playerWins: 0, opponentWins: 1,
+    rounds: [{ characterId: 'sayakaFujieda', carId: 'rx8' }],
+    lineup: [{ regionId: 'ODAIBA', characterId: 'sayakaFujieda', carId: 'rx8' }],
+  };
+  const restored = normaliseState(original);
+  assert.equal(restored.crewBattleState.rounds[0].characterId, 'sayakaFujieda');
+  assert.equal(restored.crewBattleState.lineup[0].characterId, 'sayakaFujieda');
+  assert.equal(CUTSCENES.openingSayakaKeys.characters.left, 'sayakaFujieda');
 });
