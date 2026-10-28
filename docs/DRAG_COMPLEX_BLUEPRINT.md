@@ -32,7 +32,11 @@ models are deployed and approved; career completion must preserve them.
   player-driven stages retain one cumulative 16-entrant leaderboard, with a
   decisive 40-point four-wide stage. The final saved result awards ONE Tokyo
   Champion title only to the overall winner, plus a once-only placing purse
-  (¥1m / ¥500k / ¥300k / ¥175k / ¥100k for 5–8 / ¥50k for 9–16).
+  **revised 2026-10-29 to 10× the initial Championship scale**:
+  (¥10m / ¥5m / ¥3m / ¥1.75m / ¥1m for 5–8 / ¥500k for 9–16).
+  This supports postgame acquisition of expensive Ginza collector cars
+  (starting near ¥28m, with legendary cars priced far higher), without
+  allowing a single Championship victory to buy a top-end legend.
   The final result, podium, title ledger and prize are committed together and
   survive reloads and future Pro Seasons. Five prestige trophies and Tokyo
   titles appear in the Office from saved wins, without invented awards.
