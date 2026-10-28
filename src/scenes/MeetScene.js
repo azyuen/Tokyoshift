@@ -2223,6 +2223,15 @@ export default class MeetScene extends Phaser.Scene {
     const old = Array.isArray(state.rounds) ? state.rounds : [];
     const recruited = getRecruitedCrewCharacterIds(this.registry);
     const invalid = old.some(round => recruited.has(round?.characterId));
+    // The getter migrates old Sayaka snapshots for display, but their saved
+    // power/vehicle builds may refer to her retired RX-8. Rebuild the roster
+    // once from the approved current roster and Reika's signature FC3S.
+    // Keep championship stage, wins and rewards in the surrounding state.
+    const savedRounds = (this.registry.get('tunerTeamChallenges') || {})[key]?.rounds;
+    const oldShinagawaDriver = key === 'SHINAGAWA' &&
+      Array.isArray(savedRounds) &&
+      savedRounds.some(round => round?.characterId === 'sayakaFujieda');
+    if (oldShinagawaDriver) return generated;
     // Reuse saved opponents and their stage on resume, unless recruitment
     // made a previous roster illegal; this preserves mid-run continuity.
     return invalid ? generated : Array.from({ length: TUNER_TEAM_CHALLENGE_STAGES },
