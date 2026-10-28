@@ -163,6 +163,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
        !hasSeenCutscene(this.registry,'chapter08Ginza')));
     this.autoOpenProCrewFixture = Boolean(data?.autoOpenProCrewFixture);
     this.autoShowProVictory = data?.autoShowProVictory || null;
+    this.autoOpenTokyoChampionship = Boolean(data?.autoOpenTokyoChampionship);
     this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
@@ -411,6 +412,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(this.sys?.isActive?.())showProVictoryResults(this,{
           ...result,onContinue:()=>this.renderLocation('tokyoDragComplex'),
         });
+      });
+    }
+    // Return from the Championship race directly to the persistent live
+    // leaderboard and, after the final heat, the once-only celebration.
+    if(this.autoOpenTokyoChampionship&&this.registry.get('proCircuit')?.activeChampionship){
+      this.time.delayedCall(0,()=>{
+        if(this.sys?.isActive?.())showTokyoChampionship(this);
       });
     }
     // After each professional crew heat, return straight to its SAVED heat
