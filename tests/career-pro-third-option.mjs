@@ -13,6 +13,7 @@ import {
   getProDriverInvitationRules,getProSeasonSkillTier,
   getProfessionalOpponentBuild,getProfessionalCarEligibility,
   crewSeriesEligibility,registerCrewSeries,getCrewSeriesUnits,
+  registerProfessionalTimedEvent,
 } from '../src/data/proSeason.js';
 import {
   createProvisionalChampionship,getChampionshipOpponentSkill,
@@ -160,4 +161,40 @@ test('playable race scene uses saved grades and builds without altering core AI 
   assert.match(venue,/getProfessionalCarEligibility\(build.carId,build.state,rules\)/);
   assert.doesNotMatch(venue.slice(venue.indexOf('startProBracket(event, build, storyConfirmed = false)')),
     /rules.format !== 'KNOCKOUT' \|\| rules.stock/);
+});
+
+test('every official Driver round has at least one rule-legal rival car and genuine Expert/Elite opponent',()=>{
+  mockPhaser();
+  try{
+    const targets=[145,260,340,145,430,220,215,560];
+    for(let round=0;round<8;round++){
+      const rules=PRO_SEASON_CALENDAR[round].driver;
+      const tier=getProSeasonSkillTier(round,0);
+      const build=getProfessionalOpponentBuild(rules,targets[round],tier,
+        'career-endgame-class-'+round);
+      assert.ok(build,'round '+(round+1)+' lacks a legal rival');
+      assert.ok(getProfessionalCarEligibility(build.carId,build.state,rules).eligible,
+        'illegal build in round '+(round+1));
+      assert.ok(build.powerKW<=targets[round]*1.15+0.001,
+        'hidden power advantage in round '+(round+1));
+      if(round>=4)assert.ok(build.skillTier>=4);
+    }
+  }finally{delete globalThis.Phaser;}
+});
+
+test('timed event registration saves legal opponent build and does not regenerate it on reload',()=>{
+  mockPhaser();
+  try{
+    const state=createDefaultProCircuitState();
+    state.seasonStatus='ACTIVE';state.calendar.round=1;
+    const result=registerProfessionalTimedEvent(state,'s2000',65000,{});
+    assert.ok(result.circuit,result.error);
+    const e=result.circuit.activeTimedEvent;
+    assert.equal(e.round,1);
+    assert.ok(e.opponentRating>=4);
+    assert.ok(getProfessionalCarEligibility(e.opponentCarId,e.opponentCarState,
+      PRO_SEASON_CALENDAR[1].driver).eligible);
+    assert.deepEqual(normaliseProCircuitState(JSON.parse(JSON.stringify(result.circuit))).activeTimedEvent,e);
+    assert.ok(registerProfessionalTimedEvent(result.circuit,'s2000',65000,{}).error);
+  }finally{delete globalThis.Phaser;}
 });
