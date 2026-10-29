@@ -2289,6 +2289,7 @@ cars.arkonLibertyWalk240z={
     // Aruken's personal black/gold #16 240Z. Career's player conversion
     // deliberately uses the different white/red #52 body asset.
     assetStem:'liberty_walk_aruken240z_hero',
+    referenceGeometry: { rearX: -891, frontX: -218 },
     bodyPath:'assets/Cars/hero/liberty_walk_aruken240z_hero_body.png',
     paintPath:null,overlayPath:null,singleBody:true,
     stockBodyKit:false,stockSpoiler:false,

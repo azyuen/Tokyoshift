@@ -22,7 +22,9 @@ function destroyObjects(objects = []) {
   });
 }
 
-export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
+export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, addToParent) {
+  const photoObjects = [];
+  const add = object => { photoObjects.push(object); return object; };
   const car = cars[feature.carId];
   if (!car) return false;
 
@@ -85,6 +87,7 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
   // Phaser containers draw insertion order, not child depth. Paint stays below shell.
   [...bodyLayers.objects].sort((a, b) => a.depth - b.depth).forEach(add);
 
+  photoObjects.sort((a, b) => a.depth - b.depth).forEach(addToParent);
   return Boolean(rearBacking && frontBacking && rearWheel && frontWheel);
 }
 

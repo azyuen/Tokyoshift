@@ -52,7 +52,7 @@ test('GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned
   assert.equal(car.visual.referenceStandard,true);
   assert.equal(car.visual.referenceWheelSize,'L');
   assert.deepEqual(REFERENCE_CAR_CANVAS[stem],[1300,440]);
-  assert.deepEqual(STANDARD_CAR_REFERENCE.cars[stem],{rearX:-991,frontX:-247,size:'L'});
+  assert.deepEqual(STANDARD_CAR_REFERENCE.cars[stem],{rearX:-989,frontX:-242,size:'L'});
   const paths=getCarAssetPaths(car);
   assert.equal(paths.body,'assets/Cars/stock/wrxgf8_stock_body.png');
   assert.equal(paths.paint,'assets/Cars/stock/wrxgf8_stock_paint.png');

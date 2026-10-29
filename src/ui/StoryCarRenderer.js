@@ -69,5 +69,5 @@ export function renderStoryCar(scene,car,{
     x:drawX,y:bodyY,scale,depth:depth+1,flipX,paintColor,
   });
   body?.objects?.forEach(add);
-  return objects;
+  return objects.sort((a, b) => a.depth - b.depth);
 }

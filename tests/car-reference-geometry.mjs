@@ -27,13 +27,13 @@ test('all reference cars have paired identical-size body/paint canvases and vali
   }
 });
 
-test('baseline axle coordinates stay exactly as approved', () => {
+test('reference axle coordinates include the visual wheel audit', () => {
   const expected = {
     ae86: [-921, -247, 'S'],
     ef: [-877, -195, 'S'],
     ek9: [-931, -231, 'S'],
     gc8: [-901, -253, 'S'],
-    galant: [-998, -255, 'S'],
+    galant: [-998, -255, 'L'],
     evo6: [-972, -280, 'S'],
     r32: [-988, -268, 'L'],
     rx7fc: [-936, -260, 'L'],
@@ -41,7 +41,7 @@ test('baseline axle coordinates stay exactly as approved', () => {
     rx8: [-986, -246, 'L'],
   };
   for (const [id, [rearX, frontX, size]] of Object.entries(expected)) {
-    // Body-height calibration must never change the original wheel X/size spec.
+    // The wheel audit may change wheel fit, never the body canvas.
     const { rearX: actualRear, frontX: actualFront, size: actualSize } = reference.cars[id];
     assert.deepEqual([actualRear, actualFront, actualSize], [rearX, frontX, size]);
   }

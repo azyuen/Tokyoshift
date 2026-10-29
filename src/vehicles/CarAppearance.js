@@ -1,3 +1,4 @@
+import { ensureWheelArchShadowTexture } from './WheelArchShadow.js';
 import { REFERENCE_AE86_SOURCE_WIDTH } from '../data/carReferenceGeometry.js?v=20261014-stock';
 import { getWheelOption } from '../data/wheels.js?v=20260929-r246';
 
@@ -499,6 +500,10 @@ export function createCarBodyLayers(
   const bodyY = y + bodyOffsetY;
 
   if (visual.referenceStandard && scene.textures.exists(keys.body)) {
+    const shadowKey = ensureWheelArchShadowTexture(scene, keys.body, keys.paint, visual);
+    const archShadow = shadowKey ? scene.add.image(bodyX, bodyY, shadowKey)
+      .setOrigin(1, 1).setScale(scale).setFlipX(flipX).setDepth(depth - 1.4) : null;
+    // The shadow travels/fades/destroys with the body stack, behind both tyres.
     // Reference sprites use a real bottom-right PNG anchor. Paint/body PNGs
     // share the same canvas, so no individual transform or offset is allowed.
     // The shaded paint mask belongs BEHIND the fixed shell/linework.
@@ -530,7 +535,7 @@ export function createCarBodyLayers(
       spoilerPaint: null,
       spoiler: null,
       stockSlots: { bodyKit: [], spoiler: [] },
-      objects: [base, paint].filter(Boolean),
+      objects: [archShadow, base, paint].filter(Boolean),
     };
   }
 
