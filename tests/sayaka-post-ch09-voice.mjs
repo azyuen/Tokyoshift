@@ -12,7 +12,7 @@ const expected={
   proSeasonNotQualified:{pages:7,action:'VIEW SEASON REPORT'},
   tokyoChampionshipOpening:{pages:7,action:'VIEW THE CHAMPIONSHIP'},
   tokyoChampionshipDefeat:{pages:7,action:'PREPARE FOR NEXT SEASON'},
-  tokyoChampionshipVictory:{pages:10,action:'CONTINUE AS TOKYO CHAMPION'},
+  tokyoChampionshipVictory:{pages:12,action:'CONTINUE AS TOKYO CHAMPION'},
 };
 const joined=id=>CUTSCENES[id].pages.map(p=>p.text).join(' ');
 
@@ -33,7 +33,20 @@ test('Sayaka keeps an authentic restrained-but-playful voice',()=>{
   assert.match(joined('tokyoChampionshipDefeat'),/timing board isn't interested in my opinion/);
   assert.match(joined('tokyoChampionshipVictory'),/I'm proud of all of you/);
   assert.match(joined('tokyoChampionshipVictory'),/You've earned this/);
-  assert.match(joined('tokyoChampionshipVictory'),/Careful, Aruken/);
+  assert.match(joined('tokyoChampionshipVictory'),/old 240Z/);
+  assert.match(joined('tokyoChampionshipVictory'),/find my way back to this/);
+  assert.match(joined('tokyoChampionshipVictory'),/I'm glad you were here for this/);
+});
+
+test('victory gives Aruken and Sayaka a genuinely shared, understated aside before returning to player',()=>{
+  const pages=CUTSCENES.tokyoChampionshipVictory.pages;
+  const aside=pages.filter(p=>p.leftCharacter==='arkonDen'&&
+    p.rightCharacter==='sayakaFujieda');
+  assert.equal(aside.length,4);
+  assert.deepEqual(aside.map(p=>p.speaker),['left','right','left','right']);
+  assert.equal(pages.at(-1).leftCharacter,'sayakaFujieda');
+  assert.equal(pages.at(-1).rightCharacter,'$PLAYER');
+  assert.equal(pages.at(-1).emphasis,true);
 });
 
 test('scene jokes do not leak Aruken into unqualified, opening or defeat outcomes',()=>{
