@@ -5,7 +5,7 @@ import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 import { getOfficeTrophyLines, getOfficeTrophyRecord } from '../data/officeTrophies.js?v=20261029-career1';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
-import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r574';
+import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261029-r719';
 import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r663';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
