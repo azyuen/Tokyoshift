@@ -42,7 +42,7 @@ test('one driver advice purchase is valid from any heat and refreshes for new op
   assert.notEqual(one,three);
   assert.match(three,/Ayumi.*Evo VI/);
   assert.match(driverUI,/const currentHeatAdvice=advice\.usedThisEvent/);
-  assert.match(driverUI,/driverOpponentAdvice\(oppCar,currentOpponent,playerCar\)/);
+  assert.match(driverUI,/driverOpponentAdvice\(currentOpponentCar,currentOpponent,playerCar\)/);
   assert.match(driverUI,/const currentOpponent=\{\.\.\.rival,name:round\.opponentName\|\|rival\.name\}/);
   assert.match(driverUI,/bubbleText\(x\+18,y\+38,currentHeatAdvice/);
   assert.doesNotMatch(driverUI,/bubbleText\(x\+18,y\+38,state\.briefingAdviceText/);
