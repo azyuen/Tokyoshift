@@ -635,7 +635,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
           getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null),
         driverId:definition?.rankedDriverIds[n]||null,
         name:r.id===PLAYER?c.playerTeamName:(c.drivers[teamRoster[n]]?.name ||
-          (c.drivers[teamRoster[n]]?.characterId?teamRoster[n].replace('rival:',''):null) ||
+          (c.drivers[teamRoster[n]]?.characterId?characters[c.drivers[teamRoster[n]].characterId]?.name:null) ||
           teamRoster[n] || 'PRO DRIVER '+(n+1)),
       }))};
   });
