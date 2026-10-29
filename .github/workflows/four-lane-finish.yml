@@ -9,6 +9,9 @@ on:
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/data/fourLaneFinish.js'
       - 'tests/four-lane-finish-regression.mjs'
+      - 'tests/pro-between-heats-r727.mjs'
+      - 'src/data/proDriverBriefing.js'
+      - 'src/ui/ProDriverBriefing.js'
       - '.github/workflows/four-lane-finish.yml'
 
 jobs:
@@ -33,3 +36,19 @@ jobs:
         run: node --test tests/pro-tournament-phase2.mjs
       - name: Test professional circuit save compatibility
         run: node --test tests/pro-circuit-foundation.mjs
+
+  between-heats-r727:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check briefings and professional race syntax
+        run: |
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/ui/ProDriverBriefing.js
+          node --check src/data/proDriverBriefing.js
+      - name: Verify qualification circle, next rival and direct heat/briefing routing
+        run: node --test tests/pro-between-heats-r727.mjs

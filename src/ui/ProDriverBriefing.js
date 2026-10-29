@@ -14,7 +14,7 @@ import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
   getDriverPowerPartLevelInfo, setDriverPowerPartLevels,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261029-r713';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r727';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 import { getProRaceRivalPaint } from '../data/proRacePaint.js?v=20261030-r726';
@@ -316,12 +316,11 @@ function draw(s,state,options){
     addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
   workshopHotspot(190,576,229,44,'CAR SETUP',()=>openTune());
-  const firstHeat=stageNo===1;
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.remaining>0?advice.remaining+' EVENT COOLDOWN':
-    firstHeat?'ASK FOR ADVICE':'ADVICE CLOSED';
+    advice.available?'ASK FOR ADVICE':'ADVICE CLOSED';
   workshopHotspot(1111,576,225,44,adviceLabel,()=>handleSayaka(),{
-    disabled:(!advice.available||!firstHeat)&&!state.briefingAdviceText,
+    disabled:!advice.available&&!state.briefingAdviceText,
   });
   workshopHotspot(1390,576,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
 
@@ -416,7 +415,7 @@ function draw(s,state,options){
   }
   function handleSayaka(){
     if(state.briefingAdviceText){toggleDialogue('sayaka');return;}
-    if(!advice.available||!firstHeat)return;
+    if(!advice.available)return;
     clearDialogue();openAdvice();
   }
   if(options.initialDialogue==='sayaka'&&state.briefingAdviceText)
