@@ -7,6 +7,8 @@ import { getOfficeTrophyLines, getOfficeTrophyRecord } from '../data/officeTroph
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261029-r719';
 import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r663';
+import { showProTeamNameEditor } from './ProTeamIdentity.js?v=20261030-r724';
+import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r724';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -285,6 +287,21 @@ export function showOfficePanel(scene) {
       }
     ).setOrigin(0.5).setDepth(218));
     scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
+  }
+
+  // Professional team management belongs in the Office, where the player
+  // can rename GMG RACING without changing its permanent save identity.
+  if (!openingMagazine && scene.registry.get('gameMode') !== 'arkonStory') {
+    const team=normaliseProCircuitState(scene.registry.get('proCircuit'));
+    addHotspot(scene, add, frame, {
+      x: 0.50, y: 0.145, w: 0.33, h: 0.070,
+      color: 0xe9c785, depth: 222,
+      label: 'TEAM // ' + team.playerTeamName + '  [RENAME]',
+      onActivate: () => showProTeamNameEditor(scene, () => {
+        closeOffice();
+        showOfficePanel(scene);
+      }),
+    });
   }
 
   // Seven regional pennants. The badge positions follow the authored
