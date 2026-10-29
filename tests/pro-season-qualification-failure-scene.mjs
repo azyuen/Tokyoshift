@@ -27,7 +27,8 @@ test('scene has five short frames, established actors, and standard review actio
   assert.ok(scene.pages.every(p=>typeof p.text==='string'&&p.text.length>12));
 });
 test('cutscene only qualifies after all eight rounds and unmet 60/40 thresholds',()=>{
-  assert.equal(report(7,20,20).outcome,'IN_PROGRESS');
+  assert.equal(report(7,60,40).outcome,'IN_PROGRESS');
+  assert.equal(report(7,20,20).outcome,'UNREACHABLE');
   assert.equal(report(8,60,40).outcome,'QUALIFIED');
   assert.equal(report(8,59,40).outcome,'NOT_QUALIFIED');
   assert.equal(report(8,60,39).outcome,'NOT_QUALIFIED');
