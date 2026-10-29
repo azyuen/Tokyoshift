@@ -1,5 +1,5 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { playMangaCutscene } from './MangaCutscene.js?v=20261027-r692';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
 import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261029-r714';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261029-r714';
@@ -590,6 +590,15 @@ export function showSeasonRecords(s,complete=false) {
       const out=nextProfessionalSeason(circuit(s));
       if(out.error){o.label(90,714,out.error,18);return;}
       if(commit(s,{proCircuit:out.circuit})){o.close();redraw(s);}
+    });
+  }
+  if(report.outcome==='NOT_QUALIFIED'){
+    // Played over the official final standings, not during an individual
+    // failed heat or an unfinished season. Use a save-persistent HISTORY ID
+    // scoped to the season, so refreshing the panel never repeats it but
+    // a future unsuccessful season may have its own closing conversation.
+    playMangaCutscene(s,'proSeasonNotQualified',{
+      historyId:'proSeasonNotQualified:s'+c.season,
     });
   }
 }
