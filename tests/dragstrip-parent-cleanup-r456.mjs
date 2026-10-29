@@ -24,12 +24,14 @@ test('five superseded parent-folder racetrack images are absent', () => {
   }
 });
 
-test('both Central Tokyo home-screen background images remain intact', () => {
+test('superseded Central Tokyo home backgrounds are absent; new empty art is the fallback', () => {
   const central = fs.readFileSync(path.join(root, 'src/data/centralTokyo.js'), 'utf8');
   for (const phase of ['day', 'night']) {
-    const name = 'tokyo_dragstrip_' + phase + '.png';
-    assert.ok(fs.existsSync(path.join(parent, name)), 'Missing home-screen art: ' + name);
-    assert.ok(central.includes('assets/CentralTokyo/' + name));
+    const oldName = 'tokyo_dragstrip_' + phase + '.png';
+    assert.ok(!fs.existsSync(path.join(parent, oldName)), 'Still present: ' + oldName);
+    const replacement = 'assets/CentralTokyo/dragcomplex/dragstrip_empty_' + phase + '.png';
+    assert.ok(fs.existsSync(path.join(root, replacement)), 'Missing home-screen art: ' + replacement);
+    assert.ok(central.includes(replacement));
   }
 });
 
