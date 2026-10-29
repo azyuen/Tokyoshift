@@ -104,7 +104,11 @@ export function consumeDriverAdvice(circuit = {}, state = {}) {
   // available from the optional between-heats Race Briefing screen.
   if (!status.available) return { error: 'SAYAKA AVAILABLE AFTER ' + status.remaining + ' MORE PROFESSIONAL EVENTS' };
   return {
-    circuit: { ...circuit, crewAdviceCooldownUntil: Number(circuit.eventTick || 0) + 3 },
+    // A trophy consultation covers the entire competition but blocks
+    // another consultation until the trophy plus FIVE other official events
+    // have settled. Normal driver events retain the 3-event global cooldown.
+    circuit: { ...circuit, crewAdviceCooldownUntil: Number(circuit.eventTick || 0) +
+      (state.openTrophyId ? 6 : 3) },
     competitionState: { ...state, briefingAdviceUsed: true },
   };
 }
