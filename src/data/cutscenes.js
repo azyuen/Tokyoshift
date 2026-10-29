@@ -1143,7 +1143,7 @@ export const CUTSCENES = {
         text: "You believed in me when all I had was that old 240Z. I never doubted you." },
       { speaker: 'right', leftCharacter: 'arkonDen', rightCharacter: 'sayakaFujieda',
         leftPose: 'ginzaSuit', rightPose: 'trackHappy',
-        text: "You never did. And... I'm glad you were here for this." },
+        text: "You never did. And... look at us now." },
       // Return to the team and the player; this remains their championship.
       { speaker: 'left', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER',
         leftPose: 'trackHappy',

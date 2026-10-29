@@ -35,7 +35,7 @@ test('Sayaka keeps an authentic restrained-but-playful voice',()=>{
   assert.match(joined('tokyoChampionshipVictory'),/You've earned this/);
   assert.match(joined('tokyoChampionshipVictory'),/old 240Z/);
   assert.match(joined('tokyoChampionshipVictory'),/find my way back to this/);
-  assert.match(joined('tokyoChampionshipVictory'),/I'm glad you were here for this/);
+  assert.match(joined('tokyoChampionshipVictory'),/You never did\. And\.\.\. look at us now\./);
 });
 
 test('victory gives Aruken and Sayaka a genuinely shared, understated aside before returning to player',()=>{
