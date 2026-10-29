@@ -1,6 +1,17 @@
-# R716 — Street Showdown coupon opportunities & Office hunt guide
+# R716 — Street Showdown coupon distribution and live Office intelligence
 
-- **Coupon frequency:** 60% of newly rolled Street Showdown invitations offer one car coupon; remaining 40% are cash. This is the invitation roll, not a guaranteed chance of winning a coupon, because all three heats must still be won. All existing entry fee formulae and prices remain unchanged.
-- **Regional variety:** a coupon invitation draws its prize model from the existing regional Meet favourites, plus RX-8 in Tatsumi/Shibuya and RX-7 FD in Yokohama/Daikoku. Candidate tuning and performance are still built and scored through the approved Street Showdown vehicle performance model. A seeded near-performance selection rotates eligible regional final-race cars without inventing hidden speed boosts.
-- **Office:** CAR COUPONS is now a paginated interactive register. Tap any model with at least one coupon to view places whose Showdown prize pools can contain that model, with accessible locations and locked districts marked. This reports **potential venues, not live/current offers or guarantees**; the specific coupon prize depends on the currently rolled offer and performance eligibility.
-- **Save compatibility:** ongoing Street Showdowns retain saved entry fees and prizes. Regenerated offers use an updated balance version. The normal three-heat settlement still awards exactly one coupon once. No change to pink slips, regular meets, crew recruitment requirements, tuning, physics, AI, specialist shops, or Pro Circuit economy.
+## Prize odds and class identity
+- **60%** of scheduled Street Showdown invitations offer one coupon; **40%** offer existing cash prizes. Coupon redemption counts, entry fees, cooldowns and the requirement to win all three heats remain unchanged.
+- The available prize model is weighted **80%** toward the regional class focus drawn from local Meet favourites, **15%** toward other nearby classes already present in the local Meet pool, and **5%** toward a class-appropriate visiting wildcard. Fallbacks apply if a pool is empty. Source of truth for permanent factory classes is `stockClassFor`; no reclassification or vehicle rebalance.
+- Regional class focus: Odaiba D/C, Shinagawa C/B, Tatsumi C/B, Shibuya B/C, Yokohama B/A, Daikoku A, Shinjuku A/B. Existing crew technical rules remain power, NOS and stock restrictions, not these coupon preferences.
+
+## One authoritative day/night refresh
+- Street Showdown prize selection now shares the existing **15-minute WorldClock/Open Circuit** rotation; ordinary Meet opponent rosters still refresh every **three minutes**.
+- A tiny, deterministic schedule computes prize kind and exact car for every supported Meet location without instantiating Phaser, loading art or simulating opponent tuning. The Office and Meet look up the same rotation index and location. Changing cars, opening the Office or travelling cannot reroll a published prize.
+- A full three-heat opponent build is generated **only when the player inspects that Meet Showdown**, preserving the original physics-based build and car matches. The scheduled coupon model is forced into the final heat; if an actual legal build cannot be made, the offer is unavailable rather than silently changed to another prize.
+- Already registered competitions preserve their saved fee, opponents, and reward across rotations. Previous unregistered cached invitations are regenerated under the new balance version.
+
+## Office
+- CAR COUPONS remains paginated and model-selectable; actual active coupon prizes are listed by **exact region and Meet**, with unlocked/locked status and a next-rotation countdown. A separate section lists future regional hunting leads, explicitly distinct from current prize guarantees.
+- No large new asset downloads, background races or simultaneous expensive re-renders. While Office is open, only the 15-minute slot change triggers a redraw (checked every 10 seconds). The refresh synchronizes **timing**, not a burst of expensive work.
+- No change to normal Meet rivalry, race physics, engine/tuning, AI, pink slips, crew eligibility or professional prize economy.
