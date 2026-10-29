@@ -1,0 +1,31 @@
+name: R717 Normal Meet car variety
+on:
+  push:
+    branches: [feature/normal-meet-car-variety-r717, main]
+    paths:
+      - 'src/data/normalMeetCarSelection.js'
+      - 'src/data/meetMatchmaking.js'
+      - 'src/scenes/MeetScene.js'
+      - 'tests/normal-meet-car-variety-r717.mjs'
+      - '.github/workflows/normal-meet-car-variety-r717.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  normal-meet-variety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/data/normalMeetCarSelection.js
+          node --check src/data/meetMatchmaking.js
+          node --check src/scenes/MeetScene.js
+          node --check tests/normal-meet-car-variety-r717.mjs
+      - name: Variety, physics matchmaking, career boundaries and refresh regressions
+        run: |
+          node --import ./tests/ci-phaser-math.mjs --test tests/normal-meet-car-variety-r717.mjs tests/meet-refresh-r469.mjs tests/region-crew-tuning-r529.mjs
