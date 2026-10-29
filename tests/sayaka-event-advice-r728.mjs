@@ -105,7 +105,8 @@ test('crew heat advice changes as the fixture and current rival change, without 
   };
   const first=getProCrewHeatAdvice(fixture,units);
   assert.match(first,/Fixture 1, heat 1: Takeshi/);
-  assert.match(first,/Evo/);
+  assert.match(first,/Evo/i);
+  assert.match(first,/four-wheel-drive traction/);
   const second=getProCrewHeatAdvice({...fixture,prepared:{revealed:1}},units);
   assert.match(second,/Fixture 1, heat 2: Keisuke/);
   assert.match(second,/RX-7|RX7|FD/);
