@@ -54,19 +54,26 @@ test('the main-page crowd grows with events, professional seasons and ranking', 
 test('all six new day/night home backgrounds exist and do not reference old files', () => {
   assert.deepEqual(DRAG_COMPLEX_HOME_CROWDS, ['empty', 'half', 'full']);
   for (const crowdTier of DRAG_COMPLEX_HOME_CROWDS) {
+    let pairedDimensions = null;
     for (const phase of ['day', 'night']) {
       const circuit = createDefaultProCircuitState();
-      circuit.eventTick = 4;
+      if (crowdTier !== 'empty') circuit.eventTick = 4;
       const event = crowdTier === 'full' ? trophy : driver;
       const image = resolveDragComplexHomeBackground({ phase, circuit, event });
-      // Independently validate naming and storage even when auto attendance differs.
       const filename = `assets/CentralTokyo/dragcomplex/dragstrip_${crowdTier}_${phase}.png`;
+      assert.equal(image.crowdTier, crowdTier);
+      assert.equal(image.path, filename);
       assert.ok(fs.existsSync(path.join(root, filename)), filename);
-      const hdr = fs.readFileSync(path.join(root, filename)).subarray(0, 24);
-      assert.equal(hdr.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
-      assert.equal(hdr.readUInt32BE(16), 1672);
-      assert.equal(hdr.readUInt32BE(20), 941);
-      assert.equal(image.crowdTier === crowdTier || ['empty','half','full'].includes(image.crowdTier), true);
+      const fd = fs.openSync(path.join(root, filename), 'r');
+      const header = Buffer.alloc(24);
+      try {
+        assert.equal(fs.readSync(fd, header, 0, 24, 0), 24);
+      } finally { fs.closeSync(fd); }
+      assert.equal(header.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+      const dimensions = [header.readUInt32BE(16), header.readUInt32BE(20)];
+      assert.ok(dimensions[0] > 0 && dimensions[1] > 0, filename);
+      if (pairedDimensions) assert.deepEqual(dimensions, pairedDimensions, 'Mismatched phase sizes: ' + crowdTier);
+      pairedDimensions = dimensions;
     }
   }
   const day = resolveDragComplexHomeBackground({ phase: 'DAY' });
