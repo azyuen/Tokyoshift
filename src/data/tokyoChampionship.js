@@ -21,12 +21,11 @@ export function createProvisionalChampionship(raw) {
   const c=normaliseProCircuitState(raw);
   if(!canEnterTokyoChampionship(c))return {error:'COMPLETE EIGHT ROUNDS AND REACH 60 DRIVER / 40 CREW POINTS'};
   if(c.activeChampionship)return {error:'CHAMPIONSHIP ALREADY ACTIVE'};
-  // Season standings determine the Championship draw (70% Driver,
-  // 30% Crew), while persistent ratings break ties. Driver/team IDs
-  // are paired using the same canonical roster mapping as season simulation.
-  const driverIds=Object.keys(c.drivers).sort(),teamIds=Object.keys(c.teams).sort();
-  const teamByDriver=Object.fromEntries(driverIds.map((id,index)=>
-    [id,c.teams[teamIds[index]]||null]));
+  // Championship is 16 individual drivers drawn from 12 organisations.
+  // Several drivers may represent the same team; the team's earned season
+  // points contribute to each affiliated driver's qualification seed.
+  const teamByDriver=Object.fromEntries(Object.entries(c.drivers).map(([id,driver])=>
+    [id,c.teams[driver.teamId]||null]));
   const seedScore=(driver,team)=>Number((
     .7*Math.max(0,Number(driver?.seasonPoints)||0)/60+
     .3*Math.max(0,Number(team?.seasonPoints)||0)/40).toFixed(6));
