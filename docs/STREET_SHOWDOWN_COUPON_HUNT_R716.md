@@ -2,8 +2,8 @@
 
 ## Prize odds and class identity
 - **60%** of scheduled Street Showdown invitations offer one coupon; **40%** offer existing cash prizes. Coupon redemption counts, entry fees, cooldowns and the requirement to win all three heats remain unchanged.
-- The available prize model is weighted **80%** toward the regional class focus drawn from local Meet favourites, **15%** toward other nearby classes already present in the local Meet pool, and **5%** toward a class-appropriate visiting wildcard. Fallbacks apply if a pool is empty. Source of truth for permanent factory classes is `stockClassFor`; no reclassification or vehicle rebalance.
-- Regional class focus: Odaiba D/C, Shinagawa C/B, Tatsumi C/B, Shibuya B/C, Yokohama B/A, Daikoku A, Shinjuku A/B. Existing crew technical rules remain power, NOS and stock restrictions, not these coupon preferences.
+- The available prize model is weighted **80%** toward the region's existing Meet favourites *within its preferred factory classes*, **15%** toward any other model of those same classes, and **5%** toward a neighbouring-class wildcard. A region's allowed class envelope protects entry-level areas from unexpectedly high-class prizes. Source of truth for permanent factory classes is `stockClassFor`; no reclassification or vehicle rebalance. **There are no hard-coded RX-8, RX-7 FD, or other model-specific hunting-region exceptions.**
+- Regional class focus: Odaiba D/C, Shinagawa C/B, Tatsumi C/B, Shibuya B/C, Yokohama B/A, Daikoku A, Shinjuku A/B. All regular cars in a region's class envelope are potentially attainable; a given model's frequency varies by class and whether it is an existing regional Meet favourite. Existing crew technical rules remain power, NOS and stock restrictions, not these coupon preferences.
 
 ## One authoritative day/night refresh
 - Street Showdown prize selection now shares the existing **15-minute WorldClock/Open Circuit** rotation; ordinary Meet opponent rosters still refresh every **three minutes**.
@@ -12,6 +12,6 @@
 - Already registered competitions preserve their saved fee, opponents, and reward across rotations. Previous unregistered cached invitations are regenerated under the new balance version.
 
 ## Office
-- CAR COUPONS remains paginated and model-selectable; actual active coupon prizes are listed by **exact region and Meet**, with unlocked/locked status and a next-rotation countdown. A separate section lists future regional hunting leads, explicitly distinct from current prize guarantees.
+- CAR COUPONS remains paginated and model-selectable; actual active coupon prizes are listed by **exact region and Meet**, with unlocked/locked status and a next-rotation countdown. A separate section lists future regional hunting leads, classified as **REGIONAL FAVOURITE**, **CLASS MATCH** or **RARE WILDCARD** rather than falsely designating a special home region for any model.
 - No large new asset downloads, background races or simultaneous expensive re-renders. While Office is open, only the 15-minute slot change triggers a redraw (checked every 10 seconds). The refresh synchronizes **timing**, not a burst of expensive work.
 - No change to normal Meet rivalry, race physics, engine/tuning, AI, pink slips, crew eligibility or professional prize economy.
