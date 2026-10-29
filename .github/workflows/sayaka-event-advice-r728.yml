@@ -1,0 +1,45 @@
+name: R728 Sayaka advice across all heats and trophy cooldown
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/proDriverBriefing.js'
+      - 'src/data/proSeason.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/sayaka-event-advice-r728.mjs'
+      - 'tests/open-driver-briefing-r600.mjs'
+      - 'tests/pro-between-heats-r727.mjs'
+      - 'tests/pro-briefing-lifecycle-r605.mjs'
+      - '.github/workflows/sayaka-event-advice-r728.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/proDriverBriefing.js'
+      - 'src/data/proSeason.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/sayaka-event-advice-r728.mjs'
+
+jobs:
+  sayaka-event-advice-r728:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: |
+          node --check src/data/proDriverBriefing.js
+          node --check src/data/proSeason.js
+          node --check src/ui/ProDriverBriefing.js
+          node --check src/ui/ProCrewBattleLineup.js
+          node --check src/ui/ProSeasonPanel.js
+      - name: Heat-sensitive advice and trophy cooldown contract
+        run: node --test tests/sayaka-event-advice-r728.mjs
+      - name: Existing driver and crew briefing compatibility
+        run: node --test tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r602.mjs tests/pro-between-heats-r727.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-crew-heat-r589.mjs
