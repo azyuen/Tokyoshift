@@ -12,6 +12,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261029-r714';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
 import { showProVictoryResults } from './ProVictoryResults.js?v=20261030-r723';
+import { showProTeamNameEditor } from './ProTeamIdentity.js?v=20261030-r724';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -92,7 +93,7 @@ export function drawSeasonHeader(s,stage) {
     ]){
       text(s,item.x,y+36,item.label+' RANK',15,{color:'#bbc4ce'});
       text(s,item.x,y+57,'#'+item.record.seed,29,{color:'#fff2ed'});
-      text(s,item.x,y+96,'+'+getProPrizeBonusPercent(item.record.seed)+'% WINNINGS BONUS',14,{color:'#ecc88d'});
+      text(s,item.x,y+96,'+'+getProPrizeBonusPercent(item.record.seed,item.label==='CREW'?'TEAM':'DRIVER')+'% WINNINGS BONUS',14,{color:'#ecc88d'});
     }
     const expandY=y+139;
     const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,34,0x40242a,.96)
@@ -108,7 +109,7 @@ export function drawSeasonHeader(s,stage) {
   text(s,x,y,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)} OF 8`,20,{color:'#f5e9e5'})
     .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   const bar=(yy,label,score,goal,seed,color)=>{
-    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed)}% SPONSOR   ${score}/${goal} PTS`,16,
+    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed,label==='CREW'?'TEAM':'DRIVER')}% SPONSOR   ${score}/${goal} PTS`,16,
       {color:'#f2e7e3'});
     s.addContent(s.add.rectangle(x,yy+29,w-10,10,0x38343c).setOrigin(0,0).setDepth(39));
     s.addContent(s.add.rectangle(x,yy+29,(w-10)*Math.min(1,score/goal),10,color).setOrigin(0,0).setDepth(40));
@@ -478,23 +479,25 @@ export function showProRankings(s) {
   const c=circuit(s),o=overlay(s,'PRO RANKINGS // OPEN CIRCUIT');
   o.label(90,105,'CAREER RATING · SPONSOR BONUS ON OPEN CIRCUIT & PRO SEASON CASH PRIZES',20)
     .setColor('#b8c7cf');
+  o.btn(1305,105,345,'RENAME TEAM',()=>showProTeamNameEditor(s,()=>showProRankings(s)));
   const columns=[
-    {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver'},
-    {x:820,title:'CREW RANKINGS',rows:getProCircuitTeamSeeds(c),player:'player:team'},
+    {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver',kind:'DRIVER'},
+    {x:820,title:'TEAM RANKINGS',rows:getProCircuitTeamSeeds(c),player:'player:team',kind:'TEAM'},
   ];
-  columns.forEach(({x,title,rows,player})=>{
+  columns.forEach(({x,title,rows,player,kind})=>{
     o.label(x,147,title+'  //  '+rows.length+' ENTRANTS',23).setColor('#f7e6e2');
     rows.forEach((entry,i)=>{
       const y=185+i*23;
       const mine=entry.id===player;
       if(mine)o.add(s.add.rectangle(x+310,y+10,642,22,0x45252c,.9)
         .setStrokeStyle(1,0x95646d,.65).setDepth(201));
-      const display=mine?'YOU':entry.name||characters[entry.characterId]?.name||entry.id;
+      const display=mine?(kind==='TEAM'?c.playerTeamName:'YOU'):
+        entry.name||characters[entry.characterId]?.name||entry.id;
       const style={color:mine?'#ffe4a9':i<3?'#f5f0ed':'#c4c9cf'};
       o.add(uiText(s,x,y,'#'+entry.seed,17,style).setDepth(203));
       o.add(uiText(s,x+58,y,String(display).slice(0,25),17,style).setDepth(203));
       o.add(uiText(s,x+433,y,entry.rating+' PT',16,{color:'#9fb0bc'}).setDepth(203));
-      o.add(uiText(s,x+548,y,'+'+getProPrizeBonusPercent(entry.seed)+'%',17,
+      o.add(uiText(s,x+548,y,'+'+getProPrizeBonusPercent(entry.seed,kind)+'%',17,
         {color:mine?'#ffe4a9':'#ddb985'}).setDepth(203));
     });
   });
@@ -519,7 +522,8 @@ export function showSeasonRecords(s,complete=false) {
     o.label(x,151,kind+' SEASON POINTS',25);
     const rows=getSeasonStandings(c,kind),player=kind==='TEAM'?'player:team':'player:driver';
     rows.slice(0,6).forEach((r,i)=>o.label(x,192+i*44,
-      (i+1)+'. '+(r.id===player?'YOU':r.name||characters[r.characterId]?.name||r.id)+
+      (i+1)+'. '+(r.id===player?(kind==='TEAM'?c.playerTeamName:'YOU'):
+      r.name||characters[r.characterId]?.name||r.id)+
       '  '+r.seasonPoints+' PTS',19).setColor(r.id===player?'#f2d396':'#e8e1df'));
     const position=kind==='TEAM'?report.crewStanding:report.driverStanding;
     const points=kind==='TEAM'?report.crew:report.driver;
