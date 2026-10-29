@@ -71,7 +71,7 @@ import {
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { getWorldPhase, getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
-import { resolveDragComplexHomeBackground } from '../data/dragComplexHomeVenue.js?v=20261030-r721';
+import { resolveDragComplexHomeBackground } from '../data/dragComplexHomeVenue.js?v=20261030-r725';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   applyMarketPriceDifficulty,
@@ -221,18 +221,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
 
     if (location?.kind === 'proDrag') {
-      // The main-page grandstands respond to the highlighted event, the saved
-      // player's pro ranking and their season history. First invite = empty.
-      // Resolve day and night for the SAME crowd tier during this render.
-      const events = this.getProDragEvents();
-      const selected = events[Math.max(0, Math.min(
-        Number(this.selectedEventIndex) || 0, events.length - 1,
-      ))] || null;
+      // The home crowd is stable across Driver, Crew and Trophy selection.
+      // Only the player's individual Pro Driver ranking (and world phase)
+      // determines the image; a prestigious event cannot trigger a new load.
       return resolveDragComplexHomeBackground({
         phase: safePhase,
         circuit: this.registry.get('proCircuit'),
-        event: selected,
-        accessGranted: getProCircuitAccess(this.registry).unlocked || isArkonDen(this.registry),
       });
     }
 
@@ -964,8 +958,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setDepth(-8));
 
     if (location?.kind === 'proDrag') {
-      // Keep only two home textures (day/night) for the selected crowd.
-      // This runs AFTER the old scene image was destroyed by clearContent().
+      // Keep only the two day/night textures for the driver's rank tier.
+      // Event-card selection must not purge or replace these cached images.
       // The race scene's five-part dragstrip textures are unaffected.
       const retained = new Set(this.getLocationBackgroundConfigs(location).map(bg => bg.key));
       Object.keys(this.textures.list).forEach(key => {
