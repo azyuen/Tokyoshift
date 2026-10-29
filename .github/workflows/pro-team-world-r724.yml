@@ -1,0 +1,36 @@
+name: R724 GMG Racing and 12-team professional world
+
+on:
+  push:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/tokyoChampionship.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/ui/OfficePanel.js'
+      - 'src/ui/ProTeamIdentity.js'
+      - 'tests/pro-team-world-r724.mjs'
+      - 'tests/pro-circuit-foundation.mjs'
+      - 'tests/career-tokyo-finale.mjs'
+      - '.github/workflows/pro-team-world-r724.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  team-progression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: |
+          node --check src/data/proCircuit.js
+          node --check src/data/proSeason.js
+          node --check src/data/tokyoChampionship.js
+          node --check src/ui/OfficePanel.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/ProTeamIdentity.js
+      - name: Professional world, season and Tokyo championship regressions
+        run: node --import ./tests/ci-phaser-math.mjs --test tests/pro-team-world-r724.mjs tests/pro-circuit-foundation.mjs tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js tests/career-tokyo-finale.mjs
