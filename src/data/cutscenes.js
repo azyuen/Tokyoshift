@@ -1054,8 +1054,8 @@ export const CUTSCENES = {
   // seven-member crew. She is a family friend, NOT the player's father's strategist.
   // Lightweight, skippable Career v1 Championship milestones. The official
   // result and rewards are already saved before any victory dialogue appears.
-  // Played from the final eight-round season report ONLY if neither
-  // discipline's combined qualification requirements have been fully met.
+  // Played from the final eight-round season report ONLY if the player
+  // has not met BOTH Driver and Crew qualification thresholds.
   // A season-specific historyId lets each failed season have one reflection.
   proSeasonNotQualified: {
     id: 'proSeasonNotQualified',
