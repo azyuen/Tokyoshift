@@ -1,0 +1,25 @@
+name: Career nonqualification scene review
+on:
+  push:
+    branches: [feature/season-qualification-failure-cutscene]
+    paths:
+      - 'src/data/cutscenes.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/pro-season-qualification-failure-scene.mjs'
+      - '.github/workflows/season-qualification-cutscene-review.yml'
+  workflow_dispatch:
+jobs:
+  dialogue-and-save-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check changed modules
+        run: |
+          node --check src/data/cutscenes.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check tests/pro-season-qualification-failure-scene.mjs
+      - name: Test scene triggers and previous career flow
+        run: node --test tests/pro-season-qualification-failure-scene.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs
