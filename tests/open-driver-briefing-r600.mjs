@@ -51,8 +51,8 @@ test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
   assert.match(ui,/\['NOS RULE'/);
   assert.match(ui,/\['STATUS'/);
   assert.match(ui,/function handleSayaka\(\)/);
-  assert.match(ui,/state\.briefingAdviceText\)\{toggleDialogue\('sayaka'\);return;\}/);
-  assert.match(ui,/if\(options\.initialDialogue==='sayaka'&&state\.briefingAdviceText\)/);
+  assert.match(ui,/advice\.usedThisEvent\)\{toggleDialogue\('sayaka'\);return;\}/);
+  assert.match(ui,/if\(options\.initialDialogue==='sayaka'&&currentHeatAdvice\)/);
   assert.match(scene,/this\.showOpenCircuitDriverBriefing\('sayaka'\)/);
   assert.match(ui,/clearDialogue\(\);\s+nodes\.forEach/);
 });

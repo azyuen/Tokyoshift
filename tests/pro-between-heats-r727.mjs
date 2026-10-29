@@ -77,8 +77,8 @@ test('Sayaka can be consulted after any paid heat if the shared once-per-event a
   assert.match(consumeDriverAdvice(first.circuit,first.competitionState).error,/ALREADY USED/);
   assert.equal(driverAdviceStatus({eventTick:3,crewAdviceCooldownUntil:5},state).available,false);
   assert.doesNotMatch(briefing,/!advice\.available\|\|!firstHeat/);
-  assert.match(briefing,/disabled:!advice\.available&&!state\.briefingAdviceText/);
-  assert.match(briefing,/if\(state\.briefingAdviceText\)\{toggleDialogue\('sayaka'\);return;\}/);
+  assert.match(briefing,/disabled:!advice\.available&&!advice\.usedThisEvent/);
+  assert.match(briefing,/if\(advice\.usedThisEvent\)\{toggleDialogue\('sayaka'\);return;\}/);
 });
 
 test('no next-opponent teaser or prep choice after final win or elimination',()=>{

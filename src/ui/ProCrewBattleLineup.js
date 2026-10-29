@@ -2,6 +2,7 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261026-r687';
+import {getCarMagazineMeta} from '../data/carMagazine.js?v=20261011-r479';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
@@ -39,7 +40,26 @@ export function getProCrewHeatAdvice(fixture,units){
     format==='FOUR_WIDE'?
     'Hrmmm, four-wide. Every placing counts, so strong launches and smooth shifts will help. ':
     'Hrmmm, you need two heat wins. Pair quick cars with drivers you can launch cleanly. ';
-  return note+recommendations;
+  // The consultation is bought ONCE for the competition, but the content
+  // follows the next unrevealed fixture heat. Opponent cars/driver names are
+  // read from the persisted bracket, never regenerated from a different seed.
+  const heat=Math.min(2,Math.max(0,Number(fixture?.prepared?.revealed||0)));
+  const rival=fixture?.opponent?.drivers?.[heat];
+  const rivalName=String(rival?.name||fixture?.opponent?.name||'the opposing driver').split(' ')[0];
+  const rivalCar=cars[rival?.carId]||{};
+  const carName=rivalCar.shortName||rivalCar.name||rival?.carId||'their car';
+  const drivetrain=String(getCarMagazineMeta(rival?.carId)?.drivetrain||
+    rivalCar.drivetrain||rivalCar.drive||'').toUpperCase();
+  const rivalNote=drivetrain.includes('AWD')||drivetrain.includes('4WD')||drivetrain==='FOUR_WHEEL_DRIVE'
+    ? 'Expect four-wheel-drive traction away from the line.'
+    : drivetrain==='FR'||drivetrain==='RWD'
+    ? 'Rear-drive grip on launch will be their biggest variable.'
+    : drivetrain==='FF'||drivetrain==='FWD'
+    ? 'Watch for wheelspin from the driven front tyres.'
+    : 'Concentrate on your launch and clean shifts.';
+  const context=' Fixture '+(Number(fixture?.round||0)+1)+
+    ', heat '+(heat+1)+': '+rivalName+' is in a '+carName+'. '+rivalNote+' ';
+  return note+context+recommendations;
 }
 
 function loadAssets(s,units){
@@ -299,7 +319,9 @@ function draw(s,opts){
     if(!canAsk)return;
     clearDialogue();
     showProSayakaAdviceConfirm(s,{
-      message:'Advice applies to every heat of this event. The cooldown covers this event and the next two professional events.',
+      message:e.trophyId
+        ? 'One consultation covers the entire trophy. Sayaka updates her guidance for each fixture and heat. Cooldown: this trophy plus five more professional events.'
+        : 'One consultation covers the entire event, with advice updated for each heat. Cooldown: this event plus two more professional events.',
       onConfirm:()=>{close();opts.onAdvice?.([...selected]);},
     });
   };

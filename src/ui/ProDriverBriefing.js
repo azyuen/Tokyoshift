@@ -14,7 +14,7 @@ import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
   getDriverPowerPartLevelInfo, setDriverPowerPartLevels,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r727';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r728';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 import { getProRaceRivalPaint } from '../data/proRacePaint.js?v=20261030-r726';
@@ -184,6 +184,15 @@ function draw(s,state,options){
     s.registry.get('ownedCarIds')||[],fallback);
   const circuit=options.previewCircuit||s.registry.get('proCircuit')||{};
   const advice=driverAdviceStatus(circuit,state);
+  // A consultation is charged only once per event. What Sayaka actually
+  // says, however, is regenerated from the ACTIVE HEAT'S saved rival and
+  // car every time this room opens. Older saves with first-heat prose are
+  // safely upgraded by deriving it at display time, not by charging again.
+  const currentOpponent={...rival,name:round.opponentName||rival.name};
+  const currentOpponentCar={...oppCar,drivetrain:
+    getCarMagazineMeta(round.carId)?.drivetrain||oppCar.drivetrain};
+  const currentHeatAdvice=advice.usedThisEvent
+    ? driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar) : null;
   const stageNo=state.roundIndex+1,stageTotal=state.rounds.length;
   const playerId=s.registry.get('playerCharacterId')||'renMizuno';
 
@@ -316,11 +325,11 @@ function draw(s,state,options){
     addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
   workshopHotspot(190,576,229,44,'CAR SETUP',()=>openTune());
-  const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
+  const adviceLabel=advice.usedThisEvent?'VIEW ADVICE':
     advice.remaining>0?advice.remaining+' EVENT COOLDOWN':
     advice.available?'ASK FOR ADVICE':'ADVICE CLOSED';
   workshopHotspot(1111,576,225,44,adviceLabel,()=>handleSayaka(),{
-    disabled:!advice.available&&!state.briefingAdviceText,
+    disabled:!advice.available&&!advice.usedThisEvent,
   });
   workshopHotspot(1390,576,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
 
@@ -393,7 +402,7 @@ function draw(s,state,options){
         ],{anchorX:1402});
       }
       // Closing is intentionally ONLY via the glowing Hiroshi hotspot.
-    }else if(which==='sayaka'&&state.briefingAdviceText){
+    }else if(which==='sayaka'&&currentHeatAdvice){
       // Lower than the player's face; the small equilateral speech point
       // sits in the UPPER half of the right edge and aims toward Sayaka.
       const x=558,y=405,w=470,h=146,edge=x+w;
@@ -406,7 +415,7 @@ function draw(s,state,options){
       bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(pts,true);
       bubble.lineStyle(5,0x111111,1);bubble.strokePoints(pts,true);
       bubbleText(x+18,y+11,'Sayaka',16,'#252227').setFontStyle('700');
-      const spoken=bubbleText(x+18,y+38,state.briefingAdviceText,
+      const spoken=bubbleText(x+18,y+38,currentHeatAdvice,
         16,'#111111').setWordWrapWidth(w-37);
       spoken.setLineSpacing(1);
       if(spoken.height>h-49)spoken.setScale((h-49)/spoken.height);
@@ -414,11 +423,11 @@ function draw(s,state,options){
     }
   }
   function handleSayaka(){
-    if(state.briefingAdviceText){toggleDialogue('sayaka');return;}
+    if(advice.usedThisEvent){toggleDialogue('sayaka');return;}
     if(!advice.available)return;
     clearDialogue();openAdvice();
   }
-  if(options.initialDialogue==='sayaka'&&state.briefingAdviceText)
+  if(options.initialDialogue==='sayaka'&&currentHeatAdvice)
     toggleDialogue('sayaka');
 
   // All modal elements share the owning room's lifecycle. Closing the scene
@@ -539,12 +548,12 @@ function draw(s,state,options){
     if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
       options.state||s.registry.get('competitionState')||{}).available)return;
     showProSayakaAdviceConfirm(s,{
-      message:unpaid?
-        'Advice applies to every heat of this event. The cooldown covers this event and the next two professional events.':
-        'Advice applies to every remaining heat of this event. It stays available to review throughout the competition.',
+      message:state.openTrophyId
+        ? 'One consultation covers the entire trophy. Sayaka will update her advice for each remaining opponent. Cooldown: this trophy plus five other professional events.'
+        : 'One consultation covers this event. Sayaka will update her advice for each remaining opponent. Cooldown: this event plus two other professional events.',
       onConfirm:()=>{
         close();
-        options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
+        options.onAdvice?.(driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar));
       },
     });
   }

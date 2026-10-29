@@ -2,14 +2,14 @@ import { createProvisionalChampionship, championshipStandings, getChampionshipKn
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r724';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r728';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r724';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261029-r714';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261030-r728';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
 import { showProVictoryResults } from './ProVictoryResults.js?v=20261030-r723';
 import { showProTeamNameEditor } from './ProTeamIdentity.js?v=20261030-r724';
@@ -252,7 +252,7 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
   showProCrewHeatSelection(s,{
     event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
     adviceStatus:getProCrewAdviceAvailability(source),
-    advice:t.adviceText||getProCrewHeatAdvice(f,units),
+    advice:getProCrewHeatAdvice(f,units),
     onCancel:()=>{s._pendingCrewRegistration=null;s.proError=null;redraw(s);},
     onAdvice:ids=>{
       const out=useProCrewAdvice(source,t.id);
@@ -337,24 +337,16 @@ export function showCrewFixture(s,selection=null) {
     const lineup=t.lockedLineup||f.prepared?.lineup||null;
     const lock=Boolean(lineup);
     const ids=selection||lineup||[];
-    const eventAdvice=t.adviceText||getProCrewHeatAdvice(f,units);
+    // Event purchase is once-only, while the spoken strategy is updated for
+    // the exact next unrevealed opponent every time this fixture is opened.
+    // Ignore first-heat adviceText stored by older saves.
+    const eventAdvice=getProCrewHeatAdvice(f,units);
     return showProCrewHeatSelection(s,{
       event:t,fixture:f,units,selected:ids,locked:lock,
-      adviceStatus:{
-        ...getProCrewAdviceAvailability(s.registry),
-        // Existing consultation can always be REVIEWED. New consultations
-        // are available only in the very first heat of an event.
-        remaining:!t.adviceUsed&&(f.round>0||f.prepared?.revealed>0)?
-          Math.max(1,getProCrewAdviceAvailability(s.registry).remaining):
-          getProCrewAdviceAvailability(s.registry).remaining,
-      },
+      adviceStatus:getProCrewAdviceAvailability(s.registry),
       advice:eventAdvice,
       onForfeit:()=>confirmCrewForfeit(s),
       onAdvice:lineupIds=>{
-        if(f.round>0||f.prepared?.revealed>0){
-          s.proError='SAYAKA CONSULTATION IS ONLY AVAILABLE BEFORE HEAT ONE';
-          return;
-        }
         const out=useProCrewAdvice(s.registry,t.id);
         if(out.error){s.proError=out.error;showCrewFixture(s,lineupIds);return;}
         out.circuit.activeCrewEvent={

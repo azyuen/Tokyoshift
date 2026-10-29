@@ -653,8 +653,9 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-fee};
 }
-// Advice can be used once per competition. After using it, finish this event
-// AND two other professional events before requesting another consultation.
+// Advice can be requested during any still-active fixture, once per event.
+ // It is recontextualised for each heat in the briefing UI without recharging.
+ // Regular events: this + two others. Trophy events: this + five others.
 // eventTick advances only on official settled professional events; it persists
 // across reloads and is independent of the real-world clock.
 export function getProCrewAdviceAvailability(source) {
@@ -669,11 +670,13 @@ export function useProCrewAdvice(source,eventId) {
   const t=c.activeCrewEvent;
   if(!t||t.id!==eventId)return {error:'EVENT NO LONGER AVAILABLE'};
   if(t.adviceUsed)return {error:'SAYAKA ADVICE ALREADY USED'};
-  if(t.round>0||t.fixture?.revealed>0)return {error:'SAYAKA ADVICE ONLY AVAILABLE BEFORE FIRST HEAT'};
   if(c.eventTick<c.crewAdviceCooldownUntil)
     return {error:'SAYAKA AVAILABLE AFTER '+(c.crewAdviceCooldownUntil-c.eventTick)+' MORE PROFESSIONAL EVENTS'};
   c.activeCrewEvent={...clone(t),adviceUsed:true};
-  c.crewAdviceCooldownUntil=c.eventTick+3;
+  // A trophy consultation spans all fixtures, but imposes a six-event
+  // cooldown (this trophy plus five following settled competitions).
+  // Regular crew events retain the existing three-event cadence.
+  c.crewAdviceCooldownUntil=c.eventTick+(t.trophyId?6:3);
   return {circuit:c};
 }
 
