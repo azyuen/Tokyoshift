@@ -16,7 +16,7 @@ export const STANDARD_CAR_REFERENCE = {
   },
   cars: {
     // Measured from the uploaded 1300x440 GF8 silhouette, right-origin coordinates.
-    wrxgf8: { rearX: -991, frontX: -247, size: 'L' },
+    wrxgf8: { rearX: -989, frontX: -242, size: 'L' },
     "WRXGDB": {"rearX": -983, "frontX": -256, "size": "L"},
     "s15": {"rearX": -991, "frontX": -265, "size": "S"},
     "starion": {"rearX": -958, "frontX": -248, "size": "S"},
@@ -49,13 +49,13 @@ export const STANDARD_CAR_REFERENCE = {
     'familia': { rearX: -946, frontX: -244, size: 'L', bodyRenderOffsetY: 3 },
     'jza80': { rearX: -972, frontX: -260, size: 'S' },
     'nsx': { rearX: -968, frontX: -258, size: 'L' },
-    's2000': { rearX: -919, frontX: -229, size: 'S' },
+    's2000': { rearX: -919, frontX: -229, size: 'L' },
     ae86: { rearX: -921, frontX: -247, size: 'S' },
     ef: { rearX: -877, frontX: -195, size: 'S' },
     ek9: { rearX: -931, frontX: -231, size: 'S' },
     gc8: { rearX: -901, frontX: -253, size: 'S' },
     // Galant VR-4 source alignment and its original stock canvas.
-    galant: { rearX: -998, frontX: -255, size: 'S' },
+    galant: { rearX: -998, frontX: -255, size: 'L' },
     evo6: { rearX: -972, frontX: -280, size: 'S', bodyRenderOffsetY: 1 },
     r32: { rearX: -988, frontX: -268, size: 'L' },
     rx7fc: { rearX: -936, frontX: -260, size: 'L' },

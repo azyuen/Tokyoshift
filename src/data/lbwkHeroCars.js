@@ -87,6 +87,7 @@ export function registerLbwkHeroCars(cars) {
       car.visual={
         ...cars.arkonLibertyWalk240z.visual,
         assetStem:'liberty_walk_240z_hero',
+        referenceGeometry:{rearX:-890,frontX:-220},
         bodyPath:'assets/Cars/hero/liberty_walk_240z_hero_body.png',
       };
     }
