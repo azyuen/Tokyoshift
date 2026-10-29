@@ -20,8 +20,8 @@ test('professional roster has stable unique identities and seven canonical rival
   assert.deepEqual(first, second);
   const driverIds = Object.keys(first.drivers);
   const teamIds = Object.keys(first.teams);
-  assert.equal(driverIds.length, 31);
-  assert.equal(teamIds.length, 16);
+  assert.equal(driverIds.length, 23);
+  assert.equal(teamIds.length, 11);
   assert.equal(new Set(driverIds).size, driverIds.length);
   assert.equal(new Set(teamIds).size, teamIds.length);
   for (const characterId of Object.values(MAIN_RIVAL_BY_REGION)) {
@@ -45,7 +45,8 @@ test('venue unlock and professional event unlock are separate: genuine seven rec
     { characterId: REGIONAL_CREW_ROSTERS[regionId].members[0].characterId },
   ]));
   assert.equal(getProCircuitAccess({ crewMembers: {} }).unlocked, false);
-  assert.equal(getProCircuitAccess({ crewMembers }).unlocked, true);
+  // Seven recruits alone do not unlock the post-regional professional invitation.
+  assert.equal(getProCircuitAccess({ crewMembers }).unlocked, false);
   assert.equal(getProCircuitAccess({ crewMembers }).crewCount, 7);
   const partialCrew = { ...crewMembers };
   delete partialCrew.SHINJUKU;

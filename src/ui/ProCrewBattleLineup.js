@@ -229,7 +229,7 @@ function draw(s,opts){
   const crewRows=[
     ['EVENT',eventTitle],
     ['FORMAT',formatName(f.format)],
-    ['NEXT DRIVER',String(f.opponent?.name||'OPPOSING CREW')+' #'+(heatIndex+1)],
+    ['NEXT DRIVER',String(nextOpponent?.name||f.opponent?.name||'OPPOSING CREW')],
     ['NEXT CAR',String(cars[nextOpponent?.carId]?.shortName||nextOpponent?.carId||'TBA').toUpperCase()],
     ['CAR RULE',crewRule],
     ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],

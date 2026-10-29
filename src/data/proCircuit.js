@@ -5,7 +5,12 @@
 import { MAIN_RIVAL_BY_REGION } from './characters.js?v=20261007-r411';
 import { getCrewCount, isCrewComplete, areAllCrewBattlesComplete } from './crewSystem.js?v=20261007-r413';
 
-export const PRO_CIRCUIT_SCHEMA_VERSION = 3;
+export const PRO_CIRCUIT_SCHEMA_VERSION = 4;
+export const DEFAULT_PRO_TEAM_NAME = 'GMG RACING';
+export function normaliseProTeamName(name) {
+  const clean = String(name ?? '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().replace(/\s+/g, ' ').slice(0, 24).trim();
+  return clean || DEFAULT_PRO_TEAM_NAME;
+}
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;
 
 // Deliberately stable identities: DO NOT regenerate names/IDs each time the
@@ -19,12 +24,36 @@ const GENERIC_DRIVER_NAMES = Object.freeze([
   'Tsubasa Arai', 'Saki Fujita', 'Tomo Ueda', 'Haruka Sakai',
 ]);
 
-const GENERIC_TEAM_NAMES = Object.freeze([
-  'Night Vector', 'Kanto Velocity', 'Redline Syndicate', 'Apex Circuit',
-  'Circuit Zero', 'Eastern Works', 'Carbon District', 'Wangan Motorsport',
-  'Osaka Apex', 'Tokyo Precision', 'Silverline Racing', 'Neon Pulse',
-  'Streetline Engineering', 'Blue Arc', 'Midnight Theory', 'Vertex Motorsport',
-]);
+// Eleven permanent AI organisations + the player's renameable GMG RACING.
+ // Keep the first eleven legacy team IDs unchanged for existing profiles.
+ // The 23 individually rated AI drivers now belong to actual organisations;
+ // reserves are named members of crew fixtures, not fictitious rating entries.
+export const PRO_AI_TEAM_DEFINITIONS = Object.freeze([
+  ['Night Vector', 'ODAIBA', ['rival:emiKanzaki', 'pro:driver:01'], 'Naomi Nishida', '#7289bb'],
+  ['Kanto Velocity', 'SHINAGAWA', ['rival:renMizuno', 'pro:driver:02'], 'Keisuke Toda', '#7fbdc2'],
+  ['Redline Syndicate', 'TATSUMI', ['rival:kaitoFujimori', 'pro:driver:03'], 'Mai Hoshikawa', '#c34a53'],
+  ['Apex Circuit', 'SHIBUYA', ['rival:ayaKurose', 'pro:driver:04'], 'Shota Kishi', '#d8a451'],
+  ['Circuit Zero', 'YOKOHAMA', ['rival:haruTachibana', 'pro:driver:05'], 'Tsubasa Arai', '#a78cc7'],
+  ['Eastern Works', 'DAIKOKU', ['rival:reinaShibata', 'pro:driver:06'], 'Saki Fujita', '#5bad83'],
+  ['Carbon District', 'SHINJUKU', ['rival:rikuAkamine', 'pro:driver:07'], 'Tomo Ueda', '#b0b5c0'],
+  ['Wangan Motorsport', null, ['pro:driver:08', 'pro:driver:09'], 'Haruka Sakai', '#5b9ed4'],
+  ['Osaka Apex', null, ['pro:driver:10', 'pro:driver:11'], 'Akio Hayashi', '#bd8158'],
+  ['Tokyo Precision', null, ['pro:driver:12', 'pro:driver:13'], 'Yuna Sakurai', '#d0bfb2'],
+  ['Silverline Racing', null, ['pro:driver:14', 'pro:driver:15', 'pro:driver:16'], 'Jun Watanabe', '#a5b8c9'],
+].map(([name, regionId, rankedDriverIds, reserveName, colour], index) => Object.freeze({
+  id: 'pro:team:' + String(index + 1).padStart(2, '0'),
+  name, regionId, rankedDriverIds: Object.freeze([...rankedDriverIds]),
+  leadDriverId: rankedDriverIds[0], reserveName, colour,
+})));
+export const PRO_AI_TEAM_IDS = Object.freeze(PRO_AI_TEAM_DEFINITIONS.map(t => t.id));
+const DRIVER_TEAM_IDS = Object.freeze(Object.fromEntries(PRO_AI_TEAM_DEFINITIONS.flatMap(t =>
+  t.rankedDriverIds.map(driverId => [driverId, t.id]))));
+export function getProTeamIdForDriver(driverId) {
+  return DRIVER_TEAM_IDS[String(driverId)] || null;
+}
+export function getProAiTeamDefinition(teamId) {
+  return PRO_AI_TEAM_DEFINITIONS.find(t => t.id === teamId) || null;
+}
 
 // These are persistent standalone championships, not short season events.
 // Drivers contest five live knockout stages; crews contest three full fixtures
@@ -89,6 +118,7 @@ function createDriverRoster() {
     {
       ...createStanding(1860 - index * 33),
       role: 'MAIN_RIVAL',
+      teamId: getProTeamIdForDriver('rival:' + characterId),
       characterId,
       regionId,
     },
@@ -100,6 +130,7 @@ function createDriverRoster() {
       {
         ...createStanding(1740 - index * 22),
         role: 'PRO',
+        teamId: getProTeamIdForDriver('pro:driver:' + String(index + 1).padStart(2, '0')),
         name,
       },
     ]);
@@ -108,11 +139,15 @@ function createDriverRoster() {
 }
 
 function createTeamRoster() {
-  return Object.fromEntries([...GENERIC_TEAM_NAMES, ...GENERIC_DRIVER_NAMES.slice(16, 23)].map((name, index) => [
-    'pro:team:' + String(index + 1).padStart(2, '0'),
-    {
+  return Object.fromEntries(PRO_AI_TEAM_DEFINITIONS.map((team, index) => [
+    team.id, {
       ...createStanding(1770 - index * 28),
-      name,
+      name: team.name,
+      leadDriverId: team.leadDriverId,
+      rankedDriverIds: [...team.rankedDriverIds],
+      reserveName: team.reserveName,
+      colour: team.colour,
+      regionId: team.regionId,
     },
   ]));
 }
@@ -130,6 +165,7 @@ export function createDefaultProCircuitState() {
     qualified: false, // Phase 2 sets this after the professional qualifier
     playerDriver: createStanding(1400),
     playerTeam: createStanding(1400),
+    playerTeamName: DEFAULT_PRO_TEAM_NAME,
     drivers: createDriverRoster(),
     teams: createTeamRoster(),
     completedEventIds: [],
@@ -203,6 +239,7 @@ export function normaliseProCircuitState(raw) {
     qualified: Boolean(source.qualified),
     playerDriver: normaliseStanding(source.playerDriver, initial.playerDriver),
     playerTeam: normaliseStanding(source.playerTeam, initial.playerTeam),
+    playerTeamName: normaliseProTeamName(source.playerTeamName),
     drivers: normaliseRoster(source.drivers, initial.drivers),
     teams: normaliseRoster(source.teams, initial.teams),
     completedEventIds: Array.isArray(source.completedEventIds)
@@ -269,7 +306,8 @@ export function getProCircuitAccess(source) {
 function seededRows(state, kind) {
   const source = normaliseProCircuitState(state);
   const rows = kind === 'TEAM'
-    ? [['player:team', source.playerTeam], ...Object.entries(source.teams)]
+    ? [['player:team', { ...source.playerTeam, name: source.playerTeamName }],
+       ...PRO_AI_TEAM_IDS.map(id => [id, source.teams[id]]).filter(([, record]) => Boolean(record))]
     : [['player:driver', source.playerDriver], ...Object.entries(source.drivers)];
   return rows
     .map(([id, standing]) => ({ id, ...standing }))
@@ -285,9 +323,17 @@ function seededRows(state, kind) {
 // and the eight-round Season. Only paid event purses receive commission:
 // fees, racing performance, season points and championship seeds are unchanged.
 // Lock the rate to the player's standing BEFORE the event is settled.
-export function getProPrizeBonusPercent(rank) {
+export function getProPrizeBonusPercent(rank, discipline = 'DRIVER') {
   const place = Number(rank);
   if (!Number.isInteger(place) || place < 1) return 0;
+  if (discipline === 'TEAM' || discipline === 'CREW') {
+    if (place === 1) return 100;
+    if (place === 2) return 75;
+    if (place === 3) return 50;
+    if (place <= 5) return 30;
+    if (place <= 8) return 15;
+    return 0;
+  }
   if (place === 1) return 100;
   if (place <= 3) return 75;
   if (place <= 5) return 50;
@@ -296,10 +342,10 @@ export function getProPrizeBonusPercent(rank) {
   return 0;
 }
 
-export function getProPrizeWithBonus(cashPrize, rank) {
+export function getProPrizeWithBonus(cashPrize, rank, discipline = 'DRIVER') {
   const basePrize = Number.isFinite(Number(cashPrize))
     ? Math.max(0, Math.floor(Number(cashPrize))) : 0;
-  const bonusPercent = getProPrizeBonusPercent(rank);
+  const bonusPercent = getProPrizeBonusPercent(rank, discipline);
   const bonusCash = Math.floor(basePrize * bonusPercent / 100);
   return { basePrize, bonusPercent, bonusCash, totalPrize: basePrize + bonusCash };
 }

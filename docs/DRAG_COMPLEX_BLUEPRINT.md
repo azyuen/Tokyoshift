@@ -330,3 +330,17 @@ The crew panels use the normal Rajdhani UI font and explicit final text sizes, a
 ## Release 1 implementation notes — 2026-10-11
 
 User locked: eight-round season, 100 Driver / 40 Crew qualification, at least one Driver and one Crew event option per round with a rotating third choice, one-fixture/three-heat Crew Club Sprint, next season resets season points while keeping persistent career progress, and progress bars plus event details. New Crew Club entries use a `short:true` fixture; saved legacy three-fixture series retain their original flow. UI no longer forces Crew Club selection. This release does **not** implement the Tokyo Championship invitation/entry or verified end-to-end gameplay testing. Qualification and event balance still require validation with actual save profiles.
+
+## R724 — GMG RACING and twelve-team professional world (30 October 2026)
+
+**This addendum supersedes earlier 23-team/24-team AI-roster assumptions; the 24-driver individual career ladder remains.**
+
+- The player owns a permanent `player:team` entry, displayed as **GMG RACING** (Ginza Motor Gallery) by default. The player may rename it from the Office and from the Pro Rankings overlay (24-character limit); the save ID never changes. Sayaka and Daichi retain their existing narrative/garage roles. No new lore is implied by the team name.
+- The career grid has **12 teams**: GMG Racing and 11 named AI racing organisations, using stable existing team IDs `pro:team:01` through `pro:team:11`. A fresh GMG Racing begins **#12/12**, rating 1,400; the driver begins #24/24, rating 1,400. Existing players retain earned ratings and are not artificially demoted.
+- The AI individual roster retains 23 rated racers (seven canon regional rivals + 16 named professionals). Each now belongs to an explicit organisation via `teamId`; the seven main regional rivals lead seven different organisations. Every AI team has at least two ranked members plus a named reserve, so each can present three professional drivers in a crew fixture. Named reserves are not independently on the career driver ladder.
+- Professional driver Elo, team Elo and seasonal standings remain **separate**. During an off-screen season round, a team scores as a crew **or** its ranked drivers score in solo events; a player's directly raced opponent and its team cannot score a duplicate fixture. The 16-entry Tokyo Championship stays a **driver** competition, with affiliation-based team season points contributing 30% of seeding.
+- Team sponsor multipliers were rebanded for the 12-team table: #1 100%, #2 75%, #3 50%, #4–5 30%, #6–8 15%, #9–12 0%. The 24-driver multipliers and base purses remain unchanged.
+- Legacy stored teams #12–23 are preserved in profile data for save, archive and mid-competition compatibility, but do not populate the live 12-team rankings or new team registrations. Saved in-progress brackets/entrants are preserved. Physics, tuning, car engineering and AI skill settings remain untouched.
+- A team profile can be opened from the team rankings to inspect the lead driver, other ranked professionals, named reserve and standings. Outfit and vehicle asset changes are outside this implementation.
+
+Dedicated coverage is in `tests/pro-team-world-r724.mjs` and `.github/workflows/pro-team-world-r724.yml`. A separate later design exercise may add ranked individual careers for recruited support drivers; this update deliberately does not create 96 independent Elo profiles.

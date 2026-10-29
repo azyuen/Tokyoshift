@@ -1,9 +1,9 @@
-import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261012-champaudit';
+import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261029-r714';
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261029-r714';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r724';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r724';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -12,6 +12,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261029-r714';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
 import { showProVictoryResults } from './ProVictoryResults.js?v=20261030-r723';
+import { showProTeamNameEditor } from './ProTeamIdentity.js?v=20261030-r724';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -92,7 +93,7 @@ export function drawSeasonHeader(s,stage) {
     ]){
       text(s,item.x,y+36,item.label+' RANK',15,{color:'#bbc4ce'});
       text(s,item.x,y+57,'#'+item.record.seed,29,{color:'#fff2ed'});
-      text(s,item.x,y+96,'+'+getProPrizeBonusPercent(item.record.seed)+'% WINNINGS BONUS',14,{color:'#ecc88d'});
+      text(s,item.x,y+96,'+'+getProPrizeBonusPercent(item.record.seed,item.label==='CREW'?'TEAM':'DRIVER')+'% WINNINGS BONUS',14,{color:'#ecc88d'});
     }
     const expandY=y+139;
     const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,34,0x40242a,.96)
@@ -108,7 +109,7 @@ export function drawSeasonHeader(s,stage) {
   text(s,x,y,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)} OF 8`,20,{color:'#f5e9e5'})
     .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   const bar=(yy,label,score,goal,seed,color)=>{
-    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed)}% SPONSOR   ${score}/${goal} PTS`,16,
+    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed,label==='CREW'?'TEAM':'DRIVER')}% SPONSOR   ${score}/${goal} PTS`,16,
       {color:'#f2e7e3'});
     s.addContent(s.add.rectangle(x,yy+29,w-10,10,0x38343c).setOrigin(0,0).setDepth(39));
     s.addContent(s.add.rectangle(x,yy+29,(w-10)*Math.min(1,score/goal),10,color).setOrigin(0,0).setDepth(40));
@@ -401,7 +402,7 @@ export function showCrewFixture(s,selection=null) {
     const o=overlay(s,t.trophyId?`${t.label} // FIXTURE ${t.round+1}/3`:
       t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):
       `CREW CLUB SERIES // FIXTURE ${t.round+1}/3`);
-    o.label(90,115,'YOUR CREW vs '+f.opponent.name+(currentFormat==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':currentFormat==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':currentFormat==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
+    o.label(90,115,circuit(s).playerTeamName+' vs '+f.opponent.name+(currentFormat==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':currentFormat==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':currentFormat==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
     const prepared=f.prepared;
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
     prepared.heats.forEach((h,i)=>{
@@ -472,29 +473,63 @@ function showCrewResult(s,out,round={}){
   });
 }
 
+function showProfessionalTeamDetails(s,teamId) {
+  const c=circuit(s),team=c.teams[teamId],definition=getProAiTeamDefinition(teamId);
+  if(!team||!definition)return;
+  const o=overlay(s,team.name.toUpperCase()+' // TEAM PROFILE');
+  const driverName=id=>{
+    const record=c.drivers[id];
+    return record?.name||characters[record?.characterId]?.name||id;
+  };
+  o.label(90,125,'REGION  '+(definition.regionId||'PROFESSIONAL NATIONAL')+
+    '    CAREER RATING  '+team.rating+'    SEASON POINTS  '+team.seasonPoints,23);
+  o.label(90,190,'LEAD DRIVER  //  '+driverName(definition.leadDriverId),29);
+  o.label(90,264,'PRO RACING CREW',24);
+  definition.rankedDriverIds.forEach((id,index)=>{
+    const driver=c.drivers[id],rank=getProCircuitDriverSeeds(c).find(row=>row.id===id)?.seed;
+    o.label(115,321+index*64,(index+1)+'.  '+driverName(id)+
+      '   //   DRIVER #'+(rank||'—')+'   '+(driver?.rating||0)+' PT',23);
+  });
+  o.label(115,321+definition.rankedDriverIds.length*64,
+    (definition.rankedDriverIds.length+1)+'.  '+definition.reserveName+
+    '   //   CREW RESERVE',22);
+  o.label(90,655,'Each organisation enters one crew fixture or fields its solo drivers per round.',18);
+  o.btn(780,782,330,'BACK TO RANKINGS',()=>showProRankings(s));
+}
+
 // Expand the compact Open Circuit ladder into a complete persistent driver
 // and crew leaderboard.  Season points intentionally do not affect its order.
 export function showProRankings(s) {
   const c=circuit(s),o=overlay(s,'PRO RANKINGS // OPEN CIRCUIT');
   o.label(90,105,'CAREER RATING · SPONSOR BONUS ON OPEN CIRCUIT & PRO SEASON CASH PRIZES',20)
     .setColor('#b8c7cf');
+  o.btn(1305,105,345,'RENAME TEAM',()=>showProTeamNameEditor(s,()=>showProRankings(s)));
   const columns=[
-    {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver'},
-    {x:820,title:'CREW RANKINGS',rows:getProCircuitTeamSeeds(c),player:'player:team'},
+    {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver',kind:'DRIVER'},
+    {x:820,title:'TEAM RANKINGS',rows:getProCircuitTeamSeeds(c),player:'player:team',kind:'TEAM'},
   ];
-  columns.forEach(({x,title,rows,player})=>{
+  columns.forEach(({x,title,rows,player,kind})=>{
     o.label(x,147,title+'  //  '+rows.length+' ENTRANTS',23).setColor('#f7e6e2');
     rows.forEach((entry,i)=>{
       const y=185+i*23;
       const mine=entry.id===player;
       if(mine)o.add(s.add.rectangle(x+310,y+10,642,22,0x45252c,.9)
         .setStrokeStyle(1,0x95646d,.65).setDepth(201));
-      const display=mine?'YOU':entry.name||characters[entry.characterId]?.name||entry.id;
+      if(kind==='TEAM'&&!mine){
+        const stripe=getProAiTeamDefinition(entry.id)?.colour||'#8096ac';
+        const swatch=o.add(s.add.rectangle(x+43,y+10,6,17,
+          Number.parseInt(stripe.slice(1),16)).setDepth(204));
+        const hit=o.add(s.add.rectangle(x+310,y+10,642,22,0x000000,0)
+          .setDepth(205).setInteractive({useHandCursor:true}));
+        hit.on('pointerdown',()=>showProfessionalTeamDetails(s,entry.id));
+      }
+      const display=mine?(kind==='TEAM'?c.playerTeamName:'YOU'):
+        entry.name||characters[entry.characterId]?.name||entry.id;
       const style={color:mine?'#ffe4a9':i<3?'#f5f0ed':'#c4c9cf'};
       o.add(uiText(s,x,y,'#'+entry.seed,17,style).setDepth(203));
       o.add(uiText(s,x+58,y,String(display).slice(0,25),17,style).setDepth(203));
       o.add(uiText(s,x+433,y,entry.rating+' PT',16,{color:'#9fb0bc'}).setDepth(203));
-      o.add(uiText(s,x+548,y,'+'+getProPrizeBonusPercent(entry.seed)+'%',17,
+      o.add(uiText(s,x+548,y,'+'+getProPrizeBonusPercent(entry.seed,kind)+'%',17,
         {color:mine?'#ffe4a9':'#ddb985'}).setDepth(203));
     });
   });
@@ -519,7 +554,8 @@ export function showSeasonRecords(s,complete=false) {
     o.label(x,151,kind+' SEASON POINTS',25);
     const rows=getSeasonStandings(c,kind),player=kind==='TEAM'?'player:team':'player:driver';
     rows.slice(0,6).forEach((r,i)=>o.label(x,192+i*44,
-      (i+1)+'. '+(r.id===player?'YOU':r.name||characters[r.characterId]?.name||r.id)+
+      (i+1)+'. '+(r.id===player?(kind==='TEAM'?c.playerTeamName:'YOU'):
+      r.name||characters[r.characterId]?.name||r.id)+
       '  '+r.seasonPoints+' PTS',19).setColor(r.id===player?'#f2d396':'#e8e1df'));
     const position=kind==='TEAM'?report.crewStanding:report.driverStanding;
     const points=kind==='TEAM'?report.crew:report.driver;

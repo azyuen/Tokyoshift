@@ -243,7 +243,7 @@ function drawResults(s,options,cast,carMap){
     fontFamily:HEAD,fontStyle:'900 italic',stroke:'#151019',strokeThickness:3,
   });
   if(head.width>650)head.setScale(650/head.width);
-  label(844,235,short(crew?'YOUR CREW vs '+(options.opponent||'PRO CIRCUIT'):
+  label(844,235,short(crew?(s.registry.get('proCircuit')?.playerTeamName||'GMG RACING')+' vs '+(options.opponent||'PRO CIRCUIT'):
     (options.opponent||'DRIVER CHALLENGE'),52),23,{color:'#d7d5dc'});
   const heats=(options.heats||[]);
   const wonCount=options.wins!=null?Number(options.wins):
