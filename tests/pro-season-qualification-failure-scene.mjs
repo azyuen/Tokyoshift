@@ -15,10 +15,10 @@ function report(round,driver,crew,season=1){
   c.playerDriver.seasonPoints=driver;c.playerTeam.seasonPoints=crew;c.season=season;
   return getProfessionalSeasonReport(c);
 }
-test('scene has five short frames, established actors, and standard review action',()=>{
+test('scene has seven short frames, established actors, and standard review action',()=>{
   assert.ok(scene);
   assert.equal(scene.once,true);
-  assert.equal(scene.pages.length,5);
+  assert.equal(scene.pages.length,7);
   assert.equal(scene.characters.left,'sayakaFujieda');
   assert.equal(scene.characters.right,'$PLAYER');
   assert.ok(scene.pages.some(p=>p.leftCharacter==='daichiSakamoto'));

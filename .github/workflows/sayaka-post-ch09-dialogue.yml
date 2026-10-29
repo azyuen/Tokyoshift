@@ -1,0 +1,24 @@
+name: Sayaka post-Chapter-09 dialogue pass
+on:
+  push:
+    branches: [feature/sayaka-post-ch09-character-pass]
+    paths:
+      - 'src/data/cutscenes.js'
+      - 'tests/pro-season-qualification-failure-scene.mjs'
+      - 'tests/sayaka-post-ch09-voice.mjs'
+      - '.github/workflows/sayaka-post-ch09-dialogue.yml'
+  workflow_dispatch:
+jobs:
+  voice-and-career:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: |
+          node --check src/data/cutscenes.js
+          node --check tests/sayaka-post-ch09-voice.mjs
+      - name: Run continuity, season failure, and Tokyo finale tests
+        run: node --test tests/sayaka-post-ch09-voice.mjs tests/pro-season-qualification-failure-scene.mjs tests/career-tokyo-finale.mjs tests/career-season-report.mjs tests/career-continuity-r680.mjs
