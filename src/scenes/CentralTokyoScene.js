@@ -8,10 +8,10 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261029-r714';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261029-r714';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261029-r718';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261029-r719';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
-import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261027-r693';
-import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
+import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261029-r719';
+import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';

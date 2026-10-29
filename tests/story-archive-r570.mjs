@@ -15,7 +15,7 @@ class FakeRegistry {
 const seen=['openingDaichiAfterSayaka','centralTokyoUnlocked','firstRegionalChampion',
   'canalYardBiggerDreams','warehouseHqUnlocked','sevenRegionsConquered',
   'fullCrewTogether','chapter08Ginza','chapter08RaceFinished','chapter09Welcome',
-  'proSponsorEpilogue'];
+  'proSponsorEpilogue','tokyoChampionshipOpening','tokyoChampionshipVictory'];
 const profile={
   devMode:false,cutscenesSeen:seen,openingChapter:null,playerCharacterId:'renMizuno',
   firstName:'Young',lastName:'Driver',selectedCarId:'ae86',preferredCarId:'ae86',
@@ -33,9 +33,10 @@ function fakeScene(extra={},key='GarageScene'){
   return {registry,starts,scene:{start:(...args)=>starts.push(args)},
     sys:{settings:{key}}};
 }
-test('nine public chapters, no micro cutscenes, and chapter-spoiler locks',()=>{
-  assert.equal(STORY_CHAPTERS.length,9);
-  assert.deepEqual(STORY_CHAPTERS.map(x=>x.id),Array.from({length:9},(_,i)=>'chapter0'+(i+1)));
+test('twelve public chapters, no micro cutscenes, and chapter-spoiler locks',()=>{
+  assert.equal(STORY_CHAPTERS.length,12);
+  assert.deepEqual(STORY_CHAPTERS.map(x=>x.id),
+    Array.from({length:12},(_,i)=>'chapter'+String(i+1).padStart(2,'0')));
   assert.equal(availableStoryChapters(new FakeRegistry({
     cutscenesSeen:['openingDaichiAfterSayaka','centralTokyoUnlocked'],
     openingChapter:null,
@@ -118,6 +119,38 @@ test('chapter replays reuse phone, magazine, rivals and crew interactions',()=>{
   assert.match(tester,/ACTIVE_DEV_MICRO_SCENES/);
   const office=source('src/ui/OfficePanel.js');
   assert.match(office,/STORY ARCHIVE/);
+  assert.match(office,/x: 0\.908, y: 0\.815/);
   const chapter08=source('src/ui/Chapter08Story.js');
   assert.match(chapter08,/__chapter08ReplaySkipRace/);
+});
+
+test('Chapters 09–12 have separate completion gates and no premature sponsor reveal',()=>{
+  const source=flags=>new FakeRegistry({cutscenesSeen:flags,proCircuit:{}});
+  assert.equal(isStoryChapterComplete(source(['chapter09Welcome']),'chapter09'),true);
+  assert.equal(isStoryChapterComplete(source(['chapter09Welcome']),'chapter10'),false);
+  assert.equal(isStoryChapterComplete(source(['proSponsorEpilogue']),'chapter10'),true);
+  assert.equal(isStoryChapterComplete(source(['proSponsorEpilogue']),'chapter11'),false);
+  assert.equal(isStoryChapterComplete(source(['tokyoChampionshipOpening']),'chapter11'),true);
+  assert.equal(isStoryChapterComplete(source(['tokyoChampionshipOpening']),'chapter12'),false);
+  assert.equal(isStoryChapterComplete(source(['tokyoChampionshipVictory']),'chapter12'),true);
+  assert.equal(isStoryChapterComplete(source([]),'chapter12'),false);
+  const legacy=new FakeRegistry({cutscenesSeen:[],proCircuit:{
+    championshipHistory:[{completed:true,playerChampion:true}],tokyoChampionWins:1,
+  }});
+  assert.equal(isStoryChapterComplete(legacy,'chapter11'),true);
+  assert.equal(isStoryChapterComplete(legacy,'chapter12'),true);
+});
+test('archive draws six rows per column without overflow and narrates correct scenes',()=>{
+  const ui=source('src/ui/StoryArchivePanel.js');
+  assert.match(ui,/const leftColumn=i<6/);
+  assert.match(ui,/const y=209\+\(leftColumn\?i:i-6\)\*105/);
+  assert.match(ui,/scene\.add\.rectangle\(x,y,590,98/);
+  const lastCenter=209+5*105,lastBottom=lastCenter+49;
+  assert.ok(lastBottom<798,'all twelve cards fit within overlay');
+  assert.match(ui,/id==='chapter10'/);
+  assert.match(ui,/includeChapter09Welcome:false/);
+  assert.match(ui,/id==='chapter11' \|\| id==='chapter12'/);
+  assert.match(ui,/tokyoChampionshipOpening/);
+  assert.match(ui,/tokyoChampionshipVictory/);
+  assert.doesNotMatch(ui,/startChapter09\(scene,\{preview:true,onPreviewComplete:/);
 });

@@ -4,7 +4,7 @@
 import { characters } from '../data/characters.js?v=20261024-r680';
 import { CUTSCENES } from '../data/cutscenes.js?v=20261027-r693';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261027-r693';
-import { beginProSponsorPlayableReplay } from './ProSponsorReplay.js?v=20261027-r693';
+import { beginProSponsorPlayableReplay } from './ProSponsorReplay.js?v=20261029-r719';
 
 const FONT='"Silkscreen",monospace';
 const BODY='"Rajdhani",monospace';
@@ -35,7 +35,7 @@ export const ACTIVE_DEV_MICRO_SCENES=Object.freeze([
 ]);
 export function getDevCutsceneEntries(){
   return [
-    {id:'__proSponsorChapter09',label:'CHAPTER 09 // ARUKEN SPONSORSHIP',
+    {id:'__proSponsorChapter09',label:'CHAPTER 10 // ARUKEN SPONSORSHIP',
       detail:'FULL PLAYABLE REPLAY // LIVE 240Z RACE // RESTORES YOUR SAVE',
       category:'DEVELOPER / REPLAY',
       definition:{title:'CHAPTER 09 // GINZA BACKING',pages:[]}},
@@ -167,7 +167,7 @@ export function showCutsceneTester(scene){
         window.setTimeout(()=>{
           // Start full replay in the same way as the Story Archive.
           if(primary){
-            const started=beginProSponsorPlayableReplay(scene,{returnToArchive:false});
+            const started=beginProSponsorPlayableReplay(scene,{returnToArchive:false,includeChapter09Welcome:false});
             if(started)close();
             else {row.setInteractive({useHandCursor:true});
               showError('A DRIVEABLE OWNED CAR IS NEEDED');}

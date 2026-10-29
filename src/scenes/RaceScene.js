@@ -102,7 +102,7 @@ import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261027-r693';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
-import { isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261027-r693';
+import { isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {

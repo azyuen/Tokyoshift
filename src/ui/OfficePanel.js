@@ -5,7 +5,7 @@ import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 import { getOfficeTrophyLines, getOfficeTrophyRecord } from '../data/officeTrophies.js?v=20261029-career1';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
-import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r574';
+import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261029-r719';
 import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r663';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -71,25 +71,35 @@ function point(frame, nx, ny) {
 
 function addHotspot(scene, add, frame, config) {
   const p = point(frame, config.x, config.y);
-  const box = add(scene.add.rectangle(
-    p.x,
-    p.y,
-    frame.w * config.w,
-    frame.h * config.h,
-    0x43dfff,
-    0.001
-  ).setDepth(config.depth || 205)
+  const width = frame.w * config.w, height = frame.h * config.h;
+  // Persistent, soft neon frames reveal office interactions on touch screens.
+  // An unfilled image hotspot is almost impossible to discover on a phone.
+  const box = add(scene.add.rectangle(p.x, p.y, width, height,
+    0x43dfff, 0.055)
+    .setStrokeStyle(2, config.color || 0x7ce5ff, 0.75)
+    .setDepth(config.depth || 205)
     .setInteractive({ useHandCursor: true }));
-
+  scene.tweens.add({
+    targets: box, alpha: {from: 0.60, to: 1},
+    duration: 1250, yoyo: true, repeat: -1,
+  });
   box.on('pointerover', () => {
-    box.setFillStyle(0x43dfff, 0.08);
-    box.setStrokeStyle(2, 0x8beaff, 0.80);
+    box.setFillStyle(0x43dfff, 0.16);
+    box.setStrokeStyle(3, 0xffffff, 1);
   });
   box.on('pointerout', () => {
-    box.setFillStyle(0x43dfff, 0.001);
-    box.setStrokeStyle(0, 0x43dfff, 0);
+    box.setFillStyle(0x43dfff, 0.055);
+    box.setStrokeStyle(2, config.color || 0x7ce5ff, 0.75);
   });
   box.on('pointerdown', config.onActivate);
+  if(config.label){
+    const labelY = p.y + height / 2 - 15;
+    add(scene.add.text(p.x, labelY, config.label, {
+      fontFamily: PIXEL_FONT, fontSize: '7px',
+      color: '#f2faff', backgroundColor: '#071c2bdc',
+      padding: {x: 8, y: 5},
+    }).setOrigin(0.5).setDepth((config.depth || 205) + 1));
+  }
   return box;
 }
 
@@ -254,19 +264,6 @@ export function showOfficePanel(scene) {
   }).setOrigin(0.5).setDepth(215));
   back.on('pointerdown', closeOffice);
 
-  if(scene.registry.get('openingChapter') !== 'magazine'){
-    // Shared Office location for completed-chapter replays. No micro scenes
-    // are ever shown here; Arkon Den keeps those in D) SCENES.
-    const archiveP=point(frame,.848,.055);
-    const archiveButton=add(scene.add.rectangle(archiveP.x,archiveP.y,266,48,0x172d40,.97)
-      .setStrokeStyle(2,0xf7b0d4,.94).setInteractive({useHandCursor:true}).setDepth(214));
-    add(scene.add.text(archiveP.x,archiveP.y,
-      scene.registry.get('gameMode')==='arkonStory'?'RECOUNT STORY  >':'STORY ARCHIVE  >',{
-      fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
-    }).setOrigin(.5).setDepth(215));
-    archiveButton.on('pointerdown',()=>scene.registry.get('gameMode')==='arkonStory'
-      ? showArkonStoryArchivePanel(scene) : showStoryArchivePanel(scene));
-  }
 
   const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
   // One canonical Issue 01 viewer for the first read and every later visit.
@@ -306,6 +303,12 @@ export function showOfficePanel(scene) {
     if (!achievement.visible || !scene.textures.exists(region.key)) return;
 
     const x = frame.x + frame.w * (flagStartX + flagGap * index);
+    const flagGlow=add(scene.add.rectangle(
+      x, flagTop + flagHeight / 2, flagWidth + 12, flagHeight + 13,
+      0x43dfff, 0.035
+    ).setStrokeStyle(2, 0xa5e7ff, 0.82).setDepth(197));
+    scene.tweens.add({targets:flagGlow,alpha:{from:.55,to:1},
+      duration:1450+index*80,yoyo:true,repeat:-1});
     const flag = add(scene.add.image(x, flagTop, region.key)
       .setOrigin(0.5, 0)
       .setDisplaySize(flagWidth, flagHeight)
@@ -354,6 +357,11 @@ export function showOfficePanel(scene) {
       0.36
     ).setAngle(0).setDepth(199));
 
+    const magazineGlow=add(scene.add.rectangle(
+      coverP.x, coverP.y, coverW + 18, coverH + 18, 0x43dfff, 0.04
+    ).setStrokeStyle(2,0x9eeeff,.92).setDepth(201));
+    scene.tweens.add({targets:magazineGlow,alpha:{from:.60,to:1},
+      duration:1050,yoyo:true,repeat:-1});
     const cover = add(scene.add.image(coverP.x, coverP.y, issue.coverKey)
       .setDisplaySize(coverW, coverH)
       .setAngle(0)
@@ -372,10 +380,11 @@ export function showOfficePanel(scene) {
     cover.on('pointerdown', openMagazine);
   }
 
-  // Transparent, hover-revealed interaction zones preserve the authored
-  // office artwork while making the display areas reliable on touch screens.
+  // Always-visible touch zones identify the storage/display areas.
+  // The authored office background and shelf contents are unchanged.
   addHotspot(scene, add, frame, {
     x: 0.115, y: 0.285, w: 0.17, h: 0.24,
+    label: 'CAR HISTORY',
     onActivate: () => showCarHistoryLedger(scene),
   });
   const trophyRecord=getOfficeTrophyRecord(scene.registry.get('proCircuit'));
@@ -391,18 +400,32 @@ export function showOfficePanel(scene) {
   }
   addHotspot(scene, add, frame, {
     x: 0.84, y: 0.52, w: 0.25, h: 0.37,
+    label: 'TROPHY CASE',
     onActivate: () => showOfficePopup(scene,'TROPHY CASE',
       getOfficeTrophyLines(scene.registry.get('proCircuit'))),
   });
   addHotspot(scene, add, frame, {
     // Exact bottom-right CAR COUPONS register: sign + coupon cards.
     // Keep this above the broad trophy area so taps always resolve here.
-    x: 0.765, y: 0.815, w: 0.155, h: 0.18,
-    depth: 220,
+    x: 0.756, y: 0.815, w: 0.145, h: 0.18,
+    depth: 220, color: 0xffd38a,
     onActivate: () => {
       if (typeof scene.showCouponsPopup === 'function') {
         scene.showCouponsPopup();
       }
     },
   });
+  // Book-filled lower-right drawer, beside the coupon register (not at the
+  // top of the scene). Both Career and Aruken Story have a recount here.
+  if (scene.registry.get('openingChapter') !== 'magazine') {
+    addHotspot(scene, add, frame, {
+      x: 0.908, y: 0.815, w: 0.15, h: 0.18,
+      depth: 221, color: 0xffb4d9,
+      label: scene.registry.get('gameMode') === 'arkonStory'
+        ? 'RECOUNT STORY' : 'STORY ARCHIVE',
+      onActivate: () => scene.registry.get('gameMode') === 'arkonStory'
+        ? showArkonStoryArchivePanel(scene)
+        : showStoryArchivePanel(scene),
+    });
+  }
 }
