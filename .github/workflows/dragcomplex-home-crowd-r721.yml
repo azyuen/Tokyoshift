@@ -1,0 +1,37 @@
+name: Drag Complex crowd backgrounds R721
+
+on:
+  push:
+    branches: [feature/dragcomplex-dynamic-crowds-20261030]
+  pull_request:
+    paths:
+      - 'src/data/dragComplexHomeVenue.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'assets/CentralTokyo/*.png'
+      - 'assets/CentralTokyo/dragcomplex/*.png'
+      - 'docs/background-audit/inventory.json'
+      - 'tests/dragcomplex-home-crowd-r721.mjs'
+      - 'tests/dragstrip-parent-cleanup-r456.mjs'
+      - '.github/workflows/dragcomplex-home-crowd-r721.yml'
+
+jobs:
+  crowd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/data/dragComplexHomeVenue.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/data/centralTokyo.js
+      - name: Verify progression, art, and retired duplicates
+        run: node --test tests/dragcomplex-home-crowd-r721.mjs tests/dragstrip-parent-cleanup-r456.mjs
+      - name: Preserve five-part live race renderer
+        run: node --test tests/dragstrip-venue-variants-r455.mjs
+      - name: Preserve background inventory
+        run: node --test tests/background-viewport-r645.mjs
