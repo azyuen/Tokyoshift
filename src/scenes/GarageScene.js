@@ -147,7 +147,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261029-r719';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261030-r724';
 import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r686';
 import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261025-r686';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
