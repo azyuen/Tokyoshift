@@ -113,7 +113,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261014-r501';
+} from '../data/centralTokyo.js?v=20261030-r721';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
