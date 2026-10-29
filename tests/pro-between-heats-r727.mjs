@@ -90,5 +90,5 @@ test('no next-opponent teaser or prep choice after final win or elimination',()=
   assert.equal(win.nextState,null);
   assert.equal(loss.nextState,null);
   assert.match(race,/if\(paidNextDriver\)\{/);
-  assert.match(race,/if\(!next \|\| !cars\[next\.round\.carId\]\) return false/);
+  assert.match(race,/if\s*\(!next \|\| !cars\[next\.round\.carId\]\) return false/);
 });
