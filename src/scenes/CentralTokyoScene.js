@@ -71,6 +71,7 @@ import {
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { getWorldPhase, getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
+import { resolveDragComplexHomeBackground } from '../data/dragComplexHomeVenue.js?v=20261030-r721';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   applyMarketPriceDifficulty,
@@ -112,7 +113,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261014-r501';
+} from '../data/centralTokyo.js?v=20261030-r721';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -218,6 +219,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   getLocationBackgroundConfig(location, phase = this.worldPhase || getWorldPhase()) {
     const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
+
+    if (location?.kind === 'proDrag') {
+      // The main-page grandstands respond to the highlighted event, the saved
+      // player's pro ranking and their season history. First invite = empty.
+      // Resolve day and night for the SAME crowd tier during this render.
+      const events = this.getProDragEvents();
+      const selected = events[Math.max(0, Math.min(
+        Number(this.selectedEventIndex) || 0, events.length - 1,
+      ))] || null;
+      return resolveDragComplexHomeBackground({
+        phase: safePhase,
+        circuit: this.registry.get('proCircuit'),
+        event: selected,
+        accessGranted: getProCircuitAccess(this.registry).unlocked || isArkonDen(this.registry),
+      });
+    }
 
     if (location?.kind === 'autoMarket') {
       const room = ['new', 'used'].includes(this.autoMarketRoom)
@@ -945,6 +962,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
       0x020812,
       location?.kind === 'autoMarket' ? 0.035 : 0.08
     ).setDepth(-8));
+
+    if (location?.kind === 'proDrag') {
+      // Keep only two home textures (day/night) for the selected crowd.
+      // This runs AFTER the old scene image was destroyed by clearContent().
+      // The race scene's five-part dragstrip textures are unaffected.
+      const retained = new Set(this.getLocationBackgroundConfigs(location).map(bg => bg.key));
+      Object.keys(this.textures.list).forEach(key => {
+        if (/^centralTokyoDrag(Empty|Half|Full)(Day|Night)Bg$/.test(key) && !retained.has(key))
+          this.textures.remove(key);
+      });
+    }
   }
 
   drawNavigation(title, subtitle) {

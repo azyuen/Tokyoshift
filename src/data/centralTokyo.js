@@ -74,11 +74,12 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     label: 'TOKYO DRAG COMPLEX',
     shortLabel: 'DRAG COMPLEX',
     kind: 'proDrag',
-    backgroundKey: 'centralTokyoDragBg',
-    backgroundPath: 'assets/CentralTokyo/tokyo_drag_strip_at_night.png',
+    // Safe first-visit fallback; the scene chooses empty/half/full for real.
+    backgroundKey: 'centralTokyoDragEmptyNightBg',
+    backgroundPath: 'assets/CentralTokyo/dragcomplex/dragstrip_empty_night.png',
     phaseBackgrounds: {
-      day: { key: 'centralTokyoDragDayBg', path: 'assets/CentralTokyo/tokyo_dragstrip_day.png' },
-      night: { key: 'centralTokyoDragNightBg', path: 'assets/CentralTokyo/tokyo_dragstrip_night.png' },
+      day: { key: 'centralTokyoDragEmptyDayBg', path: 'assets/CentralTokyo/dragcomplex/dragstrip_empty_day.png' },
+      night: { key: 'centralTokyoDragEmptyNightBg', path: 'assets/CentralTokyo/dragcomplex/dragstrip_empty_night.png' },
     },
     winsRequired: 0,
     championshipsRequired: 0,
