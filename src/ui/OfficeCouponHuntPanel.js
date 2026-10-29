@@ -130,8 +130,9 @@ export function showOfficeCouponHunt(scene) {
     }else{
       const available=targets.filter(t=>t.unlocked);
       const preferred=available.length?available:targets;
-      txt(813,590,preferred.slice(0,2).map(t=>t.regionName+
-        ' ('+t.eligibleMeetCount+' possible meets)').join('   /   '),
+      txt(813,590,preferred.slice(0,2).map(t=>t.regionName+' / '+
+        (t.huntTier==='REGIONAL FAVOURITE'?'FAVOURITE':
+          t.huntTier==='CLASS MATCH'?'CLASS MATCH':'RARE')).join('   /   '),
         12,false,'#b4cbd8',detailNodes);
       txt(813,614,available.length?'Others may be locked.':'Unlock regions for more leads.',
         11,false,'#9ab3c4',detailNodes);
