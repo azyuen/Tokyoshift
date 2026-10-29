@@ -148,7 +148,7 @@ export function getStreetShowdownCouponHunts(carId,source) {
       : 'RARE WILDCARD';
     const unlocked=matching.filter(loc=>isTravelLocationUnlocked(source,loc.id));
     const suggested=unlocked.find(loc=>favourites.includes(loc))||
-      favourites[0]||unlocked[0]||matching[0];
+      unlocked[0]||favourites[0]||matching[0];
     return {
       regionId,regionName:region.label,
       locationId:suggested.id,locationName:suggested.label,
