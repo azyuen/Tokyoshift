@@ -17,6 +17,7 @@ import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261029-r713';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
+import { getProRaceRivalPaint } from '../data/proRacePaint.js?v=20261030-r726';
 
 const W=1560,H=840;
 const PIXEL='"Silkscreen", monospace', BODY='"Rajdhani", sans-serif', DISPLAY='"Exo 2", sans-serif';
@@ -302,7 +303,12 @@ function draw(s,state,options){
   text(231,775,'CLASS',10,'#b1cddb',true);
   text(326,771,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
   // Approximately a third of a preview car-length left and slightly higher.
-  safeCarPreview(round.carId,545,743,211,225,round.opponentBuildState||{});
+  safeCarPreview(round.carId,545,743,211,225,{
+    ...(round.opponentBuildState||{}),
+    // FourLaneTestScene paints the first opponent in every individual
+    // Open Circuit/Trophy heat with this exact colour (not factory white).
+    paintColor:getProRaceRivalPaint(0),
+  });
 
   // Translucent breathing hotspots: identical alpha/timing language to
   // Warehouse HQ's Office / Crew / Dyno hotspots, not filled menu buttons.
@@ -431,7 +437,7 @@ function draw(s,state,options){
     dismiss();
     popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.47)
       .setDepth(269).setInteractive());
-    const x=377,y=46,w=891,h=738,side=36,mid=206;
+    const x=377,y=46,w=1140,h=738,side=36,mid=206;
     const half=side/2,tip=Math.sqrt(3)*side/2;
     const points=[
       {x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},
@@ -447,7 +453,7 @@ function draw(s,state,options){
       .setDepth(273));
     if(description)popupAdd(s.add.text(x+25,y+89,description,{
       fontFamily:BODY,fontSize:'18px',fontStyle:'600',
-      color:'#dceaf3',wordWrap:{width:w-58},lineSpacing:4,
+      color:'#dceaf3',wordWrap:{width:835},lineSpacing:4,
     }).setDepth(274));
   }
   function modalBtn(x,y,w,label,action,red=false){
@@ -464,26 +470,39 @@ function draw(s,state,options){
   // No guessed percentages or free 'dyno' result: official Stage I graph runs
   // remain a separate service and invalidate when parts are changed.
   function addLiveEngineeringMetrics(initialState) {
-    const panel=popupAdd(s.add.rectangle(820,229,820,64,0x11283a,.96)
-      .setStrokeStyle(1,0x4598b4,.85).setDepth(272));
-    const cols=[
-      {x:450,label:'POWER',field:'power'},
-      {x:640,label:'TORQUE',field:'torque'},
-      {x:830,label:'WEIGHT',field:'mass'},
-      {x:1040,label:'SCRUTINEERING',field:'status'},
+    // Keep all vehicle references in a dedicated RIGHT-HAND column.
+    // The three tune rows and part-level controls occupy x=407..1233;
+    // no stat box or label may overlap those interactive controls.
+    const railX=1276,railY=216,railW=226,railH=455;
+    popupAdd(s.add.rectangle(railX+railW/2,railY+railH/2,
+      railW,railH,0x11283a,.97)
+      .setStrokeStyle(1,0x4598b4,.92).setDepth(272));
+    popupAdd(s.add.text(railX+15,railY+17,'LIVE CAR STATS',{
+      fontFamily:PIXEL,fontSize:'10px',color:'#9ee3f9',
+    }).setDepth(275));
+    const rows=[
+      {label:'POWER',field:'power',y:railY+82},
+      {label:'TORQUE',field:'torque',y:railY+169},
+      {label:'WEIGHT',field:'mass',y:railY+256},
+      {label:'SCRUTINEERING',field:'status',y:railY+343},
     ];
-    const readouts=cols.map(col=>{
-      popupAdd(s.add.text(col.x,207,col.label,{
+    const readouts=rows.map((row,index)=>{
+      if(index)popupAdd(s.add.rectangle(railX+railW/2,row.y-17,
+        railW-30,1,0x3c6b80,.65).setDepth(273));
+      popupAdd(s.add.text(railX+15,row.y-12,row.label,{
         fontFamily:PIXEL,fontSize:'9px',color:'#9cc3d2',
       }).setDepth(275));
-      return {...col,node:popupAdd(s.add.text(col.x,232,'—',{
-        fontFamily:BODY,fontSize:'20px',fontStyle:'700',color:'#ffffff',
+      return {...row,node:popupAdd(s.add.text(railX+15,row.y+12,'—',{
+        fontFamily:BODY,
+        fontSize:row.field==='status'?'16px':'24px',
+        fontStyle:'700',color:'#ffffff',
+        wordWrap:{width:railW-30},
       }).setDepth(275))};
     });
-    popupAdd(s.add.text(820,262,
-      'LIVE VEHICLE MODEL // SAVED STAGE I DYNO READINGS REQUIRE A NEW PULL', {
-        fontFamily:PIXEL,fontSize:'8px',color:'#9aafbc',
-      }).setOrigin(.5).setDepth(275));
+    popupAdd(s.add.text(railX+15,railY+railH-32,'LIVE MODEL // STAGE I\nDYNO NEEDS A NEW PULL',{
+      fontFamily:PIXEL,fontSize:'7px',color:'#9aafbc',
+      lineSpacing:2,wordWrap:{width:railW-30},
+    }).setDepth(275));
     const update=preview=>{
       let config=null;
       try{config=getVehiclePerformance(getBaseCarId(state.playerCarId),preview)?.car||null;}
@@ -502,7 +521,7 @@ function draw(s,state,options){
       readouts.forEach(entry=>{
         entry.node.setText(values[entry.field]).setColor(
           entry.field==='status'?(check.eligible?'#81efc4':'#ffb6ba'):'#ffffff');
-        fit(entry.node,entry.field==='status'?203:170);
+        fit(entry.node,railW-30);
       });
       return check;
     };

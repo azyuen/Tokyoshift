@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/data/proDriverBriefing.js'
       - 'src/ui/ProDriverBriefing.js'
+      - 'src/data/proRacePaint.js'
+      - 'tests/pro-briefing-paint-metrics-r726.mjs'
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'tests/open-driver-briefing-r598.mjs'
@@ -33,6 +35,8 @@ on:
     paths:
       - 'src/data/proDriverBriefing.js'
       - 'src/ui/ProDriverBriefing.js'
+      - 'src/data/proRacePaint.js'
+      - 'tests/pro-briefing-paint-metrics-r726.mjs'
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'tests/open-driver-briefing-r598.mjs'
@@ -70,9 +74,26 @@ jobs:
           node --check src/data/proDriverBriefing.js
           node --check src/data/proSeason.js
           node --check src/ui/ProDriverBriefing.js
+          node --check src/data/proRacePaint.js
           node --check src/ui/ProBriefingChrome.js
           node --check src/scenes/CentralTokyoScene.js
           node --check src/scenes/FourLaneTestScene.js
           node --check src/vehicles/VehiclePerformance.js
       - name: Open Circuit driver briefing tests
-        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/open-driver-briefing-r603.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-lifecycle-r605.mjs tests/drag-complex-briefing-r606.mjs tests/drag-briefing-interactions-r607.mjs tests/pro-briefing-layout-r608.mjs tests/pro-briefing-unified-heat-r609.mjs tests/pro-briefing-layout-r610.mjs tests/pro-driver-setup-r630.mjs tests/pro-crew-visual-r596.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs
+        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/open-driver-briefing-r603.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-lifecycle-r605.mjs tests/drag-complex-briefing-r606.mjs tests/drag-briefing-interactions-r607.mjs tests/pro-briefing-layout-r608.mjs tests/pro-briefing-unified-heat-r609.mjs tests/pro-briefing-layout-r610.mjs tests/pro-driver-setup-r630.mjs tests/pro-briefing-paint-metrics-r726.mjs tests/pro-crew-visual-r596.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs
+
+  paint-and-metrics-r726:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse affected UI and racing modules
+        run: |
+          node --check src/ui/ProDriverBriefing.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/data/proRacePaint.js
+      - name: Match opponent race paint and verify unobstructed vertical metrics
+        run: node --test tests/pro-briefing-paint-metrics-r726.mjs

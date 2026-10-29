@@ -29,7 +29,7 @@ test('R606 both event preparations use the same loading title',()=>{
 
 test('R606 Daichi panel is to his right, with exact requested header/copy',()=>{
  assert.match(ui,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
- assert.match(ui,/const x=377,y=46,w=891,h=738/);
+ assert.match(ui,/const x=377,y=46,w=1140,h=738/);
  assert.match(ui,/mechanicDialogue\('DAICHI \/\/ CAR SETUP'/);
  assert.match(ui,/Temporarily fit lower owned part levels/);
  assert.match(ui,/STAGE3_CALIBRATION_OPTIONS\[entry\.key\]\.forEach/);
