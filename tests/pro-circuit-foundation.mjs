@@ -45,7 +45,8 @@ test('venue unlock and professional event unlock are separate: genuine seven rec
     { characterId: REGIONAL_CREW_ROSTERS[regionId].members[0].characterId },
   ]));
   assert.equal(getProCircuitAccess({ crewMembers: {} }).unlocked, false);
-  assert.equal(getProCircuitAccess({ crewMembers }).unlocked, true);
+  // Seven recruits alone do not unlock the post-regional professional invitation.
+  assert.equal(getProCircuitAccess({ crewMembers }).unlocked, false);
   assert.equal(getProCircuitAccess({ crewMembers }).crewCount, 7);
   const partialCrew = { ...crewMembers };
   delete partialCrew.SHINJUKU;
