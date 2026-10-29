@@ -51,3 +51,17 @@ test('nonqualification reflection is honest and does not promise automatic entry
   assert.match(all,/Driver and Crew events/);
   assert.doesNotMatch(all,/guarantee|automatically|free title|\bqualified\b/i);
 });
+
+test('R718 production boot uses fresh narrative imports without wiping the large image cache',()=>{
+  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+  const version=JSON.parse(read('version.json'));
+  assert.equal(version.build,'R718');
+  assert.match(read('index.html'),/id="build-stamp">R718/);
+  assert.match(read('index.html'),/main\.js\?v=20261029-r718/);
+  assert.match(read('sw.js'),/const BUILD = 'R718'/);
+  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
+  assert.match(read('src/main.js'),/CentralTokyoScene\.js\?v=20261029-r718/);
+  assert.match(read('src/scenes/CentralTokyoScene.js'),/ProSeasonPanel\.js\?v=20261029-r718/);
+  assert.match(read('src/ui/ProSeasonPanel.js'),/MangaCutscene\.js\?v=20261029-r718/);
+  assert.match(read('src/ui/MangaCutscene.js'),/cutscenes\.js\?v=20261029-r718/);
+});
