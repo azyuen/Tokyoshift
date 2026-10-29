@@ -48,7 +48,7 @@ export function getProCrewHeatAdvice(fixture,units){
   const rivalCar=cars[rival?.carId]||{};
   const carName=rivalCar.shortName||rivalCar.name||rival?.carId||'their car';
   const drivetrain=String(rivalCar.drivetrain||rivalCar.drive||'').toUpperCase();
-  const rivalNote=drivetrain.includes('AWD')||drivetrain.includes('4WD')
+  const rivalNote=drivetrain.includes('AWD')||drivetrain.includes('4WD')||drivetrain==='FOUR_WHEEL_DRIVE'
     ? 'Expect four-wheel-drive traction away from the line.'
     : drivetrain==='FR'||drivetrain==='RWD'
     ? 'Rear-drive grip on launch will be their biggest variable.'
