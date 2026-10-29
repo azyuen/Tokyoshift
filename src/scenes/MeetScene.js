@@ -81,7 +81,8 @@ import {
   createStreetShowdownRounds,
   STREET_SHOWDOWN_CASH_ENTRY_FEES,
   getStreetShowdownCouponEntryFee,
-} from '../data/streetShowdowns.js?v=20261016-showdown-fees';
+} from '../data/streetShowdowns.js?v=20261029-r716';
+import { getStreetShowdownScheduledOffer, getStreetShowdownScheduleSlot } from '../data/streetShowdownCouponHunt.js?v=20261029-r716b';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
@@ -3984,7 +3985,9 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   getCompetitionRefreshToken() {
-    return Number(this.registry.get('meetRefreshAt') || this.nextRefreshAt || 0);
+    // Street Showdowns now use the existing 15-minute WorldClock slot.
+    // Ordinary Meet rival rosters retain their independent 3-minute rhythm.
+    return getStreetShowdownScheduleSlot().rotationIndex;
   }
 
   generateCompetitionOffer() {
@@ -3999,13 +4002,18 @@ export default class MeetScene extends Phaser.Scene {
       ELITE: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.ELITE, cashPrize: 70000 },
     }[difficulty] || { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.MED, cashPrize: 32000 };
 
-    const owned = this.registry.get('ownedCarIds') || [];
     const playerCarId = this.registry.get('selectedCarId');
     const playerState = (this.registry.get('carStates') || {})[playerCarId] || {};
     const playerDifficulty = this.registry.get('playerDifficulty') || 'STANDARD';
     const refreshToken = this.getCompetitionRefreshToken();
-    const preferCouponPrize =
-      Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
+    // The Office and Meet inspect the same lightweight, deterministic prize
+    // schedule; changing car, visiting another area, or reloading cannot reroll
+    // a coupon advertised on the current day/night WorldClock slot.
+    const scheduled=getStreetShowdownScheduledOffer(this.selectedMeetLocation,
+      {rotationIndex:refreshToken});
+    if(!scheduled)return null;
+    const couponCarPool=scheduled.prizeType==='COUPON'
+      ? [scheduled.prizeCarId] : [];
 
     const usedCharacters = [];
     const raceTypes = Array.from({ length: 3 }, () =>
@@ -4017,23 +4025,23 @@ export default class MeetScene extends Phaser.Scene {
     const wins = Math.max(0, Number(this.registry.get('wins') || 0));
     const generatePrizeRounds = prizeType => createStreetShowdownRounds({
       garageTier, wins, playerCarId, playerState, playerDifficulty, raceTypes,
-      prizeType, baseCashPrize: settings.cashPrize,
+      prizeType, baseCashPrize: settings.cashPrize, couponCarPool,
       seed: ['street-showdown', this.selectedMeetLocation, refreshToken, playerCarId].join(':'),
     });
-    let prizeType = preferCouponPrize ? 'COUPON' : 'CASH';
+    let prizeType = scheduled.prizeType;
     let physicalRounds = generatePrizeRounds(prizeType);
     if (physicalRounds.length !== 3) return null;
-    let prizeCarId = prizeType === 'COUPON' ? physicalRounds[2]?.carId : null;
+    let prizeCarId = prizeType === 'COUPON' ? scheduled.prizeCarId : null;
 
     // Not every candidate car issues coupons. Never sell a coupon-strength
     // showdown for a cash prize merely because its chosen final car cannot
     // award coupons; instead build a real cash-strength event.
-    if (prizeType === 'COUPON' && !(prizeCarId && getCarCouponRequirement(prizeCarId) > 0)) {
-      prizeType = 'CASH';
-      prizeCarId = null;
-      physicalRounds = generatePrizeRounds('CASH');
-      if (physicalRounds.length !== 3) return null;
-    }
+    // A published coupon prize must never silently change on arrival.
+    // A missing competitive build makes the invitation unavailable instead
+    // of turning a promised coupon into cash.
+    if (prizeType === 'COUPON' &&
+        !(prizeCarId && getCarCouponRequirement(prizeCarId)>0 &&
+          physicalRounds[2]?.carId===prizeCarId)) return null;
 
     const rounds = physicalRounds.map(physical => {
       const rating = physical.encounterRating;
@@ -4074,7 +4082,7 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     return {
-      id: this.selectedMeetLocation + ':' + String(refreshToken || Date.now()),
+      id: this.selectedMeetLocation + ':' + refreshToken + ':' + playerCarId,
       locationId: this.selectedMeetLocation,
       difficulty,
       entryFee,
@@ -4084,14 +4092,15 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R20261016-fees',
+      balanceVersion: 'R716-clock-class-coupons',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
       playerDifficulty,
       tuningFingerprint: JSON.stringify(playerState),
+      scheduleRotation: refreshToken,
       meetRefreshAt: refreshToken,
-      refreshAt: refreshToken,
+      refreshAt: getStreetShowdownScheduleSlot().nextEventAt,
     };
   }
 
@@ -4099,7 +4108,7 @@ export default class MeetScene extends Phaser.Scene {
     const offers = { ...(this.registry.get('competitionOffers') || {}) };
     const current = offers[this.selectedMeetLocation];
     const refreshToken = this.getCompetitionRefreshToken();
-    const refreshChanged = Number(current?.meetRefreshAt || 0) !== refreshToken;
+    const refreshChanged = Number(current?.scheduleRotation ?? -1) !== refreshToken;
     const legacyDirectCarPrize = current?.prizeType === 'CAR';
     const expired =
       !current ||
@@ -4107,7 +4116,7 @@ export default class MeetScene extends Phaser.Scene {
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
       !this.isCompetitionOfferRosterValid(current) ||
-      current?.balanceVersion !== 'R20261016-fees' ||
+      current?.balanceVersion !== 'R716-clock-class-coupons' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||

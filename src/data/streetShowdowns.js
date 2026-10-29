@@ -182,6 +182,11 @@ export function createStreetShowdownRounds(options = {}) {
     : baselineTargets;
   const usedCars = new Set();
   const rounds = [];
+  // Only the coupon prize rival is region-specific. First two heats and
+  // the approved physical performance model remain untouched.
+  const couponPool = couponEvent && Array.isArray(options.couponCarPool)
+    ? new Set(options.couponCarPool.filter(id=>cars[id]&&carOrder.includes(id)))
+    : null;
 
   for (let roundIndex = 0; roundIndex < 3; roundIndex += 1) {
     const raceType = options.raceTypes?.[roundIndex] || 'Standing Start';
@@ -193,6 +198,7 @@ export function createStreetShowdownRounds(options = {}) {
     const candidates = [];
 
     for (const carId of carOrder) {
+      if (roundIndex === 2 && couponPool?.size && !couponPool.has(carId)) continue;
       const config = cars[carId];
       if (!config || config.collector || config.tuningLocked || config.crewLoan) continue;
       const archetype = chooseRivalBuildArchetype(config, driverRatings[roundIndex], {
@@ -218,7 +224,24 @@ export function createStreetShowdownRounds(options = {}) {
 
     if (!candidates.length) return [];
     candidates.sort((a, b) => a.score - b.score);
-    const best = candidates[0];
+    let best = candidates[0];
+    if (couponEvent && roundIndex===2 && couponPool?.size) {
+      // Include close-performance regional cars rather than always picking
+      // the single mathematically nearest model. Rotation is seeded by the
+      // existing offer token, stable across save/resume and refresh cycles.
+      const perModel=new Map();
+      for(const candidate of candidates)if(!perModel.has(candidate.carId))
+        perModel.set(candidate.carId,candidate);
+      const near=[...perModel.values()].filter(entry=>entry.score<=best.score+0.14)
+        .slice(0,8);
+      if(near.length>1){
+        let hash=2166136261;
+        for(const char of seed+':coupon-final'){
+          hash=Math.imul(hash^char.charCodeAt(0),16777619);
+        }
+        best=near[(hash>>>0)%near.length];
+      }
+    }
     usedCars.add(best.carId);
     rounds.push({
       carId: best.carId,

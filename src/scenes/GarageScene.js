@@ -1,3 +1,4 @@
+import { showOfficeCouponHunt } from '../ui/OfficeCouponHuntPanel.js?v=20261029-r716';
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import {canArkonCh7BuyStoryParts} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {
@@ -79,7 +80,6 @@ import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Ch
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
-  getCarCouponRequirement,
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
@@ -1714,97 +1714,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showCouponsPopup() {
-    const coupons = this.registry.get('carCoupons') || {};
-    const entries = carOrder
-      .filter(carId => cars[carId] && Number(coupons[carId] || 0) > 0)
-      .map(carId => ({
-        carId,
-        count: Math.max(0, Math.floor(Number(coupons[carId] || 0))),
-        required: Math.max(1, Number(getCarCouponRequirement(carId) || 2)),
-      }));
-
-    const depth = 270;
-    const objects = [];
-    const add = obj => {
-      objects.push(obj);
-      return obj;
-    };
-    const close = () => objects.forEach(obj => obj?.destroy?.());
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
-      .setDepth(depth)
-      .setInteractive());
-
-    add(this.add.rectangle(780, 420, 700, 570, 0x08131f, 0.995)
-      .setStrokeStyle(2, 0x43dfff, 1)
-      .setDepth(depth + 1));
-
-    add(this.add.text(470, 170, 'CAR COUPONS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '14px',
-      color: '#eefaff',
-    }).setDepth(depth + 2));
-
-    add(this.add.text(470, 212, 'Only coupon cars you have discovered are shown here.', {
-      fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#a7bdca',
-      fontStyle: '600',
-    }).setDepth(depth + 2));
-
-    if (!entries.length) {
-      add(this.add.text(780, 390, 'NO CAR COUPONS YET', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#708694',
-      }).setOrigin(0.5).setDepth(depth + 2));
-    } else {
-      entries.slice(0, 7).forEach((entry, index) => {
-        const y = 275 + index * 48;
-        const complete = entry.count >= entry.required;
-
-        add(this.add.rectangle(
-          780,
-          y,
-          610,
-          38,
-          complete ? 0x112a26 : 0x0d1b29,
-          1
-        ).setStrokeStyle(1, complete ? 0x62e8c7 : 0x315470, 1)
-          .setDepth(depth + 2));
-
-        add(this.add.text(500, y, cars[entry.carId].shortName, {
-          fontFamily: PIXEL_FONT,
-          fontSize: '8px',
-          color: '#eef8ff',
-        }).setOrigin(0, 0.5).setDepth(depth + 3));
-
-        add(this.add.text(
-          1060,
-          y,
-          entry.count + ' / ' + entry.required + (complete ? '  //  READY' : ''),
-          {
-            fontFamily: PIXEL_FONT,
-            fontSize: '7px',
-            color: complete ? '#86efd7' : '#a7c6d8',
-          }
-        ).setOrigin(1, 0.5).setDepth(depth + 3));
-      });
-    }
-
-    const closeButton = add(this.add.rectangle(780, 650, 190, 46, 0x151d28, 1)
-      .setStrokeStyle(1, 0x657d8c, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-
-    add(this.add.text(780, 650, 'CLOSE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#c4d5df',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    closeButton.on('pointerdown', close);
-    blocker.on('pointerdown', close);
+    return showOfficeCouponHunt(this);
   }
 
   buildCarLabel() {
