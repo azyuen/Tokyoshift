@@ -1054,6 +1054,30 @@ export const CUTSCENES = {
   // seven-member crew. She is a family friend, NOT the player's father's strategist.
   // Lightweight, skippable Career v1 Championship milestones. The official
   // result and rewards are already saved before any victory dialogue appears.
+  // Played from the final eight-round season report ONLY if neither
+  // discipline's combined qualification requirements have been fully met.
+  // A season-specific historyId lets each failed season have one reflection.
+  proSeasonNotQualified: {
+    id: 'proSeasonNotQualified',
+    category: 'PRO CIRCUIT / CAREER',
+    testerLabel: 'Pro Season — Missed Tokyo Qualification',
+    title: 'PRO SEASON // NOT QUALIFIED',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'track',
+        text: "The eight rounds are finished. We haven't met both qualification targets for Tokyo this season." },
+      { speaker: 'right', pose: 'idle',
+        text: "So there's no Championship invitation this time." },
+      { speaker: 'left', pose: 'track',
+        text: "That's right. We can review where we lost points, then plan which Driver and Crew events to enter next season." },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "I'll go through the car setups. The workshop's still here. We've got another season ahead of us." },
+      { speaker: 'right', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "Then let's see what we can improve." },
+    ],
+    finalActionLabel: 'VIEW SEASON REPORT',
+  },
   tokyoChampionshipOpening: {
     id: 'tokyoChampionshipOpening',
     category: 'TOKYO CHAMPIONSHIP / CAREER',
@@ -1307,6 +1331,7 @@ export const CUTSCENE_ORDER = [
   'dragComplexInvitation',
   'competitionIntroduction',
   'competitionChampion',
+  'proSeasonNotQualified',
   'tokyoChampionshipOpening',
   'tokyoChampionshipVictory',
   'tokyoChampionshipDefeat',
