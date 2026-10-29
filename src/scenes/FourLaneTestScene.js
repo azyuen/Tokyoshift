@@ -1,7 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r724';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261029-r714';
+import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r727';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -13,7 +13,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261026-r687';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261022-r635';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -303,6 +303,30 @@ export default class FourLaneTestScene extends RaceScene {
         const asset = getCharacterVisualAsset(playerId, pose, { proCircuit: true });
         if (asset?.key && asset.path) {
           loadImage(asset.key, getCharacterAssetUrl(asset.path));
+        }
+      }
+    }
+    // Prepare only the next driver's lightweight portrait while this heat
+    // loads. No next-car textures are queued: the result card must not add
+    // substantial delay to race startup or trigger a second loading screen.
+    if (this.proDuelInfo && isOpenDriverBriefing(this.proDuelState)) {
+      const nextIndex = Number(this.proDuelState.roundIndex) + 1;
+      const nextRound = this.proDuelState.rounds?.[nextIndex];
+      if (nextRound && cars[nextRound.carId]) {
+        const character = characters[nextRound.characterId] || {};
+        if (nextRound.mainRivalTier || character.mainRival) {
+          const asset = getCharacterVisualAsset(nextRound.characterId, 'idle', {
+            playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
+            rivalContext: true, proCircuit: true,
+          });
+          if (asset?.key && asset.path)
+            loadImage(asset.key, getCharacterAssetUrl(asset.path));
+        } else {
+          const upcoming = {...this.proDuelState, roundIndex:nextIndex};
+          const index = getProDriverHelmetIndex(upcoming, nextRound);
+          const asset = getProCircuitGenericDriverAsset(index);
+          if (asset?.path)
+            loadImage('proDriverHelmet' + index, getCharacterAssetUrl(asset.path));
         }
       }
     }
@@ -1414,6 +1438,81 @@ export default class FourLaneTestScene extends RaceScene {
     });
   }
 
+  drawProfessionalNextOpponentCard(nextState, depth = 210) {
+    // This is only shown after the current individual heat has ALREADY been
+    // settled. Read the saved next-round snapshot, never guess a rival.
+    const next = getProfessionalDuelRound(nextState);
+    if (!next || !cars[next.round.carId]) return false;
+    const round = next.round;
+    const rival = characters[round.characterId] || {};
+    const car = cars[round.carId];
+    const driverName = String(round.opponentName || rival.name ||
+      round.characterId || 'PRO DRIVER').toUpperCase();
+    const carName = String(car.name || car.shortName || round.carId).toUpperCase();
+    const rule = nextState.briefingRules || {};
+    const text = (x,y,value,size,color='#f4f7fa',pixel=false) =>
+      this.add.text(x,y,value,{fontFamily:pixel?PIXEL:'"Rajdhani",sans-serif',
+        fontSize:size+'px',fontStyle:pixel?'normal':'700',color,
+      }).setDepth(depth+4).setScrollFactor(0);
+
+    // Same angled twin-panel language as the paddock NEXT OPPONENT card.
+    // Positioned below the finish times and left of the two action buttons.
+    const panelPoints=[
+      new Phaser.Geom.Point(583,533),new Phaser.Geom.Point(1191,533),
+      new Phaser.Geom.Point(1163,690),new Phaser.Geom.Point(552,690),
+    ];
+    const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
+    panel.fillStyle(0x071728,.97).fillPoints(panelPoints,true);
+    panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
+    const portraitPoints=[
+      new Phaser.Geom.Point(590,569),new Phaser.Geom.Point(704,569),
+      new Phaser.Geom.Point(689,674),new Phaser.Geom.Point(574,674),
+    ];
+    const frame=this.add.graphics().setDepth(depth+2).setScrollFactor(0);
+    frame.fillStyle(0x165578,.94).fillPoints(portraitPoints,true);
+    frame.lineStyle(3,0x050a10,1).strokePoints(portraitPoints,true);
+    const maskShape=this.make.graphics({add:false});
+    maskShape.fillStyle(0xffffff,1).fillPoints(portraitPoints,true);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>maskShape.destroy());
+    const maskImage=image=>{
+      image.setScrollFactor(0).setMask(maskShape.createGeometryMask());
+      return image;
+    };
+    const mainRival=Boolean(round.mainRivalTier || rival.mainRival);
+    if (!mainRival) {
+      const index=getProDriverHelmetIndex(nextState,round);
+      const key='proDriverHelmet'+index;
+      if(this.textures.exists(key)){
+        const image=this.textures.get(key).getSourceImage();
+        const scale=Math.max(135/Math.max(1,image.width),180/Math.max(1,image.height));
+        maskImage(this.add.image(636,565,key).setOrigin(.5,0)
+          .setScale(scale).setDepth(depth+3));
+      }
+    } else {
+      const portrait=createCharacterProfile(this,{
+        characterId:round.characterId,pose:'idle',x:638,y:629,
+        frameWidth:170,frameHeight:155,side:'center',depth:depth+3,
+        mask:false,rivalContext:true,proCircuit:true,
+        playerCharacterId:this.registry.get('playerCharacterId')||'renMizuno',
+      });
+      if(portrait?.image)maskImage(portrait.image);
+    }
+    text(728,549,'NEXT OPPONENT',13,'#35d6ff',true);
+    text(1108,549,'HEAT '+(next.roundNumber)+' / '+next.totalRounds,
+      9,'#a9c7d6',true).setOrigin(1,0);
+    const name=text(727,579,driverName,21);
+    if(name.width>385)name.setScale(385/name.width);
+    const vehicle=text(727,610,carName,15,'#7fe0f1');
+    if(vehicle.width>395)vehicle.setScale(395/vehicle.width);
+    text(727,638,'POWER CAP',9,'#b1cddb',true);
+    text(855,634,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+    text(993,638,'NOS',9,'#b1cddb',true);
+    text(1065,634,rule.noNos?'NO':'YES',15);
+    text(727,667,'CLASS',9,'#b1cddb',true);
+    text(855,663,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
+    return true;
+  }
+
   showProfessionalMangaResult(standings, outcome) {
     // Unlike the old opaque popup, this is a frozen-race manga tableau in the
     // same visual language as RaceScene's regular end-of-race cutscene.
@@ -1574,7 +1673,7 @@ export default class FourLaneTestScene extends RaceScene {
     const rankCurrent = ranked.find(r => r.id === (this.proCrew?'player:team':'player:driver'))?.seed || 32;
     const rankBefore = outcome?.summary?.rankBefore || rankCurrent;
     const rankAfter = outcome?.summary?.rankAfter || rankCurrent;
-    const rankBadge = this.add.ellipse(470, 557, 138, 116, 0x171619, 0.99)
+    const rankBadge = this.add.circle(470, 557, 66, 0x171619, 0.99)
       .setStrokeStyle(4, 0xcac6c6, 1)
       .setDepth(depth + 12).setScrollFactor(0).setScale(0.25).setAlpha(0);
     this.tweens.add({
@@ -1601,41 +1700,63 @@ export default class FourLaneTestScene extends RaceScene {
         (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
         (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
     }
+    const paidNextDriver = advanced && duel &&
+      isOpenDriverBriefing(this.registry.get('competitionState'));
+    if(paidNextDriver){
+      this.drawProfessionalNextOpponentCard(this.registry.get('competitionState'),depth+3);
+    }
     const nextText = this.proCrew&&outcome?.status==='CREW_HEAT'?
       (outcome.heatNumber<3?'NEXT HEAT':'REVIEW FIXTURE'):
-      advanced&&duel&&isOpenDriverBriefing(this.registry.get('competitionState'))?'NEXT HEAT':
+      paidNextDriver?'NEXT HEAT':
       failure?'RETURN TO COMPLEX // RETRY HEAT':advanced?'NEXT ROUND':'RETURN TO COMPLEX';
-    // R605: dedicated bottom-right button, in addition to ENTER/tap-anywhere.
-    // A single HIGH-depth full-screen hit area, not the old lower-depth
-    // buttons hidden under the manga art. Touch and ENTER share the guard.
+    // The default action (including ENTER) skips the briefing and stages the
+    // next paid race immediately. RACE BRIEFING is an explicit second choice:
+    // it opens the real, saved preparation room for Sayaka/Daichi/Hiroshi.
     let armed = false, navigating = false;
     const tap = this.add.rectangle(780, 360, 1560, 720, 0xffffff, 0.001)
       .setDepth(depth + 95).setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
-    const advance = () => {
+    const navigate = (briefing = false) => {
       if (!armed || navigating) return;
       navigating = true;
       tap.disableInteractive();
-      if(this.proCrew&&outcome?.status==='CREW_HEAT'){
-        this.scene.start('CentralTokyoScene',{
-          locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
-        });
-      } else if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
+      if(briefing && paidNextDriver){
         this.scene.start('CentralTokyoScene',{
           locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,
         });
+      } else if(this.proCrew&&outcome?.status==='CREW_HEAT'){
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+        });
+      } else if (paidNextDriver) {
+        this.scene.restart({mode:'PRO_DUEL'});
       } else if (advanced && (this.proCup || duel)) {
         this.scene.restart({ mode: duel ? 'PRO_DUEL' : 'PRO_CUP' });
       } else this.returnToDrag();
     };
+    const advance = () => navigate(false);
     tap.on('pointerdown', advance);
     const nextHit=this.add.rectangle(1363,678,282,48,0x16364a,.96)
       .setStrokeStyle(2,0x65d9ef,1).setDepth(depth+98).setScrollFactor(0)
-      .setInteractive({useHandCursor:true}).on('pointerdown',advance);
+      .setInteractive({useHandCursor:true})
+      .on('pointerdown',(_pointer,_x,_y,event)=>{
+        event?.stopPropagation?.();advance();
+      });
     const nextLabel=this.add.text(1363,678,nextText,{
       fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+99).setScrollFactor(0);
     if(nextLabel.width>264)nextLabel.setScale(264/nextLabel.width);
+    if(paidNextDriver){
+      const briefingHit=this.add.rectangle(1363,609,282,48,0x102536,.98)
+        .setStrokeStyle(2,0xffbfda,.92).setDepth(depth+98).setScrollFactor(0)
+        .setInteractive({useHandCursor:true})
+        .on('pointerdown',(_pointer,_x,_y,event)=>{
+          event?.stopPropagation?.();navigate(true);
+        });
+      this.add.text(1363,609,'RACE BRIEFING',{
+        fontFamily:PIXEL,fontSize:'12px',color:'#fff1f7',
+      }).setOrigin(.5).setDepth(depth+99).setScrollFactor(0);
+    }
     const enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     enter.on('down', advance);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => enter.off('down', advance));
