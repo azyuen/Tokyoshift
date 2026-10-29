@@ -20,8 +20,8 @@ test('professional roster has stable unique identities and seven canonical rival
   assert.deepEqual(first, second);
   const driverIds = Object.keys(first.drivers);
   const teamIds = Object.keys(first.teams);
-  assert.equal(driverIds.length, 31);
-  assert.equal(teamIds.length, 16);
+  assert.equal(driverIds.length, 23);
+  assert.equal(teamIds.length, 11);
   assert.equal(new Set(driverIds).size, driverIds.length);
   assert.equal(new Set(teamIds).size, teamIds.length);
   for (const characterId of Object.values(MAIN_RIVAL_BY_REGION)) {
