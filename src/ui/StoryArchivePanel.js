@@ -30,7 +30,7 @@ export function showStoryArchivePanel(scene) {
   const dev=Boolean(scene.registry.get('devMode'));
   const chapters=availableStoryChapters(scene.registry,{dev});
   const cleared=chapters.filter(ch=>ch.completed).length;
-  add(scene.add.text(154,148,
+  add(scene.add.text(154,139,
     dev?'DEV VIEW // ALL CHAPTERS':'RELIVE YOUR JOURNEY // '+cleared+' OF '+chapters.length+' CHAPTERS',
     {fontFamily:BODY,fontSize:'15px',color:'#a9c8d9',fontStyle:'700'})
     .setDepth(depth+3).setScrollFactor(0));
@@ -50,20 +50,24 @@ export function showStoryArchivePanel(scene) {
           allowPlayer:true,returnToOffice:true,skipRace:!interactive,
         })
       : id==='chapter09'
-        ? (interactive
-          ? beginProSponsorPlayableReplay(scene,{returnToArchive:true})
-          : startChapter09(scene,{preview:true,onPreviewComplete:()=>{
-              // The non-playable version retains the full Drag Complex
-              // welcome, followed by the sponsor conversations. No race.
-              const intro=playMangaCutscene(scene,'proSponsorIntroduction',{
+        ? startChapter09(scene,{preview:true})
+        : id==='chapter10'
+          ? (interactive
+            ? beginProSponsorPlayableReplay(scene,{
+                returnToArchive:true,includeChapter09Welcome:false,
+              })
+            : Boolean(playMangaCutscene(scene,'proSponsorIntroduction',{
                 preview:true,preloadPagePosesOnly:true,
                 onPreviewComplete:()=>playMangaCutscene(scene,'proSponsorEpilogue',{
                   preview:true,preloadPagePosesOnly:true,
                 }),
-              });
-              if(!intro?.played)console.warn('[Tokyo SHIFT] Sponsor dialogue replay unavailable');
-            }}))
-        : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+              })?.played))
+          : id==='chapter11' || id==='chapter12'
+            ? Boolean(playMangaCutscene(scene,
+                id==='chapter11'?'tokyoChampionshipOpening':'tokyoChampionshipVictory',{
+                  preview:true,preloadPagePosesOnly:true,
+                })?.played)
+            : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
     if(!started) {
       detail.push(scene.add.text(780,550,
         'REPLAY COULD NOT START // CHECK YOUR CAR AND TRY AGAIN',{
@@ -127,10 +131,13 @@ export function showStoryArchivePanel(scene) {
           }).setOrigin(.5).setDepth(depth+19).setScrollFactor(0));
         }
       });
-    } else if(chapter.id==='chapter09'){
-      choice(566,484,350,'WATCH STORY','Welcome and sponsor reveal',()=>launch(chapter.id,false));
-      choice(996,484,350,'RELIVE CHAPTER','Play the Liberty Walk 240Z race',
+    } else if(chapter.id==='chapter10'){
+      choice(566,484,350,'WATCH STORY','Aruken signing and send-off',()=>launch(chapter.id,false));
+      choice(996,484,350,'RELIVE CHAPTER','Race the Liberty Walk 240Z',
         ()=>launch(chapter.id,true));
+    } else if(chapter.id==='chapter09'){
+      choice(780,483,470,'WATCH CHAPTER','Drag Complex welcome and team briefing',
+        ()=>launch(chapter.id,false));
     } else if(chapter.id==='chapter01'){
       choice(566,484,350,'WATCH STORY','Opening scenes',()=>launch(chapter.id,false));
       choice(996,484,350,'RELIVE CHAPTER','Flip Issue 01 and choose a car',()=>launch(chapter.id,true));
@@ -146,26 +153,26 @@ export function showStoryArchivePanel(scene) {
     back.on('pointerdown',discardDetail);
   };
   chapters.forEach((chapter,i)=>{
-    // Five rows left, four right: all nine career chapters stay separate
-    // and the new sponsor chapter is directly accessible in recount mode.
-    const leftColumn=i<5;
+    // Two columns of six; the sixth row fits inside the 756px archive.
+    const leftColumn=i<6;
     const x=leftColumn?449:1111;
-    const y=210+(leftColumn?i:i-5)*123;
+    const y=209+(leftColumn?i:i-6)*105;
     const available=chapter.completed;
     const title=available?chapter.title.toUpperCase():'???';
     const subtitle=available?chapter.subtitle:'Complete this chapter to unlock replay';
-    const rect=add(scene.add.rectangle(x,y,590,111,
+    const rect=add(scene.add.rectangle(x,y,590,98,
       available?0x12283a:0x111924,.99)
       .setStrokeStyle(2,available?0x5288a4:0x344657,.9)
       .setDepth(depth+3).setScrollFactor(0));
-    add(scene.add.text(x-267,y-29,'CHAPTER '+String(chapter.number).padStart(2,'0'),{
+    add(scene.add.text(x-267,y-27,'CHAPTER '+String(chapter.number).padStart(2,'0'),{
       fontFamily:FONT,fontSize:'8px',color:available?'#95d9f3':'#718493',
     }).setDepth(depth+4).setScrollFactor(0));
-    add(scene.add.text(x-267,y-5,title,{
+    add(scene.add.text(x-267,y-4,title,{
       fontFamily:FONT,fontSize:'10px',color:available?'#ffffff':'#718493',
     }).setDepth(depth+4).setScrollFactor(0));
-    add(scene.add.text(x-267,y+22,subtitle,{
-      fontFamily:BODY,fontSize:'12px',color:available?'#b3cfde':'#708697',
+    add(scene.add.text(x-267,y+21,subtitle,{
+      fontFamily:BODY,fontSize:'11px',color:available?'#b3cfde':'#708697',
+      wordWrap:{width:450},
     }).setDepth(depth+4).setScrollFactor(0));
     add(scene.add.text(x+265,y,available?'REPLAY >':'LOCKED',{
       fontFamily:FONT,fontSize:'8px',color:available?'#ffc1dc':'#738594',
