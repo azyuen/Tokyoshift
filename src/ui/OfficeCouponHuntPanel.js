@@ -3,7 +3,10 @@
 // undiscovered or expired Street Showdown currently offers a particular car.
 import { cars, carOrder } from '../data/cars.js?v=20261026-r687';
 import { getCarCouponRequirement } from '../data/centralTokyo.js?v=20261023-r652';
-import { getStreetShowdownCouponHunts, STREET_SHOWDOWN_COUPON_CHANCE } from '../data/streetShowdownCouponHunt.js?v=20261029-r716';
+import {
+  getStreetShowdownCouponHunts, getActiveStreetShowdownCouponOffers,
+  getStreetShowdownScheduleSlot, STREET_SHOWDOWN_COUPON_CHANCE,
+} from '../data/streetShowdownCouponHunt.js?v=20261029-r716b';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
@@ -20,6 +23,7 @@ export function showOfficeCouponHunt(scene) {
   if(scene._officeCouponClose)return;
   const entries=getOwnedCouponEntries(scene.registry);
   const staticNodes=[],detailNodes=[],depth=270;
+  let updateTimer=null;
   const destroy=list=>{for(const o of list.splice(0))try{o?.destroy?.();}catch{}};
   const add=(obj,list=staticNodes)=>{list.push(obj);return obj;};
   const rectangle=(x,y,w,h,fill,stroke=0x36556d,interactive=false,list=staticNodes)=>{
@@ -42,6 +46,7 @@ export function showOfficeCouponHunt(scene) {
   };
   const close=()=>{
     scene.events?.off?.('shutdown',close);
+    updateTimer?.remove?.(false);
     destroy(detailNodes);destroy(staticNodes);
     if(scene._officeCouponClose===close)scene._officeCouponClose=null;
   };
@@ -54,10 +59,10 @@ export function showOfficeCouponHunt(scene) {
   rectangle(490,420,515,565,0x0e2030,0x2b5469);
   rectangle(1060,420,535,565,0x0e2030,0x2b5469);
   txt(242,102,'CAR COUPONS // HUNT GUIDE',17,true,'#ecfbff');
-  txt(242,143,'Tap a coupon car to see which regional Street Showdowns can offer it.',17,false,'#9ac4d6');
+  txt(242,143,'Tap a car to find the exact active coupon Showdowns across Tokyo.',17,false,'#9ac4d6');
   button(1265,116,112,38,'CLOSE',close,staticNodes);
   txt(260,194,'YOUR COUPONS',12,true,'#7deaff');
-  txt(805,194,'WHERE TO HUNT',12,true,'#7deaff');
+  txt(805,194,'LIVE COUPON BOARD',12,true,'#7deaff');
 
   let page=0,selectedId=entries[0]?.carId||null;
   const render=()=>{
@@ -90,26 +95,59 @@ export function showOfficeCouponHunt(scene) {
     if(title.width>460)title.setScale(460/title.width);
     txt(813,265,picked.count+' / '+picked.required+' COUPONS // '+
       Math.max(0,picked.required-picked.count)+' MORE NEEDED',14,false,'#f6d48e',detailNodes);
+    const current=getStreetShowdownScheduleSlot();
+    const live=getActiveStreetShowdownCouponOffers(picked.carId,scene.registry,
+      {rotationIndex:current.rotationIndex,now:Date.now()});
+    txt(813,302,'ACTIVE STREET SHOWDOWNS ('+live.length+')',10,true,
+      '#85efdb',detailNodes);
+    const timerText='NEXT ROTATION // '+Math.max(1,
+      Math.ceil((current.nextEventAt-Date.now())/60000))+' MIN';
+    txt(813,326,timerText,11,false,'#d9d0a4',detailNodes);
+    if(!live.length){
+      txt(813,367,'NO ACTIVE COUPON OFFERS THIS CYCLE',10,true,
+        '#d1bcc0',detailNodes);
+    }else{
+      live.slice(0,3).forEach((offer,i)=>{
+        const y=367+i*55;
+        rectangle(1060,y,490,49,offer.unlocked?0x12362e:0x27242d,
+          offer.unlocked?0x2b7c6c:0x675357,false,detailNodes);
+        const label=txt(830,y-12,offer.regionName+' / '+offer.locationName,10,true,
+          offer.unlocked?'#98f0d1':'#d8b8b3',detailNodes);
+        if(label.width>430)label.setScale(430/label.width);
+        txt(830,y+10,'COUPON NOW // '+offer.accessLabel,11,false,
+          '#b4d0db',detailNodes);
+      });
+      if(live.length>3)txt(813,541,'+'+(live.length-3)+' MORE ACTIVE LOCATIONS',
+        10,true,'#96d6e4',detailNodes);
+    }
     const targets=getStreetShowdownCouponHunts(picked.carId,scene.registry);
+    txt(813,564,'REGIONAL HUNTING LEADS',10,true,'#7deaff',detailNodes);
     if(!targets.length){
-      txt(814,340,'NO KNOWN REGIONAL SHOWDOWN POOL',12,true,'#f9bb9a',detailNodes);
-      txt(814,390,'Try another model or collect coupons from special awards.',16,false,'#bdd2df',detailNodes);
-    }else targets.slice(0,7).forEach((target,i)=>{
-      const y=322+i*45;
-      rectangle(1060,y,490,40,target.unlocked?0x12362e:0x28252b,
-        target.unlocked?0x327d70:0x524c55,false,detailNodes);
-      txt(826,y-8,target.regionName,10,true,target.unlocked?'#9ff7d1':'#d4b2a7',detailNodes);
-      const locName=String(target.locationName).toUpperCase();
-      txt(826,y+9,locName+' // '+target.eligibleMeetCount+' POSSIBLE MEET'+
-        (target.eligibleMeetCount===1?'':'S'),11,false,'#b4cad6',detailNodes);
-      txt(1285,y,target.unlocked?'OPEN':'LOCKED',9,true,
-        target.unlocked?'#90efb8':'#e1aaad',detailNodes).setOrigin(1,.5);
-    });
-    const note=txt(812,660,Math.round(STREET_SHOWDOWN_COUPON_CHANCE*100)+
-      '% COUPON SHOWDOWNS. MODEL VARIES WITH LOCATION AND RACE BALANCE.\n'+
-      'REGIONS ARE HUNTING LEADS, NOT GUARANTEED CURRENT OFFERS.',13,false,'#a0b9c9',detailNodes);
-    note.setLineSpacing(4);
+      txt(813,596,'NO REGULAR REGIONAL POOL FOUND',11,false,
+        '#dfbbb0',detailNodes);
+    }else{
+      const available=targets.filter(t=>t.unlocked);
+      const preferred=available.length?available:targets;
+      txt(813,590,preferred.slice(0,2).map(t=>t.regionName+
+        ' ('+t.eligibleMeetCount+' possible meets)').join('   /   '),
+        12,false,'#b4cbd8',detailNodes);
+      txt(813,614,available.length?'Others may be locked.':'Unlock regions for more leads.',
+        11,false,'#9ab3c4',detailNodes);
+    }
+    const note=txt(813,646,
+      Math.round(STREET_SHOWDOWN_COUPON_CHANCE*100)+
+      '% OF SHOWDOWNS OFFER COUPONS // 15-MIN DAY/NIGHT CYCLE.\n'+
+      'LIVE = EXACT PRIZE. LEADS = POSSIBLE FUTURE PRIZES.',
+      11,false,'#a2bccc',detailNodes);
+    note.setLineSpacing(3);
   };
+  let renderedRotation=getStreetShowdownScheduleSlot().rotationIndex;
   render();
+  // No heavy opponent build calculations on this timer: redraw only when
+  // the authoritative WorldClock rotation changes while the Office is open.
+  updateTimer=scene.time?.addEvent?.({delay:10000,loop:true,callback:()=>{
+    const slot=getStreetShowdownScheduleSlot().rotationIndex;
+    if(slot!==renderedRotation){renderedRotation=slot;render();}
+  }})||null;
   return close;
 }
