@@ -189,8 +189,10 @@ function draw(s,state,options){
   // car every time this room opens. Older saves with first-heat prose are
   // safely upgraded by deriving it at display time, not by charging again.
   const currentOpponent={...rival,name:round.opponentName||rival.name};
+  const currentOpponentCar={...oppCar,drivetrain:
+    getCarMagazineMeta(round.carId)?.drivetrain||oppCar.drivetrain};
   const currentHeatAdvice=advice.usedThisEvent
-    ? driverOpponentAdvice(oppCar,currentOpponent,playerCar) : null;
+    ? driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar) : null;
   const stageNo=state.roundIndex+1,stageTotal=state.rounds.length;
   const playerId=s.registry.get('playerCharacterId')||'renMizuno';
 
@@ -551,7 +553,7 @@ function draw(s,state,options){
         : 'One consultation covers this event. Sayaka will update her advice for each remaining opponent. Cooldown: this event plus two other professional events.',
       onConfirm:()=>{
         close();
-        options.onAdvice?.(driverOpponentAdvice(oppCar,currentOpponent,playerCar));
+        options.onAdvice?.(driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar));
       },
     });
   }
