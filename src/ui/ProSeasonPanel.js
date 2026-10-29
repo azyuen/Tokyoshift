@@ -592,6 +592,15 @@ export function showSeasonRecords(s,complete=false) {
       if(commit(s,{proCircuit:out.circuit})){o.close();redraw(s);}
     });
   }
+  if(report.outcome==='NOT_QUALIFIED'){
+    // Played over the official final standings, not during an individual
+    // failed heat or an unfinished season. Use a save-persistent HISTORY ID
+    // scoped to the season, so refreshing the panel never repeats it but
+    // a future unsuccessful season may have its own closing conversation.
+    playMangaCutscene(s,'proSeasonNotQualified',{
+      historyId:'proSeasonNotQualified:s'+c.season,
+    });
+  }
 }
 
 /** One unified sixteen-entrant championship: live stage results, durable
