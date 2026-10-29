@@ -2,6 +2,7 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261026-r687';
+import {getCarMagazineMeta} from '../data/carMagazine.js?v=20261011-r479';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
@@ -47,7 +48,8 @@ export function getProCrewHeatAdvice(fixture,units){
   const rivalName=String(rival?.name||fixture?.opponent?.name||'the opposing driver').split(' ')[0];
   const rivalCar=cars[rival?.carId]||{};
   const carName=rivalCar.shortName||rivalCar.name||rival?.carId||'their car';
-  const drivetrain=String(rivalCar.drivetrain||rivalCar.drive||'').toUpperCase();
+  const drivetrain=String(getCarMagazineMeta(rival?.carId)?.drivetrain||
+    rivalCar.drivetrain||rivalCar.drive||'').toUpperCase();
   const rivalNote=drivetrain.includes('AWD')||drivetrain.includes('4WD')||drivetrain==='FOUR_WHEEL_DRIVE'
     ? 'Expect four-wheel-drive traction away from the line.'
     : drivetrain==='FR'||drivetrain==='RWD'
