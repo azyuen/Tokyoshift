@@ -1,4 +1,5 @@
 import { cars, carOrder } from './cars.js?v=20261026-r687';
+import { stockClassFor } from './stockClasses.js?v=20261026-r688';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260929-r271';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
@@ -104,6 +105,12 @@ function candidateWeight(candidate, context) {
   const band = bands[context.bandId] || bands.comparable;
 
   let weight = 1;
+  // Factory-class identity applies ONLY when a regular Meet supplies it.
+  // Other event matchmakers and physical performance scores are untouched.
+  if (Array.isArray(context.preferredClasses) && context.preferredClasses.length) {
+    const classFocus=new Set(context.preferredClasses);
+    weight *= classFocus.has(stockClassFor(cars[candidate.carId]))?2.2:0.55;
+  }
   if (preferred.has(candidate.carId)) weight *= cfg.preferredRegionalModelWeight;
   if (!owned.has(candidate.carId)) weight *= cfg.unownedCarWeight;
   if (candidate.carId === playerCarId) weight *= cfg.sameModelWeight;
@@ -150,13 +157,16 @@ export function createMeetOpponentMatch(options = {}) {
   const allowedBuildRatings = getAllowedBuildRatings(options.difficulty, bandId);
   const candidates = [];
 
-  // A named regional rival keeps their authored signature model. We still
-  // select their tune/build from the location's permitted difficulty range.
-  // Unnamed/generic encounters retain the original performance-based variety.
+  // Existing authored signature-car requirements retain precedence. Regular
+  // Meets supply a small, class-weighted shortlist so all rival characters
+  // can drive different stock models without a full-roster physics sweep.
   const signatureId = String(options.requiredCarId || '');
-  const eligibleCarOrder = signatureId && carOrder.includes(signatureId) && cars[signatureId]
-    ? [signatureId]
+  const shortlist = Array.isArray(options.candidateCarIds) &&
+    options.candidateCarIds.length
+    ? [...new Set(options.candidateCarIds)].filter(id=>carOrder.includes(id)&&cars[id])
     : carOrder;
+  const eligibleCarOrder = signatureId && carOrder.includes(signatureId) && cars[signatureId]
+    ? [signatureId] : shortlist;
 
   for (const carId of eligibleCarOrder) {
     const car = cars[carId];

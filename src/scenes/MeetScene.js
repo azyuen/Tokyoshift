@@ -76,7 +76,8 @@ import {
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20261010-r468';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261011-r479';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261029-r717';
+import { getNormalMeetCandidateCars, getNormalMeetPreferredClasses } from '../data/normalMeetCarSelection.js?v=20261029-r717';
 import {
   createStreetShowdownRounds,
   STREET_SHOWDOWN_CASH_ENTRY_FEES,
@@ -163,9 +164,9 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 
 const TAXI_TO_WORKSHOP_COST = 1000;
-// New regional Ref2 preferences require one fresh roster on entry; afterwards
-// normal three-minute refresh/result persistence continues unchanged.
-const MEET_ROSTER_VERSION = 'R518';
+// Only regular Meet rosters are re-rolled once for the R717 car-variety
+// change; existing 3-minute refresh and race-result persistence remain intact.
+const MEET_ROSTER_VERSION = 'R717';
 
 const MODE_DATA = {
   SINGLE: {
@@ -4581,7 +4582,14 @@ export default class MeetScene extends Phaser.Scene {
         ownedCarIds: ownedCars,
         usedCarIds: [...usedRivalCars],
         preferredCars: profile.likelyCars,
-        requiredCarId: getRegionalRivalSignatureCarId(location.district, characterId),
+        // Ordinary Meet opponents may arrive in different cars each round.
+        // Signature cars remain mandatory for regional challenges, stock
+        // recruitment and crew battles; only this path opts into variety.
+        candidateCarIds: getNormalMeetCandidateCars({
+          locationId, preferredCars: profile.likelyCars,
+          usedCarIds: [...usedRivalCars], playerCarId: selectedCarId,
+        }),
+        preferredClasses: getNormalMeetPreferredClasses(locationId),
         raceType,
         difficulty: profile.difficulty,
         playerDifficulty: this.registry.get('playerDifficulty') || 'STANDARD',
@@ -4676,7 +4684,9 @@ export default class MeetScene extends Phaser.Scene {
         incomingPinkPrompted: false,
         paintColor: selectMixedCarPaint(carId, {
           region: location.district, characterId,
-          isMainRival: Boolean(characters[characterId]?.mainRival),
+          // Main rivals also take random street cars/colours in ordinary
+          // Meets; their signature finishes belong to authored career events.
+          isMainRival: false,
           seed: Phaser.Math.Between(0, 2147483647),
         })?.color ?? getFactoryPaintColor(carId, 0) ??
           paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
