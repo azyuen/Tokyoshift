@@ -22,7 +22,9 @@ export function isProSponsorPlayableReplay(registry) {
     Number(registry.get(OWNER)) === getActiveProfileIndex();
 }
 
-export function beginProSponsorPlayableReplay(scene,{returnToArchive=false}={}) {
+export function beginProSponsorPlayableReplay(scene,{
+  returnToArchive=false, includeChapter09Welcome=true,
+}={}) {
   const registry=scene?.registry;
   if(!registry?.getAll || sessions.has(registry) ||
      registry.get('gameMode')==='arkonStory' ||
@@ -45,11 +47,13 @@ export function beginProSponsorPlayableReplay(scene,{returnToArchive=false}={}) 
   });
   registry.set(OWNER,getActiveProfileIndex());
   registry.set(ACTIVE,true);
-  registry.set(PHASE,'welcome');
+  // Chapter 10 starts with Masato's signing; Chapter 09 is a separate
+  // Open Circuit welcome and is never replayed as part of sponsorship.
+  registry.set(PHASE,includeChapter09Welcome?'welcome':'sponsor');
   registry.set('selectedCarId',car);
   registry.set('crewSpaceActive',false);
-  // The chapter first shows the canonical earlier professional briefing,
-  // followed by a fresh one-time signing even on an old developer profile.
+  // Reset only sponsor milestones in a private rehearsal; never mutate
+  // the user's actual saved season, cars, rewards or story progress.
   registry.set('cutscenesSeen',[...new Set([
     ...seenWithoutSponsor(registry.get('cutscenesSeen')),
     'chapter08Ginza','chapter09Welcome','ginzaInvitation',
