@@ -118,7 +118,7 @@ export function driverOpponentAdvice(opponentCar = {}, opponent = {}, playerCar 
   const carName = String(opponentCar.shortName || 'car');
   const intro = opponent?.name ? opponent.name.split(' ')[0] + ' is driving a ' + carName + '. ' :
     'The next car is a ' + carName + '. ';
-  const note = drivetrain.includes('AWD') || drivetrain.includes('4WD')
+  const note = drivetrain.includes('AWD') || drivetrain.includes('4WD') || drivetrain==='FOUR_WHEEL_DRIVE'
     ? "Expect a clean launch from an AWD car. Don't chase the start light; hold your own launch range and stay tidy through second."
     : drivetrain.includes('RWD') || drivetrain === 'FR'
     ? "With rear-wheel drive, too much throttle early can cost traction. Watch your own grip and concentrate on clean shifts."
