@@ -27,9 +27,9 @@ test('Chapter 09 unlocks on first eligible strip arrival, never before the Chapt
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza'])),true);
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza','chapter09Welcome'])),false);
  assert.equal(chapter09ShouldBegin(registry(['chapter08Ginza'],{devMode:false})),false);
- assert.equal(isStoryChapterComplete(registry(['chapter09Welcome']),'chapter09'),false);
- assert.equal(isStoryChapterComplete(registry(['chapter09Welcome','proSponsorEpilogue']),'chapter09'),true);
- assert.equal(STORY_CHAPTERS.at(-1).id,'chapter09');
+ assert.equal(isStoryChapterComplete(registry(['chapter09Welcome']),'chapter09'),true);
+ assert.equal(isStoryChapterComplete(registry(['chapter09Welcome','proSponsorEpilogue']),'chapter10'),true);
+ assert.equal(STORY_CHAPTERS.at(-1).id,'chapter12');
 });
 test('Drag Scene triggers the same connected story after first arrival, and exposes consistent compact actions',()=>{
  const central=source('src/scenes/CentralTokyoScene.js');
