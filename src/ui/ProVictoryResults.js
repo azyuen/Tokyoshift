@@ -8,7 +8,7 @@ import {
 
 const W=1560,H=840;
 const BG_KEY='proVictoryDragstripDayR617';
-const BG_URL='assets/CentralTokyo/tokyo_dragstrip_day.png?v=20261020-r617';
+const BG_URL='assets/CentralTokyo/dragcomplex/dragstrip_full_day.png?v=20261030-r723';
 const BODY='"Rajdhani", sans-serif';
 const HEAD='"Exo 2", sans-serif';
 const PIXEL='"Silkscreen", monospace';
@@ -71,29 +71,63 @@ function heatLabel(h,i,isCrew){
 
 // Caller must have saved the competition before calling this. All car previews
 // use the production car renderer: paint, wheels and reference geometry match.
-export function showProVictoryResults(s,options={}){
-  const crew=options.kind==='crew',winner=options.winner!==false;
+export function showProVictoryResults(s,options={},assetsAttempted=false){
+  const winner=options.winner!==false;
   const cast=resultsCast(s,options);
   const carIds=resultCars(s,options);
   const carMap=Object.fromEntries(carIds.map(id=>[id,cars[id]]));
   if(s._proVictoryLoading)return;
-  const queued=queueProVictoryAssets(s,cast,winner?'win':'loss',carIds);
+  // Once a batch finishes, do not queue any missing/failed image a second
+  // time. The original missing background path caused an endless load loop
+  // instead of ever advancing from PREPARING EVENT RESULTS.
+  const queued=assetsAttempted?0:queueProVictoryAssets(s,cast,winner?'win':'loss',carIds);
   if(queued>0){
-    // A crew finish can enter the screen from a saved fixture after reload.
     s._proVictoryLoading=true;
-    const bg=s.add.rectangle(W/2,H/2,W,H,0x0b1320,.98).setDepth(300).setInteractive();
-    const title=s.add.text(W/2,H/2,'PREPARING EVENT RESULTS',{
+    const bg=s.add.rectangle(W/2,H/2,W,H,0x0b1320,.98)
+      .setDepth(300).setInteractive();
+    // A modal loading veil must intercept taps, including on mobile devices
+    // where other scene controls remain alive underneath the result UI.
+    bg.on('pointerdown',(_pointer,_x,_y,event)=>event?.stopPropagation?.());
+    const title=s.add.text(W/2,H/2-22,'PREPARING EVENT RESULTS',{
       fontFamily:PIXEL,fontSize:'17px',color:'#f1eceb',
     }).setOrigin(.5).setDepth(301);
-    const cleanup=()=>{bg.destroy();title.destroy();s._proVictoryLoading=false;};
-    const loaded=()=>{
+    const skip=s.add.rectangle(W/2,H/2+67,410,52,0x183548,.99)
+      .setStrokeStyle(2,0x8ad6f4,1).setDepth(302)
+      .setInteractive({useHandCursor:true});
+    const skipText=s.add.text(W/2,H/2+67,'SHOW SAVED RESULTS  >',{
+      fontFamily:PIXEL,fontSize:'10px',color:'#f6fbff',
+    }).setOrigin(.5).setDepth(303);
+    let settled=false,timeout=null;
+    const failed=file=>console.warn('[Tokyo SHIFT] Optional event-results asset unavailable:',
+      file?.key || file?.src || 'unknown');
+    const cleanup=()=>{
+      if(settled)return false;
+      settled=true;
+      s.load.off('complete',loaded);
+      s.load.off('loaderror',failed);
       s.events.off('shutdown',stopped);
-      cleanup();
-      if(s.sys?.isActive?.())showProVictoryResults(s,options);
+      timeout?.remove?.();
+      [bg,title,skip,skipText].forEach(node=>node.destroy());
+      s._proVictoryLoading=false;
+      return true;
     };
-    const stopped=()=>{s.load.off('complete',loaded);cleanup();};
+    const loaded=()=>{
+      if(!cleanup()||!s.sys?.isActive?.())return;
+      // Even a partial asset batch must render the official, already-saved
+      // result. Missing portrait/car images are purely decorative.
+      showProVictoryResults(s,options,true);
+    };
+    const stopped=()=>cleanup();
+    skip.on('pointerdown',(_pointer,_x,_y,event)=>{
+      event?.stopPropagation?.();
+      loaded();
+    });
     s.events.once('shutdown',stopped);
+    s.load.on('loaderror',failed);
     s.load.once('complete',loaded);
+    // Slow or offline asset requests must never hold a trophy celebration
+    // hostage; the user can also continue immediately with the button.
+    timeout=s.time.delayedCall(8000,loaded);
     s.load.start();
     return;
   }
@@ -137,7 +171,13 @@ function drawResults(s,options,cast,carMap){
 
   // One authored scene image across ALL 1560x840; never a floating modal
   // or the former bespoke dark photo/banner/floor presentation.
-  add(s.add.image(W/2,H/2,BG_KEY).setDisplaySize(W,H),210);
+  if(s.textures.exists(BG_KEY)){
+    add(s.add.image(W/2,H/2,BG_KEY).setDisplaySize(W,H),210);
+  }else{
+    // The ceremony is still usable when an optional venue image is missing.
+    add(s.add.rectangle(W/2,H/2,W,H,0x172b3e,1),210);
+    console.warn('[Tokyo SHIFT] Event-results venue unavailable; using fallback');
+  }
   add(s.add.rectangle(W/2,H/2,W,H,0x06101d,.17),211);
 
   // Actual garage cars sit on the visible right-hand road, behind the HUD.

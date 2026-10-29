@@ -119,3 +119,71 @@ test('driver victory contains Sayaka, player, Daichi and true paid values',()=>{
   assert.ok(!labels.includes('TOKYO'),'there is no bespoke top logo/banner');
   assert.ok(labels.includes('CLEAN SWEEP'));
 });
+
+test('missing result venue asset cannot repeat PREPARING results forever',()=>{
+  const {s,objects}=scene();
+  const queued=[],listeners={},timers=[];
+  s.textures.exists=key=>key!=='proVictoryDragstripDayR617';
+  s.load={
+    image(key,url){queued.push({key,url});},
+    once(name,cb){listeners[name]=cb;},
+    on(name,cb){listeners[name]=cb;},
+    off(name,cb){if(listeners[name]===cb)delete listeners[name];},
+    start(){this.starts=(this.starts||0)+1;},
+  };
+  s.time.delayedCall=(ms,cb)=>{
+    const timer={ms,cb,removed:false,remove(){this.removed=true;}};
+    timers.push(timer);return timer;
+  };
+  showProVictoryResults(s,{kind:'driver',winner:true,eventName:'SHUTO TROPHY',
+    cashPrize:285000,openCircuit:true});
+  assert.equal(s.load.starts,1);
+  assert.equal(queued.length,1,'only the missing venue image queues');
+  assert.equal(queued[0].key,'proVictoryDragstripDayR617');
+  assert.match(queued[0].url,/assets\/CentralTokyo\/dragcomplex\/dragstrip_full_day\.png/);
+  assert.ok(objects.some(o=>o.value==='PREPARING EVENT RESULTS'));
+  const veil=objects.find(o=>o.type==='rectangle'&&o.depth===300);
+  let blocked=false;
+  veil.events.pointerdown(null,null,null,{stopPropagation(){blocked=true;}});
+  assert.equal(blocked,true,'opaque loading veil blocks events behind it');
+  // Failed assets still emit loader.complete in Phaser. They are not
+  // necessarily installed as usable textures.
+  listeners.loaderror?.({key:'proVictoryDragstripDayR617'});
+  listeners.complete();
+  assert.equal(s._proVictoryLoading,false);
+  assert.equal(s.load.starts,1,'failed asset must never be requeued');
+  assert.ok(objects.some(o=>o.value==='EVENT WINNER'));
+  assert.ok(objects.some(o=>o.value==='¥285,000'));
+  assert.ok(objects.some(o=>o.type==='rectangle'&&o.depth===210),
+    'fallback venue remains visible with no texture');
+  assert.equal(timers[0].removed,true);
+  assert.equal(veil.destroyed,true);
+});
+
+test('tapping SHOW SAVED RESULTS releases stuck loader with no duplicate result',()=>{
+  const {s,objects}=scene();
+  const listeners={},timers=[];
+  s.textures.exists=key=>key!=='proVictoryDragstripDayR617';
+  s.load={
+    image(){},
+    once(name,cb){listeners[name]=cb;},
+    on(name,cb){listeners[name]=cb;},
+    off(name,cb){if(listeners[name]===cb)delete listeners[name];},
+    start(){},
+  };
+  s.time.delayedCall=(ms,cb)=>{
+    const timer={ms,cb,removed:false,remove(){this.removed=true;}};
+    timers.push(timer);return timer;
+  };
+  showProVictoryResults(s,{kind:'driver',winner:false,
+    eventName:'SHUTO TROPHY',cashPrize:0,openCircuit:true});
+  const skip=objects.find(o=>o.type==='rectangle'&&o.depth===302);
+  assert.ok(skip);
+  let blocked=false;
+  skip.events.pointerdown(null,null,null,{stopPropagation(){blocked=true;}});
+  assert.equal(blocked,true);
+  assert.ok(objects.some(o=>o.value==='EVENT COMPLETE'));
+  assert.equal(s._proVictoryLoading,false);
+  assert.equal(objects.filter(o=>o.value==='EVENT COMPLETE').length,1);
+  assert.equal(timers[0].removed,true);
+});

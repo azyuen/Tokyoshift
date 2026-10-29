@@ -1,6 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261029-r714';
-import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261029-r713';
+import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261030-r723';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
