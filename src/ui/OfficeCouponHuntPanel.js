@@ -65,6 +65,9 @@ export function showOfficeCouponHunt(scene) {
   txt(805,194,'LIVE COUPON BOARD',12,true,'#7deaff');
 
   let page=0,selectedId=entries[0]?.carId||null;
+  let rotationCountdown=null;
+  const minutesUntilNextRotation=()=>Math.max(1,
+    Math.ceil((getStreetShowdownScheduleSlot().nextEventAt-Date.now())/60000));
   const render=()=>{
     destroy(detailNodes);
     if(!entries.length){
@@ -100,9 +103,8 @@ export function showOfficeCouponHunt(scene) {
       {rotationIndex:current.rotationIndex,now:Date.now()});
     txt(813,302,'ACTIVE STREET SHOWDOWNS ('+live.length+')',10,true,
       '#85efdb',detailNodes);
-    const timerText='NEXT ROTATION // '+Math.max(1,
-      Math.ceil((current.nextEventAt-Date.now())/60000))+' MIN';
-    txt(813,326,timerText,11,false,'#d9d0a4',detailNodes);
+    rotationCountdown=txt(813,326,'NEXT ROTATION // '+
+      minutesUntilNextRotation()+' MIN',11,false,'#d9d0a4',detailNodes);
     if(!live.length){
       txt(813,367,'NO ACTIVE COUPON OFFERS THIS CYCLE',10,true,
         '#d1bcc0',detailNodes);
@@ -148,6 +150,8 @@ export function showOfficeCouponHunt(scene) {
   updateTimer=scene.time?.addEvent?.({delay:10000,loop:true,callback:()=>{
     const slot=getStreetShowdownScheduleSlot().rotationIndex;
     if(slot!==renderedRotation){renderedRotation=slot;render();}
+    else rotationCountdown?.setText?.('NEXT ROTATION // '+
+      minutesUntilNextRotation()+' MIN');
   }})||null;
   return close;
 }
