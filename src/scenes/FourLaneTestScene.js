@@ -29,6 +29,7 @@ import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
+import { getProRaceRivalPaint } from '../data/proRacePaint.js?v=20261030-r726';
 import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
@@ -407,7 +408,7 @@ export default class FourLaneTestScene extends RaceScene {
           rating, playerDifficulty: difficulty, rollingStart: false,
           raceDistanceM: FOUR_LANE_TEST_DISTANCE_M,
         }),
-        config: built.car, paint: [0xd04a59, 0x63b3d4, 0xefca66][index],
+        config: built.car, paint: getProRaceRivalPaint(index),
         finishSeconds: null, disqualified: false,
       });
     });
