@@ -279,8 +279,8 @@
       "dimensions_match": true
     },
     {
-      "day": "assets/CentralTokyo/tokyo_dragstrip_day.png",
-      "night": "assets/CentralTokyo/tokyo_dragstrip_night.png",
+      "day": "assets/CentralTokyo/dragcomplex/dragstrip_full_day.png",
+      "night": "assets/CentralTokyo/dragcomplex/dragstrip_full_night.png",
       "dimensions_match": true
     },
     {
@@ -971,7 +971,7 @@
       "sha256": "0568d93ae44307b101aaaba3487983bceecf7cff73189353e3b16c148e333380"
     },
     {
-      "path": "assets/CentralTokyo/tokyo_dragstrip_day.png",
+      "path": "assets/CentralTokyo/dragcomplex/dragstrip_full_day.png",
       "group": "outdoor_central",
       "width": 1672,
       "height": 941,
@@ -981,7 +981,7 @@
       "sha256": "7410f83e86182d54c05f1af911485a5dc604b81d1b23dcb1e84311326a91a18a"
     },
     {
-      "path": "assets/CentralTokyo/tokyo_dragstrip_night.png",
+      "path": "assets/CentralTokyo/dragcomplex/dragstrip_full_night.png",
       "group": "outdoor_central",
       "width": 1672,
       "height": 941,

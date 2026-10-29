@@ -187,6 +187,6 @@ test('Arkon Den + Story Archive replay the complete story over the room without 
   assert.match(story,/const sequence=preview\?\[\.\.\.CHAPTER09_SEQUENCE\]/);
   assert.match(story,/onPreviewComplete:done/);
   assert.ok(story.includes('onPreviewComplete?.()'));
-  assert.match(archive,/const leftColumn=i<5/);
-  assert.match(archive,/const y=210\+\(leftColumn\?i:i-5\)\*123/);
+  assert.match(archive,/const leftColumn=i<6/);
+  assert.match(archive,/const y=209\+\(leftColumn\?i:i-6\)\*105/);
 });

@@ -14,7 +14,10 @@ export const STORY_CHAPTERS = Object.freeze([
   { number:6,id:'chapter06',title:'Beyond Seven',subtitle:'Seven regional leaders' },
   { number:7,id:'chapter07',title:'One Crew, Seven Roads',subtitle:'Your crew comes together' },
   { number:8,id:'chapter08',title:'The Next Level',subtitle:'A new racing career begins' },
-  { number:9,id:'chapter09',title:'Ginza Backing',subtitle:'The Drag Complex, Aruken and the first Pro Season' },
+  { number:9,id:'chapter09',title:'Welcome to the Big Leagues',subtitle:'The Drag Complex welcome and Open Circuit' },
+  { number:10,id:'chapter10',title:'Ginza Backing',subtitle:'Aruken sponsors the Pro Season and races his 240Z' },
+  { number:11,id:'chapter11',title:'Tokyo Qualified',subtitle:"You've earned a place in the final sixteen" },
+  { number:12,id:'chapter12',title:'Tokyo Champion',subtitle:"Your championship-winning celebration" },
 ]);
 export const getStoryChapter = id => STORY_CHAPTERS.find(chapter => chapter.id === id) || null;
 export function isStoryChapterComplete(source, chapterId) {
@@ -42,9 +45,24 @@ export function isStoryChapterComplete(source, chapterId) {
     case 'chapter08':
       return seen('chapter08Ginza');
     case 'chapter09':
-      // The initial Drag Complex briefing is only the chapter prelude.
-      // The sponsor revelation and post-race send-off complete Chapter 09.
+      return seen('chapter09Welcome');
+    case 'chapter10':
+      // The sponsor signing only happens after committing to the first season,
+      // not during the earlier Open Circuit welcome (Chapter 09).
       return seen('proSponsorEpilogue');
+    case 'chapter11': {
+      // Legacy qualified profiles may predate the once-only qualification scene.
+      const pro = get(source,'proCircuit',{});
+      return seen('tokyoChampionshipOpening') ||
+        Boolean(pro?.activeChampionship ||
+          (pro?.championshipHistory || []).some(r => r?.completed));
+    }
+    case 'chapter12': {
+      const pro = get(source,'proCircuit',{});
+      return seen('tokyoChampionshipVictory') ||
+        Number(pro?.tokyoChampionWins || 0) > 0 ||
+        Boolean(pro?.championshipHistory?.some(r => r?.playerChampion));
+    }
     default:
       return false;
   }

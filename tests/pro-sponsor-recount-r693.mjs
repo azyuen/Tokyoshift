@@ -35,11 +35,12 @@ const fakeScene=(updates={},key='GarageScene')=>{
 };
 const delay=()=>new Promise(resolve=>setTimeout(resolve,30));
 
-test('the Archive keeps nine canonical chapters, with Aruken completion after signing',()=>{
- assert.equal(STORY_CHAPTERS.length,9);
- assert.match(STORY_CHAPTERS[8].title,/Ginza/i);
- assert.equal(isStoryChapterComplete({cutscenesSeen:['chapter09Welcome']},'chapter09'),false);
- assert.equal(isStoryChapterComplete({cutscenesSeen:['proSponsorEpilogue']},'chapter09'),true);
+test('the Archive keeps twelve chapters, with signing separate from the welcome',()=>{
+ assert.equal(STORY_CHAPTERS.length,12);
+ assert.match(STORY_CHAPTERS[9].title,/Ginza/i);
+ assert.equal(isStoryChapterComplete({cutscenesSeen:['chapter09Welcome']},'chapter09'),true);
+ assert.equal(isStoryChapterComplete({cutscenesSeen:['chapter09Welcome']},'chapter10'),false);
+ assert.equal(isStoryChapterComplete({cutscenesSeen:['proSponsorEpilogue']},'chapter10'),true);
  const panel=src('src/ui/StoryArchivePanel.js');
  assert.match(panel,/WATCH STORY/);
  assert.match(panel,/RELIVE CHAPTER/);
@@ -111,4 +112,20 @@ test('scene transitions are real and replay exits cleanly after epilogue or race
  assert.match(race,/addProSponsorReplayExit/);
  assert.match(welcome,/onPreviewComplete/);
  assert.match(src('src/state/GameState.js'),/__proSponsorReplayOwnerSlot/);
+});
+
+test('Office Chapter 10 sponsor replay skips the Chapter 09 welcome and restores the full profile',async()=>{
+ const scene=fakeScene();
+ const original=structuredClone(scene.registry.getAll());
+ assert.equal(beginProSponsorPlayableReplay(scene,{
+   returnToArchive:true,includeChapter09Welcome:false,
+ }),true);
+ assert.equal(scene.registry.get('__proSponsorReplayPhase'),'sponsor');
+ assert.equal(scene.registry.get('cutscenesSeen').includes('proSponsorEpilogue'),false);
+ assert.equal(finishProSponsorPlayableReplay(scene),true);
+ assert.deepEqual(scene.registry.getAll(),original);
+ await delay();
+ const ui=src('src/ui/StoryArchivePanel.js');
+ assert.match(ui,/startChapter09\(scene,\{preview:true\}\)/);
+ assert.match(ui,/includeChapter09Welcome:false/);
 });

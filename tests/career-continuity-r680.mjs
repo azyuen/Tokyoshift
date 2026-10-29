@@ -55,7 +55,7 @@ test('Chapter 8 invitation, Ginza identity and strategist role stay, but Aruken 
   assert.doesNotMatch(content(ginza),/Aruken|Denzaki|From Warehouse HQ|Arkon Den/i);
   for(const beat of ['chapter08SayakaExit','chapter08SayakaGallery','chapter08SayakaOutfitCue','chapter08FinalPortrait'])
     assert.ok(ginza.pages.some(p=>p.cinematicBeat===beat),beat);
-  assert.deepEqual(STORY_CHAPTERS.map(c=>c.id),Array.from({length:9},(_,i)=>'chapter0'+(i+1)));
+  assert.deepEqual(STORY_CHAPTERS.map(c=>c.id),Array.from({length:12},(_,i)=>'chapter'+String(i+1).padStart(2,'0')));
 });
 test('Standalone pre-Pro strategist disclosure also conceals Aruken',()=>{
   const pro=CUTSCENES.proCircuitStrategistReveal;

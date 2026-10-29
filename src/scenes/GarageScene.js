@@ -75,7 +75,7 @@ import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261024-r680
 import { isArkonRwbRestoration, getArkonRwbLoan } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
-import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261027-r693';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261029-r719';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -147,7 +147,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261029-r719';
 import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r686';
 import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261025-r686';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';

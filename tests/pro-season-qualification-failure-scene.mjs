@@ -15,10 +15,10 @@ function report(round,driver,crew,season=1){
   c.playerDriver.seasonPoints=driver;c.playerTeam.seasonPoints=crew;c.season=season;
   return getProfessionalSeasonReport(c);
 }
-test('scene has five short frames, established actors, and standard review action',()=>{
+test('scene has seven short frames, established actors, and standard review action',()=>{
   assert.ok(scene);
   assert.equal(scene.once,true);
-  assert.equal(scene.pages.length,5);
+  assert.equal(scene.pages.length,7);
   assert.equal(scene.characters.left,'sayakaFujieda');
   assert.equal(scene.characters.right,'$PLAYER');
   assert.ok(scene.pages.some(p=>p.leftCharacter==='daichiSakamoto'));
@@ -52,16 +52,26 @@ test('nonqualification reflection is honest and does not promise automatic entry
   assert.doesNotMatch(all,/guarantee|automatically|free title|\bqualified\b/i);
 });
 
-test('R718 production boot uses fresh narrative imports without wiping the large image cache',()=>{
+test('R719 production boot includes Office and career-story UI without wiping the large image cache',()=>{
   const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
   const version=JSON.parse(read('version.json'));
-  assert.equal(version.build,'R718');
-  assert.match(read('index.html'),/id="build-stamp">R718/);
-  assert.match(read('index.html'),/main\.js\?v=20261029-r718/);
-  assert.match(read('sw.js'),/const BUILD = 'R718'/);
+  assert.equal(version.build,'R719');
+  assert.match(read('index.html'),/id="build-stamp">R719/);
+  assert.match(read('index.html'),/main\.js\?v=20261029-r719/);
+  assert.match(read('sw.js'),/const BUILD = 'R719'/);
   assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
-  assert.match(read('src/main.js'),/CentralTokyoScene\.js\?v=20261029-r718/);
-  assert.match(read('src/scenes/CentralTokyoScene.js'),/ProSeasonPanel\.js\?v=20261029-r718/);
+  assert.match(read('src/main.js'),/CentralTokyoScene\.js\?v=20261029-r719/);
+  assert.match(read('src/scenes/CentralTokyoScene.js'),/ProSeasonPanel\.js\?v=20261029-r719/);
   assert.match(read('src/ui/ProSeasonPanel.js'),/MangaCutscene\.js\?v=20261029-r718/);
   assert.match(read('src/ui/MangaCutscene.js'),/cutscenes\.js\?v=20261029-r718/);
+});
+
+test('qualified chapter 11 begins after the full eight-round season and never on a failed report',()=>{
+  const body=ui.slice(ui.indexOf('export function showSeasonRecords('),
+    ui.indexOf('export function showTokyoChampionship('));
+  assert.match(body,/if\(report\.canEnterTokyo && !hasSeenCutscene\(s\.registry,'tokyoChampionshipOpening'\)\)/);
+  assert.match(body,/playMangaCutscene\(s,'tokyoChampionshipOpening'/);
+  assert.equal(report(7,60,40).canEnterTokyo,false);
+  assert.equal(report(8,60,40).canEnterTokyo,true);
+  assert.equal(report(8,59,40).canEnterTokyo,false);
 });

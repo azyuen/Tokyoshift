@@ -83,8 +83,12 @@ test('Chapter 8 interaction routing uses normal scenes and skips once flags in r
   const central=src('src/scenes/CentralTokyoScene.js');
   const map=src('src/ui/TravelMap.js');
   const tester=src('src/ui/CutsceneTester.js');
-  assert.match(tester,/FULL INTERACTIVE REPLAY/);
-  assert.match(tester,/DIALOGUE PREVIEW/);
+  // Developer D) SCENES now holds micro-scenes; full chapter replay is
+  // explicitly offered in the Office Archive, not duplicated in the tester.
+  const archive=src('src/ui/StoryArchivePanel.js');
+  assert.match(tester,/ACTIVE_DEV_MICRO_SCENES/);
+  assert.match(archive,/RELIVE CHAPTER/);
+  assert.match(archive,/WATCH STORY/);
   assert.match(story,/preview: preview \|\| interactiveReplay/);
   assert.match(story,/onExit: isChapter08DevReplay/);
   assert.match(story,/finishInteractiveChapter08Replay\(scene\)/);
