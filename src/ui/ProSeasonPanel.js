@@ -252,7 +252,7 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
   showProCrewHeatSelection(s,{
     event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
     adviceStatus:getProCrewAdviceAvailability(source),
-    advice:t.adviceText||getProCrewHeatAdvice(f,units),
+    advice:getProCrewHeatAdvice(f,units),
     onCancel:()=>{s._pendingCrewRegistration=null;s.proError=null;redraw(s);},
     onAdvice:ids=>{
       const out=useProCrewAdvice(source,t.id);
@@ -337,24 +337,16 @@ export function showCrewFixture(s,selection=null) {
     const lineup=t.lockedLineup||f.prepared?.lineup||null;
     const lock=Boolean(lineup);
     const ids=selection||lineup||[];
-    const eventAdvice=t.adviceText||getProCrewHeatAdvice(f,units);
+    // Event purchase is once-only, while the spoken strategy is updated for
+    // the exact next unrevealed opponent every time this fixture is opened.
+    // Ignore first-heat adviceText stored by older saves.
+    const eventAdvice=getProCrewHeatAdvice(f,units);
     return showProCrewHeatSelection(s,{
       event:t,fixture:f,units,selected:ids,locked:lock,
-      adviceStatus:{
-        ...getProCrewAdviceAvailability(s.registry),
-        // Existing consultation can always be REVIEWED. New consultations
-        // are available only in the very first heat of an event.
-        remaining:!t.adviceUsed&&(f.round>0||f.prepared?.revealed>0)?
-          Math.max(1,getProCrewAdviceAvailability(s.registry).remaining):
-          getProCrewAdviceAvailability(s.registry).remaining,
-      },
+      adviceStatus:getProCrewAdviceAvailability(s.registry),
       advice:eventAdvice,
       onForfeit:()=>confirmCrewForfeit(s),
       onAdvice:lineupIds=>{
-        if(f.round>0||f.prepared?.revealed>0){
-          s.proError='SAYAKA CONSULTATION IS ONLY AVAILABLE BEFORE HEAT ONE';
-          return;
-        }
         const out=useProCrewAdvice(s.registry,t.id);
         if(out.error){s.proError=out.error;showCrewFixture(s,lineupIds);return;}
         out.circuit.activeCrewEvent={
