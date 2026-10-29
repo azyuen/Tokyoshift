@@ -84,8 +84,7 @@ test('Tokyo seeding values 70% Driver + 30% Crew results and locks a season snap
   assert.equal(initial.entrants.filter(e=>e.characterId).length,7);
   const key='pro:driver:01';
   assert.ok(c.drivers[key]);
-  const drivers=Object.keys(c.drivers).sort(),teams=Object.keys(c.teams).sort();
-  const team=c.teams[teams[drivers.indexOf(key)]];
+  const team=c.teams[c.drivers[key].teamId];
   assert.ok(team);
   c.activeChampionship=null;
   c.drivers[key].seasonPoints=120;
