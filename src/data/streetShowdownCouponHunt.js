@@ -25,13 +25,17 @@ export const STREET_SHOWDOWN_CLASS_FOCUS = Object.freeze({
 });
 const REGION_ORDER = Object.freeze(['ODAIBA','SHINAGAWA','TATSUMI',
   'SHIBUYA','YOKOHAMA','DAIKOKU','SHINJUKU']);
-// Existing meet favourites omitted RX-7 FD and RX-8. Introduce them only in
-// geographically and class-appropriate regional coupon selections.
-export const EXTRA_SHOWDOWN_COUPON_MODELS = Object.freeze({
-  TATSUMI: Object.freeze(['rx8']),
-  SHIBUYA: Object.freeze(['rx8']),
-  YOKOHAMA: Object.freeze(['rx7fd']),
-  DAIKOKU: Object.freeze(['rx7fd']),
+// The focus defines the common stock classes. The envelope admits a much
+// rarer neighbouring class; no individual model is assigned a hunting region.
+// Each eligible non-collector car follows the same class-based rules.
+export const STREET_SHOWDOWN_CLASS_ENVELOPE = Object.freeze({
+  ODAIBA: Object.freeze(['D','C','B']),
+  SHINAGAWA: Object.freeze(['D','C','B']),
+  TATSUMI: Object.freeze(['C','B','A']),
+  SHIBUYA: Object.freeze(['C','B','A']),
+  YOKOHAMA: Object.freeze(['C','B','A']),
+  DAIKOKU: Object.freeze(['B','A']),
+  SHINJUKU: Object.freeze(['C','B','A']),
 });
 const ALLOWED=new Set(REGION_ORDER);
 const REGIONAL_LOCATIONS=Object.freeze(REGION_ORDER.flatMap(id=>
@@ -54,15 +58,15 @@ function availableCar(id) {
     !cars[id].collector&&!cars[id].tuningLocked&&!cars[id].crewLoan;
 }
 
-// Core per-location model pool: real local Meet favourites, not all vehicles.
-// Entries outside the focused factory classes can appear at a lower weight.
+// All cars in the region's permitted factory-class envelope can eventually
+// appear, including models absent from the authored Meet favourites. Actual
+// regional affinity is a weighting, not a model-specific hard-coded exception.
 export function getStreetShowdownCouponPool(locationId) {
-  const id=String(locationId||'');
-  const region=locationRegion(id);
+  const region=locationRegion(String(locationId||''));
+  const allowed=new Set(STREET_SHOWDOWN_CLASS_ENVELOPE[region]||[]);
   if(!ALLOWED.has(region))return [];
-  const liked=getEncounterProfile(id).likelyCars||[];
-  const preferred=new Set([...liked,...(EXTRA_SHOWDOWN_COUPON_MODELS[region]||[])]);
-  return carOrder.filter(carId=>preferred.has(carId)&&availableCar(carId));
+  return carOrder.filter(carId=>availableCar(carId)&&
+    allowed.has(stockClassFor(cars[carId])));
 }
 export function rollStreetShowdownCouponPrize(random=Math.random) {
   return Number(random())<STREET_SHOWDOWN_COUPON_CHANCE;
@@ -74,21 +78,20 @@ function weightedPrizeCar(locationId, rotationIndex) {
   const pool=getStreetShowdownCouponPool(locationId);
   const region=locationRegion(locationId);
   const focus=new Set(STREET_SHOWDOWN_CLASS_FOCUS[region]||[]);
+  const local=new Set(getEncounterProfile(locationId).likelyCars||[]);
   const focused=pool.filter(id=>focus.has(stockClassFor(cars[id])));
-  const adjacent=pool.filter(id=>!focus.has(stockClassFor(cars[id])));
-  // 80% local focus, 15% neighbouring classes within the regional meet pool,
-  // 5% unusual visiting cars. Never offer a Class A at starter Odaiba:
-  // surprises stay in the region's difficulty envelope.
-  const wildcard=carOrder.filter(id=>availableCar(id)&&!pool.includes(id)&&
-    (region==='ODAIBA'||region==='SHINAGAWA'
-      ? ['D','C','B'].includes(stockClassFor(cars[id]))
-      : region==='TATSUMI'||region==='SHIBUYA'
-        ? ['C','B','A'].includes(stockClassFor(cars[id]))
-        : ['B','A'].includes(stockClassFor(cars[id]))));
+  const regional=focused.filter(id=>local.has(id));
+  const visiting=focused.filter(id=>!local.has(id));
+  const wildcard=pool.filter(id=>!focus.has(stockClassFor(cars[id])));
+  // 80% region-favourite within the focused classes; 15% other models in
+  // those same classes; 5% a neighbouring-class wildcard. Every model is
+  // treated identically, by class and by existing Meet-region affinity.
   const sample=unit(rotationIndex+':'+locationId+':car-band');
-  const candidates=sample<.80 ? (focused.length?focused:pool)
-    : sample<.95 ? (adjacent.length?adjacent:focused.length?focused:pool)
-      : wildcard.length?wildcard:pool;
+  const candidates=sample<.80
+    ? (regional.length?regional:focused.length?focused:pool)
+    : sample<.95
+      ? (visiting.length?visiting:focused.length?focused:pool)
+      : (wildcard.length?wildcard:focused.length?focused:pool);
   return candidates.length
     ? candidates[hash(rotationIndex+':'+locationId+':car-choice')%candidates.length]
     : null;
@@ -136,16 +139,28 @@ export function getStreetShowdownCouponHunts(carId,source) {
     const matching=region.locations.filter(loc=>loc.available!==false&&
       getStreetShowdownCouponPool(loc.id).includes(carId));
     if(!matching.length)return null;
+    const focus=STREET_SHOWDOWN_CLASS_FOCUS[regionId]||[];
+    const focusMatch=focus.includes(stockClassFor(cars[carId]));
+    const favourites=matching.filter(loc=>
+      (getEncounterProfile(loc.id).likelyCars||[]).includes(carId));
+    const huntTier=focusMatch
+      ? favourites.length?'REGIONAL FAVOURITE':'CLASS MATCH'
+      : 'RARE WILDCARD';
     const unlocked=matching.filter(loc=>isTravelLocationUnlocked(source,loc.id));
-    const suggested=unlocked[0]||matching[0];
+    const suggested=unlocked.find(loc=>favourites.includes(loc))||
+      favourites[0]||unlocked[0]||matching[0];
     return {
       regionId,regionName:region.label,
       locationId:suggested.id,locationName:suggested.label,
       eligibleMeetCount:matching.length,unlockedMeetCount:unlocked.length,
+      huntTier,focusMatch,
       unlocked:unlocked.length>0,
       unlockLabel:unlocked.length?'OPEN':getTravelLocationUnlockLabel(source,suggested.id),
     };
-  }).filter(Boolean).sort((a,b)=>Number(b.unlocked)-Number(a.unlocked)||
+  }).filter(Boolean).sort((a,b)=>
+    (a.huntTier==='REGIONAL FAVOURITE'?0:a.huntTier==='CLASS MATCH'?1:2)-
+      (b.huntTier==='REGIONAL FAVOURITE'?0:b.huntTier==='CLASS MATCH'?1:2)||
+    Number(b.unlocked)-Number(a.unlocked)||
     b.unlockedMeetCount-a.unlockedMeetCount||
     b.eligibleMeetCount-a.eligibleMeetCount);
 }
