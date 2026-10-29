@@ -4,6 +4,12 @@ on:
     branches: [feature/season-qualification-failure-cutscene]
     paths:
       - 'src/data/cutscenes.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'sw.js'
+      - 'version.json'
       - 'src/ui/ProSeasonPanel.js'
       - 'tests/pro-season-qualification-failure-scene.mjs'
       - '.github/workflows/season-qualification-cutscene-review.yml'
@@ -20,6 +26,9 @@ jobs:
         run: |
           node --check src/data/cutscenes.js
           node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
           node --check tests/pro-season-qualification-failure-scene.mjs
       - name: Test scene triggers and previous career flow
         run: node --test tests/pro-season-qualification-failure-scene.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs
