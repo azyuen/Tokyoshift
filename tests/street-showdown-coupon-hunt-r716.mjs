@@ -11,7 +11,8 @@ import {createStreetShowdownRounds,STREET_SHOWDOWN_CASH_ENTRY_FEES,
   getStreetShowdownCouponEntryFee} from '../src/data/streetShowdowns.js';
 import {STREET_SHOWDOWN_COUPON_CHANCE,rollStreetShowdownCouponPrize,
   getStreetShowdownCouponPool,getStreetShowdownCouponHunts,
-  STREET_SHOWDOWN_CLASS_FOCUS,getStreetShowdownScheduledOffer,
+  STREET_SHOWDOWN_CLASS_FOCUS,STREET_SHOWDOWN_CLASS_ENVELOPE,
+  getStreetShowdownScheduledOffer,
   getActiveStreetShowdownCouponOffers} from '../src/data/streetShowdownCouponHunt.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -50,8 +51,21 @@ test('all Street Showdown coupon models have real hunt locations',()=>{
     assert.ok(all.has(id),'redemption coupon car not huntable: '+id);
   for(const id of carOrder)
     assert.ok(all.has(id),'stock car not eligible for any Street Showdown coupon: '+id);
-  assert.ok(getStreetShowdownCouponPool('tatsumiSkylineVista').includes('rx8'));
-  assert.ok(getStreetShowdownCouponPool('daikokuPA').includes('rx7fd'));
+  // Every car — including cars absent from regional Meet favourites — follows
+  // the same factory-class envelope rule. No per-model regional exceptions.
+  const couponCode=read('src/data/streetShowdownCouponHunt.js');
+  assert.doesNotMatch(couponCode,/EXTRA_SHOWDOWN_COUPON_MODELS/);
+  assert.doesNotMatch(couponCode,/['"]rx8['"]|['"]rx7fd['"]/);
+  for(const regionId of REGIONS){
+    const accepted=new Set(STREET_SHOWDOWN_CLASS_ENVELOPE[regionId]);
+    for(const location of TRAVEL_REGIONS[regionId].locations){
+      const pool=new Set(getStreetShowdownCouponPool(location.id));
+      for(const carId of carOrder){
+        assert.equal(pool.has(carId),accepted.has(STOCK_CLASS_DATA[carId].stockClass),
+          regionId+' should filter '+carId+' purely by factory class');
+      }
+    }
+  }
   assert.deepEqual(getStreetShowdownCouponPool('ginzaMotorGallery'),[]);
 });
 
@@ -156,16 +170,17 @@ test('60% coupon rate is schedule-wide, class focus dominates while wildcards st
         if(offer.prizeType!=='COUPON')continue;
         coupons++;
         assert.ok(carOrder.includes(offer.prizeCarId));
-        const car=read('src/data/stockClasses.js');
-        assert.ok(car.includes('"'+offer.prizeCarId+'"'));
-        if(focus.includes(STOCK_CLASS_DATA[offer.prizeCarId]?.stockClass))focused++;
-        if(!getStreetShowdownCouponPool(loc.id).includes(offer.prizeCarId))wildcards++;
+        assert.ok(STOCK_CLASS_DATA[offer.prizeCarId]);
+        const actualClass=STOCK_CLASS_DATA[offer.prizeCarId]?.stockClass;
+        assert.ok(STREET_SHOWDOWN_CLASS_ENVELOPE[regionId].includes(actualClass));
+        if(focus.includes(actualClass))focused++;
+        else wildcards++;
       }
     }
   }
   assert.ok(coupons/all>.53&&coupons/all<.67,'offer odds expected about 60%, found '+coupons/all);
-  assert.ok(focused/coupons>.67,'regional focus should win most coupon events');
-  assert.ok(wildcards>0,'rare visiting-class wildcards should actually be possible');
+  assert.ok(focused/coupons>.85,'regional class focus should dominate coupon events');
+  assert.ok(wildcards>0,'rare adjacent-class wildcards should actually be possible');
 });
 
 test('live Office board matches authoritative location schedule, including locked venues',()=>{
@@ -203,4 +218,18 @@ test('scheduled prize car is the real third-heat rival and remains deterministic
   assert.equal(rounds.length,3);
   assert.equal(rounds[2].carId,coupon);
   assert.deepEqual(createStreetShowdownRounds(options),rounds);
+});
+
+test('hunting leads describe regional favourites, general class matches and rare class wildcards',()=>{
+  const source=registry(createDefaultGameState());
+  for(const id of carOrder){
+    const hints=getStreetShowdownCouponHunts(id,source);
+    assert.ok(hints.length, 'every regular model should have at least one class-appropriate lead: '+id);
+    for(const hint of hints){
+      const cls=STOCK_CLASS_DATA[id].stockClass;
+      assert.equal(hint.focusMatch,STREET_SHOWDOWN_CLASS_FOCUS[hint.regionId].includes(cls));
+      assert.ok(['REGIONAL FAVOURITE','CLASS MATCH','RARE WILDCARD'].includes(hint.huntTier));
+      if(!hint.focusMatch)assert.equal(hint.huntTier,'RARE WILDCARD');
+    }
+  }
 });
