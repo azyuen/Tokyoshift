@@ -3,7 +3,7 @@ import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
 import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r724';
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261030-r724';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r724';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -473,6 +473,30 @@ function showCrewResult(s,out,round={}){
   });
 }
 
+function showProfessionalTeamDetails(s,teamId) {
+  const c=circuit(s),team=c.teams[teamId],definition=getProAiTeamDefinition(teamId);
+  if(!team||!definition)return;
+  const o=overlay(s,team.name.toUpperCase()+' // TEAM PROFILE');
+  const driverName=id=>{
+    const record=c.drivers[id];
+    return record?.name||characters[record?.characterId]?.name||id;
+  };
+  o.label(90,125,'REGION  '+(definition.regionId||'PROFESSIONAL NATIONAL')+
+    '    CAREER RATING  '+team.rating+'    SEASON POINTS  '+team.seasonPoints,23);
+  o.label(90,190,'LEAD DRIVER  //  '+driverName(definition.leadDriverId),29);
+  o.label(90,264,'PRO RACING CREW',24);
+  definition.rankedDriverIds.forEach((id,index)=>{
+    const driver=c.drivers[id],rank=getProCircuitDriverSeeds(c).find(row=>row.id===id)?.seed;
+    o.label(115,321+index*64,(index+1)+'.  '+driverName(id)+
+      '   //   DRIVER #'+(rank||'—')+'   '+(driver?.rating||0)+' PT',23);
+  });
+  o.label(115,321+definition.rankedDriverIds.length*64,
+    (definition.rankedDriverIds.length+1)+'.  '+definition.reserveName+
+    '   //   CREW RESERVE',22);
+  o.label(90,655,'Each organisation enters one crew fixture or fields its solo drivers per round.',18);
+  o.btn(780,782,330,'BACK TO RANKINGS',()=>showProRankings(s));
+}
+
 // Expand the compact Open Circuit ladder into a complete persistent driver
 // and crew leaderboard.  Season points intentionally do not affect its order.
 export function showProRankings(s) {
@@ -491,6 +515,14 @@ export function showProRankings(s) {
       const mine=entry.id===player;
       if(mine)o.add(s.add.rectangle(x+310,y+10,642,22,0x45252c,.9)
         .setStrokeStyle(1,0x95646d,.65).setDepth(201));
+      if(kind==='TEAM'&&!mine){
+        const stripe=getProAiTeamDefinition(entry.id)?.colour||'#8096ac';
+        const swatch=o.add(s.add.rectangle(x+43,y+10,6,17,
+          Number.parseInt(stripe.slice(1),16)).setDepth(204));
+        const hit=o.add(s.add.rectangle(x+310,y+10,642,22,0x000000,0)
+          .setDepth(205).setInteractive({useHandCursor:true}));
+        hit.on('pointerdown',()=>showProfessionalTeamDetails(s,entry.id));
+      }
       const display=mine?(kind==='TEAM'?c.playerTeamName:'YOU'):
         entry.name||characters[entry.characterId]?.name||entry.id;
       const style={color:mine?'#ffe4a9':i<3?'#f5f0ed':'#c4c9cf'};
