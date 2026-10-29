@@ -1,5 +1,5 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus } from './proCircuit.js?v=20261021-r628';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus, getProTeamIdForDriver, getProAiTeamDefinition } from './proCircuit.js?v=20261021-r628';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
 import { cars } from './cars.js?v=20261026-r687';
 import { characters } from './characters.js?v=20261017-r565';
@@ -452,32 +452,29 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
   const index=Math.max(0,Math.min(PRO_SEASON_LENGTH-1,Math.floor(Number(round)||0)));
   const rng=seasonRandom('pro:season:'+c.season+':round:'+index);
   const occupied=new Set(occupiedIds);
-  // Player-opponent IDs can be supplied as driver IDs or team IDs.
-  // The mapped counterpart must not earn a second simulated result.
-  // Pair the original 23 AI drivers with the original 23 teams.
-  // Unknown roster entries from older/future saves are appended, never
-  // allowed to shift the established driver-to-team correspondence.
-  const baseline=normaliseProCircuitState(null);
-  const canonicalDrivers=Object.keys(baseline.drivers).sort();
-  const canonicalTeams=Object.keys(baseline.teams).sort();
-  const extraDrivers=Object.keys(c.drivers).filter(id=>!baseline.drivers[id]).sort();
-  const extraTeams=Object.keys(c.teams).filter(id=>!baseline.teams[id]).sort();
-  const driverIds=[...canonicalDrivers,...extraDrivers].filter(id=>c.drivers[id]);
-  const teamIds=[...canonicalTeams,...extraTeams].filter(id=>c.teams[id]);
-  const competitors=driverIds.map((id,index)=>({id,record:c.drivers[id],teamId:teamIds[index]||null}));
-  competitors.forEach(({id,teamId})=>{
-    if(teamId&&(occupied.has(id)||occupied.has(teamId))){occupied.add(id);occupied.add(teamId);}
-  });
-  // A single decision per professional: driver OR crew, never both.
+  // A professional team owns several individually ranked drivers. A team
+  // can enter one crew fixture OR have its rated drivers contest the solo
+  // event in a given background round. Never award a second result to an
+  // organisation already involved in the player's official competition.
+  const teams=getProCircuitTeamSeeds(c).filter(t=>t.id!==PLAYER);
+  const drivers=getProCircuitDriverSeeds(c).filter(d=>d.id!=='player:driver');
   const entries={DRIVER:[],TEAM:[]};
-  for(const item of competitors.sort((a,b)=>a.id.localeCompare(b.id))) {
-    if(occupied.has(item.id)||occupied.has(item.teamId))continue;
-    const teamId=item.teamId;
-    const team=c.teams[teamId];
-    const driverGap=60-item.record.seasonPoints;
-    const crewGap=40-(team?.seasonPoints||0);
-    const discipline=team&&(crewGap>driverGap*0.7 || (Math.abs(crewGap-driverGap*0.7)<4&&rng()<0.5))?'TEAM':'DRIVER';
-    entries[discipline].push({id:discipline==='TEAM'?teamId:item.id,rating:discipline==='TEAM'?team.rating:item.record.rating});
+  for(const team of teams) {
+    const members=drivers.filter(d=>getProTeamIdForDriver(d.id)===team.id);
+    if(occupied.has(team.id)||members.some(d=>occupied.has(d.id)))continue;
+    const driverPoints=members.reduce((max,d)=>Math.max(max,d.seasonPoints),0);
+    const driverGap=60-driverPoints;
+    const crewGap=40-team.seasonPoints;
+    const runCrew=crewGap>driverGap*.7||
+      (Math.abs(crewGap-driverGap*.7)<4&&rng()<.5);
+    if(runCrew)entries.TEAM.push({id:team.id,rating:team.rating});
+    else for(const member of members)entries.DRIVER.push({id:member.id,rating:member.rating});
+  }
+  // Independently ranked legacy additions without a professional team may
+  // still contest driver rounds; they never create anonymous extra teams.
+  for(const member of drivers) {
+    if(getProTeamIdForDriver(member.id)||occupied.has(member.id))continue;
+    entries.DRIVER.push({id:member.id,rating:member.rating});
   }
   const results={};
   for(const discipline of ['DRIVER','TEAM']){
@@ -628,10 +625,20 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     teamsPool.sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id)):
     teamsPool.sort((a,b)=>Math.abs(a.rating-c.playerTeam.rating)-
       Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
-  const teams=[{id:PLAYER,name:'YOUR CREW',rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
-  const entrants=teams.map((r,i)=>({...r,seed:i+1,drivers:[0,1,2].map(n=>
-    opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
-      getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null))}));
+  const teams=[{id:PLAYER,name:c.playerTeamName,rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
+  const entrants=teams.map((r,i)=>{
+    const definition=getProAiTeamDefinition(r.id);
+    const teamRoster=definition ? [...definition.rankedDriverIds, definition.reserveName] : [];
+    return {...r,seed:i+1,leadDriverId:definition?.leadDriverId||null,
+      drivers:[0,1,2].map(n=>({
+        ...opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
+          getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null),
+        driverId:definition?.rankedDriverIds[n]||null,
+        name:r.id===PLAYER?c.playerTeamName:(c.drivers[teamRoster[n]]?.name ||
+          (c.drivers[teamRoster[n]]?.characterId?teamRoster[n].replace('rival:',''):null) ||
+          teamRoster[n] || 'PRO DRIVER '+(n+1)),
+      }))};
+  });
   const ids=entrants.map(t=>t.id),schedule=[[[ids[0],ids[3]],[ids[1],ids[2]]],[[ids[0],ids[2]],[ids[3],ids[1]]],[[ids[0],ids[1]],[ids[2],ids[3]]]];
   const units=getCrewSeriesUnits(source,assignments);
   const registeredCars=Object.fromEntries(squadIds.map(id=>[id,units.find(u=>u.id===id).carId]));
@@ -789,7 +796,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
       (t.seasonChoice==='alternative'
         ?[50000,PRO_ALT_CREW_PRIZES[2],PRO_ALT_CREW_PRIZES[1],PRO_ALT_CREW_PRIZES[0]][wins]
         :[50000,200000,450000,1050000][wins]);
-    const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
+    const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore,'TEAM');
     const cashPrize=sponsor?.totalPrize??baseCashPrize;
     if(wins===3&&!t.openCircuit)c.crewSeriesWins++;
     c.activeCrewEvent=null;
@@ -811,7 +818,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const result=getCrewSeriesTable(t),place=result.findIndex(r=>r.id===PLAYER)+1;
   result.forEach((r,i)=>{table[r.id].entered++;if(!t.openCircuit)table[r.id].seasonPoints+=[20,15,10,5][i];});
   const baseCashPrize=Math.max(35000,t.prizes[place-1]);
-  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore,'TEAM');
   const cashPrize=sponsor?.totalPrize??baseCashPrize;
   if(place===1&&!t.openCircuit)c.crewSeriesWins++;
   c.activeCrewEvent=null;
