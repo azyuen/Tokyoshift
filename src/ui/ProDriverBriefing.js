@@ -320,7 +320,7 @@ function draw(s,state,options){
     ...(round.opponentBuildState||{}),
     // FourLaneTestScene paints the first opponent in every individual
     // Open Circuit/Trophy heat with this exact colour (not factory white).
-    paintColor:getProRaceRivalPaint(0),
+    paintColor:round.paintColor??getProRaceRivalPaint(0),
   });
 
   // Translucent breathing hotspots: identical alpha/timing language to
