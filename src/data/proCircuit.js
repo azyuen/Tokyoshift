@@ -159,6 +159,8 @@ export function createDefaultProCircuitState() {
     eventTick: 0, // advances on completed in-game events, never wall-clock time
     seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
     openCircuitTick: 0, // successful standalone event completions only
+    openCircuitLastDriverSlot: -1, // once per live Open Circuit schedule slot
+    openCircuitLastCrewSlot: -1,
     minorTrophyIndex: 0,
     minorTrophyCooldownUntil: 0,
     crewAdviceCooldownUntil: 0, // eventTick after this event + two OTHER completions
@@ -233,6 +235,8 @@ export function normaliseProCircuitState(raw) {
     eventTick: boundedInteger(source.eventTick, 0, 0, 10000000),
     seasonStatus,
     openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
+    openCircuitLastDriverSlot: boundedInteger(source.openCircuitLastDriverSlot,-1,-1,100000000),
+    openCircuitLastCrewSlot: boundedInteger(source.openCircuitLastCrewSlot,-1,-1,100000000),
     minorTrophyIndex: boundedInteger(source.minorTrophyIndex, 0, 0, PRO_CIRCUIT_TROPHIES.length - 1),
     minorTrophyCooldownUntil: boundedInteger(source.minorTrophyCooldownUntil, 0, 0, 10000000),
     crewAdviceCooldownUntil: boundedInteger(source.crewAdviceCooldownUntil, 0, 0, 10000000),
