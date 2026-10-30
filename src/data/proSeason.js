@@ -587,9 +587,13 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonCh
   if(new Set(chosen.map(u=>u.carId)).size!==chosen.length)return 'REGISTER A DISTINCT CAR FOR EACH DRIVER';
   return null;
 }
-function opponentBuild(id,rating,slot,skillTier=null) {
-  const rng=seasonRandom(id+':'+slot),pool=['ae86','ek9','fc3s','galant','r32','s2000','rx7fd','jza80'];
-  const carId=pool[Math.floor(rng()*pool.length)],level=clamp(Math.round(2+(rating-1400)/220),1,5);
+function opponentBuild(id,rating,slot,skillTier=null,requiredDrivetrain=null) {
+  const rng=seasonRandom(id+':'+slot);
+  const eligible=['ae86','ek9','fc3s','galant','r32','s2000','rx7fd','jza80']
+    .filter(carId=>!requiredDrivetrain||
+      getCarMagazineMeta(carId).drivetrain===requiredDrivetrain);
+  const carId=eligible[Math.floor(rng()*eligible.length)];
+  const level=clamp(Math.round(2+(rating-1400)/220),1,5);
   const state=createRivalBuildState(cars[carId],level,{seed:id+':'+slot,raceType:'Standing Start'});
   const tier=skillTier||Math.max(3,Math.min(5,Math.round(3+(rating-1400)/250)));
   return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,
@@ -632,7 +636,8 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     return {...r,seed:i+1,leadDriverId:definition?.leadDriverId||null,
       drivers:[0,1,2].map(n=>({
         ...opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
-          getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null),
+          getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null,
+          trophy?.id==='triDrive'&&r.id!==PLAYER?['FWD','RWD','AWD'][n]:null),
         driverId:definition?.rankedDriverIds[n]||null,
         name:r.id===PLAYER?c.playerTeamName:(c.drivers[teamRoster[n]]?.name ||
           (c.drivers[teamRoster[n]]?.characterId?characters[c.drivers[teamRoster[n]].characterId]?.name:null) ||

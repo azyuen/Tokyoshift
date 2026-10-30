@@ -1,0 +1,37 @@
+name: R729 Professional rival scrutineering
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/proOpponentScrutineering.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-opponent-scrutineering-r729.mjs'
+      - '.github/workflows/pro-opponent-scrutineering-r729.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/proOpponentScrutineering.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-opponent-scrutineering-r729.mjs'
+
+jobs:
+  rival-scrutineering:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check registration, vehicle and race syntax
+        run: |
+          node --check src/data/proOpponentScrutineering.js
+          node --check src/data/proSeason.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+      - name: Physically enforce power, NOS, drivetrain and stock for all pro rivals
+        run: node --test tests/pro-opponent-scrutineering-r729.mjs

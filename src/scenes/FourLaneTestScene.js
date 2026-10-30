@@ -1,5 +1,5 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r728';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r729';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r728';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
@@ -25,6 +25,8 @@ import {
   boostAiForStandingStart,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
+import { scrutineerProOpponentRound, inspectProOpponent } from '../data/proOpponentScrutineering.js?v=20261030-r729';
+import { PRO_DRAG_EVENTS } from '../data/centralTokyo.js?v=20261030-r721';
 import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures,
@@ -164,6 +166,80 @@ export default class FourLaneTestScene extends RaceScene {
     this.crewRelay=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='RELAY';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
+    // Old installed saves can contain a 5-star rival built before NPC
+    // scrutineering existed. Repair ONLY the current paid heat, preserving
+    // the event/round and payment ledger; this runs before preload/Vehicle.
+    if(data.mode==='PRO_DUEL' && this.proDuelState?.active){
+      const entry=this.proDuelState;
+      const index=Number(entry.roundIndex||0);
+      const original=entry.rounds?.[index];
+      const event=PRO_DRAG_EVENTS.find(e=>e.id===entry.eventId)||
+        PRO_CIRCUIT_TROPHIES.find(e=>e.id===entry.openTrophyId)||{};
+      const official=!entry.openCircuit ?
+        getProfessionalRoundEvents(this.registry.get('proCircuit')?.calendar?.round).driver : {};
+      const rules=entry.briefingRules||{
+        maxPowerKW:event.maxPowerKW??official.maxPowerKW??null,
+        noNos:Boolean(event.noNos||official.noNos),
+        stock:Boolean(event.stock||official.stock),
+        drivetrain:event.drivetrain||official.drivetrain||'',
+      };
+      const own=(this.registry.get('carStates')||{})[entry.playerCarId]||{};
+      const ownKW=getBuiltCar(entry.playerCarId,own)?.car?.powerKW||0;
+      const result=scrutineerProOpponentRound(original,rules,{
+        targetPowerKW:ownKW,
+        seed:'pro-resume:'+entry.proSeasonId+':'+index,
+        excludedCarId:entry.playerCarId,
+      });
+      if(!result){
+        console.error('[Tokyo SHIFT] Race blocked: no legal opponent for',entry.eventId,index);
+        this.registry.set('proScrutineeringError','NO CLASS-LEGAL RIVAL AVAILABLE');
+        this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+        return;
+      }
+      if(result.repaired || !entry.briefingRules){
+        const updated={...entry,briefingRules:rules,
+          rounds:entry.rounds.map((r,i)=>i===index?result.round:r)};
+        try{
+          saveProTransaction(this.registry,{competitionState:updated});
+          this.proDuelState=updated;
+          console.warn('[Tokyo SHIFT] Repaired legacy illegal pro rival:',
+            result.priorViolations.join(' / '));
+        }catch(error){
+          console.error('[Tokyo SHIFT] Unable to save legal rival:',error);
+          this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+          return;
+        }
+      }
+    }
+    if(this.proTimed && this.timedEvent){
+      const event=this.timedEvent,circuit=this.registry.get('proCircuit');
+      const rules=getProfessionalRoundEvents(event.round).driver;
+      const checked=scrutineerProOpponentRound({
+        carId:event.opponentCarId,opponentBuildState:event.opponentCarState,
+        encounterRating:event.opponentRating,
+      },rules,{
+        targetPowerKW:getBuiltCar(event.carId,event.carState||{})?.car?.powerKW||0,
+        seed:'pro-timed-resume:'+event.id,
+        excludedCarId:event.carId,
+      });
+      if(!checked){
+        this.registry.set('proScrutineeringError','NO CLASS-LEGAL TIMED RIVAL AVAILABLE');
+        this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+        return;
+      }
+      if(checked.repaired){
+        const patched={...event,opponentCarId:checked.round.carId,
+          opponentCarState:checked.round.opponentBuildState};
+        try{
+          saveProTransaction(this.registry,{proCircuit:{...circuit,activeTimedEvent:patched}});
+          this.timedEvent=patched;
+        }catch(error){
+          console.error('[Tokyo SHIFT] Timed opponent repair failed:',error);
+          this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+          return;
+        }
+      }
+    }
     if(this.proCrew) {
       const h=this.crewHeat;
       this.proDuelState=h?{active:true,proEvent:true,eventId:'crewOpen',playerCarId:h.carId,roundIndex:h.index,
@@ -396,6 +472,7 @@ export default class FourLaneTestScene extends RaceScene {
       paint: getCarPaintColor(this.playerState), finishSeconds: null,
       disqualified: false,
     }];
+    this._proOpponentInvalid=false;
     this.aiCarIds.forEach((id, index) => {
       const entrant = this.aiEntrants[index];
       const rivalRound = this.proDuel&&!this.crewFourWide ? this.proDuelInfo.round : null;
@@ -405,7 +482,7 @@ export default class FourLaneTestScene extends RaceScene {
       const rating = championshipTier|| (rivalRound ? Number(rivalRound.encounterRating || 4)
         : entrant?.skillTier|| (entrant ? Math.max(2, Math.min(5,
             Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4));
-      const state = entrant?.buildState||this.proRivalBuilds?.[entrant?.id]?.state||
+      const state = this.proRivalBuilds?.[entrant?.id]?.state||entrant?.buildState||
         (this.crewFourWide&&index===0?this.crewHeat.opponent.state:null)||
         rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
         seed: this.proCup ? this.proHeat.id + ':' + entrant.id
@@ -415,6 +492,25 @@ export default class FourLaneTestScene extends RaceScene {
         raceType: 'Standing Start',
       });
       const built = getBuiltCar(id, state) || getBuiltCar(id, {});
+      // Never instantiate a professional opponent that can violate the
+      // official power, stock, drivetrain or NOS limits in live physics.
+      const activeRules=this.proCup
+        ? getProfessionalRoundEvents(this.registry.get('proCircuit')?.calendar?.round).driver
+        : this.proTimed
+          ? getProfessionalRoundEvents(this.timedEvent?.round).driver
+          : this.proDuel&&!this.proCrew
+            ? this.proDuelState?.briefingRules : null;
+      if(activeRules){
+        const scrutineering=inspectProOpponent(id,state,activeRules);
+        if(!scrutineering.eligible){
+          console.error('[Tokyo SHIFT] BLOCKED illegal AI vehicle',id,
+            scrutineering.reasons);
+          this.registry.set('proScrutineeringError',
+            'AI SCRUTINEERING FAILED // '+scrutineering.reasons.join(' / '));
+          this._proOpponentInvalid=true;
+          return;
+        }
+      }
       const vehicle = new Vehicle(built.car, built.engine);
       vehicle.transmission.currentGear = 1;
       vehicle.transmission.lastShiftQuality = 'STAGED';
@@ -436,6 +532,10 @@ export default class FourLaneTestScene extends RaceScene {
         finishSeconds: null, disqualified: false,
       });
     });
+    if(this._proOpponentInvalid){
+      this.returnToDrag();
+      return;
+    }
 
     ensureDerivedModularCarTextures(
       this, Object.fromEntries([...new Set(this.runners.map(r => r.carId))]
