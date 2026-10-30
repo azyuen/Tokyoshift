@@ -1564,19 +1564,26 @@ export default class FourLaneTestScene extends RaceScene {
         fontSize:size+'px',fontStyle:pixel?'normal':'700',color,
       }).setDepth(depth+4).setScrollFactor(0);
 
-    // Match the production race briefing's compact opponent panel geometry,
-    // portrait crop, rule typography and actual modular car renderer.
+    // Exact briefing card dimensions, type scale and element placements.
+    // The only change is translation (+28, -122) into the result screen.
+    const dx=28,dy=-122;
     const panelPoints=[
-      new Phaser.Geom.Point(77,509),new Phaser.Geom.Point(808,509),
-      new Phaser.Geom.Point(782,691),new Phaser.Geom.Point(54,691),
+      new Phaser.Geom.Point(52+dx+28,643+dy),
+      new Phaser.Geom.Point(52+dx+654-28,643+dy),
+      new Phaser.Geom.Point(52+dx+654-28-24,643+dy+164),
+      new Phaser.Geom.Point(52+dx+4,643+dy+164),
     ];
+    // Match the briefing's slanted poly(x,y,w,h) geometry exactly.
     const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
     panel.fillStyle(0x071728,.97).fillPoints(panelPoints,true);
     panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
-    text(93,518,'NEXT OPPONENT',21,'#35d6ff',true);
+    text(89+dx,652+dy,'NEXT OPPONENT',24,'#35d6ff',false);
+    const frameX=74+dx,frameY=683+dy,frameW=129,frameH=106,skew=16;
     const framePoints=[
-      new Phaser.Geom.Point(111,550),new Phaser.Geom.Point(240,550),
-      new Phaser.Geom.Point(208,680),new Phaser.Geom.Point(79,680),
+      new Phaser.Geom.Point(frameX+skew,frameY),
+      new Phaser.Geom.Point(frameX+frameW+skew,frameY),
+      new Phaser.Geom.Point(frameX+frameW-skew,frameY+frameH),
+      new Phaser.Geom.Point(frameX-skew,frameY+frameH),
     ];
     const frame=this.add.graphics().setDepth(depth+2).setScrollFactor(0);
     frame.fillStyle(0x165578,.87).fillPoints(framePoints,true);
@@ -1585,38 +1592,42 @@ export default class FourLaneTestScene extends RaceScene {
     maskShape.fillStyle(0xffffff,1).fillPoints(framePoints,true);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>maskShape.destroy());
     const clip=image=>image?.setScrollFactor(0).setMask(maskShape.createGeometryMask());
-    const px=166,py=618;
+    const px=frameX+frameW/2-9,py=frameY+frameH/2;
     const mainRival=Boolean(round.mainRivalTier||rival.mainRival);
     const key='proDriverHelmet'+getProDriverHelmetIndex(nextState,round);
     if(!mainRival&&this.textures.exists(key)){
       const source=this.textures.get(key).getSourceImage();
-      const scale=Math.max(129*1.6/Math.max(1,source.width),
-        130*2.2/Math.max(1,source.height));
+      const scale=Math.max(frameW*1.6/Math.max(1,source.width),
+        frameH*2.2/Math.max(1,source.height));
       this.textures.get(key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-      clip(this.add.image(px,568,key).setOrigin(.5,0).setScale(scale)
+      clip(this.add.image(px,frameY+18,key).setOrigin(.5,0).setScale(scale)
         .setDepth(depth+3).setScrollFactor(0));
     }else{
       const portrait=createCharacterProfile(this,{
         characterId:round.characterId,pose:'idle',x:px,y:py+10,
-        frameWidth:200,frameHeight:195,side:'center',depth:depth+3,
-        mask:false,rivalContext:true,proCircuit:true,
+        frameWidth:frameW*1.55,frameHeight:frameH*1.5,
+        side:'center',depth:depth+3,mask:false,rivalContext:true,proCircuit:true,
         playerCharacterId:this.registry.get('playerCharacterId')||'renMizuno',
       });
       if(portrait?.image)clip(portrait.image);
     }
+    // Identical briefing text positions and typography.
+    const briefingText=(x,y,value,size,color='#f4f7fa',pixel=false)=>
+      this.add.text(x+dx,y+dy,value,{
+        fontFamily:pixel?PIXEL:'"Rajdhani",sans-serif',
+        fontSize:size+'px',fontStyle:pixel?'normal':'700',color,
+      }).setDepth(depth+4).setScrollFactor(0);
     const fit=(label,width)=>{if(label.width>width)label.setScale(width/label.width);};
-    fit(text(260,552,driverName,18),245);
-    fit(text(260,579,carName,14,'#7fe0f1'),252);
-    text(260,608,'CLASS CAP',10,'#b1cddb',true);
-    text(370,605,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
-    text(260,630,'NOS',10,'#b1cddb',true);
-    text(370,627,rule.noNos?'PROHIBITED':'PERMITTED',15);
-    text(260,653,'CLASS',10,'#b1cddb',true);
-    text(370,650,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
-    // The race briefing uses CentralTokyoScene.createCarDisplay. Reuse that
-    // exact production renderer rather than substituting a flat car sprite.
+    fit(briefingText(231,684,driverName,18,'#ffffff'),239);
+    fit(briefingText(231,708,carName,14,'#7fe0f1'),247);
+    briefingText(231,733,'CLASS CAP',10,'#b1cddb',true);
+    briefingText(326,730,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+    briefingText(231,753,'NOS',10,'#b1cddb',true);
+    briefingText(326,750,rule.noNos?'PROHIBITED':'PERMITTED',15);
+    briefingText(231,775,'CLASS',10,'#b1cddb',true);
+    briefingText(326,771,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
     const carParts=CentralTokyoScene.prototype.createCarDisplay.call(
-      this,car,665,626,205,depth+3,getProRaceRivalPaint(0),null,false,{
+      this,car,545+dx,743+dy,211,depth+3,getProRaceRivalPaint(0),null,false,{
         ...(round.opponentBuildState||{}),paintColor:getProRaceRivalPaint(0),
       });
     carParts.forEach((part,i)=>{
@@ -1684,10 +1695,10 @@ export default class FourLaneTestScene extends RaceScene {
     // Large, angled manga face panel on the LEFT, using the same mask/profile
     // renderer as RaceScene (not a loosely scaled full-body PNG).
     const points = [
-      new Phaser.Geom.Point(88, individualHeatPreview ? 75 : 114),
-      new Phaser.Geom.Point(individualHeatPreview ? 484 : 497, individualHeatPreview ? 99 : 129),
-      new Phaser.Geom.Point(individualHeatPreview ? 467 : 462, individualHeatPreview ? 465 : 572),
-      new Phaser.Geom.Point(65, individualHeatPreview ? 480 : 593),
+      new Phaser.Geom.Point(individualHeatPreview ? 112 : 88, individualHeatPreview ? 58 : 114),
+      new Phaser.Geom.Point(individualHeatPreview ? 508 : 497, individualHeatPreview ? 82 : 129),
+      new Phaser.Geom.Point(individualHeatPreview ? 491 : 462, individualHeatPreview ? 448 : 572),
+      new Phaser.Geom.Point(individualHeatPreview ? 89 : 65, individualHeatPreview ? 463 : 593),
     ];
     const frame = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
     frame.fillStyle(0xe9e6e3, 0.92).fillPoints(points, true);
@@ -1695,7 +1706,7 @@ export default class FourLaneTestScene extends RaceScene {
     const portrait = createCharacterProfile(this, {
       characterId: this.registry.get('playerCharacterId') || 'renMizuno',
       pose: champion || advanced ? 'win' : 'loss',
-      x: individualHeatPreview ? 274 : 283, y: individualHeatPreview ? 265 : 345,
+      x: individualHeatPreview ? 298 : 283, y: individualHeatPreview ? 248 : 345,
       frameWidth: individualHeatPreview ? 421 : 455,
       frameHeight: individualHeatPreview ? 392 : 460,
       side: 'left', depth: depth + 3, flipInward: true, mask: false,
@@ -1711,7 +1722,7 @@ export default class FourLaneTestScene extends RaceScene {
       targets: [frame, ...(portrait?.image ? [portrait.image] : [])],
       alpha: 1, duration: 260, ease: 'Sine.Out',
     });
-    this.add.text(90, individualHeatPreview ? 486 : 607, name.toUpperCase(), {
+    if (!individualHeatPreview) this.add.text(90, 607, name.toUpperCase(), {
       fontFamily: PIXEL, fontSize: '11px', color: '#faf7f6',
       backgroundColor: '#171518ed', padding: { x: 12, y: 8 },
     }).setDepth(depth + 5).setScrollFactor(0);
@@ -1790,19 +1801,19 @@ export default class FourLaneTestScene extends RaceScene {
     const rankCurrent = ranked.find(r => r.id === (this.proCrew?'player:team':'player:driver'))?.seed || 32;
     const rankBefore = outcome?.summary?.rankBefore || rankCurrent;
     const rankAfter = outcome?.summary?.rankAfter || rankCurrent;
-    const rankBadge = this.add.circle(individualHeatPreview ? 424 : 470, individualHeatPreview ? 424 : 557, 66, 0x171619, 0.99)
+    const rankBadge = this.add.circle(individualHeatPreview ? 492 : 470, individualHeatPreview ? 412 : 557, 66, 0x171619, 0.99)
       .setStrokeStyle(4, 0xcac6c6, 1)
       .setDepth(depth + 12).setScrollFactor(0).setScale(0.25).setAlpha(0);
     this.tweens.add({
       targets: rankBadge, scaleX: 1, scaleY: 1, alpha: 1,
       duration: 360, ease: 'Back.Out',
     });
-    const rankValue = this.add.text(individualHeatPreview ? 424 : 470, individualHeatPreview ? 414 : 547, '#' + rankBefore, {
+    const rankValue = this.add.text(individualHeatPreview ? 492 : 470, individualHeatPreview ? 402 : 547, '#' + rankBefore, {
       fontFamily: '"Exo 2", sans-serif', fontStyle: '900 italic',
       fontSize: '34px', color: '#f4f1f0',
       stroke: '#080808', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(depth + 14).setScrollFactor(0);
-    this.add.text(individualHeatPreview ? 424 : 470, individualHeatPreview ? 456 : 589, this.proCrew?'TEAM RANK':'PRO RANK', {
+    this.add.text(individualHeatPreview ? 492 : 470, individualHeatPreview ? 444 : 589, this.proCrew?'TEAM RANK':'PRO RANK', {
       fontFamily: PIXEL, fontSize: '7px', color: '#cfcbca',
     }).setOrigin(0.5).setDepth(depth + 14).setScrollFactor(0);
     this.tweens.addCounter({
