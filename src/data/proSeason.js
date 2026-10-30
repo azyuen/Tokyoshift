@@ -23,6 +23,19 @@ export function isOpenCircuitAvailable(raw) {
   return !(c.calendar.round>=PRO_SEASON_LENGTH&&getProQualification(c).qualified&&!c.activeChampionship);
 }
 export const OPEN_CIRCUIT_CREW_FORMATS=Object.freeze(['DUEL','RELAY','TECHNICAL','FOUR_WIDE']);
+// The normal Driver and Crew offers rotate every schedule slot. Each may
+// be entered once per slot, even when the player finishes after the slot
+// changes. Prestige Trophies keep their separate event-based cooldown.
+export function getOpenCircuitSlotStatus(raw, discipline='DRIVER', rotation=null) {
+  const c=normaliseProCircuitState(raw);
+  const key=discipline==='TEAM'?'openCircuitLastCrewSlot':'openCircuitLastDriverSlot';
+  const slot=Number(rotation?.rotationIndex);
+  const valid=rotation!=null&&Number.isInteger(slot)&&slot>=0;
+  const used=valid&&c[key]===slot;
+  return {available:!used,used,slot:valid?slot:null,
+    nextEventAt:valid?Number(rotation.nextEventAt||0):null};
+}
+
 export function getOpenCircuitCrewFormat(rotation=null,completedEventTick=0) {
   const index=rotation&&Number.isInteger(rotation.rotationIndex)
     ?rotation.rotationIndex:completedEventTick;
@@ -53,9 +66,47 @@ export function getOpenCircuitTrophy(raw,rotation=null) {
 }
 // Settled once for each official paid standalone competition. No season points,
 // calendar round, or championship qualification change in this path.
+// Simulated Open Circuit heats use the actual, persistent 23-driver table.
+// Every competitor not raced by the player takes part in one seeded off-screen
+// duel, receiving real Elo/W-L/entry changes. No fictitious season points.
+export function simulateOpenCircuitField(c, eventId, playerOpponents=[]) {
+  const occupied=new Set(playerOpponents);
+  const rng=seasonRandom('open-circuit-field:'+String(eventId));
+  const table=getProCircuitDriverSeeds(c)
+    .filter(d=>d.id!=='player:driver'&&c.drivers[d.id]&&!occupied.has(d.id))
+    .sort((a,b)=>a.rating-b.rating||a.id.localeCompare(b.id));
+  const results=[];
+  for(let index=0;index<table.length;index+=2) {
+    const left=table[index],right=table[index+1];
+    const a=c.drivers[left.id];
+    a.entered++;
+    if(!right){
+      results.push({id:left.id,result:'BYE'});
+      continue;
+    }
+    const b=c.drivers[right.id];
+    b.entered++;
+    const chance=1/(1+10**((b.rating-a.rating)/400));
+    const leftWon=rng()<chance;
+    elo(a,b,leftWon);
+    results.push({id:left.id,opponentId:right.id,won:leftWon},
+      {id:right.id,opponentId:left.id,won:!leftWon});
+  }
+  return results;
+}
+
 export function finishOpenCircuitEvent(raw,summary) {
   const c=normaliseProCircuitState(raw);
   if(!isOpenCircuitAvailable(c)||!summary?.id||c.completedEventIds.includes(summary.id))return c;
+  // Seed from the saved event ID so reloads never reroll the field.
+  // Actual opponents were already scored against the player by the caller.
+  const background=simulateOpenCircuitField(c,summary.id,summary.driverIds||[]);
+  const slot=Number(summary.openCircuitSlotIndex);
+  if(!summary.trophyId&&Number.isInteger(slot)&&slot>=0&&
+    summary.openCircuitSlotIndex!=null) {
+    if(summary.discipline==='DRIVER')c.openCircuitLastDriverSlot=slot;
+    if(summary.discipline==='TEAM')c.openCircuitLastCrewSlot=slot;
+  }
   c.eventTick++;
   c.openCircuitTick++;
   c.completedEventIds=[...c.completedEventIds,summary.id].slice(-250);
@@ -72,7 +123,7 @@ export function finishOpenCircuitEvent(raw,summary) {
       c.minorTrophyCooldownUntil=c.openCircuitTick+OPEN_CIRCUIT_TROPHY_COOLDOWN;
     }
   }
-  c.lastTournament={...summary,points:0,openCircuit:true};
+  c.lastTournament={...summary,points:0,openCircuit:true,background};
   return c;
 }
 export function startProfessionalSeason(raw) {
@@ -518,6 +569,17 @@ export function completeSeasonRound(raw,summary,participants=[]) {
       background.push({kind,id:result.id,placing:result.placing,points:result.points});
     }
   }
+  // The sorted simulated finish order also decides real head-to-head
+  // rating results. Only BACKGROUND entrants are paired; the player and
+  // their actual opponents were already scored in the live competition.
+  for(const kind of ['DRIVER','TEAM']){
+    const roster=kind==='TEAM'?c.teams:c.drivers;
+    const rows=simulation.results[kind];
+    for(let index=0;index+1<rows.length;index+=2){
+      const first=roster[rows[index].id],second=roster[rows[index+1].id];
+      if(first&&second)elo(first,second,true);
+    }
+  }
   c.calendar.round++;
   c.calendar.history=[...c.calendar.history,{...summary,background}].slice(-PRO_SEASON_LENGTH);
   if(c.calendar.round===PRO_SEASON_LENGTH){
@@ -892,7 +954,11 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
         ? Object.keys(c.drivers).find(id=>c.drivers[id].characterId===round.characterId)
         : null;
     const rival=rivalId?c.drivers[rivalId]:{rating:1300+Number(round?.encounterRating||3)*70,wins:0,losses:0};
-    elo(c.playerDriver,rival,n<roundsWon);if(rivalId)participants.push(rivalId);
+    elo(c.playerDriver,rival,n<roundsWon);
+    if(rivalId) {
+      c.drivers[rivalId].entered++;
+      participants.push(rivalId);
+    }
   }
   c.playerDriver.entered++;const openCircuit=Boolean(state.openCircuit);
   const points=openCircuit?0:[2,7,13,20][roundsWon];
@@ -913,7 +979,9 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
     ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
     sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
-    trophyId:state.openTrophyId||null,openCircuit,rounds:roundCount,carId:state.playerCarId};
+    trophyId:state.openTrophyId||null,openCircuit,rounds:roundCount,
+    driverIds:participants.slice(1),openCircuitSlotIndex:state.openCircuitSlotIndex??null,
+    carId:state.playerCarId};
   c.lastTournament=summary;
   return openCircuit?finishOpenCircuitEvent(c,summary):completeSeasonRound(c,summary,participants);
 }
