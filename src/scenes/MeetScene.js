@@ -1997,7 +1997,7 @@ export default class MeetScene extends Phaser.Scene {
 
     // Recruitment always uses its explicit tier instead of the recruit's
     // personal Expert/Elite profile, which could bypass the chosen difficulty.
-    // Easy = Rookie, Standard = Skilled, Hard = Expert.
+    // Easy = Rookie, Standard = Expert, Hard = Expert.
     const rating = recruitRules.aiRating;
     const encounterAi = getEncounterAi(rating);
 
