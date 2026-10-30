@@ -1558,15 +1558,15 @@ export default class FourLaneTestScene extends RaceScene {
     // Same angled twin-panel language as the paddock NEXT OPPONENT card.
     // Positioned below the finish times and left of the two action buttons.
     const panelPoints=[
-      new Phaser.Geom.Point(583,533),new Phaser.Geom.Point(1191,533),
-      new Phaser.Geom.Point(1163,690),new Phaser.Geom.Point(552,690),
+      new Phaser.Geom.Point(77,509),new Phaser.Geom.Point(808,509),
+      new Phaser.Geom.Point(782,691),new Phaser.Geom.Point(54,691),
     ];
     const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
     panel.fillStyle(0x071728,.97).fillPoints(panelPoints,true);
     panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
     const portraitPoints=[
-      new Phaser.Geom.Point(590,569),new Phaser.Geom.Point(704,569),
-      new Phaser.Geom.Point(689,674),new Phaser.Geom.Point(574,674),
+      new Phaser.Geom.Point(95,548),new Phaser.Geom.Point(235,548),
+      new Phaser.Geom.Point(217,677),new Phaser.Geom.Point(75,677),
     ];
     const frame=this.add.graphics().setDepth(depth+2).setScrollFactor(0);
     frame.fillStyle(0x165578,.94).fillPoints(portraitPoints,true);
@@ -1585,31 +1585,31 @@ export default class FourLaneTestScene extends RaceScene {
       if(this.textures.exists(key)){
         const image=this.textures.get(key).getSourceImage();
         const scale=Math.max(135/Math.max(1,image.width),180/Math.max(1,image.height));
-        maskImage(this.add.image(636,565,key).setOrigin(.5,0)
+        maskImage(this.add.image(166,544,key).setOrigin(.5,0)
           .setScale(scale).setDepth(depth+3));
       }
     } else {
       const portrait=createCharacterProfile(this,{
-        characterId:round.characterId,pose:'idle',x:638,y:629,
+        characterId:round.characterId,pose:'idle',x:620,y:625,
         frameWidth:170,frameHeight:155,side:'center',depth:depth+3,
         mask:false,rivalContext:true,proCircuit:true,
         playerCharacterId:this.registry.get('playerCharacterId')||'renMizuno',
       });
       if(portrait?.image)maskImage(portrait.image);
     }
-    text(728,549,'NEXT OPPONENT',13,'#35d6ff',true);
-    text(1108,549,'HEAT '+(next.roundNumber)+' / '+next.totalRounds,
+    text(258,524,'NEXT OPPONENT',13,'#35d6ff',true);
+    text(721,524,'HEAT '+(next.roundNumber)+' / '+next.totalRounds,
       9,'#a9c7d6',true).setOrigin(1,0);
-    const name=text(727,579,driverName,21);
+    const name=text(258,556,driverName,21);
     if(name.width>385)name.setScale(385/name.width);
-    const vehicle=text(727,610,carName,15,'#7fe0f1');
+    const vehicle=text(258,590,carName,15,'#7fe0f1');
     if(vehicle.width>395)vehicle.setScale(395/vehicle.width);
-    text(727,638,'POWER CAP',9,'#b1cddb',true);
-    text(855,634,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
-    text(993,638,'NOS',9,'#b1cddb',true);
-    text(1065,634,rule.noNos?'NO':'YES',15);
-    text(727,667,'CLASS',9,'#b1cddb',true);
-    text(855,663,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
+    text(258,620,'POWER CAP',9,'#b1cddb',true);
+    text(396,616,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+    text(560,620,'NOS',9,'#b1cddb',true);
+    text(634,616,rule.noNos?'NO':'YES',15);
+    text(258,655,'CLASS',9,'#b1cddb',true);
+    text(396,651,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
     return true;
   }
 
@@ -1640,6 +1640,8 @@ export default class FourLaneTestScene extends RaceScene {
         'ROUND ' + this.proDuelInfo.roundNumber + '/' + this.proDuelInfo.totalRounds)
       : FOUR_WIDE_CUP.stageNames[this.proTournament.stage];
     const advanced = outcome?.status === 'ADVANCED';
+    const individualHeatPreview = advanced && duel &&
+      isOpenDriverBriefing(this.registry.get('competitionState'));
     const champion = outcome?.status === 'CHAMPION' ||
       (outcome?.summary?.stagesCompleted === 3 && outcome?.summary?.placing === 1);
     const finalist = !duel && outcome?.summary?.stagesCompleted === 3;
@@ -1669,10 +1671,10 @@ export default class FourLaneTestScene extends RaceScene {
     // Large, angled manga face panel on the LEFT, using the same mask/profile
     // renderer as RaceScene (not a loosely scaled full-body PNG).
     const points = [
-      new Phaser.Geom.Point(88, 114),
-      new Phaser.Geom.Point(497, 129),
-      new Phaser.Geom.Point(462, 572),
-      new Phaser.Geom.Point(65, 593),
+      new Phaser.Geom.Point(88, individualHeatPreview ? 98 : 114),
+      new Phaser.Geom.Point(individualHeatPreview ? 457 : 497, 129),
+      new Phaser.Geom.Point(individualHeatPreview ? 434 : 462, individualHeatPreview ? 428 : 572),
+      new Phaser.Geom.Point(65, individualHeatPreview ? 445 : 593),
     ];
     const frame = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
     frame.fillStyle(0xe9e6e3, 0.92).fillPoints(points, true);
@@ -1680,7 +1682,9 @@ export default class FourLaneTestScene extends RaceScene {
     const portrait = createCharacterProfile(this, {
       characterId: this.registry.get('playerCharacterId') || 'renMizuno',
       pose: champion || advanced ? 'win' : 'loss',
-      x: 283, y: 345, frameWidth: 455, frameHeight: 460,
+      x: individualHeatPreview ? 263 : 283, y: individualHeatPreview ? 268 : 345,
+      frameWidth: individualHeatPreview ? 380 : 455,
+      frameHeight: individualHeatPreview ? 335 : 460,
       side: 'left', depth: depth + 3, flipInward: true, mask: false,
       profileOverride: { scale: 1.10, offsetX: 0, offsetY: 22 },
       proCircuit: true,
@@ -1694,7 +1698,7 @@ export default class FourLaneTestScene extends RaceScene {
       targets: [frame, ...(portrait?.image ? [portrait.image] : [])],
       alpha: 1, duration: 260, ease: 'Sine.Out',
     });
-    this.add.text(90, 607, name.toUpperCase(), {
+    this.add.text(90, individualHeatPreview ? 464 : 607, name.toUpperCase(), {
       fontFamily: PIXEL, fontSize: '11px', color: '#faf7f6',
       backgroundColor: '#171518ed', padding: { x: 12, y: 8 },
     }).setDepth(depth + 5).setScrollFactor(0);
@@ -1732,7 +1736,7 @@ export default class FourLaneTestScene extends RaceScene {
         : this.proDuelState?.eventId === 'tokyoInvitational' ? 'TOKYO INVITATIONAL'
         : 'STREET SHOOTOUT'))
       : 'FOUR-WIDE OPEN';
-    label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
+    label(675, 246, individualHeatPreview ? eventLabel : eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
       'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewTechnical?'SCORE IS THREE-RUN SPREAD':
         this.crewRelay?'SCORE IS TOTAL RELAY TIME':
@@ -1773,19 +1777,19 @@ export default class FourLaneTestScene extends RaceScene {
     const rankCurrent = ranked.find(r => r.id === (this.proCrew?'player:team':'player:driver'))?.seed || 32;
     const rankBefore = outcome?.summary?.rankBefore || rankCurrent;
     const rankAfter = outcome?.summary?.rankAfter || rankCurrent;
-    const rankBadge = this.add.circle(470, 557, 66, 0x171619, 0.99)
+    const rankBadge = this.add.circle(individualHeatPreview ? 424 : 470, individualHeatPreview ? 424 : 557, 66, 0x171619, 0.99)
       .setStrokeStyle(4, 0xcac6c6, 1)
       .setDepth(depth + 12).setScrollFactor(0).setScale(0.25).setAlpha(0);
     this.tweens.add({
       targets: rankBadge, scaleX: 1, scaleY: 1, alpha: 1,
       duration: 360, ease: 'Back.Out',
     });
-    const rankValue = this.add.text(470, 547, '#' + rankBefore, {
+    const rankValue = this.add.text(individualHeatPreview ? 424 : 470, individualHeatPreview ? 414 : 547, '#' + rankBefore, {
       fontFamily: '"Exo 2", sans-serif', fontStyle: '900 italic',
       fontSize: '34px', color: '#f4f1f0',
       stroke: '#080808', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(depth + 14).setScrollFactor(0);
-    this.add.text(470, 589, this.proCrew?'TEAM RANK':'PRO RANK', {
+    this.add.text(individualHeatPreview ? 424 : 470, individualHeatPreview ? 456 : 589, this.proCrew?'TEAM RANK':'PRO RANK', {
       fontFamily: PIXEL, fontSize: '7px', color: '#cfcbca',
     }).setOrigin(0.5).setDepth(depth + 14).setScrollFactor(0);
     this.tweens.addCounter({
@@ -1800,8 +1804,7 @@ export default class FourLaneTestScene extends RaceScene {
         (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
         (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
     }
-    const paidNextDriver = advanced && duel &&
-      isOpenDriverBriefing(this.registry.get('competitionState'));
+    const paidNextDriver = individualHeatPreview;
     if(paidNextDriver){
       this.drawProfessionalNextOpponentCard(this.registry.get('competitionState'),depth+3);
     }
@@ -1836,24 +1839,24 @@ export default class FourLaneTestScene extends RaceScene {
     };
     const advance = () => navigate(false);
     tap.on('pointerdown', advance);
-    const nextHit=this.add.rectangle(1363,678,282,48,0x16364a,.96)
+    const nextHit=this.add.rectangle(paidNextDriver ? 1370 : 1363,paidNextDriver ? 637 : 678,282,48,0x16364a,.96)
       .setStrokeStyle(2,0x65d9ef,1).setDepth(depth+98).setScrollFactor(0)
       .setInteractive({useHandCursor:true})
       .on('pointerdown',(_pointer,_x,_y,event)=>{
         event?.stopPropagation?.();advance();
       });
-    const nextLabel=this.add.text(1363,678,nextText,{
+    const nextLabel=this.add.text(paidNextDriver ? 1370 : 1363,paidNextDriver ? 637 : 678,nextText,{
       fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+99).setScrollFactor(0);
     if(nextLabel.width>264)nextLabel.setScale(264/nextLabel.width);
     if(paidNextDriver){
-      const briefingHit=this.add.rectangle(1363,609,282,48,0x102536,.98)
+      const briefingHit=this.add.rectangle(1059,637,282,48,0x102536,.98)
         .setStrokeStyle(2,0xffbfda,.92).setDepth(depth+98).setScrollFactor(0)
         .setInteractive({useHandCursor:true})
         .on('pointerdown',(_pointer,_x,_y,event)=>{
           event?.stopPropagation?.();navigate(true);
         });
-      this.add.text(1363,609,'RACE BRIEFING',{
+      this.add.text(1059,637,'RACE BRIEFING',{
         fontFamily:PIXEL,fontSize:'12px',color:'#fff1f7',
       }).setOrigin(.5).setDepth(depth+99).setScrollFactor(0);
     }
