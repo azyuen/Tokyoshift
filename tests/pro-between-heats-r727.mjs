@@ -40,13 +40,13 @@ test('QUALIFIED uses the settled, saved next round (not the current opponent)',(
 });
 
 test('rank badge, next rival card and action buttons have non-overlapping layout',()=>{
-  assert.match(race,/const rankBadge = this\\.add\\.circle\\(individualHeatPreview \\? 492 : 470/);
-  assert.doesNotMatch(race,/const rankBadge = this\\.add\\.ellipse/);
-  assert.match(race,/new Phaser\\.Geom\\.Point\\(52\\+654\\+25\\+dx\\+55,643\\+dy\\)/);
-  assert.match(race,/new Phaser\\.Geom\\.Point\\(52\\+654-25\\+dx\\+55,643\\+164\\+dy\\)/);
+  assert.match(race,/const rankBadge = this\.add\.circle\(individualHeatPreview \? 492 : 470/);
+  assert.doesNotMatch(race,/const rankBadge = this\.add\.ellipse/);
+  assert.match(race,/new Phaser\.Geom\.Point\(52\+654\+25\+dx\+55,643\+dy\)/);
+  assert.match(race,/new Phaser\.Geom\.Point\(52\+654-25\+dx\+55,643\+164\+dy\)/);
   assert.match(race,/NEXT OPPONENT/);
-  assert.match(race,/getProCircuitGenericDriverAsset\\(index\\)/);
-  assert.match(race,/getCharacterVisualAsset\\(nextRound\\.characterId, 'idle'/);
+  assert.match(race,/getProCircuitGenericDriverAsset\(index\)/);
+  assert.match(race,/getCharacterVisualAsset\(nextRound\.characterId, 'idle'/);
   const cardTop=643-122,cardRight=52+654+25+28+55;
   assert.ok(412+66<cardTop,'ranking circle must not cover the opponent card');
   assert.ok(cardRight<1059-141,'card must not touch briefing button');
