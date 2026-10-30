@@ -5,6 +5,13 @@ import { getCrewRecruitmentChallengeRules } from '../src/data/crewSystem.js';
 import { getEncounterAi, boostAiForStandingStart } from '../src/data/encounterProfiles.js';
 import { applyDifficultyToRivalAi } from '../src/data/playerDifficulty.js';
 
+// Performance estimates now run the real vehicle/AI physics in Node. Match
+// the minimal Phaser math shim already used by tests/ai-driving.mjs.
+globalThis.Phaser ??= { Math: {
+  Clamp: (v,a,b) => Math.max(a,Math.min(b,v)),
+  Linear: (a,b,t) => a+(b-a)*t,
+} };
+
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 const meet = read('src/scenes/MeetScene.js');
 const race = read('src/scenes/RaceScene.js');
