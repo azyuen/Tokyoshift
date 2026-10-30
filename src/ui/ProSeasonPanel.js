@@ -221,7 +221,7 @@ export function drawCrewSidebar(s,event,side) {
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
     active&&!t?'FINISH YOUR ACTIVE EVENT FIRST':
-    crewSlotUsed?'CREW EVENT COMPLETED // NEXT DAY/NIGHT ROTATION':
+    crewSlotUsed?'CREW EVENT COMPLETE // NEXT ROTATION':
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
