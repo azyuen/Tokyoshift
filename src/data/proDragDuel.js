@@ -38,10 +38,22 @@ export function selectProDuelOpponents(circuit,{
   if(!roster.length)return [];
   const total=Math.max(0,Math.min(roster.length,Math.floor(Number(count)||0)));
   const ordinal=Math.max(0,Math.floor(Number(entryOrdinal)||0));
-  const start=(stableHash(eventId)%roster.length+
-    ordinal*total)%roster.length;
+  // Interleave the 16 house professionals with the 7 regional champions.
+  // A lexicographically sorted roster puts all seven champions together:
+  // that previously made some three-heat cups look regional-only.
+  // This retains deterministic coverage of all 23 competitors, with
+  // roughly two helmeted professionals per regional rival in each event.
+  const generic=roster.filter(driver=>driver.id.startsWith('pro:driver:'));
+  const regional=roster.filter(driver=>driver.id.startsWith('rival:'));
+  const field=[];
+  while(generic.length||regional.length){
+    for(let k=0;k<2&&generic.length;k++)field.push(generic.shift());
+    if(regional.length)field.push(regional.shift());
+  }
+  const start=(stableHash(eventId)%field.length+
+    ordinal*total)%field.length;
   return Array.from({length:total},(_,index)=>
-    roster[(start+index)%roster.length]);
+    field[(start+index)%field.length]);
 }
 
 export function materialiseProDuelOpponentIdentities(state,circuit) {
