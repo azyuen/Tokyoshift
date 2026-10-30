@@ -1,4 +1,4 @@
-import { getProCircuitDriverSeeds } from './proCircuit.js?v=20261030-r724';
+import { getProCircuitDriverSeeds, PRO_AI_TEAM_DEFINITIONS } from './proCircuit.js?v=20261030-r724';
 import { characters } from './characters.js?v=20261023-r672';
 
 // A saved professional heat must reference one of the actual named drivers
@@ -15,10 +15,11 @@ const stableHash=value=>{
 // The complete professional ladder is 23 AI drivers: seven regional
 // champions and 16 named professional drivers. Keep a stable ID order:
 // rankings are dynamic and must never reshuffle event opponent rotation.
+const CANONICAL_PRO_DRIVER_IDS=new Set(
+  PRO_AI_TEAM_DEFINITIONS.flatMap(team=>team.rankedDriverIds));
 export function getProDuelOpponentRoster(circuit) {
   return getProCircuitDriverSeeds(circuit)
-    .filter(driver=>driver.id?.startsWith('pro:driver:')||
-      driver.id?.startsWith('rival:'))
+    .filter(driver=>CANONICAL_PRO_DRIVER_IDS.has(driver.id))
     .map(driver=>({
       ...driver,
       name:driver.name||characters[driver.characterId]?.name||null,
