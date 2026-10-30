@@ -506,7 +506,7 @@ export default class FourLaneTestScene extends RaceScene {
             scrutineering.reasons);
           this.registry.set('proScrutineeringError',
             'AI SCRUTINEERING FAILED // '+scrutineering.reasons.join(' / '));
-          this.returnToDrag();
+          this._proOpponentInvalid=true;
           return;
         }
       }
@@ -531,6 +531,10 @@ export default class FourLaneTestScene extends RaceScene {
         finishSeconds: null, disqualified: false,
       });
     });
+    if(this._proOpponentInvalid){
+      this.returnToDrag();
+      return;
+    }
 
     ensureDerivedModularCarTextures(
       this, Object.fromEntries([...new Set(this.runners.map(r => r.carId))]
