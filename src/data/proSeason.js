@@ -243,7 +243,8 @@ export function getFactoryStockStatus(state={}) {
 export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   const car=cars[carId];
   if(!car)return {eligible:false,reasons:['UNKNOWN CAR']};
-  const power=Number(getVehiclePerformance(carId,carState)?.car?.powerKW);
+  const performance=getVehiclePerformance(carId,carState);
+  const power=Number(performance?.car?.powerKW);
   const drivetrain=String(getCarMagazineMeta(carId)?.drivetrain||'').toUpperCase();
   const expected=String(rules.drivetrain||'').toUpperCase();
   const aliases={FF:'FWD',FR:'RWD',AWD:'AWD',FWD:'FWD',RWD:'RWD'};
@@ -254,7 +255,8 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
   if(rules.stock)reasons.push(...getFactoryStockStatus(carState).reasons);
   if(rules.noNos&&(Boolean(carState?.nosInstalled)||Number(carState?.exhaustNosTuning?.nosKit||0)>0))reasons.push('NOS PROHIBITED');
-  return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain};
+  return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
+    weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }
 
 
@@ -446,26 +448,38 @@ const PRO_RIVAL_CARS=Object.freeze([
 export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',excludedId=null) {
   const skill=Math.max(3,Math.min(5,Math.floor(Number(rating)||4)));
   const candidates=[];
+  const cap=Number(rules?.maxPowerKW);
+  const hasCap=Number.isFinite(cap)&&cap>0;
+  const playerPower=Math.max(1,Number(playerPowerKW)||200);
+  // Build near the declared class ceiling (when present), while remaining
+  // competitively matched to the player's actual car. Never grant invisible
+  // engine upgrades or exceed the official scrutineering cap.
+  const target=hasCap?Math.min(cap*.965,Math.max(playerPower*1.06,cap*.83)):
+    playerPower*1.06;
   for(const carId of PRO_RIVAL_CARS){
     if(carId===excludedId||!cars[carId])continue;
     // Stock events use genuine stock vehicles; non-stock opponents can bring
     // developed builds as long as the actual configured car passes scrutineering.
     const snapshots=rules?.stock?[{}]:
-      [skill,4,3].map((buildRating,i)=>createRivalBuildState(cars[carId],buildRating,{
+      [...new Set([skill,5,4,3])].map((buildRating,i)=>
+        createRivalBuildState(cars[carId],buildRating,{
         seed:String(seed)+':'+carId+':'+i,raceType:'Standing Start',
         noNos:Boolean(rules?.noNos)}));
     if(!rules?.stock)snapshots.push({});
     for(const state of snapshots){
       const check=getProfessionalCarEligibility(carId,state,rules);
       if(!check.eligible)continue;
-      const target=Math.max(1,Number(playerPowerKW)||check.powerKW);
-      const ratio=check.powerKW/target;
-      // Avoid a wildly overpowering rival, even if the class is open.
+      const ratio=check.powerKW/playerPower;
+      // Genuinely comparable professional machinery, not a 600-kW entrant
+      // automatically matched against a 200-kW novice or vice versa.
       if(ratio>1.15)continue;
-      const difference=Math.abs(Math.log(Math.max(.1,ratio)));
+      const difference=Math.abs(Math.log(Math.max(.1,check.powerKW/target)));
+      const mass=Math.max(750,Number(check.weightKg)||1400);
+      const weightPenalty=Math.max(0,mass-1125)/4300;
       const developed=rules?.stock?0:Object.values(state.tuning||{}).reduce((a,b)=>a+Number(b||0),0);
-      candidates.push({carId,state,powerKW:check.powerKW,
-        score:difference+(!rules?.stock&&developed===0?0.15:0)});
+      candidates.push({carId,state,powerKW:check.powerKW,weightKg:mass,
+        score:difference+weightPenalty+
+          (!rules?.stock&&developed===0?0.18:0)});
     }
   }
   candidates.sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
