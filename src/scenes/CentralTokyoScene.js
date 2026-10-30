@@ -50,7 +50,8 @@ import {
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
-  getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
+  getProCircuitAccess, getProCircuitDriverSeeds, getProDriverLadderSkillModifier,
+  normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
 } from '../data/proCircuit.js?v=20261030-r739';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
@@ -3935,12 +3936,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
       // Persistent Pro Circuit Elo now influences execution within the
       // approved expert/elite AI model. This is not a physics multiplier.
-      const form=Math.max(-.025,Math.min(.025,
-        (Number(driver.rating||1600)-1600)/12000));
+      const form=getProDriverLadderSkillModifier(driver);
 
       if (mainRivalRound) {
+        // Regional champions also obey the professional ladder, while
+        // preserving their authored driving personality and character art.
         return {
           ...mainRivalRound,
+          encounterAi:Object.fromEntries(
+            Object.entries(mainRivalRound.encounterAi||baseAi)
+              .map(([key,value])=>[key,clamp01(Number(value)+form)])),
           opponentDriverId:driver.id,
           opponentName:driver.name,
           paintColor: selectMixedCarPaint(mainRivalRound.carId,
