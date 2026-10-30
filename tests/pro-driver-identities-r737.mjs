@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createDefaultProCircuitState, getProCircuitDriverSeeds} from '../src/data/proCircuit.js';
-import {materialiseProDuelOpponentIdentities} from '../src/data/proDragDuel.js';
+import {materialiseProDuelOpponentIdentities, getProDuelOpponentRoster, selectProDuelOpponents} from '../src/data/proDragDuel.js';
 import {settleLegacySeasonEvent} from '../src/data/proSeason.js';
 
 const circuit=()=>createDefaultProCircuitState();
@@ -14,10 +14,60 @@ const event=()=>({
     {carId:'r32',encounterRating:4},
     {carId:'galantVr4',encounterRating:4}],
 });
+test('the full Pro Circuit includes 23 eligible opponent identities, not just 16 anonymous pros',()=>{
+  const roster=getProDuelOpponentRoster(circuit());
+  assert.equal(getProCircuitDriverSeeds(circuit()).length,24);
+  assert.equal(roster.length,23);
+  assert.equal(roster.filter(driver=>driver.id.startsWith('rival:')).length,7);
+  assert.equal(roster.filter(driver=>driver.id.startsWith('pro:driver:')).length,16);
+  assert.equal(new Set(roster.map(driver=>driver.id)).size,23);
+  assert.equal(new Set(roster.map(driver=>driver.name)).size,23);
+  assert.ok(roster.every(driver=>driver.name?.trim()));
+  assert.ok(!roster.some(driver=>driver.id==='player:driver'));
+});
+test('three heats per event rotate through every one of the 23 professional opponents',()=>{
+  const roster=getProDuelOpponentRoster(circuit());
+  const seen=new Set();
+  for(let entryOrdinal=0;entryOrdinal<8;entryOrdinal++){
+    const rounds=selectProDuelOpponents(circuit(),{
+      eventId:'streetShootout',entryOrdinal,count:3,
+    });
+    assert.equal(rounds.length,3);
+    assert.equal(new Set(rounds.map(driver=>driver.id)).size,3,
+      'no repeated opponent within a single event');
+    rounds.forEach(driver=>seen.add(driver.id));
+  }
+  assert.deepEqual([...seen].sort(),roster.map(driver=>driver.id).sort());
+});
+test('five-round trophies also rotate all 23 rivals with stable ranked identities',()=>{
+  const roster=getProDuelOpponentRoster(circuit());
+  const ids=new Set();
+  for(let entryOrdinal=0;entryOrdinal<5;entryOrdinal++){
+    const rounds=selectProDuelOpponents(circuit(),{
+      eventId:'shutoSpeed',entryOrdinal,count:5,
+    });
+    assert.equal(new Set(rounds.map(driver=>driver.id)).size,5);
+    rounds.forEach(driver=>ids.add(driver.id));
+  }
+  assert.equal(ids.size,23);
+  const changed=circuit();
+  for(const entry of Object.values(changed.drivers))entry.rating=101;
+  assert.deepEqual(selectProDuelOpponents(changed,{
+    eventId:'streetShootout',entryOrdinal:3,count:3,
+  }).map(driver=>driver.id),selectProDuelOpponents(circuit(),{
+    eventId:'streetShootout',entryOrdinal:3,count:3,
+  }).map(driver=>driver.id));
+});
+test('individual registration selects actual official driver IDs and keeps their saved names',()=>{
+  const source=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
+  assert.match(source,/const opponentRoster=selectProDuelOpponents\(pro,/);
+  assert.match(source,/opponentDriverId:driver\.id/);
+  assert.match(source,/opponentName:driver\.name/);
+  assert.doesNotMatch(source,/const rivals = \[\.\.\.rotatedMigrated/);
+});
 test('legacy empty individual heats are populated with REAL distinct persistent Pro Circuit names',()=>{
   const original=event(),named=materialiseProDuelOpponentIdentities(original,circuit());
-  const available=getProCircuitDriverSeeds(circuit())
-    .filter(row=>row.id.startsWith('pro:driver:'));
+  const available=getProDuelOpponentRoster(circuit());
   assert.notEqual(named,original);
   assert.deepEqual(original.rounds.map(row=>row.opponentName),[undefined,undefined,undefined]);
   assert.equal(named.rounds.length,3);
