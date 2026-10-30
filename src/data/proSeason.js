@@ -80,6 +80,23 @@ export function simulateOpenCircuitField(c, eventId, playerOpponents=[]) {
     .sort((a,b)=>a.rating-b.rating||a.id.localeCompare(b.id));
   const results=[];
   for(let index=0;index<table.length;index+=2) {
+    // An odd field runs a final three-driver virtual heat rather than giving
+    // one competitor a non-scoring bye. All three record an actual result.
+    if(table.length-index===3){
+      const field=table.slice(index).map(row=>({
+        ...row,pace:row.rating+(rng()+rng()-1)*140,
+      })).sort((a,b)=>b.pace-a.pace||a.id.localeCompare(b.id));
+      const winner=c.drivers[field[0].id];
+      const second=c.drivers[field[1].id];
+      const third=c.drivers[field[2].id];
+      winner.entered++;second.entered++;third.entered++;
+      elo(winner,second,true);
+      elo(second,third,true);
+      results.push(...field.map((row,place)=>({
+        id:row.id,placing:place+1,format:'THREE_DRIVER',
+      })));
+      break;
+    }
     const left=table[index],right=table[index+1];
     const a=c.drivers[left.id];
     a.entered++;
