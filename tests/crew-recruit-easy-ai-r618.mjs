@@ -52,15 +52,15 @@ test('Easy crew AI is substantially slower at reaction, launch and shifting than
   assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
 });
 
-test('Standard recruitment uses Skilled 3 rather than Expert 4',()=>{
+test('Standard recruitment uses Expert 4',()=>{
   const std=rules('STANDARD');
-  assert.equal(std.aiRating,3);
+  assert.equal(std.aiRating,4);
   assert.equal(std.aiTier,'SKILLED');
   assert.match(meet,/const rating = recruitRules\.aiRating/);
   assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
   assert.deepEqual(applyDifficultyToRivalAi(getEncounterAi(3),'STANDARD'),getEncounterAi(3));
   for(const key of ['reactionSkill','launchSkill','shiftSkill','aggression']){
-    assert.ok(getEncounterAi(3)[key]<getEncounterAi(4)[key],key+' Skilled should be below former Expert');
+    assert.equal(getEncounterAi(std.aiRating)[key],getEncounterAi(4)[key]);
   }
 });
 
