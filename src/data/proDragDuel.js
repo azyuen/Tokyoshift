@@ -5,7 +5,7 @@ import { characters } from './characters.js?v=20261023-r672';
 // in the persistent Pro Circuit roster. Earlier dev / legacy event schedules
 // could have no characterId, and visually fell back to "UNKNOWN DRIVER".
 // Assign *display/standings identity only*; never change car, AI or physics.
-const anonymousLabel=/^(?:UNKNOWN DRIVER|PRO DRIVER|RIVAL)(?:\\s*\\d+)?$/i;
+const anonymousLabel=/^(?:UNKNOWN DRIVER|PRO DRIVER|RIVAL)(?:\s*\d+)?$/i;
 const stableHash=value=>{
   let hash=2166136261;
   for(const char of String(value||''))hash=Math.imul(hash^char.charCodeAt(0),16777619);
@@ -30,7 +30,7 @@ export function materialiseProDuelOpponentIdentities(state,circuit) {
     const rosterByName=roster.find(driver=>
       driver.name.toLowerCase()===explicit.toLowerCase());
     let selected=rosterById||rosterByName||null;
-    if(!selected&&!namedCharacter&&!explicit.replace(anonymousLabel,'').trim()) {
+    if(!selected&&!namedCharacter&&(!explicit||anonymousLabel.test(explicit))) {
       for(let step=0;step<roster.length;step++){
         const candidate=roster[(offset+index+step)%roster.length];
         if(!used.has(candidate.id)){selected=candidate;break;}
