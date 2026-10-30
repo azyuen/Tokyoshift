@@ -472,6 +472,7 @@ export default class FourLaneTestScene extends RaceScene {
       paint: getCarPaintColor(this.playerState), finishSeconds: null,
       disqualified: false,
     }];
+    this._proOpponentInvalid=false;
     this.aiCarIds.forEach((id, index) => {
       const entrant = this.aiEntrants[index];
       const rivalRound = this.proDuel&&!this.crewFourWide ? this.proDuelInfo.round : null;
