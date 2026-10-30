@@ -482,9 +482,6 @@ function draw(s,state,options){
     // The three tune rows and part-level controls occupy x=407..1233;
     // no stat box or label may overlap those interactive controls.
     const railX=1276,railY=216,railW=226,railH=455;
-    popupAdd(s.add.rectangle(railX+railW/2,railY+railH/2,
-      railW,railH,0x11283a,.97)
-      .setStrokeStyle(1,0x4598b4,.92).setDepth(272));
     popupAdd(s.add.text(railX+15,railY+17,'LIVE CAR STATS',{
       fontFamily:PIXEL,fontSize:'10px',color:'#9ee3f9',
     }).setDepth(275));
@@ -495,8 +492,6 @@ function draw(s,state,options){
       {label:'SCRUTINEERING',field:'status',y:railY+343},
     ];
     const readouts=rows.map((row,index)=>{
-      if(index)popupAdd(s.add.rectangle(railX+railW/2,row.y-17,
-        railW-30,1,0x3c6b80,.65).setDepth(273));
       popupAdd(s.add.text(railX+15,row.y-12,row.label,{
         fontFamily:PIXEL,fontSize:'9px',color:'#9cc3d2',
       }).setDepth(275));
@@ -507,10 +502,6 @@ function draw(s,state,options){
         wordWrap:{width:railW-30},
       }).setDepth(275))};
     });
-    popupAdd(s.add.text(railX+15,railY+railH-32,'LIVE MODEL // STAGE I\nDYNO NEEDS A NEW PULL',{
-      fontFamily:PIXEL,fontSize:'7px',color:'#9aafbc',
-      lineSpacing:2,wordWrap:{width:railW-30},
-    }).setDepth(275));
     const update=preview=>{
       let config=null;
       try{config=getVehiclePerformance(getBaseCarId(state.playerCarId),preview)?.car||null;}
@@ -611,7 +602,7 @@ function draw(s,state,options){
         const max=owned?.original||0;
         const current=info?.current||0;
         const x=i<firstColumnSize?610:1030;
-        const y=334+(i%firstColumnSize)*70;
+        const y=337+(i%firstColumnSize)*78;
         rowAdd(s.add.rectangle(x,y,390,64,0x0c2132,.94)
           .setStrokeStyle(1,max>0?0x40718b:0x465360,.8).setDepth(273));
         const chosen=Object.prototype.hasOwnProperty.call(requestedLevels,part.id);
@@ -692,13 +683,13 @@ function draw(s,state,options){
     const entries=[
       {key:'ecuBias',title:'ECU CURVE',sprite:'tuningPartEcuL3',
         requirement:'REQUIRES MOTORSPORT ECU // LEVEL 3',
-        left:'MIDRANGE',right:'TOP END',accent:0x62e8c7,y:320},
+        left:'MIDRANGE',right:'TOP END',accent:0x62e8c7,y:309},
       {key:'boostBias',title:'BOOST CURVE',sprite:'tuningPartTurboL3',
         requirement:'REQUIRES BIG TURBO // LEVEL 3',
         left:'EARLY',right:'LATE / STRONG',accent:0x43dfff,y:461},
       {key:'gearBias',title:'GEAR SPREAD',sprite:'tuningPartGearboxL3',
         requirement:'REQUIRES DOG BOX // LEVEL 3',
-        left:'CLOSE',right:'WIDE',accent:0xffc86a,y:602},
+        left:'CLOSE',right:'WIDE',accent:0xffc86a,y:613},
     ];
     const tuneNodes=[];
     let applyButton=null;
