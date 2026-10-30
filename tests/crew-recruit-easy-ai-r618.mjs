@@ -24,7 +24,7 @@ test('Easy crew recruitment is a consistent Rookie (rating 2) independent of the
   assert.equal(easy.aiTier,'ROOKIE');
   assert.equal(easy.aiRating,2);
   assert.equal(easy.carRule,'STOCK');
-  assert.match(meet,/recruitRules\.playerDifficulty === 'EASY'\s*\? getEncounterAi\(2\)/);
+  assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
   assert.match(meet,/this\.registry\.set\('selectedOpponentEncounterRating', rating\)/);
   assert.match(meet,/this\.registry\.set\('selectedOpponentEncounterAi', encounterAi\)/);
 });
@@ -45,21 +45,34 @@ test('Easy crew AI is substantially slower at reaction, launch and shifting than
   assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
 });
 
-test('Standard recruitment retains Expert 4 and the original fixed profile',()=>{
+test('Standard recruitment uses Skilled 3 rather than Expert 4',()=>{
   const std=rules('STANDARD');
-  assert.equal(std.aiRating,4);
-  assert.equal(std.aiTier,'EXPERT');
-  assert.match(meet,/recruitRules\.playerDifficulty === 'STANDARD'\s*\? getEncounterAi\(4\)/);
-  assert.deepEqual(applyDifficultyToRivalAi(getEncounterAi(4),'STANDARD'),getEncounterAi(4));
+  assert.equal(std.aiRating,3);
+  assert.equal(std.aiTier,'SKILLED');
+  assert.match(meet,/const rating = recruitRules\.aiRating/);
+  assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
+  assert.deepEqual(applyDifficultyToRivalAi(getEncounterAi(3),'STANDARD'),getEncounterAi(3));
+  for(const key of ['reactionSkill','launchSkill','shiftSkill','aggression']){
+    assert.ok(getEncounterAi(3)[key]<getEncounterAi(4)[key],key+' Skilled should be below former Expert');
+  }
 });
 
-test('Hard recruitment retains Elite 5 and strongest character-or-tier profile',()=>{
+test('Hard recruitment uses Expert 4 rather than Elite 5',()=>{
   const hard=rules('HARD');
-  assert.equal(hard.aiRating,5);
-  assert.equal(hard.aiTier,'ELITE');
-  assert.match(meet,/reactionSkill:\s*Math\.max\(Number\(characterAi\.reactionSkill \|\| 0\), Number\(tierAi\.reactionSkill \|\| 0\)\)/);
-  assert.match(meet,/launchSkill:\s*Math\.max\(Number\(characterAi\.launchSkill \|\| 0\), Number\(tierAi\.launchSkill \|\| 0\)\)/);
-  assert.match(meet,/shiftSkill:\s*Math\.max\(Number\(characterAi\.shiftSkill \|\| 0\), Number\(tierAi\.shiftSkill \|\| 0\)\)/);
+  assert.equal(hard.aiRating,4);
+  assert.equal(hard.aiTier,'EXPERT');
+  assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
+  // Hard's usual driver modifier remains, but a tier-four recruit should
+  // still be slower than the former tier-five recruit after that modifier.
+  const newHard=applyDifficultyToRivalAi(
+    boostAiForStandingStart(getEncounterAi(4),4),'HARD'
+  );
+  const oldHard=applyDifficultyToRivalAi(
+    boostAiForStandingStart(getEncounterAi(5),5),'HARD'
+  );
+  for(const key of ['reactionSkill','launchSkill','shiftSkill','aggression']){
+    assert.ok(newHard[key]<oldHard[key],key+' Hard Expert should be below former Elite');
+  }
 });
 
 test('All three modes preserve stock matching and vehicle power class',()=>{
