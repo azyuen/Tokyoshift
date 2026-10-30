@@ -54,9 +54,9 @@ export function ginzaConversation(kind, { carName = 'THIS CAR', shortfall = 0 } 
     vaultOwner: {
       title: 'GINZA // A WORD WITH THE OWNER', finalActionLabel: 'ENTER PRIVATE ROOM',
       pages: [
-        sayaka('ginzaHappy', 'Aruken Denzaki! Of course the owner of the Ginza Motor Gallery has access to the private collection. Welcome back!'),
-        sayaka('ginzaHappy', "Those three cars are yours to inspect, and I'll gladly accompany you on a drive."),
-        sayaka('ginzaSerious', "But I'm coming in the passenger seat. We cannot have our owner crashing the gallery's most valuable assets!"),
+        sayaka('ginzaHappy', 'Welcome to Ginza Motor Gallery. I can arrange an accompanied look inside the private vault.'),
+        sayaka('ginzaHappy', "These three cars are here in our care. I'll gladly accompany you on a drive."),
+        sayaka('ginzaSerious', "But I'm coming in the passenger seat. We do have a responsibility to their owners!"),
       ],
     },
     // Only the Arkon Den developer login gets the gallery owner's relaxed
