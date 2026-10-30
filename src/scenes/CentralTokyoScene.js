@@ -1,6 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261030-r737';
-import { materialiseProDuelOpponentIdentities } from '../data/proDragDuel.js?v=20261030-r737';
+import { materialiseProDuelOpponentIdentities, selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r738';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261030-r723';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
@@ -3882,38 +3882,26 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if (story.played) return;
     }
 
-    const playerCharacterId = this.registry.get('playerCharacterId');
-    const migrated = getConqueredMainRivalIds(this.registry);
-    const rotation = migrated.length
-      ? (
-          Number(this.registry.get('wins') || 0) +
-          Number(this.devCentralRefreshOffsets?.proDrag || 0) +
-          Math.max(0, PRO_DRAG_EVENTS.findIndex(item => item.id === event.id))
-        ) % migrated.length
-      : 0;
-    const rotatedMigrated = migrated.length
-      ? migrated.slice(rotation).concat(migrated.slice(0, rotation))
-      : [];
-    const genericFill = genericRivalCharacterOrder
-      .filter(id =>
-        id !== playerCharacterId &&
-        characters[id] &&
-        !rotatedMigrated.includes(id)
-      )
-      .sort((a, b) =>
-        Number(characters[b]?.skill?.rating || 3) -
-        Number(characters[a]?.skill?.rating || 3)
-      );
-    const lineupOffset = Number(this.devCentralRefreshOffsets?.proDrag || 0);
-    const genericOrder = genericFill.length
-      ? [...genericFill.slice(lineupOffset % genericFill.length),
-         ...genericFill.slice(0, lineupOffset % genericFill.length)]
-      : [];
-    const rivals = [...rotatedMigrated, ...genericOrder].slice(0, event.trophyId ? 5 : 3);
+    // Each three-heat event draws THREE distinct opponents; the cumulative
+    // pool is ALL 23 rated Pro Circuit drivers, not the same three every time.
+    // Rotation advances on completed Open Circuit events / season rounds,
+    // retaining stable named identities and the existing event rules.
+    const entryOrdinal=openCircuit
+      ? Number(pro.openCircuitTick||0)
+      : Number(pro.calendar?.round||0)+8*Math.max(0,Number(pro.season||1)-1);
+    const opponentRoster=selectProDuelOpponents(pro,{
+      eventId:event.id,entryOrdinal,count:event.opponentRatings.length,
+    });
+    if(opponentRoster.length!==event.opponentRatings.length){
+      this.proError='PROFESSIONAL DRIVER ROSTER UNAVAILABLE';
+      this.renderLocation(this.activeLocationId);
+      return;
+    }
 
     const seasonRules=!openCircuit?event.seasonRules:null;
     const rounds = event.opponentRatings.map((originalRating, index) => {
-      const characterId = rivals[index % rivals.length];
+      const driver=opponentRoster[index];
+      const characterId=driver.characterId||null;
       const rating=openCircuit?originalRating:
         getProSeasonSkillTier(pro.calendar.round,index,event.seasonChoice==='alternative');
       const mainRivalRound=openCircuit?this.buildDragMainRivalRound(
@@ -3927,7 +3915,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if (mainRivalRound) {
         return {
           ...mainRivalRound,
-          opponentName:characters[characterId]?.name||null,
+          opponentDriverId:driver.id,
+          opponentName:driver.name,
           paintColor: selectMixedCarPaint(mainRivalRound.carId,
             {characterId, isMainRival: true, seed: index})?.color ??
             [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
@@ -3937,7 +3926,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
       return {
         characterId,
-        opponentName:characters[characterId]?.name||null,
+        opponentDriverId:driver.id,
+        opponentName:driver.name,
         carId: professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
         opponentBuildState:professionalBuild?.state||null,
         paintColor: selectMixedCarPaint(professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
