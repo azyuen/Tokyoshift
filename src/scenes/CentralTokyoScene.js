@@ -55,6 +55,7 @@ import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261021-r628';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
+import { scrutineerProOpponentRound } from '../data/proOpponentScrutineering.js?v=20261030-r729';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261027-r694';
 import {
   saveSessionState,
@@ -3943,7 +3944,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
         raceType: 'Standing Start',
       };
     });
-    if(!openCircuit&&rounds.some(r=>!r.opponentBuildState)){
+    // Every entrant, including returning region champions, must pass the
+    // PLAYER'S exact power/NOS/stock/drivetrain class before payment. A
+    // pre-selected 5-star AI build is not automatically a legal 260 kW car.
+    const rivalRules={
+      maxPowerKW:Number.isFinite(event.seasonRules?.maxPowerKW)?event.seasonRules.maxPowerKW:
+        Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
+      noNos:Boolean(event.seasonRules?.noNos||event.noNos),
+      stock:Boolean(event.stock||(!openCircuit&&event.seasonRules?.stock)),
+      drivetrain:String(event.drivetrain||(!openCircuit&&event.seasonRules?.drivetrain)||'').toUpperCase(),
+    };
+    const checkedRounds=rounds.map((round,index)=>scrutineerProOpponentRound(
+      round,rivalRules,{
+        targetPowerKW:Number(build.car?.powerKW||0),
+        seed:'pro-entry:'+event.id+':'+pro.season+':'+index,
+        excludedCarId:build.carId,
+      }
+    ));
+    if(checkedRounds.some(result=>!result)){
       this.proError='NO CLASS-LEGAL PROFESSIONAL OPPONENT AVAILABLE';
       this.renderLocation(this.activeLocationId);
       return;
@@ -3957,13 +3975,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       trophyStages:event.trophyStages||null,
       eventId: event.id,
       briefingLabel: event.label,
-      briefingRules: {
-        maxPowerKW:Number.isFinite(event.seasonRules?.maxPowerKW)?event.seasonRules.maxPowerKW:
-          Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
-        noNos:Boolean(event.seasonRules?.noNos||event.noNos),
-        stock:Boolean(event.stock||(!openCircuit&&event.seasonRules?.stock)),
-        drivetrain:String(event.drivetrain||(!openCircuit&&event.seasonRules?.drivetrain)||'').toUpperCase(),
-      },
+      briefingRules:rivalRules,
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
       difficulty: 'ELITE',
@@ -3972,7 +3984,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       prizeType: 'CASH',
       prizeCash: event.prizeCash,
       prizeCarId: null,
-      rounds,
+      rounds:checkedRounds.map(result=>result.round),
       roundIndex: 0,
     };
 
