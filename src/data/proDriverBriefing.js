@@ -311,8 +311,12 @@ export function forfeitOpenDriverTransaction(rawCircuit = {}, state = {}, carSta
 // receives one of four helmeted house-driver portraits. These are cosmetic;
 // known regional MAIN rivals retain their authored identity and character art.
 export function getProDriverHelmetIndex(state = {}, round = {}) {
-  const seed=String(state.proSeasonId||state.eventId||'open')+'|'+
-    String(state.roundIndex??0)+'|'+String(round.characterId||round.opponentName||'npc');
+  // Stable for each named professional across all events and save reloads.
+  // Historical unnamed rounds retain their previous event-based fallback.
+  const seed=round.opponentDriverId
+    ? String(round.opponentDriverId)
+    : String(state.proSeasonId||state.eventId||'open')+'|'+
+      String(state.roundIndex??0)+'|'+String(round.characterId||round.opponentName||'npc');
   let hash=2166136261;
   for(let i=0;i<seed.length;i++) {
     hash=Math.imul(hash^seed.charCodeAt(i),16777619);
