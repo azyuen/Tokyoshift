@@ -296,7 +296,11 @@ function draw(s,state,options){
     if(portrait?.image){add(portrait);clipPortrait(portrait.image);}
     else text(px,py,'PRO DRIVER',11,'#b8d7e7',true,226).setOrigin(.5);
   }
-  const roster=Object.values(circuit.drivers||{}).find(d=>d.characterId===round.characterId);
+  const roster=round.opponentDriverId
+    ? circuit.drivers?.[round.opponentDriverId]
+    : round.characterId
+      ? Object.values(circuit.drivers||{}).find(d=>d.characterId===round.characterId)
+      : null;
   const rivalName=String(round.opponentName||rival.name||roster?.name||
     round.characterId||'PRO DRIVER').toUpperCase();
   // The driver name aligns with the portrait's TOP horizontal, not its centre.
