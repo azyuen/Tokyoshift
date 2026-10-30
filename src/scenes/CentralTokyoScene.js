@@ -1,5 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261030-r731';
+import { materialiseProDuelOpponentIdentities } from '../data/proDragDuel.js?v=20261030-r737';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261030-r723';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isArkonStory240zProtected } from '../data/arkonStoryCarProtection.js?v=20261025-r682';
@@ -3672,10 +3673,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // scene-local until the ONE Proceed to Grid transaction.
   showOpenCircuitDriverBriefing(initialDialogue=null) {
     const pending=this._pendingProDriverBriefing||null;
-    const state=pending?.state||this.registry.get('competitionState');
-    if(!isOpenDriverBriefing(state))return;
-    const definition=pending?.event||PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const original=pending?.state||this.registry.get('competitionState');
+    const state=materialiseProDuelOpponentIdentities(original,pro);
+    if(!isOpenDriverBriefing(state))return;
+    // Repair identity only: keep the original saved opponent car, AI and
+    // already-paid event. Never replace the actual bracket or fee snapshot.
+    if(state!==original){
+      if(pending)pending.state=state;
+      else try{saveProTransaction(this.registry,{competitionState:state});}
+      catch(error){console.warn('[Tokyo SHIFT] Driver identity repair not persisted',error);}
+    }
+    const definition=pending?.event||PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     const fail=message=>{
       // Do not silently refresh after a refused entry.
       this.proError=String(message||'ENTRY COULD NOT BE SAVED');
@@ -3967,7 +3976,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       return;
     }
 
-    const state = {
+    const state = materialiseProDuelOpponentIdentities({
       active: true,
       proEvent: true,
       proSeasonId: (openCircuit?'open:':'duel:') + event.id + ':s' + pro.season + ':e' + (pro.eventTick + 1),
@@ -3986,7 +3995,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       prizeCarId: null,
       rounds:checkedRounds.map(result=>result.round),
       roundIndex: 0,
-    };
+    },pro);
 
     if(prepareBeforePay && isOpenDriverBriefing(state)){
       this._proDriverError=null;
