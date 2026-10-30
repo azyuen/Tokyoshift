@@ -1569,15 +1569,15 @@ export default class FourLaneTestScene extends RaceScene {
     const dx=28,dy=-122;
     const panelPoints=[
       new Phaser.Geom.Point(52+25+dx,643+dy),
-      new Phaser.Geom.Point(52+654+25+dx,643+dy),
-      new Phaser.Geom.Point(52+654-25+dx,643+164+dy),
+      new Phaser.Geom.Point(52+654+25+dx+120,643+dy),
+      new Phaser.Geom.Point(52+654-25+dx+120,643+164+dy),
       new Phaser.Geom.Point(52-25+dx,643+164+dy),
     ];
     const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
     panel.fillStyle(0x071728,.84).fillPoints(panelPoints,true);
     panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
     this.add.text(89+dx,652+dy,'NEXT OPPONENT',{
-      fontFamily:'"Exo 2", sans-serif',fontSize:'24px',
+      fontFamily:'"Exo 2", sans-serif',fontSize:'19px',
       fontStyle:'italic 900',color:'#35d6ff',
       stroke:'#081321',strokeThickness:2,
     }).setDepth(depth+4).setScrollFactor(0);
@@ -1622,16 +1622,16 @@ export default class FourLaneTestScene extends RaceScene {
         wordWrap:{width:780},
       }).setDepth(depth+4).setScrollFactor(0);
     const fit=(label,width)=>{if(label.width>width)label.setScale(width/label.width);};
-    fit(briefingText(231,684,driverName,18,'#ffffff'),239);
-    fit(briefingText(231,708,carName,14,'#7fe0f1'),247);
+    fit(briefingText(231,684,driverName,16,'#ffffff'),218);
+    fit(briefingText(231,708,carName,12,'#7fe0f1'),225);
     briefingText(231,733,'CLASS CAP',10,'#b1cddb',true);
-    briefingText(326,730,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+    fit(briefingText(337,730,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',13),145);
     briefingText(231,753,'NOS',10,'#b1cddb',true);
-    briefingText(326,750,rule.noNos?'PROHIBITED':'PERMITTED',15);
+    fit(briefingText(337,750,rule.noNos?'PROHIBITED':'PERMITTED',13),145);
     briefingText(231,775,'CLASS',10,'#b1cddb',true);
-    briefingText(326,771,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
+    fit(briefingText(337,771,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',13),145);
     const carParts=CentralTokyoScene.prototype.createCarDisplay.call(
-      this,car,545+dx,743+dy,211,depth+3,getProRaceRivalPaint(0),null,false,{
+      this,car,668+dx,743+dy,196,depth+3,getProRaceRivalPaint(0),null,false,{
         ...(round.opponentBuildState||{}),paintColor:getProRaceRivalPaint(0),
       });
     carParts.forEach((part,i)=>{
