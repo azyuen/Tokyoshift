@@ -1,7 +1,7 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
-import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
+import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261030-r742';
 import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r741';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
@@ -215,7 +215,7 @@ export function drawCrewSidebar(s,event,side) {
     '1ST  '+cash(prizes[0])+' // 2ND  '+cash(prizes[1]),
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
-  drawProEventSidebarDetails(s,side,[fee===0?'ARUKEN SPONSORSHIP // ENTRY COVERED':
+  drawProEventSidebarDetails(s,side,[fee===0?'GMG RACING // ENTRY COVERED':
     'LEGACY PAID ENTRY  '+cash(fee),...lines]);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
