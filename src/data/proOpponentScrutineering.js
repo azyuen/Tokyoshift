@@ -63,7 +63,13 @@ export function scrutineerProOpponentRound(round, rules = {}, {
   const before = round.opponentBuildState || {};
   const check = inspectProOpponent(round.carId,before,rules);
   if(check.eligible){
-    return {round,repaired:false,check};
+    // An absent state is not the same as an explicit stock build in
+    // FourLaneTestScene: null there triggers unrestricted random 4/5-star
+    // NOS tuning. Materialise a legal empty build so the actual AI runs
+    // the same configuration that scrutineering just checked.
+    return round.opponentBuildState
+      ? {round,repaired:false,check}
+      : {round:{...round,opponentBuildState:{}},repaired:true,check};
   }
   const rating=Math.max(1,Math.min(5,Math.round(Number(
     round.opponentBuildRating || round.encounterRating || 4))));
