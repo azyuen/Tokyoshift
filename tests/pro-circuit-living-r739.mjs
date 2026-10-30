@@ -30,7 +30,7 @@ test('professional driver's generic helmet art is stable across event types and 
   const scene=source('src/scenes/FourLaneTestScene.js');
   const briefing=source('src/ui/ProDriverBriefing.js');
   assert.match(scene,/character\.mainRival/);
-  assert.match(briefing,/character\.mainRival/);
+  assert.match(briefing,/named\?\.mainRival/);
 });
 
 test('all 23 Pro drivers complete one event each after a 3-heat Open Circuit win',()=>{
