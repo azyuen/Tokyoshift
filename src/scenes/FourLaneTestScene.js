@@ -6,6 +6,7 @@ import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetInd
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
 import RaceScene from './RaceScene.js?v=20261011-r482';
+import CentralTokyoScene from './CentralTokyoScene.js?v=20261030-r731';
 import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
@@ -1555,8 +1556,8 @@ export default class FourLaneTestScene extends RaceScene {
         fontSize:size+'px',fontStyle:pixel?'normal':'700',color,
       }).setDepth(depth+4).setScrollFactor(0);
 
-    // Same angled twin-panel language as the paddock NEXT OPPONENT card.
-    // Positioned below the finish times and left of the two action buttons.
+    // Match the production race briefing's compact opponent panel geometry,
+    // portrait crop, rule typography and actual modular car renderer.
     const panelPoints=[
       new Phaser.Geom.Point(77,509),new Phaser.Geom.Point(808,509),
       new Phaser.Geom.Point(782,691),new Phaser.Geom.Point(54,691),
@@ -1564,52 +1565,56 @@ export default class FourLaneTestScene extends RaceScene {
     const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
     panel.fillStyle(0x071728,.97).fillPoints(panelPoints,true);
     panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
-    const portraitPoints=[
-      new Phaser.Geom.Point(95,548),new Phaser.Geom.Point(235,548),
-      new Phaser.Geom.Point(217,677),new Phaser.Geom.Point(75,677),
+    text(93,518,'NEXT OPPONENT',21,'#35d6ff',true);
+    const framePoints=[
+      new Phaser.Geom.Point(111,550),new Phaser.Geom.Point(240,550),
+      new Phaser.Geom.Point(208,680),new Phaser.Geom.Point(79,680),
     ];
     const frame=this.add.graphics().setDepth(depth+2).setScrollFactor(0);
-    frame.fillStyle(0x165578,.94).fillPoints(portraitPoints,true);
-    frame.lineStyle(3,0x050a10,1).strokePoints(portraitPoints,true);
+    frame.fillStyle(0x165578,.87).fillPoints(framePoints,true);
+    frame.lineStyle(4,0x050a10,1).strokePoints(framePoints,true);
     const maskShape=this.make.graphics({add:false});
-    maskShape.fillStyle(0xffffff,1).fillPoints(portraitPoints,true);
+    maskShape.fillStyle(0xffffff,1).fillPoints(framePoints,true);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>maskShape.destroy());
-    const maskImage=image=>{
-      image.setScrollFactor(0).setMask(maskShape.createGeometryMask());
-      return image;
-    };
-    const mainRival=Boolean(round.mainRivalTier || rival.mainRival);
-    if (!mainRival) {
-      const index=getProDriverHelmetIndex(nextState,round);
-      const key='proDriverHelmet'+index;
-      if(this.textures.exists(key)){
-        const image=this.textures.get(key).getSourceImage();
-        const scale=Math.max(135/Math.max(1,image.width),180/Math.max(1,image.height));
-        maskImage(this.add.image(166,544,key).setOrigin(.5,0)
-          .setScale(scale).setDepth(depth+3));
-      }
-    } else {
+    const clip=image=>image?.setScrollFactor(0).setMask(maskShape.createGeometryMask());
+    const px=166,py=618;
+    const mainRival=Boolean(round.mainRivalTier||rival.mainRival);
+    const key='proDriverHelmet'+getProDriverHelmetIndex(nextState,round);
+    if(!mainRival&&this.textures.exists(key)){
+      const source=this.textures.get(key).getSourceImage();
+      const scale=Math.max(129*1.6/Math.max(1,source.width),
+        130*2.2/Math.max(1,source.height));
+      this.textures.get(key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+      clip(this.add.image(px,568,key).setOrigin(.5,0).setScale(scale)
+        .setDepth(depth+3).setScrollFactor(0));
+    }else{
       const portrait=createCharacterProfile(this,{
-        characterId:round.characterId,pose:'idle',x:167,y:625,
-        frameWidth:170,frameHeight:155,side:'center',depth:depth+3,
+        characterId:round.characterId,pose:'idle',x:px,y:py+10,
+        frameWidth:200,frameHeight:195,side:'center',depth:depth+3,
         mask:false,rivalContext:true,proCircuit:true,
         playerCharacterId:this.registry.get('playerCharacterId')||'renMizuno',
       });
-      if(portrait?.image)maskImage(portrait.image);
+      if(portrait?.image)clip(portrait.image);
     }
-    text(258,524,'NEXT OPPONENT',13,'#35d6ff',true);
-    text(721,524,'HEAT '+(next.roundNumber)+' / '+next.totalRounds,
-      9,'#a9c7d6',true).setOrigin(1,0);
-    const name=text(258,556,driverName,21);
-    if(name.width>385)name.setScale(385/name.width);
-    const vehicle=text(258,590,carName,15,'#7fe0f1');
-    if(vehicle.width>395)vehicle.setScale(395/vehicle.width);
-    text(258,620,'POWER CAP',9,'#b1cddb',true);
-    text(396,616,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
-    text(560,620,'NOS',9,'#b1cddb',true);
-    text(634,616,rule.noNos?'NO':'YES',15);
-    text(258,655,'CLASS',9,'#b1cddb',true);
-    text(396,651,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
+    const fit=(label,width)=>{if(label.width>width)label.setScale(width/label.width);};
+    fit(text(260,552,driverName,18),245);
+    fit(text(260,579,carName,14,'#7fe0f1'),252);
+    text(260,608,'CLASS CAP',10,'#b1cddb',true);
+    text(370,605,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',15);
+    text(260,630,'NOS',10,'#b1cddb',true);
+    text(370,627,rule.noNos?'PROHIBITED':'PERMITTED',15);
+    text(260,653,'CLASS',10,'#b1cddb',true);
+    text(370,650,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',15);
+    // The race briefing uses CentralTokyoScene.createCarDisplay. Reuse that
+    // exact production renderer rather than substituting a flat car sprite.
+    const carParts=CentralTokyoScene.prototype.createCarDisplay.call(
+      this,car,665,626,205,depth+3,getProRaceRivalPaint(0),null,false,{
+        ...(round.opponentBuildState||{}),paintColor:getProRaceRivalPaint(0),
+      });
+    carParts.forEach((part,i)=>{
+      if(i===2){part?.destroy?.();return;}
+      part?.setScrollFactor?.(0);
+    });
     return true;
   }
 
@@ -1671,10 +1676,10 @@ export default class FourLaneTestScene extends RaceScene {
     // Large, angled manga face panel on the LEFT, using the same mask/profile
     // renderer as RaceScene (not a loosely scaled full-body PNG).
     const points = [
-      new Phaser.Geom.Point(88, individualHeatPreview ? 98 : 114),
-      new Phaser.Geom.Point(individualHeatPreview ? 457 : 497, 129),
-      new Phaser.Geom.Point(individualHeatPreview ? 434 : 462, individualHeatPreview ? 428 : 572),
-      new Phaser.Geom.Point(65, individualHeatPreview ? 445 : 593),
+      new Phaser.Geom.Point(88, individualHeatPreview ? 75 : 114),
+      new Phaser.Geom.Point(individualHeatPreview ? 484 : 497, individualHeatPreview ? 99 : 129),
+      new Phaser.Geom.Point(individualHeatPreview ? 467 : 462, individualHeatPreview ? 465 : 572),
+      new Phaser.Geom.Point(65, individualHeatPreview ? 480 : 593),
     ];
     const frame = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
     frame.fillStyle(0xe9e6e3, 0.92).fillPoints(points, true);
@@ -1682,9 +1687,9 @@ export default class FourLaneTestScene extends RaceScene {
     const portrait = createCharacterProfile(this, {
       characterId: this.registry.get('playerCharacterId') || 'renMizuno',
       pose: champion || advanced ? 'win' : 'loss',
-      x: individualHeatPreview ? 263 : 283, y: individualHeatPreview ? 268 : 345,
-      frameWidth: individualHeatPreview ? 380 : 455,
-      frameHeight: individualHeatPreview ? 335 : 460,
+      x: individualHeatPreview ? 274 : 283, y: individualHeatPreview ? 265 : 345,
+      frameWidth: individualHeatPreview ? 421 : 455,
+      frameHeight: individualHeatPreview ? 392 : 460,
       side: 'left', depth: depth + 3, flipInward: true, mask: false,
       profileOverride: { scale: 1.10, offsetX: 0, offsetY: 22 },
       proCircuit: true,
@@ -1698,7 +1703,7 @@ export default class FourLaneTestScene extends RaceScene {
       targets: [frame, ...(portrait?.image ? [portrait.image] : [])],
       alpha: 1, duration: 260, ease: 'Sine.Out',
     });
-    this.add.text(90, individualHeatPreview ? 464 : 607, name.toUpperCase(), {
+    this.add.text(90, individualHeatPreview ? 486 : 607, name.toUpperCase(), {
       fontFamily: PIXEL, fontSize: '11px', color: '#faf7f6',
       backgroundColor: '#171518ed', padding: { x: 12, y: 8 },
     }).setDepth(depth + 5).setScrollFactor(0);
