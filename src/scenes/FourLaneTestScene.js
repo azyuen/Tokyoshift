@@ -1,12 +1,12 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r739';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r740';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
-import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r739';
+import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r740';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
 import RaceScene from './RaceScene.js?v=20261011-r482';
-import CentralTokyoScene from './CentralTokyoScene.js?v=20261030-r739';
+import CentralTokyoScene from './CentralTokyoScene.js?v=20261030-r740';
 import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
@@ -26,7 +26,7 @@ import {
   boostAiForStandingStart,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { scrutineerProOpponentRound, inspectProOpponent } from '../data/proOpponentScrutineering.js?v=20261030-r739';
+import { scrutineerProOpponentRound, inspectProOpponent } from '../data/proOpponentScrutineering.js?v=20261030-r740';
 import { PRO_DRAG_EVENTS } from '../data/centralTokyo.js?v=20261030-r721';
 import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
