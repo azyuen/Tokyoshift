@@ -3544,7 +3544,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ? 'FINISH YOUR ACTIVE EVENT FIRST'
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : trophyUnavailable ? 'TROPHY COOLDOWN // '+event.trophyCooldown+' OTHER EVENTS REQUIRED'
-        : slotUnavailable ? 'EVENT COMPLETED // NEXT DAY/NIGHT ROTATION'
+        : slotUnavailable ? 'EVENT COMPLETE // NEXT ROTATION'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
         : !build ? 'SELECT A CAR FIRST'
         : !supportedFormat ? 'EVENT FORMAT NOT YET AVAILABLE'
