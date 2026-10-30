@@ -76,7 +76,7 @@ export function scrutineerProOpponentRound(round, rules = {}, {
     round.opponentBuildRating || round.encounterRating || 4))));
   const target=Number.isFinite(Number(targetPowerKW)) && Number(targetPowerKW)>0
     ? Number(targetPowerKW)
-    : Number.isFinite(Number(rules.maxPowerKW)) ? Number(rules.maxPowerKW)
+    : finite(rules.maxPowerKW) != null ? finite(rules.maxPowerKW)
     : Number(cars[round.carId].powerKW)||200;
   let legal=[];
   for(const state of candidatesForCar(round.carId,before,rules,seed,rating)){
