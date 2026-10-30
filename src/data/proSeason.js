@@ -1,7 +1,7 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus, getProTeamIdForDriver, getProAiTeamDefinition } from './proCircuit.js?v=20261030-r724';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
-import { materialiseProDuelOpponentIdentities } from './proDragDuel.js?v=20261030-r737';
+import { materialiseProDuelOpponentIdentities } from './proDragDuel.js?v=20261030-r738';
 import { cars } from './cars.js?v=20261026-r687';
 import { characters } from './characters.js?v=20261017-r565';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
