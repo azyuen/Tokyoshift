@@ -31,7 +31,10 @@ export function getOpenCircuitSlotStatus(raw, discipline='DRIVER', rotation=null
   const key=discipline==='TEAM'?'openCircuitLastCrewSlot':'openCircuitLastDriverSlot';
   const slot=Number(rotation?.rotationIndex);
   const valid=rotation!=null&&Number.isInteger(slot)&&slot>=0;
-  const used=valid&&c[key]===slot;
+  // Legacy scene modules may still serialise a v4 Pro Circuit object;
+  // the existing completed-event ledger provides durable slot history.
+  const marker='open-slot:'+(discipline==='TEAM'?'crew':'driver')+':'+slot;
+  const used=valid&&(c[key]===slot||c.completedEventIds.includes(marker));
   return {available:!used,used,slot:valid?slot:null,
     nextEventAt:valid?Number(rotation.nextEventAt||0):null};
 }
@@ -102,14 +105,22 @@ export function finishOpenCircuitEvent(raw,summary) {
   // Actual opponents were already scored against the player by the caller.
   const background=simulateOpenCircuitField(c,summary.id,summary.driverIds||[]);
   const slot=Number(summary.openCircuitSlotIndex);
+  let slotMarker=null;
   if(!summary.trophyId&&Number.isInteger(slot)&&slot>=0&&
     summary.openCircuitSlotIndex!=null) {
-    if(summary.discipline==='DRIVER')c.openCircuitLastDriverSlot=slot;
-    if(summary.discipline==='TEAM')c.openCircuitLastCrewSlot=slot;
+    if(summary.discipline==='DRIVER'){
+      c.openCircuitLastDriverSlot=slot;
+      slotMarker='open-slot:driver:'+slot;
+    }
+    if(summary.discipline==='TEAM'){
+      c.openCircuitLastCrewSlot=slot;
+      slotMarker='open-slot:crew:'+slot;
+    }
   }
   c.eventTick++;
   c.openCircuitTick++;
-  c.completedEventIds=[...c.completedEventIds,summary.id].slice(-250);
+  c.completedEventIds=[...c.completedEventIds,summary.id,
+    ...(slotMarker?[slotMarker]:[])].slice(-250);
   if(summary.trophyId){
     // The offer can rotate while a paid trophy event is in progress. Award
     // the saved event's trophy identity, never the current day's new offer.
