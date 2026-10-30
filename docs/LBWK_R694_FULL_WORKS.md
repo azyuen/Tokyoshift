@@ -35,3 +35,7 @@ The collector class is still **S** for all sealed hero cars, although the above 
 - No routine factory car, normal regional hero or existing user-purchased upgrade part definitions altered.
 - **Save compatibility:** saved car IDs are preserved. Previous LBWK owner specifications and pricing are replaced by R694 on load; no retroactive refunds are issued because purchase transactions do not persist exact historical itemised part costs. If old premium purchases need compensation, implement a dedicated, idempotent migration.
 - **Before merge:** inspect 402m benchmark output against standard full Lv3 and globally stacked regional tuning; run mobile/tablet manual checkout and NOS races. The two supplied number-livery images are now included in the branch; verify their staging and wheel alignment in mobile/tablet QA.
+
+## R742 — GMG demonstration vehicle versus Prelude 240Z
+
+The Career-only `arkonGinza240z` (#16 RB26 collector special, listed at ¥125 million) is a **different, later Ginza Motor Gallery × Liberty Walk one-off demonstration/commission build** from Aruken's personally owned 240Z voluntarily sold during Prelude Chapter 10. It deliberately reuses his signature black-and-gold #16 visual identity without erasing the sale. GMG's commercial access does not assert his personal ownership. The no-stakes sponsor exhibition uses this later car; specifications, price, gallery rotation, saved vehicle IDs and racing mechanics remain unchanged. See `docs/GMG_BUSINESS_AND_RACING_CANON_20261030.md`.

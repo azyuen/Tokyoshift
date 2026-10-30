@@ -78,7 +78,8 @@ test('cash shortfall dialogue and celebrations use all three gallery staff', () 
   const owner = ginzaConversation('vaultOwner');
   assert.equal(owner.pages[0].leftPose,'ginzaHappy');
   assert.equal(owner.pages.at(-1).leftPose,'ginzaSerious');
-  assert.match(owner.pages[0].text,/owner/i);
+  assert.match(owner.pages[0].text,/private vault/i);
+  assert.doesNotMatch(owner.pages[0].text,/owner of the Ginza Motor Gallery/i);
 });
 
 test('gallery loan survives a save without becoming a permanent car-history acquisition', () => {

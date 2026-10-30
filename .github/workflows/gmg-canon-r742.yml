@@ -1,0 +1,32 @@
+name: R742 GMG business and sponsor canon
+on:
+  push:
+    branches: [main, feature/gmg-partnership-canon-r742]
+    paths:
+      - 'docs/GMG_BUSINESS_AND_RACING_CANON_20261030.md'
+      - 'docs/CHARACTER_BIBLE.md'
+      - 'src/data/chapter09.js'
+      - 'src/data/ginzaScenes.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/gmg-canon-r742.mjs'
+      - 'tests/ginza-gallery-r565.mjs'
+      - 'tests/pro-sponsor-r692.mjs'
+      - '.github/workflows/gmg-canon-r742.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  narrative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify module syntax
+        run: |
+          for f in src/data/chapter09.js src/data/ginzaScenes.js src/ui/ProSeasonPanel.js src/ui/ProSponsorStory.js src/scenes/CentralTokyoScene.js src/ui/MangaCutscene.js src/data/cutscenes.js tests/gmg-canon-r742.mjs; do node --check "$f"; done
+      - name: Run canon, sponsor and gallery regressions
+        run: |
+          node --test tests/gmg-canon-r742.mjs tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-denzaki-permanent-r695.mjs tests/ginza-gallery-r565.mjs

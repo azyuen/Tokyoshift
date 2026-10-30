@@ -37,6 +37,11 @@ test('Aruken and Sayaka sponsor the first season without labelling their romance
   assert.match(words(scene), /good to finally meet you/i);
   assert.match(words(scene), /Sayaka.s shown me/i);
   assert.match(words(scene), /Liberty Walk 240Z/i);
+  assert.match(words(scene), /GMG gets a racing programme worth backing/i);
+  assert.match(words(scene), /We agreed it was worth doing/i);
+  assert.match(words(scene), /I've missed running a race programme/i);
+  assert.match(words(scene), /our Liberty Walk 240Z demonstrator/i);
+  assert.doesNotMatch(words(scene), /against my Liberty Walk 240Z|That's YOUR 240Z/i);
   assert.doesNotMatch(words(scene), /my wife|my girlfriend|my partner in life|in love/i);
 });
 
