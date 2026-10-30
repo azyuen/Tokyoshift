@@ -1,9 +1,9 @@
 // R605 — Persistent Open Circuit driver + trophy event briefings.
-import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261029-r714';
+import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261030-r739';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { getExhaustNosTuning } from './secondaryTuning.js?v=20261026-r687';
-import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
+import { normaliseProCircuitState } from './proCircuit.js?v=20261030-r739';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
   return Boolean(state?.active && state?.proEvent && state?.openCircuit &&
