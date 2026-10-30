@@ -1,12 +1,12 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r740';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r740';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
 import RaceScene from './RaceScene.js?v=20261011-r482';
-import CentralTokyoScene from './CentralTokyoScene.js?v=20261030-r740';
+import CentralTokyoScene from './CentralTokyoScene.js?v=20261030-r741';
 import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
@@ -26,7 +26,7 @@ import {
   boostAiForStandingStart,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { scrutineerProOpponentRound, inspectProOpponent } from '../data/proOpponentScrutineering.js?v=20261030-r740';
+import { scrutineerProOpponentRound, inspectProOpponent } from '../data/proOpponentScrutineering.js?v=20261030-r741';
 import { PRO_DRAG_EVENTS } from '../data/centralTokyo.js?v=20261030-r721';
 import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
@@ -39,10 +39,10 @@ import { saveSessionState } from '../state/GameState.js?v=20261030-r739';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20261029-r713';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
-import { getProfessionalDuelRound, settleProfessionalDuel, materialiseProDuelOpponentIdentities } from '../data/proDragDuel.js?v=20261030-r738';
+import { getProfessionalDuelRound, settleProfessionalDuel, materialiseProDuelOpponentIdentities } from '../data/proDragDuel.js?v=20261030-r741';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261030-r739';
+import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261030-r741';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
 } from '../data/proTournament.js?v=20261021-r628';
