@@ -546,7 +546,8 @@ export default class FourLaneTestScene extends RaceScene {
           rating, playerDifficulty: difficulty, rollingStart: false,
           raceDistanceM: FOUR_LANE_TEST_DISTANCE_M,
         }),
-        config: built.car, paint: getProRaceRivalPaint(index),
+        config: built.car,
+        paint: rivalRound?.paintColor??getProRaceRivalPaint(index),
         finishSeconds: null, disqualified: false,
       });
     });
@@ -1639,9 +1640,10 @@ export default class FourLaneTestScene extends RaceScene {
     fit(briefingText(378,755,rule.noNos?'PROHIBITED':'PERMITTED',12),118);
     briefingText(245,777,'CLASS',8,'#b1cddb',true);
     fit(briefingText(378,774,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',12),118);
+    const nextPaint=round.paintColor??getProRaceRivalPaint(0);
     const carParts=CentralTokyoScene.prototype.createCarDisplay.call(
-      this,car,624+dx,743+dy,178,depth+3,getProRaceRivalPaint(0),null,false,{
-        ...(round.opponentBuildState||{}),paintColor:getProRaceRivalPaint(0),
+      this,car,624+dx,743+dy,178,depth+3,nextPaint,null,false,{
+        ...(round.opponentBuildState||{}),paintColor:nextPaint,
       });
     carParts.forEach((part,i)=>{
       if(i===2){part?.destroy?.();return;}
