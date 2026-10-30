@@ -130,8 +130,8 @@ test('legal existing builds remain unchanged and approved NOS is permitted where
   const unconstrained=makeRound('r32',{
     nosInstalled:true,exhaustNosTuning:{nosKit:1,nitrousShot:1},
   });
-  assert.equal(inspectProOpponent('r32',unconstrained,classRules).eligible,true);
-  assert.equal(inspectProOpponent('r32',unconstrained,{
+  assert.equal(inspectProOpponent('r32',unconstrained.opponentBuildState,classRules).eligible,true);
+  assert.equal(inspectProOpponent('r32',unconstrained.opponentBuildState,{
     maxPowerKW:260,noNos:true,
   }).eligible,false);
 });
