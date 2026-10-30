@@ -354,6 +354,17 @@ export function getProPrizeWithBonus(cashPrize, rank, discipline = 'DRIVER') {
   return { basePrize, bonusPercent, bonusCash, totalPrize: basePrize + bonusCash };
 }
 
+// A driver's live ladder position influences professional race execution.
+// This affects driving skill parameters only, never engine/vehicle physics.
+// Top seeds get sharper reactions/launch/shifts; lower seeds retain the
+// event's expert/elite baseline with modest human inconsistency.
+export function getProDriverLadderSkillModifier(driver={}) {
+  const seed=Math.max(1,Math.min(24,Math.floor(Number(driver.seed)||12)));
+  const position=(24-seed)/23; // #1 -> 1, #24 -> 0
+  const elo=Math.max(-1,Math.min(1,(Number(driver.rating)||1500)-1500)/500));
+  return Math.max(-0.04,Math.min(0.045,-0.03+position*0.066+elo*0.009));
+}
+
 export function getProCircuitDriverSeeds(proCircuit) {
   return seededRows(proCircuit, 'DRIVER');
 }
