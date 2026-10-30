@@ -1568,16 +1568,19 @@ export default class FourLaneTestScene extends RaceScene {
     // The only change is translation (+28, -122) into the result screen.
     const dx=28,dy=-122;
     const panelPoints=[
-      new Phaser.Geom.Point(52+dx+28,643+dy),
-      new Phaser.Geom.Point(52+dx+654-28,643+dy),
-      new Phaser.Geom.Point(52+dx+654-28-24,643+dy+164),
-      new Phaser.Geom.Point(52+dx+4,643+dy+164),
+      new Phaser.Geom.Point(52+dx+25,643+dy),
+      new Phaser.Geom.Point(52+dx+654+25,643+dy),
+      new Phaser.Geom.Point(52+dx+654-25,643+dy+164),
+      new Phaser.Geom.Point(52+dx-25,643+dy+164),
     ];
     // Match the briefing's slanted poly(x,y,w,h) geometry exactly.
     const panel=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
-    panel.fillStyle(0x071728,.97).fillPoints(panelPoints,true);
+    panel.fillStyle(0x071728,.84).fillPoints(panelPoints,true);
     panel.lineStyle(3,0x35d6ff,1).strokePoints(panelPoints,true);
-    text(89+dx,652+dy,'NEXT OPPONENT',24,'#35d6ff',false);
+    this.add.text(89+dx,652+dy,'NEXT OPPONENT',{
+      fontFamily:'"Rajdhani",sans-serif',fontSize:'24px',fontStyle:'italic 900',
+      color:'#35d6ff',stroke:'#081321',strokeThickness:2,
+    }).setDepth(depth+4).setScrollFactor(0);
     const frameX=74+dx,frameY=683+dy,frameW=129,frameH=106,skew=16;
     const framePoints=[
       new Phaser.Geom.Point(frameX+skew,frameY),
