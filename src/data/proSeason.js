@@ -123,7 +123,11 @@ export function finishOpenCircuitEvent(raw,summary) {
       c.minorTrophyCooldownUntil=c.openCircuitTick+OPEN_CIRCUIT_TROPHY_COOLDOWN;
     }
   }
-  c.lastTournament={...summary,points:0,openCircuit:true,background};
+  const rankAfter=summary.discipline==='DRIVER'?
+    getProCircuitDriverSeeds(c).find(row=>row.id==='player:driver')?.seed:
+    getProCircuitTeamSeeds(c).find(row=>row.id==='player:team')?.seed;
+  c.lastTournament={...summary,rankAfter:rankAfter??summary.rankAfter,
+    points:0,openCircuit:true,background};
   return c;
 }
 export function startProfessionalSeason(raw) {
@@ -594,8 +598,13 @@ export function completeSeasonRound(raw,summary,participants=[]) {
       if(first&&second)elo(first,second,true);
     }
   }
+  const seasonRankAfter=(summary.discipline==='TEAM'?
+    getProCircuitTeamSeeds(c):getProCircuitDriverSeeds(c))
+    .find(row=>row.id===(summary.discipline==='TEAM'?'player:team':'player:driver'))?.seed;
   c.calendar.round++;
-  c.calendar.history=[...c.calendar.history,{...summary,background}].slice(-PRO_SEASON_LENGTH);
+  c.calendar.history=[...c.calendar.history,{
+    ...summary,rankAfter:seasonRankAfter??summary.rankAfter,background,
+  }].slice(-PRO_SEASON_LENGTH);
   if(c.calendar.round===PRO_SEASON_LENGTH){
     c.calendar.result={season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
     c.seasonStatus='COMPLETE';
