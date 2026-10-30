@@ -1,6 +1,7 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus, getProTeamIdForDriver, getProAiTeamDefinition } from './proCircuit.js?v=20261030-r724';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
+import { materialiseProDuelOpponentIdentities } from './proDragDuel.js?v=20261030-r737';
 import { cars } from './cars.js?v=20261026-r687';
 import { characters } from './characters.js?v=20261017-r565';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
@@ -874,6 +875,9 @@ export function forfeitCrewSeries(source,eventId) {
 
 // Legacy three-round pro cups retain their original fee, purse and race engine.
 export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null) {
+  // Older event snapshots had no professional driver identity. Resolve it
+  // from the actual persistent roster before assigning Elo / standings.
+  state=materialiseProDuelOpponentIdentities(state,raw);
   const c=normaliseProCircuitState(raw),id=state.proSeasonId||'legacy:'+state.eventId+':s'+c.season+':e'+(c.eventTick+1);
   if(c.completedEventIds.includes(id))return c;
   const participants=['player:driver'];
@@ -881,7 +885,12 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
   const ratingBefore=c.playerDriver.rating;
   const roundCount=state.rounds?.length===5?5:3;
   for(let n=0;n<Math.min(roundCount,roundsWon+1);n++) {
-    const round=state.rounds[n],rivalId=Object.keys(c.drivers).find(id=>c.drivers[id].characterId===round?.characterId);
+    const round=state.rounds[n];
+    const rivalId=round?.opponentDriverId&&c.drivers[round.opponentDriverId]
+      ? round.opponentDriverId
+      : round?.characterId
+        ? Object.keys(c.drivers).find(id=>c.drivers[id].characterId===round.characterId)
+        : null;
     const rival=rivalId?c.drivers[rivalId]:{rating:1300+Number(round?.encounterRating||3)*70,wins:0,losses:0};
     elo(c.playerDriver,rival,n<roundsWon);if(rivalId)participants.push(rivalId);
   }
