@@ -39,29 +39,28 @@ test('QUALIFIED uses the settled, saved next round (not the current opponent)',(
     getProDriverHelmetIndex(outcome.nextState,rounds[1]));
 });
 
-test('rank badge is a true circle and compact next-rival parallelogram fits between results and buttons',()=>{
-  assert.match(race,/const rankBadge = this\.add\.circle\(470, 557, 66/);
-  assert.doesNotMatch(race,/const rankBadge = this\.add\.ellipse/);
-  assert.match(race,/new Phaser\.Geom\.Point\(583,533\)/);
-  assert.match(race,/new Phaser\.Geom\.Point\(1163,690\)/);
-  assert.match(race,/new Phaser\.Geom\.Point\(590,569\)/);
+test('rank badge, next rival card and action buttons have non-overlapping layout',()=>{
+  assert.match(race,/const rankBadge = this\\.add\\.circle\\(individualHeatPreview \\? 492 : 470/);
+  assert.doesNotMatch(race,/const rankBadge = this\\.add\\.ellipse/);
+  assert.match(race,/new Phaser\\.Geom\\.Point\\(52\\+654\\+25\\+dx\\+55,643\\+dy\\)/);
+  assert.match(race,/new Phaser\\.Geom\\.Point\\(52\\+654-25\\+dx\\+55,643\\+164\\+dy\\)/);
   assert.match(race,/NEXT OPPONENT/);
-  assert.match(race,/getProCircuitGenericDriverAsset\(index\)/);
-  assert.match(race,/getCharacterVisualAsset\(nextRound\.characterId, 'idle'/);
-  assert.ok(470+66<552,'circular rank badge must not touch the next-opponent panel');
-  assert.ok(1191<1363-141,'opponent card must leave room for action buttons');
-  assert.ok(533>384+3*40,'result table does not overlap the next-opponent panel');
-  assert.ok(609+24<678-24,'briefing and next-heat buttons have a visible gap');
+  assert.match(race,/getProCircuitGenericDriverAsset\\(index\\)/);
+  assert.match(race,/getCharacterVisualAsset\\(nextRound\\.characterId, 'idle'/);
+  const cardTop=643-122,cardRight=52+654+25+28+55;
+  assert.ok(412+66<cardTop,'ranking circle must not cover the opponent card');
+  assert.ok(cardRight<1059-141,'card must not touch briefing button');
+  assert.ok(cardTop>384+3*40,'results table must end above the opponent card');
+  assert.ok(1059+141<1370-141,'briefing and next-heat actions need horizontal spacing');
 });
-
 test('NEXT HEAT skips preparation; RACE BRIEFING opens saved paid preparation room',()=>{
-  assert.match(race,/const paidNextDriver = advanced && duel &&/);
+  assert.match(race,/const paidNextDriver = individualHeatPreview;/);
   assert.match(race,/if\(briefing && paidNextDriver\)\{\s*this\.scene\.start\('CentralTokyoScene',\{\s*locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,/);
   assert.match(race,/else if \(paidNextDriver\) \{\s*this\.scene\.restart\(\{mode:'PRO_DUEL'\}\)/);
   assert.match(race,/const advance = \(\) => navigate\(false\)/);
   assert.match(race,/\.on\('pointerdown',\(_pointer,_x,_y,event\)=>\{\s*event\?\.stopPropagation\?\.\(\);navigate\(true\)/);
-  assert.match(race,/this\.add\.text\(1363,609,'RACE BRIEFING'/);
-  assert.match(race,/this\.add\.rectangle\(1363,678,282,48/);
+  assert.match(race,/this\.add\.text\(1059,637,'RACE BRIEFING'/);
+  assert.match(race,/this\.add\.rectangle\(paidNextDriver \? 1370 : 1363,paidNextDriver \? 637 : 678,282,48/);
   assert.match(controller,/autoOpenProDriverBriefing/);
   assert.match(controller,/showOpenCircuitDriverBriefing/);
 });
