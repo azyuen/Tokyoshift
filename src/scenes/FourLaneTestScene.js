@@ -1590,7 +1590,7 @@ export default class FourLaneTestScene extends RaceScene {
       }
     } else {
       const portrait=createCharacterProfile(this,{
-        characterId:round.characterId,pose:'idle',x:620,y:625,
+        characterId:round.characterId,pose:'idle',x:167,y:625,
         frameWidth:170,frameHeight:155,side:'center',depth:depth+3,
         mask:false,rivalContext:true,proCircuit:true,
         playerCharacterId:this.registry.get('playerCharacterId')||'renMizuno',
