@@ -74,7 +74,7 @@ test('missing historic AI build must never fall back to an unrestricted NOS buil
   assert.deepEqual(fixed.round.opponentBuildState,{});
   legal(fixed.round,street);
   assert.match(runtime,/rivalRound\?\.opponentBuildState \|\| createRivalBuildState/);
-  assert.match(runtime,/if\(result\.repaired\)\{/);
+  assert.match(runtime,/if\(result\.repaired \|\| !entry\.briefingRules\)\{/);
   assert.match(runtime,/saveProTransaction\(this\.registry,\{competitionState:updated\}\)/);
 });
 
