@@ -3933,6 +3933,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
           driver.id+':'+index,build.carId);
       const baseAi = getEncounterAi(rating);
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
+      // Persistent Pro Circuit Elo now influences execution within the
+      // approved expert/elite AI model. This is not a physics multiplier.
+      const form=Math.max(-.025,Math.min(.025,
+        (Number(driver.rating||1600)-1600)/12000));
 
       if (mainRivalRound) {
         return {
@@ -3957,10 +3961,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
           [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
         encounterAi: {
-          reactionSkill: clamp01(baseAi.reactionSkill + eventBoost),
-          launchSkill: clamp01(baseAi.launchSkill + eventBoost),
-          shiftSkill: clamp01(baseAi.shiftSkill + eventBoost),
-          aggression: clamp01(baseAi.aggression + eventBoost),
+          reactionSkill: clamp01(baseAi.reactionSkill + eventBoost + form),
+          launchSkill: clamp01(baseAi.launchSkill + eventBoost + form),
+          shiftSkill: clamp01(baseAi.shiftSkill + eventBoost + form),
+          aggression: clamp01(baseAi.aggression + eventBoost + form),
         },
         raceType: 'Standing Start',
       };
