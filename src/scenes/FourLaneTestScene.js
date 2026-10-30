@@ -420,6 +420,14 @@ export default class FourLaneTestScene extends RaceScene {
       queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20261008-r431');
       queued += preloadCarWheel(this, cars[id], id === this.playerCarId ? playerState : {});
     });
+    // The between-heat card previews the SAVED next rival, not the just-raced car.
+    if(this.proDuel && this.proDuelState?.rounds?.[this.proDuelInfo?.roundIndex+1]){
+      const upcoming=this.proDuelState.rounds[this.proDuelInfo.roundIndex+1];
+      if(cars[upcoming.carId]){
+        queued+=preloadCarAppearanceAssets(this,{[upcoming.carId]:cars[upcoming.carId]},'20261008-r431');
+        queued+=preloadCarWheel(this,cars[upcoming.carId],upcoming.opponentBuildState||{});
+      }
+    }
     queued += preloadVisualModSelectionAssets(this, this.playerCarId, playerState, '20261008-r431');
     queued += preloadTunerDecalAssets(this, playerState, '20261008-r431');
     startSceneLoading(this, 'TOKYO DRAG COMPLEX', queued);
