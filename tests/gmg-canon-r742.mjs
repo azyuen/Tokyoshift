@@ -26,7 +26,7 @@ test('Career #16 demonstration car is different from Aruken\'s sold prequel 240Z
  assert.equal(GINZA_LISTINGS.find(c=>c.carId==='arkonGinza240z')?.price,125000000);
  assert.match(src('src/ui/ProSponsorStory.js'),/selectedOpponentCarId', 'arkonGinza240z/);
 });
-test('wealthy player's vault access no longer misidentifies them as gallery sole owner',()=>{
+test("wealthy player access does not imply gallery ownership",()=>{
  const vault=ginzaConversation('vaultOwner');
  const dialogue=vault.pages.map(p=>p.text).join(' ');
  assert.equal(vault.pages.length,3);
