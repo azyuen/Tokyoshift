@@ -1989,34 +1989,17 @@ export default class MeetScene extends Phaser.Scene {
     if (this.isCrewTestDriveMode()) return;
     if (!challenge?.characterId || !challenge?.baseCarId || !cars[playerCarId]) return;
 
-    const character = characters[challenge.characterId];
     const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
     if (!(recruitRules.eligibleCarIds || []).includes(playerCarId)) return;
     // Select the actual regional duel before RaceScene reads the legacy
     // active-challenge slot; accepted duels elsewhere remain untouched.
     setCrewRecruitChallenge(this.registry, challenge);
 
-    const characterRating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
-    const rating = recruitRules.aiRating || characterRating;
-    const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
-    const tierAi = getEncounterAi(rating);
-    // Easy must never inherit an Expert/Elite recruit's personal AI; the
-    // factory-stock duel uses a Rookie driver with the normal Easy assist.
-    // Standard keeps the exact Expert profile. Hard keeps the demanding
-    // max-of-character-and-Elite profile, both unchanged.
-    const encounterAi = recruitRules.playerDifficulty === 'EASY'
-      ? getEncounterAi(2)
-      : recruitRules.playerDifficulty === 'STANDARD'
-        ? getEncounterAi(4)
-        : recruitRules.aiTier
-        ? {
-            ...characterAi,
-            reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
-            launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
-            shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
-            aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
-          }
-        : characterAi;
+    // Recruitment always uses its explicit tier instead of the recruit's
+    // personal Expert/Elite profile, which could bypass the chosen difficulty.
+    // Easy = Rookie, Standard = Skilled, Hard = Expert.
+    const rating = recruitRules.aiRating;
+    const encounterAi = getEncounterAi(rating);
 
     this.registry.set('selectedCarId', playerCarId);
     this.registry.set(

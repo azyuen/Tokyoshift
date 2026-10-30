@@ -240,13 +240,13 @@ export function getCrewRecruitmentChallengeRules(
 
   return {
     playerDifficulty: difficulty,
-    // Easy recruitment should be a welcoming stock duel, not the personal
-    // Expert/Elite profile of whichever recruitable character appeared.
-    // Standard remains Expert and Hard remains Elite without any reductions.
-    aiTier: difficulty === 'HARD' ? 'ELITE'
-      : difficulty === 'STANDARD' ? 'EXPERT' : 'ROOKIE',
-    aiRating: difficulty === 'HARD' ? 5
-      : difficulty === 'STANDARD' ? 4 : 2,
+    // Recruitment driver skill is deliberately one tier below the original
+    // Expert/Elite challenge: Easy Rookie, Standard Skilled, Hard Expert.
+    // Factory-stock car and +/-40 kW eligibility rules stay unchanged.
+    aiTier: difficulty === 'HARD' ? 'EXPERT'
+      : difficulty === 'STANDARD' ? 'SKILLED' : 'ROOKIE',
+    aiRating: difficulty === 'HARD' ? 4
+      : difficulty === 'STANDARD' ? 3 : 2,
     carRule: 'STOCK',
     powerClass,
     powerClassLabel: powerClass.label,
