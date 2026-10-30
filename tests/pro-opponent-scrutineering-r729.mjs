@@ -13,6 +13,13 @@ import {
   inspectProOpponent,scrutineerProOpponentRound,
 } from '../src/data/proOpponentScrutineering.js';
 
+// VehiclePerformance's elapsed-time estimator uses the same Phaser math
+// helpers as the browser; provide a faithful minimal Node test shim.
+globalThis.Phaser??={};
+globalThis.Phaser.Math??={
+  Clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),
+  Linear:(a,b,t)=>a+(b-a)*t,
+};
 const file=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const entry=file('src/scenes/CentralTokyoScene.js');
 const runtime=file('src/scenes/FourLaneTestScene.js');
