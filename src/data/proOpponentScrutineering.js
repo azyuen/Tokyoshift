@@ -5,7 +5,7 @@ import { cars } from './cars.js?v=20261027-r694';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import {
   getProfessionalCarEligibility, getProfessionalOpponentBuild,
-} from './proSeason.js?v=20261030-r728';
+} from './proSeason.js?v=20261030-r729';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 
 const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
