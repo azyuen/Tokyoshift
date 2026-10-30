@@ -8,7 +8,7 @@ import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r728';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r738';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r738';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261030-r728';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261027-r693';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261029-r719';
@@ -3053,6 +3053,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const rotation=getOpenCircuitRotation();
       const driverBase=PRO_DRAG_EVENTS[rotation.rotationIndex%PRO_DRAG_EVENTS.length];
       const driver={...driverBase,requiredWins:0,openCircuit:true,
+        slotCooldown:!getOpenCircuitSlotStatus(pro,'DRIVER',rotation).available,
         entryFee:0,
         prizeCash:Math.round(driverBase.prizeCash*.6/1000)*1000};
       const crewFormat=getOpenCircuitCrewFormat(rotation,pro.openCircuitTick);
@@ -3420,8 +3421,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedFourWide = Boolean(event.fourWide);
     const openCircuit=Boolean(event.openCircuit);
     const trophyUnavailable=Boolean(event.trophyId&&event.trophyCooldown);
+    const slotUnavailable=Boolean(openCircuit&&!event.trophyId&&event.slotCooldown);
     const selectedTimed = ['TIME_ATTACK','CONSISTENCY'].includes(event.seasonRules?.format);
-    const eventUnlocked = circuitOpen && !trophyUnavailable &&
+    const eventUnlocked = circuitOpen && !trophyUnavailable && !slotUnavailable &&
       (selectedFourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
     const power = Math.round(Number(build?.car?.powerKW || 0));
     const seasonRules = event.seasonRules;
@@ -3542,6 +3544,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ? 'FINISH YOUR ACTIVE EVENT FIRST'
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : trophyUnavailable ? 'TROPHY COOLDOWN // '+event.trophyCooldown+' OTHER EVENTS REQUIRED'
+        : slotUnavailable ? 'EVENT COMPLETED // NEXT DAY/NIGHT ROTATION'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
         : !build ? 'SELECT A CAR FIRST'
         : !supportedFormat ? 'EVENT FORMAT NOT YET AVAILABLE'
@@ -3851,7 +3854,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const choices=this.getProDragEvents();
       const actual=choices.find(e=>e.id===event.id&&e.openCircuit&&
         (e.trophyId||null)===(event.trophyId||null));
-      if(!actual||actual.trophyCooldown||actual.team||actual.entryFee!==event.entryFee)return;
+      if(!actual||actual.trophyCooldown||actual.slotCooldown||actual.team||
+        actual.entryFee!==event.entryFee)return;
     }else{
       if(pro.seasonStatus!=='ACTIVE')return;
       const official=getProfessionalRoundEvents(pro.calendar.round).driver;
@@ -3971,6 +3975,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       proEvent: true,
       proSeasonId: (openCircuit?'open:':'duel:') + event.id + ':s' + pro.season + ':e' + (pro.eventTick + 1),
       openCircuit,openTrophyId:event.trophyId||null,
+      openCircuitSlotIndex:openCircuit?getOpenCircuitRotation().rotationIndex:null,
       trophyStages:event.trophyStages||null,
       eventId: event.id,
       briefingLabel: event.label,
