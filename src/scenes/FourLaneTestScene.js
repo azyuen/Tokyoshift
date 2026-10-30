@@ -39,7 +39,7 @@ import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20261029-r713';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
-import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
+import { getProfessionalDuelRound, settleProfessionalDuel, materialiseProDuelOpponentIdentities } from '../data/proDragDuel.js?v=20261030-r737';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
 import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261030-r724';
@@ -167,6 +167,15 @@ export default class FourLaneTestScene extends RaceScene {
     this.crewRelay=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='RELAY';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
+    if(data.mode==='PRO_DUEL'&&this.proDuelState?.active){
+      const named=materialiseProDuelOpponentIdentities(
+        this.proDuelState,this.registry.get('proCircuit'));
+      if(named!==this.proDuelState){
+        this.proDuelState=named;
+        try{saveProTransaction(this.registry,{competitionState:named});}
+        catch(error){console.warn('[Tokyo SHIFT] Could not persist professional rival names',error);}
+      }
+    }
     // Old installed saves can contain a 5-star rival built before NPC
     // scrutineering existed. Repair ONLY the current paid heat, preserving
     // the event/round and payment ledger; this runs before preload/Vehicle.
@@ -529,7 +538,7 @@ export default class FourLaneTestScene extends RaceScene {
       );
       this.runners.push({
         id: entrant?.id || 'ai-' + (index + 1), lane: index + 2,
-        label: this.proCrew&&!this.crewFourWide ? this.crewHeat.opponentName.toUpperCase().slice(0,16) : rivalRound ? String(characters[rivalRound.characterId]?.name || 'RIVAL').toUpperCase().slice(0, 16)
+        label: this.proCrew&&!this.crewFourWide ? this.crewHeat.opponentName.toUpperCase().slice(0,16) : rivalRound ? String(rivalRound.opponentName || characters[rivalRound.characterId]?.name || 'RIVAL').toUpperCase().slice(0, 16)
           : entrant ? entrant.name.toUpperCase().slice(0, 16)
           : 'RIVAL ' + (index + 1), carId: id,
         carState: {}, carLabel: cars[id].shortName,
@@ -1556,7 +1565,7 @@ export default class FourLaneTestScene extends RaceScene {
     const rival = characters[round.characterId] || {};
     const car = cars[round.carId];
     const driverName = String(round.opponentName || rival.name ||
-      round.characterId || 'UNKNOWN DRIVER').toUpperCase();
+      round.characterId || 'PRO DRIVER').toUpperCase();
     const carName = String(car.name || car.shortName || round.carId).toUpperCase();
     const rule = nextState.briefingRules || {};
     const text = (x,y,value,size,color='#f4f7fa',pixel=false) =>
@@ -1622,14 +1631,14 @@ export default class FourLaneTestScene extends RaceScene {
         wordWrap:{width:780},
       }).setDepth(depth+4).setScrollFactor(0);
     const fit=(label,width)=>{if(label.width>width)label.setScale(width/label.width);};
-    fit(briefingText(231,684,driverName,14,'#ffffff'),208);
+    fit(briefingText(231,684,driverName,15,'#ffffff'),217);
     fit(briefingText(231,706,carName,12,'#7fe0f1'),217);
-    briefingText(245,739,'CLASS CAP',9,'#b1cddb',true);
-    fit(briefingText(343,736,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',12),130);
-    briefingText(245,759,'NOS',9,'#b1cddb',true);
-    fit(briefingText(343,756,rule.noNos?'PROHIBITED':'PERMITTED',12),130);
-    briefingText(245,777,'CLASS',9,'#b1cddb',true);
-    fit(briefingText(343,774,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',12),130);
+    briefingText(245,738,'CLASS CAP',8,'#b1cddb',true);
+    fit(briefingText(378,735,rule.maxPowerKW==null?'OPEN':rule.maxPowerKW+' KW MAX',12),118);
+    briefingText(245,758,'NOS',8,'#b1cddb',true);
+    fit(briefingText(378,755,rule.noNos?'PROHIBITED':'PERMITTED',12),118);
+    briefingText(245,777,'CLASS',8,'#b1cddb',true);
+    fit(briefingText(378,774,rule.stock?'FACTORY STOCK':rule.drivetrain||'OPEN',12),118);
     const carParts=CentralTokyoScene.prototype.createCarDisplay.call(
       this,car,624+dx,743+dy,178,depth+3,getProRaceRivalPaint(0),null,false,{
         ...(round.opponentBuildState||{}),paintColor:getProRaceRivalPaint(0),
