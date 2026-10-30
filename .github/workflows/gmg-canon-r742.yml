@@ -9,6 +9,7 @@ on:
       - 'src/data/ginzaScenes.js'
       - 'src/ui/ProSeasonPanel.js'
       - 'tests/gmg-canon-r742.mjs'
+      - 'tests/ginza-gallery-r565.mjs'
       - 'tests/pro-sponsor-r692.mjs'
       - '.github/workflows/gmg-canon-r742.yml'
   pull_request:
@@ -28,4 +29,4 @@ jobs:
           for f in src/data/chapter09.js src/data/ginzaScenes.js src/ui/ProSeasonPanel.js src/ui/ProSponsorStory.js src/scenes/CentralTokyoScene.js src/ui/MangaCutscene.js src/data/cutscenes.js tests/gmg-canon-r742.mjs; do node --check "$f"; done
       - name: Run canon, sponsor and gallery regressions
         run: |
-          node --test tests/gmg-canon-r742.mjs tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-denzaki-permanent-r695.mjs
+          node --test tests/gmg-canon-r742.mjs tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-denzaki-permanent-r695.mjs tests/ginza-gallery-r565.mjs
