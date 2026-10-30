@@ -64,7 +64,7 @@ test('saved rival paint is consistently used in briefing, live race and next-hea
   const entry=source('src/scenes/CentralTokyoScene.js');
   const briefing=source('src/ui/ProDriverBriefing.js');
   const runtime=source('src/scenes/FourLaneTestScene.js');
-  assert.match(entry,/seed:driver\.id\+': '\+/ .source); // placeholder
+  assert.ok(entry.includes("seed:driver.id+':'+event.id"),'paint seed must include persistent driver ID');
   assert.match(briefing,/paintColor:round\.paintColor\?\?getProRaceRivalPaint\(0\)/);
   assert.match(runtime,/paint: rivalRound\?\.paintColor\?\?getProRaceRivalPaint\(index\)/);
   assert.match(runtime,/const nextPaint=round\.paintColor\?\?getProRaceRivalPaint\(0\)/);
