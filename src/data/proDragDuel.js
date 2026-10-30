@@ -11,13 +11,42 @@ const stableHash=value=>{
   for(const char of String(value||''))hash=Math.imul(hash^char.charCodeAt(0),16777619);
   return hash>>>0;
 };
+
+// The complete professional ladder is 23 AI drivers: seven regional
+// champions and 16 named professional drivers. Keep a stable ID order:
+// rankings are dynamic and must never reshuffle event opponent rotation.
+export function getProDuelOpponentRoster(circuit) {
+  return getProCircuitDriverSeeds(circuit)
+    .filter(driver=>driver.id?.startsWith('pro:driver:')||
+      driver.id?.startsWith('rival:'))
+    .map(driver=>({
+      ...driver,
+      name:driver.name||characters[driver.characterId]?.name||null,
+    }))
+    .filter(driver=>driver.name)
+    .sort((a,b)=>a.id.localeCompare(b.id));
+}
+
+// Each event contains only three (or five) heats, but successive entries
+// cycle through the FULL 23-driver roster without duplicates within an event.
+// The stable order allows every competitor to be encountered over time.
+export function selectProDuelOpponents(circuit,{
+  eventId='professional',entryOrdinal=0,count=3,
+}={}) {
+  const roster=getProDuelOpponentRoster(circuit);
+  if(!roster.length)return [];
+  const total=Math.max(0,Math.min(roster.length,Math.floor(Number(count)||0)));
+  const ordinal=Math.max(0,Math.floor(Number(entryOrdinal)||0));
+  const start=(stableHash(eventId)%roster.length+
+    ordinal*total)%roster.length;
+  return Array.from({length:total},(_,index)=>
+    roster[(start+index)%roster.length]);
+}
+
 export function materialiseProDuelOpponentIdentities(state,circuit) {
   if(!state?.proEvent||!Array.isArray(state.rounds)||
     ![3,5].includes(state.rounds.length))return state;
-  const roster=getProCircuitDriverSeeds(circuit)
-    .filter(driver=>driver.id?.startsWith('pro:driver:') &&
-      typeof driver.name==='string' && driver.name.trim())
-    .sort((a,b)=>a.id.localeCompare(b.id));
+  const roster=getProDuelOpponentRoster(circuit);
   if(!roster.length)return state;
   const offset=stableHash(state.proSeasonId||state.eventId||'professional')%roster.length;
   const used=new Set();
@@ -40,9 +69,14 @@ export function materialiseProDuelOpponentIdentities(state,circuit) {
     const name=explicit&&!anonymousLabel.test(explicit)
       ? explicit : namedCharacter || selected?.name || explicit;
     const id=selected?.id||round.opponentDriverId||null;
-    if(name===round.opponentName&&(!id||id===round.opponentDriverId))return round;
+    const characterId=round.characterId||selected?.characterId||null;
+    if(name===round.opponentName&&
+      (!id||id===round.opponentDriverId)&&
+      (!characterId||characterId===round.characterId))return round;
     changed=true;
-    return {...round,opponentName:name,...(id?{opponentDriverId:id}:{})};
+    return {...round,opponentName:name,
+      ...(id?{opponentDriverId:id}:{}),
+      ...(characterId?{characterId}:{})};
   });
   return changed?{...state,rounds}:state;
 }
