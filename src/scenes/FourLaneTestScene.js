@@ -196,7 +196,7 @@ export default class FourLaneTestScene extends RaceScene {
         this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
         return;
       }
-      if(result.repaired){
+      if(result.repaired || !entry.briefingRules){
         const updated={...entry,briefingRules:rules,
           rounds:entry.rounds.map((r,i)=>i===index?result.round:r)};
         try{
