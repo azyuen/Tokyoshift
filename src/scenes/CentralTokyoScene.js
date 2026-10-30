@@ -3914,6 +3914,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     const seasonRules=!openCircuit?event.seasonRules:null;
+    const usedOpponentCarIds=new Set([build.carId]);
     const rounds = event.opponentRatings.map((originalRating, index) => {
       const driver=opponentRoster[index];
       const characterId=driver.characterId||null;
@@ -3931,7 +3932,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }:seasonRules,
         Number(build.car?.powerKW||0),rating,
         'pro:s'+pro.season+':r'+pro.calendar.round+':'+event.id+':'+
-          driver.id+':'+index,build.carId);
+          driver.id+':'+pro.eventTick+':'+index,
+        build.carId,{avoidCarIds:[...usedOpponentCarIds]});
       const baseAi = getEncounterAi(rating);
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
       // Persistent Pro Circuit Elo now influences execution within the
@@ -3939,6 +3941,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const form=getProDriverLadderSkillModifier(driver);
 
       if (mainRivalRound) {
+        usedOpponentCarIds.add(mainRivalRound.carId);
         // Regional champions also obey the professional ladder, while
         // preserving their authored driving personality and character art.
         return {
@@ -3955,14 +3958,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
         };
       }
 
+      const selectedCarId=professionalBuild?.carId||
+        event.opponentCars[index % event.opponentCars.length];
+      usedOpponentCarIds.add(selectedCarId);
       return {
         characterId,
         opponentDriverId:driver.id,
         opponentName:driver.name,
-        carId: professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
+        carId:selectedCarId,
         opponentBuildState:professionalBuild?.state||null,
-        paintColor: selectMixedCarPaint(professionalBuild?.carId||event.opponentCars[index % event.opponentCars.length],
-          {region:'SHINJUKU', characterId, seed: index + pro.eventTick * 31})?.color ??
+        paintColor: selectMixedCarPaint(selectedCarId,
+          {region:'SHINJUKU', characterId,
+            seed:driver.id+':'+event.id+':'+pro.eventTick+':'+index})?.color ??
           [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
         encounterAi: {
