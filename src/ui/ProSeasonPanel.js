@@ -2,7 +2,7 @@ import { createProvisionalChampionship, championshipStandings, getChampionshipKn
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261027-r692';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r729';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r729';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r724';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
@@ -170,11 +170,12 @@ export function drawCrewSidebar(s,event,side) {
     getProfessionalRoundEvents(c.calendar.round).crew.format);
   const fee=t?.entryFee??(open?(event.trophyId?trophy?.entryFee??OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):event.entryFee??CREW_SERIES.entryFee);
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
+  const crewSlotUsed=open&&!event.trophyId&&!getOpenCircuitSlotStatus(c,'TEAM',rotation).available;
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
     !(c.activeChampionship&&!c.activeChampionship.completed)&&!s.registry.get('competitionState')?.active&&
     (open||c.seasonStatus==='ACTIVE'&&c.calendar.round<8)&&
     (!event.trophyId||trophy?.available&&trophy.id===event.trophyId)&&
-    Number(s.registry.get('cash')||0)>=fee;
+    !crewSlotUsed&&Number(s.registry.get('cash')||0)>=fee;
   // Match the right-panel header typography of individual driver events.
   const crewTitle=t?.trophyId||event.trophyId?event.label:
     short?(event.seasonChoice==='alternative'?event.label:
@@ -220,6 +221,7 @@ export function drawCrewSidebar(s,event,side) {
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
     active&&!t?'FINISH YOUR ACTIVE EVENT FIRST':
+    crewSlotUsed?'CREW EVENT COMPLETED // NEXT DAY/NIGHT ROTATION':
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
