@@ -58,6 +58,9 @@ test('all 23 Pro drivers complete one event each after a 3-heat Open Circuit win
   assert.deepEqual(settleLegacySeasonEvent(after,event,3),after,
     'resettlement of the same paid event is inert');
   assert.equal(getOpenCircuitSlotStatus(after,'DRIVER',rotation(17)).available,false);
+  // Legacy modules that strip unknown fields still retain completedEventIds.
+  const savedLegacy={...after,openCircuitLastDriverSlot:-1};
+  assert.equal(getOpenCircuitSlotStatus(savedLegacy,'DRIVER',rotation(17)).available,false);
   assert.equal(getOpenCircuitSlotStatus(after,'DRIVER',rotation(18)).available,true);
   assert.equal(getOpenCircuitSlotStatus(after,'TEAM',rotation(17)).available,true);
 });
@@ -110,6 +113,6 @@ test('Open Circuit now prepares real upgraded rivals rather than default stock c
     assert.equal(check.eligible,true,event.id+': '+check.reasons.join(','));
     assert.ok(check.powerKW<=event.maxPowerKW+.001);
     assert.ok(chosen.powerKW>0);
-    if(event.noNos)assert.equal(chosen.state.nosInstalled,false);
+    if(event.noNos)assert.equal(Boolean(chosen.state.nosInstalled),false);
   }
 });
