@@ -1,4 +1,4 @@
-import { getProCircuitDriverSeeds, PRO_AI_TEAM_DEFINITIONS } from './proCircuit.js?v=20261030-r724';
+import { getProCircuitDriverSeeds, PRO_AI_TEAM_DEFINITIONS } from './proCircuit.js?v=20261030-r739';
 import { characters } from './characters.js?v=20261023-r672';
 
 // A saved professional heat must reference one of the actual named drivers
