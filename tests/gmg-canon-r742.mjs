@@ -22,7 +22,7 @@ test('Career #16 demonstration car is different from Aruken\'s sold prequel 240Z
  assert.match(intro,/our Liberty Walk 240Z demonstrator/i);
  assert.doesNotMatch(intro,/my Liberty Walk 240Z|That's YOUR 240Z/i);
  assert.match(src('docs/GMG_BUSINESS_AND_RACING_CANON_20261030.md'),/different, later GMG/i);
- assert.match(src('docs/ARKON_R679_RECIPROCITY_AND_FINALE.md'),/voluntarily/i);
+ assert.match(src('docs/ARKON_R679_RECIPROCITY_AND_FINALE.md'),/independently decides to sell/i);
  assert.equal(GINZA_LISTINGS.find(c=>c.carId==='arkonGinza240z')?.price,125000000);
  assert.match(src('src/ui/ProSponsorStory.js'),/selectedOpponentCarId', 'arkonGinza240z/);
 });
