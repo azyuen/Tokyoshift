@@ -8,7 +8,8 @@ import {
 } from './proSeason.js?v=20261030-r729';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 
-const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
+const finite = value => value == null || value === '' ? null :
+  Number.isFinite(Number(value)) ? Number(value) : null;
 
 export function inspectProOpponent(carId, state = {}, rules = {}) {
   const raw = getProfessionalCarEligibility(carId, state, rules);
