@@ -3605,10 +3605,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ...(character.preferredCars || []),
       ...(event.opponentCars || []),
     ].filter((id, pos, list) => cars[id] && list.indexOf(id) === pos);
-    const targetPower = Math.min(
-      Number(event.maxPowerKW || 9999),
-      Math.max(1, Number(build?.car?.powerKW || event.maxPowerKW || 1))
-    );
+    const playerPower=Math.max(1,Number(build?.car?.powerKW)||250);
+    const cap=Number(event.maxPowerKW);
+    const hasCap=Number.isFinite(cap)&&cap>0;
+    const targetPower=hasCap?
+      Math.min(cap*.965,Math.max(playerPower*1.06,cap*.83)):
+      playerPower*1.06;
     const preferredRating = progression.tier >= 2 ? 5 : 4;
     const ratingCandidates = preferredRating >= 5 ? [5, 4, 3] : [4, 3, 5];
     let best = null;
@@ -3642,9 +3644,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const power = Number(performance?.car?.powerKW || cars[carId]?.powerKW || 0);
         if (power <= 0 || power > Number(event.maxPowerKW || Infinity)) return;
 
-        const score =
-          Math.abs(power - targetPower) +
-          Math.abs(buildRating - preferredRating) * 8;
+        // Preserve their established preferred cars and development builds,
+        // but compare genuine mass-adjusted class performance.
+        const mass=Number(performance?.car?.vehicleMassKg)||1400;
+        const score=Math.abs(Math.log(Math.max(.1,power/targetPower)))+
+          Math.max(0,mass-1125)/4300+
+          Math.abs(buildRating - preferredRating) * .015;
         if (!best || score < best.score) {
           best = {
             score,
@@ -3664,8 +3669,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
       opponentBuildRating: best.buildRating,
       opponentBuildArchetype: best.state.buildArchetype || null,
       opponentBuildState: best.state,
-      encounterRating: progression.encounterRating,
-      encounterAi: progression.encounterAi,
+      encounterRating: Math.max(event.opponentRatings?.[index]||4,progression.encounterRating),
+      // Regional champions retain their driving personality but enter
+      // professional heats at the event's minimum expert/elite standard.
+      encounterAi:Object.fromEntries(
+        Object.entries(getEncounterAi(event.opponentRatings?.[index]||4))
+          .map(([key,value])=>[key,Math.max(value,Number(progression.encounterAi?.[key]||0))])
+      ),
       difficulty: progression.difficulty,
       mainRivalTier: progression.tierLabel,
     };
@@ -3910,9 +3920,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         getProSeasonSkillTier(pro.calendar.round,index,event.seasonChoice==='alternative');
       const mainRivalRound=openCircuit?this.buildDragMainRivalRound(
         characterId,event,build,index):null;
-      const professionalBuild=!openCircuit?
-        getProfessionalOpponentBuild(seasonRules,Number(build.car?.powerKW||0),rating,
-          'pro:s'+pro.season+':r'+pro.calendar.round+':'+event.id+':'+index,build.carId):null;
+      // Both Open Circuit and Pro Season draw fully configured class-legal
+      // rivals. Previously Open Circuit skipped this and silently used STOCK
+      // cars whenever stock passed scrutineering, even in 600-kW classes.
+      const professionalBuild=getProfessionalOpponentBuild(
+        openCircuit?{
+          maxPowerKW:event.maxPowerKW??null,noNos:Boolean(event.noNos),
+          stock:Boolean(event.stock),drivetrain:event.drivetrain||'',
+        }:seasonRules,
+        Number(build.car?.powerKW||0),rating,
+        'pro:s'+pro.season+':r'+pro.calendar.round+':'+event.id+':'+
+          driver.id+':'+index,build.carId);
       const baseAi = getEncounterAi(rating);
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
 
