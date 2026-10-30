@@ -2,7 +2,7 @@
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus, getProTeamIdForDriver, getProAiTeamDefinition } from './proCircuit.js?v=20261030-r739';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
 import { materialiseProDuelOpponentIdentities } from './proDragDuel.js?v=20261030-r738';
-import { cars } from './cars.js?v=20261026-r687';
+import { cars, carOrder } from './cars.js?v=20261026-r687';
 import { characters } from './characters.js?v=20261017-r565';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
@@ -473,13 +473,17 @@ export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES'
 // Professional cars must pass the SAME class rules as the player's car.
 // Select at registration and save the resulting legal build; never give a
 // rival an invisible power, drivetrain or NOS exemption.
-const PRO_RIVAL_CARS=Object.freeze([
-  'ae86','ek9','fc3s','galant','gc8','r32','s2000','rx7fd',
-  'jza80','evo6','r34','jzx100','dc2','crx','240z','gdb','z33',
-]);
-export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',excludedId=null) {
+// All official showroom/stock models are eligible to race professionally.
+// This excludes collector hero cars, exhibition loans and crew aliases,
+// while retaining the complete standard car roster (42 cars at R741).
+export const PRO_RIVAL_CARS=Object.freeze(
+  carOrder.filter(id=>cars[id]&&!cars[id].ginzaDemo)
+);
+export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',excludedId=null,options={}) {
   const skill=Math.max(3,Math.min(5,Math.floor(Number(rating)||4)));
   const candidates=[];
+  const avoid=new Set(Array.isArray(options?.avoidCarIds)?options.avoidCarIds:[]);
+  if(excludedId)avoid.add(excludedId);
   const cap=Number(rules?.maxPowerKW);
   const hasCap=Number.isFinite(cap)&&cap>0;
   const playerPower=Math.max(1,Number(playerPowerKW)||200);
@@ -489,7 +493,7 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
   const target=hasCap?Math.min(cap*.965,Math.max(playerPower*1.06,cap*.83)):
     playerPower*1.06;
   for(const carId of PRO_RIVAL_CARS){
-    if(carId===excludedId||!cars[carId])continue;
+    if(avoid.has(carId)||!cars[carId])continue;
     // Stock events use genuine stock vehicles; non-stock opponents can bring
     // developed builds as long as the actual configured car passes scrutineering.
     const snapshots=rules?.stock?[{}]:
@@ -514,13 +518,30 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
           (!rules?.stock&&developed===0?0.18:0)});
     }
   }
-  candidates.sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
-  const chosen=candidates[0];
-  // A low-power class may have only one viable model. Two independent drivers
-  // can legitimately race the same model; never strand a paid professional
-  // event by insisting on a different make/model.
-  if(!chosen&&excludedId)return getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed,null);
-  return chosen?{carId:chosen.carId,state:chosen.state,powerKW:chosen.powerKW,skillTier:skill}:null;
+  // Select from COMPETITIVE but varied models. Previously selecting the
+  // global minimum always favoured the same GT-R/Supra and ignored the
+  // rest of the available models, even if they could legally compete.
+  const perModel=new Map();
+  for(const item of candidates) {
+    const current=perModel.get(item.carId);
+    if(!current||item.score<current.score)perModel.set(item.carId,item);
+  }
+  const ranked=[...perModel.values()]
+    .sort((a,b)=>a.score-b.score||a.carId.localeCompare(b.carId));
+  const best=ranked[0]?.score??Infinity;
+  const competitive=ranked.filter(item=>
+    item.score<=best+.20&&item.powerKW>=target*.74).slice(0,10);
+  const shortlist=competitive.length>=3?competitive:
+    ranked.filter(item=>item.score<=best+.27).slice(0,5);
+  const choices=shortlist.length?shortlist:ranked.slice(0,1);
+  const random=seasonRandom('pro-opponent-car:'+String(seed));
+  const chosen=choices[Math.floor(random()*choices.length)];
+  // In extremely restrictive classes permit an already-used model rather
+  // than failing paid entry or breaching the class's scrutineering rules.
+  if(!chosen&&avoid.size)return getProfessionalOpponentBuild(
+    rules,playerPowerKW,rating,seed,null,{avoidCarIds:[]});
+  return chosen?{carId:chosen.carId,state:chosen.state,
+    powerKW:chosen.powerKW,skillTier:skill}:null;
 }
 // A genuine third official event choice, using existing player-driven crew modes.
 // Deliberately separate from Open Circuit trophies and the normal crew slot.
