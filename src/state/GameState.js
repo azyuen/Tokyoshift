@@ -1,5 +1,5 @@
 import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20261010-r459';
-import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r724';
+import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r739';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
