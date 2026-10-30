@@ -602,7 +602,7 @@ function draw(s,state,options){
         const max=owned?.original||0;
         const current=info?.current||0;
         const x=i<firstColumnSize?610:1030;
-        const y=337+(i%firstColumnSize)*78;
+        const y=326+(i%firstColumnSize)*80;
         rowAdd(s.add.rectangle(x,y,390,64,0x0c2132,.94)
           .setStrokeStyle(1,max>0?0x40718b:0x465360,.8).setDepth(273));
         const chosen=Object.prototype.hasOwnProperty.call(requestedLevels,part.id);
@@ -683,13 +683,13 @@ function draw(s,state,options){
     const entries=[
       {key:'ecuBias',title:'ECU CURVE',sprite:'tuningPartEcuL3',
         requirement:'REQUIRES MOTORSPORT ECU // LEVEL 3',
-        left:'MIDRANGE',right:'TOP END',accent:0x62e8c7,y:309},
+        left:'MIDRANGE',right:'TOP END',accent:0x62e8c7,y:288},
       {key:'boostBias',title:'BOOST CURVE',sprite:'tuningPartTurboL3',
         requirement:'REQUIRES BIG TURBO // LEVEL 3',
-        left:'EARLY',right:'LATE / STRONG',accent:0x43dfff,y:461},
+        left:'EARLY',right:'LATE / STRONG',accent:0x43dfff,y:452},
       {key:'gearBias',title:'GEAR SPREAD',sprite:'tuningPartGearboxL3',
         requirement:'REQUIRES DOG BOX // LEVEL 3',
-        left:'CLOSE',right:'WIDE',accent:0xffc86a,y:613},
+        left:'CLOSE',right:'WIDE',accent:0xffc86a,y:616},
     ];
     const tuneNodes=[];
     let applyButton=null;
