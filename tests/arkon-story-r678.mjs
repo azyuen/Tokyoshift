@@ -81,7 +81,8 @@ test('Chapter 7 retains the emotional distance and Chapter 10 Career origins rem
  assert.match(text(C7),/Sayaka/i);
  assert.match(text(C7),/what on earth have you done/i);
  const ch10=readFileSync(new URL('../src/data/arkonChapter10.js',import.meta.url),'utf8');
- assert.match(ch10,/GINZA GALLERY/);
+ assert.match(ch10,/GINZA \/\/ AN EMPTY ROOM/);
+  assert.match(ch10,/A FEW YEARS LATER/);
  assert.match(ch10,/arkonLibertyWalk240z/);
  const ch7source=readFileSync(new URL('../src/data/arkonChapter07Progress.js',import.meta.url),'utf8');
  assert.match(ch7source,/getInstalledSpecialistTuning/);
