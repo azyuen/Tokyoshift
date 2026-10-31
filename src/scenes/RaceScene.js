@@ -383,8 +383,16 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   init() {
-    this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
-    if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
+    // Meet entry snapshots the exact chosen vehicle; never silently swap to
+    // the stock AE86 if the global selection changes during scene loading.
+    const entryCarId = this.registry.get('raceReturnScene') === 'MeetScene'
+      ? this.registry.get('raceEntryCarId') : null;
+    const selectedCarId = entryCarId || this.registry.get('selectedCarId');
+    this.selectedCarId = cars[selectedCarId] ? selectedCarId : null;
+    this.invalidRaceCarSelection = !this.selectedCarId;
+    if (this.selectedCarId && this.registry.get('selectedCarId') !== this.selectedCarId) {
+      this.registry.set('selectedCarId', this.selectedCarId);
+    }
 
     const chosenOpponent = this.registry.get('selectedOpponentCarId');
     const fallbackRivals = carOrder.filter(id => id !== this.selectedCarId && cars[id]);
@@ -615,6 +623,12 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    if (this.invalidRaceCarSelection) {
+      console.error('[Tokyo SHIFT] Race cancelled: missing/unknown selected car ID');
+      this.registry.set('raceEntryCarId', null);
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
     if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
         shouldLaunchDevVaultStory(this.registry)) {
       if (queueSafeSceneStart(this,'DevVaultStoryScene')) {
