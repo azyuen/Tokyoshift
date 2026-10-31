@@ -3,7 +3,7 @@ import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
-import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
+import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261031-r747';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
 import {
   DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY,
@@ -2169,7 +2169,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   setupCoachedLesson() {
-    this.coach = new DrivingCoach(this.player);
+    this.coach = new DrivingCoach(this.player, this.selectedCarId);
     this.coachLaunch = this.coach.launch();
     this.coachRolling = this.coach.rollingStart(60);
     this.coachShifts = [];
@@ -2199,12 +2199,9 @@ export default class RaceScene extends Phaser.Scene {
     this.coachTarget = this.coachHud.value;
     this.coachTargetFoot = this.coachHud.footer;
     this.coachSetTarget();
-    const drivetrain = String(this.player?.config?.drivetrain || this.player?.config?.driveType || '').toUpperCase();
-    const ffLaunch = /^(FF|FWD|FRONT)/.test(drivetrain);
+    const priorLaunch = this.registry.get('oshiageCoachingProgress')?.[this.selectedCarId]?.launch;
     const intro = this.coachingLesson === 'launch'
-      ? (ffLaunch
-        ? 'FRONT-WHEEL DRIVE: start near the displayed RPM range. On green, release the clutch smoothly and add throttle gently. If the front tyres spin, use less throttle and release the clutch more slowly.'
-        : 'Start near the displayed RPM range. On green, release the clutch smoothly while adding throttle. If the tyres spin, ease the throttle and slow the clutch release.')
+      ? this.coach.launchIntroduction(this.coachLaunch, priorLaunch?.build === this.getCoachingBuildKey() ? priorLaunch.lastLaunch : null)
       : this.coachingLesson === 'rolling'
         ? 'At 60 km/h, choose the suggested gear. I will help with the shifts afterwards.'
         : 'Watch the target circle for each gear change. The band matters, not a single RPM.';
@@ -2300,6 +2297,13 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
+  getCoachingBuildKey() {
+    const signatureData = JSON.stringify({ car: this.player.config, engine: this.player.engine.config });
+    let hash = 2166136261;
+    for (let i = 0; i < signatureData.length; i++) hash = Math.imul(hash ^ signatureData.charCodeAt(i), 16777619);
+    return (hash >>> 0).toString(16);
+  }
+
   completeCoachedLesson(t, timedOut = false) {
     if (this.coachComplete) return;
     this.coachComplete = true;
@@ -2321,13 +2325,13 @@ export default class RaceScene extends Phaser.Scene {
       : 'You completed the run. Try practising your shift timing.';
     const outcomes = { ...(this.registry.get('oshiageCoachingProgress') || {}) };
     const previous = outcomes[this.selectedCarId] || {};
-    const signatureData = JSON.stringify({ car: this.player.config, engine: this.player.engine.config });
-    let hash = 2166136261;
-    for (let i = 0; i < signatureData.length; i++) {
-      hash = Math.imul(hash ^ signatureData.charCodeAt(i), 16777619);
-    }
-    const build = (hash >>> 0).toString(16);
+    const build = this.getCoachingBuildKey();
     const lastBest = previous[this.coachingLesson];
+    const priorLaunch = isLaunch && lastBest?.build === build ? lastBest.lastLaunch : null;
+    if (isLaunch && !timedOut) feedback = this.coach.launchFeedback({
+      rpm: this.coachLaunchRPM, slip: this.coachPeakSlip,
+      clutchSeconds: this.coachClutchReleaseSeconds, seconds: resultSeconds,
+    }, this.coachLaunch, priorLaunch);
     outcomes[this.selectedCarId] = {
       ...previous,
       [this.coachingLesson]: {
@@ -2336,6 +2340,10 @@ export default class RaceScene extends Phaser.Scene {
           ? Math.min(Number(lastBest.bestSeconds || Infinity), resultSeconds)
           : timedOut ? null : resultSeconds,
         cleanShifts: clean, totalShifts: total,
+        ...(isLaunch && !timedOut ? { lastLaunch: {
+          rpm: this.coachLaunchRPM, slip: this.coachPeakSlip,
+          clutchSeconds: this.coachClutchReleaseSeconds, seconds: resultSeconds,
+        } } : isLaunch && lastBest?.build === build ? { lastLaunch: lastBest.lastLaunch } : {}),
       },
     };
     this.registry.set('oshiageCoachingProgress', outcomes);

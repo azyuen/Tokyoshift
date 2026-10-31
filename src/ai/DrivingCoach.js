@@ -7,8 +7,9 @@ const launchCache = new Map();
 const rpmRound = (rpm, step = 50) => Math.round(rpm / step) * step;
 
 export class DrivingCoach {
-  constructor(vehicle) {
+  constructor(vehicle, carId = '') {
     this.vehicle = vehicle;
+    this.carId = String(vehicle?.config?.crewBaseCarId || carId || vehicle?.config?.id || '').replace(/^crew__/, '').toLowerCase();
     this.model = new DrivingModel(vehicle);
     this.shiftBands = this.model.shiftPoints.slice(0, -1).map((rpm, index) => {
       const ceiling = this.model.ceiling;
@@ -88,6 +89,47 @@ export class DrivingCoach {
     if (launchCache.size >= 64) launchCache.delete(launchCache.keys().next().value);
     launchCache.set(key, result);
     return { ...result };
+  }
+
+  // Coaching reads the live vehicle build; it never changes physics.
+  getDriveLayout() {
+    const v = this.vehicle.config || {};
+    const id = String(v.drivetrain || v.driveType || '').toUpperCase();
+    if (['ef','ek9','crx','dc2','prelude','fto','mx6','familia','eclipse'].includes(this.carId)) return 'FF';
+    if (['sw20','nsx','mr2'].includes(this.carId)) return 'MR';
+    if (['FF', 'FWD'].includes(id)) return 'FF';
+    if (['AWD', '4WD'].includes(id) || Number(v.drivenAxleWeightFraction) >= 0.9) return 'AWD';
+    if (['MR', 'RR'].includes(id)) return id;
+    if (['FR', 'RWD'].includes(id)) return 'FR';
+    // Use known layout only; axle weight fraction alone does not identify FF vs FR.
+    const layout = String(v.engineLayout || '').toLowerCase();
+    return layout === 'mid' ? 'MR' : layout === 'rear' ? 'RR' : 'FR';
+  }
+
+  launchIntroduction(target = this.launch(), prior = null) {
+    const drive = this.getDriveLayout();
+    const low = target.min.toLocaleString();
+    const high = target.max.toLocaleString();
+    const opening = drive === 'FF'
+      ? 'Your car is front-wheel drive. Start toward the lower end of my ' + low + '–' + high + ' RPM range, use moderate throttle, and release the clutch smoothly. Once the front tyres grip, increase throttle.'
+      : drive === 'AWD'
+        ? 'Your car drives all four wheels. Start in my ' + low + '–' + high + ' RPM range and release the clutch smoothly. Avoid dropping the revs too far as the tyres bite.'
+        : 'Your ' + (drive === 'MR' ? 'mid-engine' : drive === 'RR' ? 'rear-engine' : 'rear-wheel-drive') + ' car needs a controlled launch. Start in my ' + low + '–' + high + ' RPM range, then progressively release the clutch and add throttle.';
+    if (!prior) return opening;
+    if (prior.slip > 0.27) return 'Last time you spun the tyres. ' + (drive === 'FF' ? 'Keep the front tyres gripping: ' : '') + 'Use a little less throttle and release the clutch more gradually. Aim to beat your previous 60-foot time.';
+    if (prior.rpm != null && prior.rpm < target.min) return 'Last launch was below our RPM range. Hold slightly more revs this time, then release the clutch smoothly.';
+    if (prior.rpm != null && prior.rpm > target.max) return 'Last launch was above our RPM range. Start with slightly fewer revs this time.';
+    return 'That was a controlled launch. Repeat the same clutch and throttle sequence, and see if we can improve your 60-foot time.';
+  }
+
+  launchFeedback({ rpm, slip = 0, clutchSeconds = null, seconds = null }, target = this.launch(), previous = null) {
+    const time = seconds == null ? '' : ' Your 60-foot time: ' + seconds.toFixed(3) + ' s.';
+    const comparison = previous?.seconds != null && seconds != null
+      ? (seconds < previous.seconds ? ' Faster than last time!' : seconds > previous.seconds ? ' Try to improve on your last run.' : ' Same time as last run.') : '';
+    if (slip > 0.27) return 'Too much wheelspin. ' + (this.getDriveLayout() === 'FF' ? 'The front tyres need more grip. ' : '') + (clutchSeconds != null && clutchSeconds < target.clutchSeconds * 0.7 ? 'Release the clutch more gradually.' : 'Use a little less throttle during clutch release.') + time + comparison;
+    if (rpm != null && rpm < target.min) return 'Your launch revs were too low. Try a little more RPM next time.' + time + comparison;
+    if (rpm != null && rpm > target.max) return 'Your launch revs were too high. Try a little less RPM next time.' + time + comparison;
+    return 'Nice, that launch was controlled. Keep the same technique.' + time + comparison;
   }
 
   shiftAdvice(from, rpm, quality = 'CLEAN') {
