@@ -44,7 +44,7 @@ export const CUTSCENES = {
       { speaker: 'right', pose: 'idle', text: "Wow, I can't believe I've finally got my own car!" },
       { speaker: 'left', pose: 'homeNormal', text: "It's decent enough, I guess. Do you even know how to drive?" },
       { speaker: 'right', pose: 'idle', text: "Just press accelerate, right?" },
-      { speaker: 'left', pose: 'homeSad', text: "It's a manual... clutch in, shift gears, ease up on the clutch, then accelerate... You know what? I'll give you a quick lesson.", emphasis: true },
+      { speaker: 'left', pose: 'homeExplaining', text: "It's a manual... clutch in, shift gears, ease up on the clutch, then accelerate... You know what? I'll give you a quick lesson.", emphasis: true },
     ],
     finalActionLabel: 'LEARN TO DRIVE',
   },
@@ -63,7 +63,7 @@ export const CUTSCENES = {
       { speaker: 'left', pose: 'homeBlushing', text: "I hear there's an incredibly beautiful and talented lady instructor there. Very modest, too!" },
       { speaker: 'right', pose: 'idle', text: "You seem to know a lot about this instructor..." },
       { speaker: 'left', pose: 'homeHappy', text: "Oh, just what I've heard! Here, take three free lesson vouchers — one for each advanced course. Even the retries are covered!" },
-      { speaker: 'left', pose: 'homeSerious', text: "Anyway, drive safely. I've got somewhere to be, but we'll see each other around." },
+      { speaker: 'left', pose: 'homeConfident', text: "Anyway, drive safely. I've got somewhere to be, but we'll see each other around." },
     ],
     finalActionLabel: 'SAY GOODBYE',
   },
@@ -76,7 +76,7 @@ export const CUTSCENES = {
     presentation: 'phone',
     presentationMode: 'openingSwipe', // Opening-only pilot; other phone calls unchanged.
     callerId: 'sayakaFujieda',
-    callerPose: 'idle', // Same normal Sayaka PNG already preloaded for the garage.
+    callerPose: 'homeNormal', // Her casual clothes for the Shinonome delivery.
     callerName: 'SAYAKA',
     label: 'INCOMING CALL',
     pages: [
@@ -770,9 +770,9 @@ export const CUTSCENES = {
         phoneCall: true, text: "Hello! Just checking if you’re still driving safely…wait… did I just hear someone say racing?" },
       { speaker: 'right', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER',
         phoneCall: true, text: "Yeah! My friend who's a mechanic is helping me prepare for the tougher regional challenges." },
-      { speaker: 'left', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER', pose: 'homeSerious',
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER', pose: 'homeAlert',
         phoneCall: true, text: "Regional challenges?! You're racing that much? Please be careful!" },
-      { speaker: 'left', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER', pose: 'homeHappy',
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER', pose: 'homeExplaining',
         phoneCall: true, text: "And tell your mechanic friend — more horsepower is useless if the tyres can't put it down!" },
       { speaker: 'right', leftCharacter: 'sayakaFujieda', rightCharacter: '$PLAYER',
         phoneCall: true, text: "...Since when do you know so much about tuning?" },
