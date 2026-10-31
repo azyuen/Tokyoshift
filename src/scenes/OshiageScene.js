@@ -52,6 +52,9 @@ const SIDE = SHOWDOWN_SIDE;
 const STRIP = SHOWDOWN_STRIP;
 const ROOT = 'assets/Oshiage/';
 const SAYAKA = 'assets/Characters/Main/oshiage_sayaka_fujieda_';
+// The former Oshiage explaining/alert/confident/contemplative PNGs were home outfits.
+// Use the verified instructor talking pose instead of requesting the removed explaining asset.
+const schoolAssetPose = pose => pose === 'explaining' ? 'talking' : pose;
 const schoolSayakaKey = pose => 'characterSayakaOshiage' +
   pose.charAt(0).toUpperCase() + pose.slice(1);
 const LOCATIONS = Object.freeze({
@@ -219,7 +222,7 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadVisualModSelectionAssets(this, car.id, state, '20261014-r510');
       }
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
-        queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + pose + '.png?v=20261031-r744');
+        queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + schoolAssetPose(pose) + '.png?v=20261031-r746');
       }
     }
     if (this.activeLocationId === 'oshiageSkytreeMeet' &&
