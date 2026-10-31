@@ -1,0 +1,20 @@
+name: Loading and persistent asset cache
+on:
+  push:
+    branches: [performance/loading-cache-audit-20261101]
+  pull_request:
+    paths: ['sw.js', 'asset-manifest.js', 'assets/**', 'app-icon*', 'index.html', 'src/main.js', 'scripts/generate-asset-manifest.mjs', 'tests/loading-cache*', '.github/workflows/loading-cache.yml']
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/generate-asset-manifest.mjs --check
+      - run: node --test tests/loading-cache.mjs tests/startup-import-integrity-r508.mjs
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node tests/loading-cache-browser.mjs

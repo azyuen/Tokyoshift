@@ -126,7 +126,7 @@
         </div>
       </div>
     </div>
-    <div id="build-stamp">R749</div>
+    <div id="build-stamp">R750</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -274,21 +274,21 @@
         if (current && current !== info.build) {
           localStorage.setItem('tokyoShiftBuild', info.build);
 
-          // Development builds move quickly. Clear only Tokyo SHIFT caches and
+          // Development builds move quickly. Retain content-hashed assets; clear runtime caches and
           // retire the old worker so the installed iOS PWA cannot remain on
           // an older UI revision. Game/save localStorage is intentionally kept.
           try {
             const keys = await caches.keys();
             await Promise.all(
               keys
-                .filter(key => key.startsWith('tokyoshift-'))
+                .filter(key => key.startsWith('tokyoshift-') && !key.startsWith('tokyoshift-content-v1-'))
                 .map(key => caches.delete(key))
             );
           } catch (e) {}
 
           try {
             const registrations = await navigator.serviceWorker?.getRegistrations?.();
-            await Promise.all((registrations || []).map(reg => reg.unregister()));
+            await Promise.all((registrations || []).filter(reg => reg.scope === new URL('./', location.href).href).map(reg => reg.unregister()));
           } catch (e) {}
 
           const url = new URL(location.href);
@@ -344,7 +344,7 @@
     // worker is being retired. Device saves are never altered by this guard.
     window.TOKYO_SHIFT_BOOT_READY.then(ready => {
       if (ready === false) return;
-      import('./src/main.js?v=20261101-r749').catch(error => {
+      import('./src/main.js?v=20261101-r750').catch(error => {
         console.error('[Tokyo SHIFT] main module failed to load', error);
         window.TOKYO_SHIFT_SHOW_BOOT_ERROR?.(error, 'MAIN MODULE ERROR');
       });

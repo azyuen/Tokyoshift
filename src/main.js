@@ -38,6 +38,9 @@ async function startTokyoShift() {
   try {
     window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING');
 
+    // Fonts and scene modules are independent: overlap their network waits.
+    const fontsReady = waitForTokyoShiftFonts();
+
     const MenuNavigation = (
       await import('./input/MenuNavigation.js?v=20261007-r423')
     ).default;
@@ -116,7 +119,7 @@ async function startTokyoShift() {
       return originalTextFactory.call(this, x, y, text, next);
     };
 
-    await waitForTokyoShiftFonts();
+    await fontsReady;
 
     const allScenes = [
       BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene,
