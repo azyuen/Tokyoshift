@@ -1795,25 +1795,20 @@ export default class RaceScene extends Phaser.Scene {
     this.drawScene(pt,null,dt);
     this.hud.update(pt,'YOKOHAMA // SAYAKA DRIVING // NO RACE');
     this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    // R748 — shorter, post-Championship in-car conversation. Their long-term
+    // growth is in what they do for one another, not a second summary speech.
     const lines=[
-      [1,'sayaka','You have gone awfully quiet.','homeHappy'],
-      [4,'arkon','I am getting used to not holding the steering wheel.','storySheepish'],
-      [7.5,'sayaka','I think the passenger seat suits you.','homeHappy'],
-      [11,'arkon','It is different when somebody else drives.','storyThinking'],
-      [14,'sayaka','Something wrong with my technique?','homeHappy'],
-      [17.5,'arkon','No. For once, I am not chasing a result.','storyCoolShy'],
-      [21,'sayaka','I could take the long way, you know.','homeHappy'],
-      [24,'arkon','In this company? Please do.','storyConfidentSmirk'],
-      [27,'sayaka','Excellent engineering, this Porsche.','homeHappy'],
-      [30,'arkon','Remarkably good driver too.','storyCoolShy'],
-      [33,'sayaka','Careful. Compliments are becoming a habit.','homeHappy'],
+      [1,'arkon','I thought we could stop by the waterfront before dinner.','storyConfidentSmirk'],
+      [8,'sayaka','You even left time for that?','homeHappy'],
+      [14,'arkon','Of course. I remember what you like.','storyCoolShy'],
+      [21,'sayaka','I rather like this version of you, Aruken.','homeConfident'],
     ];
     while(this.arkonCh10LineIndex<lines.length &&
           this.arkonCh10Seconds>=lines[this.arkonCh10LineIndex][0]){
       const [,speaker,words,pose]=lines[this.arkonCh10LineIndex++];
       this.arkonCh10Dialogue?.show(speaker,words,pose);
     }
-    if(this.arkonCh10Seconds>=37){
+    if(this.arkonCh10Seconds>=29){
       this.arkonCh10Leaving=true;
       const cruise=this.registry.get('arkonStoryChapter10Cruise');
       if(cruise?.active){

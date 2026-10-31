@@ -16,7 +16,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'ARKON_CH8_MEET','ARKON_CH8_RACE','ARKON_CH8_RETURN','ARKON_CH8_CONTRACT',
   'ARKON_CH9_RACE','ARKON_CH9_RETURN','ARKON_CH9_REFUSE',
   'ARKON_CH10_SETTLEMENT','ARKON_CH10_SELL_Z','ARKON_CH10_DRIVE','ARKON_CH10_DRIVE_RETURN','ARKON_CH10_RESTORE','ARKON_CH10_RACE','ARKON_CH10_RETURN',
-  'ARKON_CH10_GINZA','ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA','ARKON_CH10_FINALE',
+  'ARKON_CH10_GINZA','ARKON_CH10_INVEST','ARKON_CH10_YOKOHAMA','ARKON_CH10_FINALE','ARKON_CH10_TIME_JUMP',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -44,6 +44,9 @@ export function validateStoryScript(script) {
         !step.choices.every(choice => choice?.id && choice?.label && choice?.to))) {
       throw new Error('CHOICE requires 2-4 named options with branch targets at ' + index);
     }
+    if(type==='ARKON_CH10_TIME_JUMP'&&
+        (!Number.isFinite(step.durationMs)||step.durationMs<3500||step.durationMs>10000))
+      throw new Error('Chapter 10 time jump requires a 3.5–10 second pause at '+index);
     if (type === 'WAIT_MS' && (!Number.isFinite(step.ms) || step.ms < 0 || step.ms > 15000)) {
       throw new Error('WAIT_MS must be 0-15000 milliseconds at ' + index);
     }

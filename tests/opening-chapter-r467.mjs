@@ -246,7 +246,7 @@ test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => 
   assert.match(intro[2].text, /even know how to drive/);
   assert.match(intro[3].text, /press accelerate/);
   assert.match(intro[4].text, /clutch in, shift gears/);
-  assert.equal(intro[4].pose, 'homeSad');
+  assert.equal(intro[4].pose, 'homeExplaining');
   assert.equal(goodbye[0].pose, 'homeHappy');
   assert.match(goodbye[0].text, /listen to the engine/);
   assert.equal(goodbye[2].pose, 'homeBlushing');
@@ -342,7 +342,7 @@ test('the in-office Sayaka call uses the shared blue race dialogue with phone co
   const definition = CUTSCENES.openingSayakaPhoneCall;
   assert.equal(definition.presentation, 'phone');
   assert.equal(definition.once, false, 'A delivery save can replay the phone call');
-  assert.equal(definition.callerPose, 'idle');
+  assert.equal(definition.callerPose, 'homeNormal');
   assert.equal(definition.pages.length, 2);
   assert.equal(definition.presentationMode, 'openingSwipe');
   assert.equal(definition.pages[1].speaker, 'player');
@@ -421,7 +421,7 @@ test('Sayaka first-keys and driving-safe panels resolve to the actual authored s
   const { getCharacterProfileTexture } = await import('../src/characters/CharacterProfileRenderer.js');
   const { openingSayakaKeys, openingSayakaFarewell } = CUTSCENES;
   const checks = [
-    [openingSayakaKeys.pages[4], 'assets/Characters/Main/home_sayaka_fujieda_sad.png'],
+    [openingSayakaKeys.pages[4], 'assets/Characters/Main/home_sayaka_fujieda_explaining.png'],
     [openingSayakaFarewell.pages[0], 'assets/Characters/Main/home_sayaka_fujieda_happy.png'],
     [openingSayakaFarewell.pages[2], 'assets/Characters/Main/home_sayaka_fujieda_blushing.png'],
     [openingSayakaFarewell.pages[3], 'assets/Characters/Main/home_sayaka_fujieda_serious.png'],
