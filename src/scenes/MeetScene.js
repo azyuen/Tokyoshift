@@ -1800,6 +1800,7 @@ export default class MeetScene extends Phaser.Scene {
       car.name || car.shortName || interest.baseCarId
     ).toUpperCase();
     const playerName = getInGamePlayerDisplayName(this.registry);
+    const requiredRecruitClass = getCrewRecruitmentChallengeRules(this.registry, interest).stockClass;
     const dialogue = getCrewInviteDialogue(interest.characterId, {
       REGION: currentRegion, RIVAL_NAME: rivalName,
       SIGNATURE_CAR: signatureCarName, PLAYER_NAME: playerName.toUpperCase(),
@@ -1859,6 +1860,7 @@ export default class MeetScene extends Phaser.Scene {
         CREW_LINE_1: dialogue.opening,
         CREW_LINE_2: dialogue.reveal,
         CREW_LINE_3: dialogue.challenge,
+        REQUIRED_STOCK_CLASS: requiredRecruitClass || 'UNAVAILABLE',
         CREW_ACCEPT_LABEL: dialogue.acceptLabel,
         CREW_DECLINE_LABEL: dialogue.declineLabel,
       },
@@ -1948,8 +1950,9 @@ export default class MeetScene extends Phaser.Scene {
         speakerLabel: 'CHOOSE A CAR TO RACE',
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'Recruitment requires a factory-stock car within 40 kW of the rival. ' +
-          'Choose one from your garage, or acquire one and come back later.',
+        text: eligibleIds.length
+          ? 'Recruitment requires an unmodified factory-stock CLASS ' + (rules.stockClass || 'UNAVAILABLE') + ' car. Choose an eligible car from your garage.'
+          : 'NO ELIGIBLE CAR. You need an unmodified factory-stock CLASS ' + (rules.stockClass || 'UNAVAILABLE') + ' car to recruit this driver. Acquire one and return later.',
       }],
       finalActionLabel: 'READY TO RACE',
       secondaryFinalActionLabel: 'RACE LATER',
