@@ -1,4 +1,5 @@
 import { cars } from './cars.js?v=20261026-r687';
+import { stockClassFor } from './stockClasses.js?v=20261026-r687';
 import { getDefaultFactoryPaintColor } from './factoryPaintPalettes.js?v=20261020-r623';
 import {
   CREW_REGIONS,
@@ -255,25 +256,19 @@ export function getCrewRecruitmentChallengeRules(
   const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
     .filter(carId => cars[carId] && !cars[carId].crewLoan);
 
-  // Both cars must be genuinely factory stock and within ±40 kW of the
-  // recruit's factory output. Easy mode lowers the rival's driving skill.
-  // Cosmetic paint/rims do not invalidate an otherwise stock performance build.
-  const opponentPerformance = baseCarId
-    ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
-    : null;
-  const powerClass = getCrewRecruitPowerClass(
-    opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
-  );
-  const eligibleCarIds = getStockCrewChallengeCarIds(source).filter(carId => {
-    const performance = getVehiclePerformance(carId, states[carId] || {});
-    const power = Number(performance?.car?.powerKW || 0);
-    return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
-  });
+  // Recruitment matches permanent factory performance class, not raw power.
+  // Keep the factory-stock build rule: upgrades cannot change eligibility.
+  const opponentClass = stockClassFor(cars[baseCarId]);
+  const eligibleCarIds = opponentClass
+    ? getStockCrewChallengeCarIds(source).filter(carId =>
+        stockClassFor(cars[carId]) === opponentClass)
+    : [];
+  const powerClass = { label: opponentClass ? 'FACTORY CLASS ' + opponentClass : 'CLASS UNAVAILABLE' };
 
   return {
     playerDifficulty: difficulty,
     // Recruitment driver skill: Easy Rookie, Standard Expert, Hard Expert.
-    // Factory-stock car and +/-40 kW eligibility rules stay unchanged.
+    // Factory-stock car and exact permanent stock class eligibility.
     aiTier: difficulty === 'HARD' ? 'EXPERT'
       : difficulty === 'STANDARD' ? 'EXPERT' : 'ROOKIE',
     aiRating: difficulty === 'HARD' ? 4
@@ -281,6 +276,7 @@ export function getCrewRecruitmentChallengeRules(
     carRule: 'STOCK',
     powerClass,
     powerClassLabel: powerClass.label,
+    stockClass: opponentClass,
     eligibleCarIds,
   };
 }
