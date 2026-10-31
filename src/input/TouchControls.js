@@ -333,10 +333,9 @@ export default class TouchControls {
     if (this.clutchPointer) {
       const scale = Math.max(0.55, Number(this.placements.clutch.scale || 1));
       const travel = this.clutchStartY - this.clutchPointer.y;
-      if (this.pedalLatchMax && travel >= this.pedalSwipePx * scale) this.clutchLatchedMax = true;
-      touchClutch = this.clutchLatchedMax
-        ? 1
-        : Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
+      // Unlike the throttle, the clutch must track the finger both ways.
+      // Players can now ease it back from 100% without lifting their finger.
+      touchClutch = Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
     }
     this.clutch = Math.max(keyboardClutch ? 1 : 0, touchClutch, controllerClutch);
     this.nos = this.nosEnabled && (
