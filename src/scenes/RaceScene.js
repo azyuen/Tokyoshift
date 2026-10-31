@@ -1789,6 +1789,20 @@ export default class RaceScene extends Phaser.Scene {
     // so createGinzaBanterHud returned null and every spoken line disappeared.
     this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true,homeClothes:true});
     this.events.once('shutdown',()=>this.arkonCh10Dialogue?.destroy?.());
+    // A non-race cinematic still needs a clear forward action. Offer it
+    // after the final line, and auto-continue shortly afterwards.
+    const button=this.add.rectangle(1330,749,377,66,0x123a46,.98)
+      .setStrokeStyle(2,0x8cddcd).setDepth(230).setScrollFactor(0)
+      .setVisible(false);
+    const text=this.add.text(1330,749,'CONTINUE TO YOKOHAMA  >',{
+      fontFamily:PIXEL_FONT,fontSize:'12px',color:'#fff9e9',
+    }).setOrigin(.5).setDepth(231).setScrollFactor(0).setVisible(false);
+    this.arkonCh10Continue={button,text};
+    button.on('pointerdown',()=>{
+      if(this.arkonCh10Leaving)return;
+      button.disableInteractive();
+      this.arkonCh10Seconds=Math.max(this.arkonCh10Seconds,29);
+    });
   }
   updateArkonCh10Cruise(dt,realDt=dt){
     if(this.arkonCh10Leaving)return;
@@ -1811,8 +1825,17 @@ export default class RaceScene extends Phaser.Scene {
       const [,speaker,words,pose]=lines[this.arkonCh10LineIndex++];
       this.arkonCh10Dialogue?.show(speaker,words,pose);
     }
+    if(this.arkonCh10Seconds>=23&&!this.arkonCh10Leaving){
+      const action=this.arkonCh10Continue;
+      if(action&&!action.button.visible){
+        action.button.setVisible(true).setInteractive({useHandCursor:true});
+        action.text.setVisible(true);
+      }
+    }
     if(this.arkonCh10Seconds>=29){
       this.arkonCh10Leaving=true;
+      this.arkonCh10Continue?.button?.disableInteractive()?.setVisible(false);
+      this.arkonCh10Continue?.text?.setVisible(false);
       const cruise=this.registry.get('arkonStoryChapter10Cruise');
       if(cruise?.active){
         this.registry.set('arkonStoryChapter10Cruise',{...cruise,completed:true});
