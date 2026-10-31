@@ -3694,7 +3694,7 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
     const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
 
-    if (activeWorkshop?.id !== DYNO_WAREHOUSE_ID || !installed) {
+    if (activeWorkshop?.id !== DYNO_WAREHOUSE_ID) {
       return null;
     }
 
@@ -3709,7 +3709,7 @@ export default class GarageScene extends Phaser.Scene {
       h: 44,
       label: 'DYNO',
       labelAlign: 'right',
-      labelText: '<  DYNO',
+      labelText: installed ? '<  DYNO' : '<  INSTALL DYNO',
       onActivate: () => this.activateWarehouseDynoSpace(),
     });
 
@@ -3727,76 +3727,14 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
 
     if (activeWorkshop.id === DYNO_WAREHOUSE_ID) {
-      const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
-
-      // Before Stage I is installed, Warehouse HQ exposes Dyno only as a
-      // purchase action in the right panel. The in-room glowing hotspot stays
-      // completely hidden/inaccessible until the installation is paid for.
-      if (installed) {
-        this.clearWarehouseDynoInstallButton();
-        this.refreshDynoButton = () => {};
-        return;
-      }
-
-      const stage = getDynoStage(1);
-      const installCost = Math.max(0, Number(stage.installCost || 0));
-      const x = SIDE.x + SIDE.w / 2;
-      const y = 608;
-
-      this.dynoButton = this.add.rectangle(
-        x,
-        y,
-        SIDE.w - 32,
-        44,
-        0x102138,
-        1
-      ).setStrokeStyle(2, 0x55b8ff, 1)
-        .setDepth(40);
-
-      this.dynoButtonLabel = this.add.text(x, y, '', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#eef8ff',
-        align: 'center',
-      }).setOrigin(0.5).setDepth(41);
-
+      // Installation and access share the glowing in-room Dyno hotspot.
+      // Never render a second sidebar button over Crew Space controls.
+      this.clearWarehouseDynoInstallButton();
+      this.buildWarehouseDynoHotspot();
       this.refreshDynoButton = () => {
-        if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
-
-        const liveInstalled =
-          Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
-        if (liveInstalled) {
-          this.clearWarehouseDynoInstallButton();
-          this.buildWarehouseDynoHotspot();
-          return;
-        }
-
-        const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-        const affordable = cash >= installCost;
-        const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
-
-        this.dynoButtonLabel
-          .setText(
-            affordable
-              ? 'INSTALL DYNO // ¥' + installCost.toLocaleString('en-US')
-              : 'INSTALL DYNO // NEED ¥' + installCost.toLocaleString('en-US')
-          )
-          .setColor(affordable ? '#f1fffb' : '#c99aa4');
-
-        this.dynoButton
-          .setFillStyle(affordable ? 0x0c2827 : 0x1b1418, 1)
-          .setStrokeStyle(2, affordable ? 0x62e8c7 : 0x79515a, 1);
-
-        if (lockedByTuning) this.dynoButton.disableInteractive();
-        else this.dynoButton.setInteractive({ useHandCursor: true });
+        const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
+        this.warehouseDynoHotspot?.text?.setText(installed ? '<  DYNO' : '<  INSTALL DYNO');
       };
-
-      this.dynoButton.on('pointerdown', () => {
-        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-        this.showDynoInstallPopup();
-      });
-
-      this.refreshDynoButton();
       return;
     }
 
