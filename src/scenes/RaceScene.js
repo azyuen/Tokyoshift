@@ -236,6 +236,7 @@ export default class RaceScene extends Phaser.Scene {
     // Derive the lesson type from persisted race setup, not those fields.
     const tutorialQueued=this.registry.get('selectedRaceCategory')==='TUTORIAL';
     const oshiageInstructorLesson=tutorialQueued && (
+      Boolean(this.registry.get('oshiageTrainingLesson')) ||
       this.registry.get('raceReturnScene')==='OshiageScene' ||
       String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
       this.registry.get('oshiageLocation')==='oshiageDrivingSchool'
@@ -2463,7 +2464,8 @@ export default class RaceScene extends Phaser.Scene {
 
     // Keep the instructor uniform in ALL Oshiage lessons, including basic
     // driving, even when returning from a restart with stale race context.
-    const atSchool=this.registry.get('raceReturnScene')==='OshiageScene' ||
+    const atSchool=Boolean(this.registry.get('oshiageTrainingLesson')) ||
+      this.registry.get('raceReturnScene')==='OshiageScene' ||
       String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
       this.registry.get('oshiageLocation')==='oshiageDrivingSchool';
     const homePoses = {
