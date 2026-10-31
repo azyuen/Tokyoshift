@@ -240,6 +240,8 @@ export const CUTSCENES = {
         CREW_LINE_3: "Stock for stock. Beat me in it and I'll run with your crew.",
         CREW_ACCEPT_LABEL: 'ACCEPT STOCK RACE',
         CREW_DECLINE_LABEL: 'NOT NOW',
+        REQUIRED_STOCK_CLASS: 'C',
+        RECRUIT_CAR_MESSAGE: 'Choose an eligible unmodified stock car from your garage.',
       },
     },
     introCard: {
@@ -280,7 +282,7 @@ export const CUTSCENES = {
         fadeOutActors: true,
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'Recruitment requires an unmodified factory-stock CLASS {REQUIRED_STOCK_CLASS} car. If none is eligible in your garage, acquire one and return later.',
+        text: 'Required: unmodified factory-stock CLASS {REQUIRED_STOCK_CLASS}. {RECRUIT_CAR_MESSAGE}',
       },
     ],
     finalActionLabel: 'READY TO RACE',
