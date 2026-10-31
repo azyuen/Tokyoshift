@@ -6,7 +6,7 @@ import {
 } from './StoryScript.js?v=20261028-r696';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261027-trio';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261028-r710';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261101-r749';
 import {showArukenChapter08Meet} from '../ui/ArukenChapter08Meet.js?v=20261028-pilot';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261025-r684';
@@ -14,6 +14,7 @@ import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=202610
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
 import {migrateArkonR748Checkpoint} from './ArkonR748CheckpointMigration.js?v=20261101-r748';
+import {migrateArkonR749Checkpoint} from './ArkonR749CheckpointMigration.js?v=20261101-r749';
 import {showArkonStoryTimeJump} from '../ui/ArkonStoryTimeJump.js?v=20261101-r748';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
@@ -158,7 +159,10 @@ export class StoryDirector {
     if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     if(!preview && savedIndex===0 && id==='arkonChapter07')scriptVars.storyR684=true;
     if(!preview && savedIndex===0 && id==='arkonChapter02')scriptVars.storyR685=true;
-    if(!preview && savedIndex===0 && id==='arkonChapter10')scriptVars.storyR748=true;
+    if(!preview && savedIndex===0 && id==='arkonChapter10'){
+      scriptVars.storyR748=true;
+      scriptVars.storyR749=true;
+    }
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -324,7 +328,15 @@ export class StoryDirector {
     const migrated679=migrateArkonR679Checkpoint(compiled,intermediate,scene.registry);
     const post679=migrated679?{...intermediate,...migrated679}:intermediate;
     const migrated748=migrateArkonR748Checkpoint(compiled,post679,scene.registry);
-    return this.start(checkpoint.id, migrated748 || migrated679 || migrated678 ||
+    // R748 is a semantic remap into the CURRENT script, so don't apply a
+    // second numeric shift to it. R748-native saves need the +2 R749 shift.
+    const post748=migrated748
+      ? {...migrated748,vars:{...migrated748.vars,storyR749:true}}
+      : post679;
+    const migrated749=migrated748?post748:
+      migrateArkonR749Checkpoint(compiled,post748);
+    return this.start(checkpoint.id,
+      migrated749 || migrated748 || migrated679 || migrated678 ||
       {index:checkpoint.index,vars:checkpoint.vars});
   }
   checkpoint() {
