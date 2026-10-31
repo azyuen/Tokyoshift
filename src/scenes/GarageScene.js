@@ -3687,10 +3687,13 @@ export default class GarageScene extends Phaser.Scene {
       });
     }
 
-    this.buildWarehouseDynoHotspot();
+    if (!this.crewMode) this.buildWarehouseDynoHotspot();
   }
 
   buildWarehouseDynoHotspot() {
+    // Crew Space uses a different background; Warehouse's in-room sign
+    // has no matching physical location there.
+    if (this.crewMode) return null;
     const activeWorkshop = this.getActiveWorkshop();
     const installed = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0)) >= 1;
 
@@ -3724,6 +3727,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildDynoButton() {
+    // Dyno installation and testing belong to the player's Warehouse HQ.
+    // Do not project the Warehouse hotspot onto the Crew Space artwork.
+    if (this.crewMode) {
+      this.clearWarehouseDynoInstallButton();
+      return;
+    }
     const activeWorkshop = this.getActiveWorkshop();
 
     if (activeWorkshop.id === DYNO_WAREHOUSE_ID) {
