@@ -245,7 +245,7 @@ export default class RaceScene extends Phaser.Scene {
     if (oshiageInstructorLesson) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
-          'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
+          'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261031-r744');
       }
     } else if (tutorialQueued) {
       // First workshop lesson: Sayaka wears her home clothes, not her
