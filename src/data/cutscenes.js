@@ -280,7 +280,7 @@ export const CUTSCENES = {
         fadeOutActors: true,
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'You can only race an unmodified stock car of the same class. Choose one from your garage, or acquire one and come back later.',
+        text: 'Recruitment requires an unmodified factory-stock CLASS {REQUIRED_STOCK_CLASS} car. If none is eligible in your garage, acquire one and return later.',
       },
     ],
     finalActionLabel: 'READY TO RACE',
