@@ -2175,6 +2175,9 @@ export default class RaceScene extends Phaser.Scene {
     this.coachLaunchRPM = null;
     this.coachSelectedRollingGear = null;
     this.coachLaunchCommented = false;
+    this.coachClutchReleaseStart = null;
+    this.coachClutchReleaseSeconds = null;
+    this.coachLaunchThrottle = null;
     this.coachComplete = false;
     this.coachRetrying = false; // Phaser scene.restart() reuses this scene instance.
     this.player.transmission.currentGear = 1;
@@ -2195,7 +2198,7 @@ export default class RaceScene extends Phaser.Scene {
     this.coachTargetFoot = this.coachHud.footer;
     this.coachSetTarget();
     const intro = this.coachingLesson === 'launch'
-      ? 'Hold the launch RPM inside that circle. Release the clutch smoothly on green.'
+      ? 'Hold the target RPM. On green, slide your clutch finger DOWN gradually (do not lift it at once). Build throttle as grip settles.'
       : this.coachingLesson === 'rolling'
         ? 'At 60 km/h, choose the suggested gear. I will help with the shifts afterwards.'
         : 'Watch the target circle for each gear change. The band matters, not a single RPM.';
@@ -2256,6 +2259,16 @@ export default class RaceScene extends Phaser.Scene {
       this.coachSetTarget();
     }
     this.coachPeakSlip = Math.max(this.coachPeakSlip, Number(telemetry.slipRatio || 0));
+    if (this.coachingLesson === 'launch' && elapsed < 2 && !this.isRollingStart) {
+      const clutch = Number(controls.clutch || 0);
+      if (this.coachClutchReleaseStart == null && clutch < 0.95) {
+        this.coachClutchReleaseStart = elapsed;
+        this.coachLaunchThrottle = Number(controls.throttle || 0);
+      }
+      if (this.coachClutchReleaseStart != null && this.coachClutchReleaseSeconds == null && clutch <= 0.05) {
+        this.coachClutchReleaseSeconds = Math.max(0, elapsed - this.coachClutchReleaseStart);
+      }
+    }
     if (this.coachLaunchRPM == null && !this.isRollingStart &&
         this.player.transmission.currentGear === 1 && telemetry.speedKmh >= 2) {
       this.coachLaunchRPM = this.coachStagedRPM ?? telemetry.rpm;
@@ -2265,7 +2278,9 @@ export default class RaceScene extends Phaser.Scene {
       this.coachLaunchCommented = true;
       const rpm = this.coachLaunchRPM;
       const band = this.coachLaunch;
-      if (this.coachPeakSlip > 0.27) this.coachSpeak('Too much wheelspin. Try a smoother clutch release.', 'concerned');
+      if (this.coachPeakSlip > 0.27) this.coachSpeak(this.coachClutchReleaseSeconds != null && this.coachClutchReleaseSeconds < this.coachLaunch.clutchSeconds * 0.7
+        ? 'Wheelspin: you released the clutch too fast. Keep your finger down and slide it back over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.'
+        : 'Wheelspin: keep the target RPM, but feed in less throttle as you slide the clutch back over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.', 'concerned');
       else if (rpm != null && rpm < band.min) this.coachSpeak('Low launch revs. Try slightly higher next time.', 'explaining');
       else if (rpm != null && rpm > band.max) this.coachSpeak('Launch revs were high. Try a little lower.', 'concerned');
       else this.coachSpeak('Good launch. You kept the car moving.', 'happy');
@@ -2294,7 +2309,7 @@ export default class RaceScene extends Phaser.Scene {
     let feedback;
     if (timedOut) feedback = 'Practice ended. Try again when you are ready.';
     else if (isLaunch) feedback = this.coachPeakSlip > 0.27
-      ? 'Try reducing wheelspin. A smooth clutch release helps.'
+      ? 'Wheelspin cost you traction. Slide your clutch finger DOWN over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s, and feed throttle in gradually.'
       : 'Good. Repeat the launch and aim for consistency.';
     else feedback = total ? clean + ' of ' + total + ' shifts were clean and in range.'
       : 'You completed the run. Try practising your shift timing.';
