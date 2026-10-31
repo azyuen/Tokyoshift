@@ -10,6 +10,7 @@ import {
   finishArkonCh10PorscheCruise,
 } from '../src/data/arkonChapter10Work.js';
 import {migrateArkonR679Checkpoint} from '../src/story/ArkonR679CheckpointMigration.js';
+import {migrateArkonR748Checkpoint} from '../src/story/ArkonR748CheckpointMigration.js';
 import {createDefaultGameState,normaliseState} from '../src/state/GameState.js';
 const source=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 const registry=init=>({data:{...init},get(k){return this.data[k]},
@@ -132,7 +133,11 @@ test('R678 mid-chapter checkpoint numbers migrate without replaying past races',
   data.set('ownedCarIds',['ef']);
   data.set('arkonStoryChapter10ZSale',{status:'sold'});
   const later=migrateArkonR679Checkpoint(compiled,prior,data);
-  assert.equal(ARKON_CHAPTER_10.steps[later.index].type,'ARKON_CH10_YOKOHAMA');
+  // The historical R679 numerical relocation must pass through R748's
+  // semantic migration. A sold 240Z must never skip to the final scene.
+  const remapped=migrateArkonR748Checkpoint(compiled,{...prior,...later},data);
+  assert.equal(ARKON_CHAPTER_10.steps[remapped.index].key,'arkonStoryPhase');
+  assert.equal(ARKON_CHAPTER_10.steps[remapped.index].value,'chapter10Ginza');
   assert.equal(migrateArkonR679Checkpoint(compiled,
     {...prior,vars:{storyR679:true}},data),null);
 });
