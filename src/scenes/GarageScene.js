@@ -95,7 +95,7 @@ import {
   removeAllCrewMembers,
   recruitRandomDevCrew,
   repairCrewRosterFromOwnedLoanCars,
-} from '../data/crewSystem.js?v=20261020-r619';
+} from '../data/crewSystem.js?v=20261101-r748';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
