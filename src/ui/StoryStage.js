@@ -54,9 +54,11 @@ export function showStoryStage(scene, {
   // when the Story Director is running over MeetScene. Avoid projecting or
   // scaling vehicles a second time; their coordinates are Garage coordinates.
   const garagePanel=stageMode==='garage-panel' && profile?.frameId==='workshop';
-  const template=(stageMode==='story'||garagePanel)
+  const fullScreen=stageMode==='chapter08-full'||stageMode==='chapter10-full';
+  const chapter10Full=stageMode==='chapter10-full';
+  const template=(stageMode==='story'||fullScreen||garagePanel)
     ? null : getNativeStoryStageTemplate(profile,scene) || (aruken?getArukenEnvironmentTemplate(profile):null);
-  const native=stageMode==='chapter08-full' ? false : garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
+  const native=fullScreen ? false : garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const duel=Boolean(meetDuel&&template?.kind==='meet'&&profile?.frameId==='location');
   const frame=native?profile.frame:{x:0,y:0,w,h};
   // Story-only Chapter 08 fills the display and masks irrelevant gameplay UI.
@@ -106,7 +108,7 @@ export function showStoryStage(scene, {
     (scene.workshopPlayerSprite?.stageShadows||[]).forEach(hide);
   }
   const state = {
-    fullScreenChapter08:stageMode==='chapter08-full',
+    fullScreenChapter08:fullScreen,
     setPaintColor(color) {
       let changed=false;
       for(const object of objects){
@@ -225,7 +227,7 @@ export function showStoryStage(scene, {
       clipGraphics.fillRect(frame.x,frame.y,frame.w,frame.h);
       clipMask=clipGraphics.createGeometryMask();
     }
-    if(stageMode==='chapter08-full'){
+    if(fullScreen){
       const cover=scene.add.rectangle(w/2,h/2,w,h,0x080e19,1)
         .setDepth(depth-1).setScrollFactor(0).setInteractive();
       objects.push(cover);
@@ -326,11 +328,15 @@ export function showStoryStage(scene, {
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
       const authoredCar=chapter08Layout?.cars?.[i];
-      const cinematicCar=authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
+      const chapter10Car=chapter10Full?{
+        x:w*(carProps.length>1?(i===0?.53:.82):.72),
+        groundY:h*.88,targetWidth:w*(carProps.length>1?.36:.45),
+      }:null;
+      const cinematicCar=chapter10Car || (authoredCar ? {x:w*authoredCar[0]/100,groundY:h*authoredCar[1]/100,targetWidth:w*authoredCar[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(carProps.length===1?.52:(i===0?.40:.76)),
         targetWidth:w*(carProps.length===1?.43:(i===0?.33:.30)),
         groundY:h*(String(backgroundId||'').startsWith('workshop:')?.79:.73),
-      }:null;
+      }:null);
       const x=Number(cinematicCar?.x??sharedBay?.x??finaleCar?.x??ch6Car?.x??duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
       const targetWidth=Number(cinematicCar?.targetWidth??sharedBay?.targetWidth??finaleCar?.targetWidth??ch6Car?.targetWidth??duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
@@ -367,7 +373,7 @@ export function showStoryStage(scene, {
           x,groundY:authoredCar?groundY:(template?.kind==='meet'?575:groundY),targetWidth,depth:layer,flipX:authoredCar?authoredCar[3]:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
           editorCanvas:Boolean(authoredCar),
-          garageGeometry:garagePanel||Boolean(template),
+          garageGeometry:garagePanel||Boolean(template)||chapter10Full,
         });
         if(duel)carImages.set(i,carObjects);
         carObjects.forEach(obj=>{
@@ -467,16 +473,20 @@ export function showStoryStage(scene, {
       // Characters of a scene all share the same native ground/height:
       // only their horizontal slot or optional observer role differs.
       const authoredCast=chapter08Layout?.cast?.[i];
-       const cinematicCast=authoredCast ? {x:w*authoredCast[0]/100,feetY:h*authoredCast[1]/100,height:h*authoredCast[2]/100} : stageMode==='chapter08-full' ? {
+       const chapter10Cast=chapter10Full?{
+        x:w*(actors.length>1?(i===0?.17:.37):.24),
+        feetY:h*.91,height:h*.43,
+      }:null;
+      const cinematicCast=chapter10Cast || (authoredCast ? {x:w*authoredCast[0]/100,feetY:h*authoredCast[1]/100,height:h*authoredCast[2]/100} : stageMode==='chapter08-full' ? {
         x:w*(actors.length===2?[.17,.30][i]:actors.length===3?[.15,.29,.85][i]:.22),
         feetY:h*.73,
         height:h*(a.role==='challenger'?.36:.39),
-      }:null;
+      }:null);
       const x=Number(cinematicCast?.x??a.x??assigned?.x??estimate?.x??anchor.x)+(cinematicCast?0:Number(a.offsetX||0));
       const feet=Number(cinematicCast?.feetY??assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
       const height=Number(cinematicCast?.height??assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
         (Number.isFinite(Number(characterScale))?Number(characterScale):1) * (authoredCast?1:(aruken?arukenPoseHeight(a.pose):1));
-      const layer=Number(authoredCast ? depth+10+authoredCast[3] : template
+      const layer=Number(chapter10Full ? depth+12+i : authoredCast ? depth+10+authoredCast[3] : template
         ? (a.role==='chapter01RepairSayaka'?portraitDepth-3:portraitDepth+i)
         : (a.depth??(carInFront
           ?Math.min(portraitDepth+i,estimate?.depth??portraitDepth+i)

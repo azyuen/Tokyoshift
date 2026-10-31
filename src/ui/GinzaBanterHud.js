@@ -16,6 +16,9 @@ export function createGinzaBanterHud(scene,{storyCruise=false,chapter03=false,ho
   const sayakaKey = sayakaVisual.poseAssets[sayakaPose].key;
   const arkonKey = arkonVisual.poseAssets[arkonPose].key;
   if (!scene.textures.exists(sayakaKey) || !scene.textures.exists(arkonKey)) {
+    console.warn('[TOKYO SHIFT] Dialogue portraits not preloaded', {
+      sayakaPose,arkonPose,sayakaKey,arkonKey,
+    });
     return null;
   }
   const create = (speaker, visual, key, side, layout,initialPose) =>

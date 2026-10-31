@@ -11,7 +11,7 @@ import {
 } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
-import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261025-r685';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261101-r749';
 import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
 
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
@@ -171,8 +171,8 @@ export default class RaceScene extends Phaser.Scene {
       queueImage('arkonSayakaWatchingStory',
         'assets/Characters/Main/arkon_sayaka_watching.png');
       for(const [id,poses] of [
-        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
-        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy']],
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing','homeConfident','homeContemplative']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy','storyConfidentSmirk']],
       ])for(const pose of poses){
         const asset=characters[id]?.visual?.poseAssets?.[pose];
         if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
@@ -1785,12 +1785,29 @@ export default class RaceScene extends Phaser.Scene {
     this.stakeText?.setText('SAYAKA DRIVING // TOGETHER // NO RACE');
     this.prepareRollingVehicle(this.player);
     this.setArkonMx5OpponentVisible(false);
-    this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    // Previous storyCruise default requested an un-preloaded Oshiage pose,
+    // so createGinzaBanterHud returned null and every spoken line disappeared.
+    this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true,homeClothes:true});
     this.events.once('shutdown',()=>this.arkonCh10Dialogue?.destroy?.());
+    // A non-race cinematic still needs a clear forward action. Offer it
+    // after the final line, and auto-continue shortly afterwards.
+    const button=this.add.rectangle(1330,749,377,66,0x123a46,.98)
+      .setStrokeStyle(2,0x8cddcd).setDepth(230).setScrollFactor(0)
+      .setVisible(false);
+    const text=this.add.text(1330,749,'CONTINUE TO YOKOHAMA  >',{
+      fontFamily:PIXEL_FONT,fontSize:'12px',color:'#fff9e9',
+    }).setOrigin(.5).setDepth(231).setScrollFactor(0).setVisible(false);
+    this.arkonCh10Continue={button,text};
+    button.on('pointerdown',()=>{
+      if(this.arkonCh10Leaving)return;
+      button.disableInteractive();
+      this.arkonCh10Seconds=Math.max(this.arkonCh10Seconds,29);
+    });
   }
-  updateArkonCh10Cruise(dt){
+  updateArkonCh10Cruise(dt,realDt=dt){
     if(this.arkonCh10Leaving)return;
-    this.arkonCh10Seconds+=dt;
+    // Cinematic time must run at wall-clock speed, not the capped physics dt.
+    this.arkonCh10Seconds+=Math.max(0,Math.min(realDt,.15));
     const pt=this.advanceRollingVehicle(this.player,dt);
     this.drawScene(pt,null,dt);
     this.hud.update(pt,'YOKOHAMA // SAYAKA DRIVING // NO RACE');
@@ -1808,8 +1825,17 @@ export default class RaceScene extends Phaser.Scene {
       const [,speaker,words,pose]=lines[this.arkonCh10LineIndex++];
       this.arkonCh10Dialogue?.show(speaker,words,pose);
     }
+    if(this.arkonCh10Seconds>=23&&!this.arkonCh10Leaving){
+      const action=this.arkonCh10Continue;
+      if(action&&!action.button.visible){
+        action.button.setVisible(true).setInteractive({useHandCursor:true});
+        action.text.setVisible(true);
+      }
+    }
     if(this.arkonCh10Seconds>=29){
       this.arkonCh10Leaving=true;
+      this.arkonCh10Continue?.button?.disableInteractive()?.setVisible(false);
+      this.arkonCh10Continue?.text?.setVisible(false);
       const cruise=this.registry.get('arkonStoryChapter10Cruise');
       if(cruise?.active){
         this.registry.set('arkonStoryChapter10Cruise',{...cruise,completed:true});
@@ -2959,7 +2985,7 @@ export default class RaceScene extends Phaser.Scene {
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     if(this.isArkonCh10Cruise){
       this.raceClock+=dt;
-      this.updateArkonCh10Cruise(dt);
+      this.updateArkonCh10Cruise(dt,deltaMs/1000);
       return;
     }
     if(this.isArkonCh7Solo){

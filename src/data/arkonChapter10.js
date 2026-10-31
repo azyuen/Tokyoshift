@@ -19,7 +19,12 @@ const manga=(title,lines,formal=false)=>({
 });
 const staged=(label,backgroundId,cast,cars=[],options={})=>[
   {type:'CLEAR_STAGE'},
-  {type:'STAGE',backgroundId,stageMode:'native',composition:'car-behind-cast',
+  {type:'STAGE',backgroundId,
+    // Use a full-frame cinematic for narrative interiors, leaving the
+    // Garage three-panel UI exclusively for hands-on restoration work.
+    stageMode:/^(workshop:|central:)/.test(backgroundId)?'chapter10-full':'native',
+    depth:/^(workshop:|central:)/.test(backgroundId)?620:160,
+    composition:'car-behind-cast',
     fadeInMs:850,privateMeet:backgroundId.startsWith('meet:'),
     characters:cast,cars,...options},
   {type:'HOLD_SCENE',label,caption:'ARUKEN DENZAKI // THE ROAD AHEAD',revealMs:550},
@@ -135,6 +140,11 @@ export const ARKON_CHAPTER_10={
       ark('Alright. The buyer can take the keys.','storySerious'),
     ]),
     {type:'ARKON_CH10_SELL_Z'},
+    {type:'CLEAR_STAGE'},
+    // Refresh the live GarageScene against ownership after Aruken's hero Z
+    // leaves his garage; its previous car display was created before the sale.
+    {type:'LOCATION',scene:'GarageScene',force:true,
+      data:{crewMode:false,workshopLocationId:'shinonomeWarehouseStrip'}},
     ...shop('WAREHOUSE HQ // A SMALLER, QUIETER GARAGE','ae86'),
     ...shop('WAREHOUSE HQ // ONE LAST COMMISSION','r32'),
     manga('SOMETHING SPECIAL',[

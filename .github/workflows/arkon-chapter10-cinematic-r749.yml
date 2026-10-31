@@ -1,0 +1,31 @@
+name: R749 Chapter 10 cinematic staging and night-drive recovery
+on:
+  push:
+    branches: [main, fix/ch10-fullscreen-farewell-drive-r749]
+    paths:
+      - 'src/data/arkonChapter10.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/ArkonR749CheckpointMigration.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/ui/GinzaBanterHud.js'
+      - 'tests/arkon-chapter10-cinematic-r749.mjs'
+      - '.github/workflows/arkon-chapter10-cinematic-r749.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  story:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check changed runtime and tests
+        run: |
+          for f in src/data/arkonChapter10.js src/ui/StoryStage.js src/scenes/RaceScene.js src/ui/GinzaBanterHud.js src/story/StoryDirector.js src/story/ArkonR749CheckpointMigration.js tests/arkon-chapter10-cinematic-r749.mjs; do node --check "$f"; done
+      - name: Chapter 10 and Sayaka continuity regression
+        run: |
+          node --test tests/arkon-chapter10-cinematic-r749.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/sayaka-pose-ch10-r748.mjs tests/arkon-story-r678.mjs tests/arkonStoryMode.test.mjs tests/career-continuity-r680.mjs
