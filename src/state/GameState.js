@@ -191,6 +191,7 @@ export function createDefaultGameState(options = {}) {
     tunerTeamChallenges: {},
     tunerChallengeRevealPending: null,
     crewMembers: {},
+    crewRecruitJoinReceipts: {},
     crewRecruitmentState: {},
     crewInviteInterest: null,
     crewInviteInterests: {},
@@ -1596,6 +1597,7 @@ export function normaliseState(input = {}) {
       : (input.tunerChallengeRevealPending
           ? String(input.tunerChallengeRevealPending).toUpperCase()
           : null),
+    crewRecruitJoinReceipts: input.crewRecruitJoinReceipts && typeof input.crewRecruitJoinReceipts === 'object' ? input.crewRecruitJoinReceipts : {},
     crewMembers:
       input.crewMembers && typeof input.crewMembers === 'object'
         ? {
@@ -1936,6 +1938,7 @@ export function snapshotRegistry(registry) {
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
     tunerChallengeRevealPending: registry.get('tunerChallengeRevealPending') || null,
     crewMembers: registry.get('crewMembers') || {},
+    crewRecruitJoinReceipts: registry.get('crewRecruitJoinReceipts') || {},
     crewRecruitmentState: registry.get('crewRecruitmentState') || {},
     crewInviteInterest: registry.get('crewInviteInterest') || null,
     crewInviteInterests: registry.get('crewInviteInterests') || {},

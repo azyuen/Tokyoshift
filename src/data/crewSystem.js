@@ -100,6 +100,38 @@ export function isActiveCrewLoanCar(source, carId) {
   );
 }
 
+// Recover a completed recruitment if a prior save retained its loan car but
+// lost the crew roster entry. Never invent membership from ordinary cars.
+export function repairCrewRosterFromOwnedLoanCars(registry) {
+  if (!registry?.get || !registry?.set) return [];
+  const owned = registry.get('ownedCarIds') || [];
+  const existing = { ...(registry.get('crewMembers') || {}) };
+  const restored = [];
+  for (const regionId of CREW_REGIONS) {
+    if (getCrewMemberForRegion(registry, regionId)) continue;
+    const receipt = (registry.get('crewRecruitJoinReceipts') || {})[regionId];
+    const candidate = getRecruitableRegionalMembers(regionId).find(member => {
+      if (receipt?.characterId === member.characterId) return true;
+      const id = getCrewLoanCarId(member.characterId);
+      return owned.includes(id) && cars[id]?.crewOwnerCharacterId === member.characterId;
+    });
+    if (!candidate) continue;
+    const loanCarId = getCrewLoanCarId(candidate.characterId);
+    if (!owned.includes(loanCarId)) {
+      registry.set('ownedCarIds', [...owned, loanCarId]);
+      const states = { ...(registry.get('carStates') || {}) };
+      states[loanCarId] = states[loanCarId] || createStockCrewCarState(candidate.characterId, candidate.baseCarId);
+      registry.set('carStates', states);
+      registry.set('carGarageLocations', { ...(registry.get('carGarageLocations') || {}), [loanCarId]: CREW_WAREHOUSE_ID });
+    }
+    existing[regionId] = { regionId, characterId: candidate.characterId,
+      baseCarId: candidate.baseCarId, loanCarId, recruitedAt: Date.now() };
+    restored.push(regionId);
+  }
+  if (restored.length) registry.set('crewMembers', existing);
+  return restored;
+}
+
 export function getCrewMemberForRegion(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   return getCrewMembers(source)[key] || null;
@@ -679,6 +711,9 @@ export function removeCrewMember(registry, regionId) {
   delete states[loanCarId];
   delete locations[loanCarId];
   delete members[key];
+  const receipts = { ...(registry.get('crewRecruitJoinReceipts') || {}) };
+  delete receipts[key];
+  registry.set('crewRecruitJoinReceipts', receipts);
 
   registry.set('crewMembers', members);
   registry.set('ownedCarIds', owned);

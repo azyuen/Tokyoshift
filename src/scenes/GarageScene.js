@@ -94,6 +94,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
+  repairCrewRosterFromOwnedLoanCars,
 } from '../data/crewSystem.js?v=20261020-r619';
 import {
   WORKSHOP_TIERS,
@@ -220,6 +221,8 @@ export default class GarageScene extends Phaser.Scene {
     this._warehousePresentationTransitioning = false;
 
     if (this.crewMode) {
+      const recovered = repairCrewRosterFromOwnedLoanCars(this.registry);
+      if (recovered.length) saveSessionState(this.registry);
       this.registry.set('crewSpaceActive', true);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
     } else if (explicitCrewMode === false) {

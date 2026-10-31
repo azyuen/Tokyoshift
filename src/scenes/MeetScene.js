@@ -734,6 +734,11 @@ export default class MeetScene extends Phaser.Scene {
           }
           const accepted = reason === 'action';
           const joined = accepted ? acceptCrewMember(this.registry, pending) : null;
+          if (joined) {
+            const receipts = { ...(this.registry.get('crewRecruitJoinReceipts') || {}) };
+            receipts[joined.regionId] = { ...joined };
+            this.registry.set('crewRecruitJoinReceipts', receipts);
+          }
           if (!joined) resetCrewRecruitmentAfterLoss(this.registry, pending);
           this.registry.set('crewPendingJoinDecision', null);
           saveSessionState(this.registry);
