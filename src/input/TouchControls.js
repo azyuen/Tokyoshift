@@ -318,10 +318,9 @@ export default class TouchControls {
     if (this.throttlePointer) {
       const scale = Math.max(0.55, Number(this.placements.throttle.scale || 1));
       const travel = this.throttleStartY - this.throttlePointer.y;
-      if (this.pedalLatchMax && travel >= this.pedalSwipePx * scale) this.throttleLatchedMax = true;
-      touchThrottle = this.throttleLatchedMax
-        ? 1
-        : Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
+      // Throttle must remain analog in both directions, including after full press.
+      // Do not latch at 100%: moving the finger back down reduces power.
+      touchThrottle = Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
     }
     this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle, controllerThrottle);
 
