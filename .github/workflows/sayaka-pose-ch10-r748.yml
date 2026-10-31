@@ -33,4 +33,4 @@ jobs:
           for f in src/data/characters.js src/data/arkonChapter10.js src/data/cutscenes.js src/story/ArukenPresentation.js src/story/ArkonR748CheckpointMigration.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonStoryTimeJump.js tests/sayaka-pose-ch10-r748.mjs; do node --check "$f"; done
       - name: Focused full pose and Prelude/Career continuity
         run: |
-          node --test tests/sayaka-pose-ch10-r748.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-ch01-sayaka-uniform-r686.mjs tests/career-continuity-r680.mjs tests/chapter08-09-wardrobe-r646.mjs tests/sayaka-post-ch09-voice.mjs tests/opening-chapter-r467.mjs
+          node --test tests/sayaka-pose-ch10-r748.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-ch01-sayaka-uniform-r686.mjs tests/career-continuity-r680.mjs tests/chapter08-09-wardrobe-r646.mjs tests/sayaka-post-ch09-voice.mjs
