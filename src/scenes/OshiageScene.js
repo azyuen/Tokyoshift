@@ -161,7 +161,7 @@ export default class OshiageScene extends Phaser.Scene {
       : locationId === 'oshiageSkytreeMeet' && this.meetAlternative
         ? 'oshiage_skytree02'
         : (LOCATIONS[locationId] || LOCATIONS.oshiageDrivingSchool).stem;
-    return { key: 'oshiage_' + stem + '_' + cleanPhase, path: ROOT + stem + '_' + cleanPhase + '.png?v=20261013-r496' };
+    return { key: 'oshiage_' + stem + '_' + cleanPhase, path: ROOT + stem + '_' + cleanPhase + '.png?v=20261031-r744' };
   }
 
   queueImage(key, path) {
@@ -219,7 +219,7 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadVisualModSelectionAssets(this, car.id, state, '20261014-r510');
       }
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
-        queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + pose + '.png?v=20261013-r496');
+        queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + pose + '.png?v=20261031-r744');
       }
     }
     if (this.activeLocationId === 'oshiageSkytreeMeet' &&
