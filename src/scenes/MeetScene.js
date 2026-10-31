@@ -1861,6 +1861,10 @@ export default class MeetScene extends Phaser.Scene {
         CREW_LINE_2: dialogue.reveal,
         CREW_LINE_3: dialogue.challenge,
         REQUIRED_STOCK_CLASS: requiredRecruitClass || 'UNAVAILABLE',
+        RECRUIT_CAR_MESSAGE: getCrewRecruitmentChallengeRules(this.registry, interest).eligibleCarIds.length
+          ? 'Choose an eligible unmodified stock car from your garage.'
+          : 'NO ELIGIBLE CAR IN GARAGE. Acquire a factory-stock CLASS ' +
+            (requiredRecruitClass || 'UNAVAILABLE') + ' car and return later.',
         CREW_ACCEPT_LABEL: dialogue.acceptLabel,
         CREW_DECLINE_LABEL: dialogue.declineLabel,
       },
