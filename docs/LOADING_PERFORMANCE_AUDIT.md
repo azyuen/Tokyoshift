@@ -26,7 +26,11 @@ Baseline: `161e375` (main, R749). Scope: download reuse and startup waits. No be
 - Eight local Node tests pass: content reuse across requests/worker restarts, same-path changes, stale deployment bytes, cache access denial, offline/server-failure code fallback, request boundaries, build/cache-save separation, and repository import integrity.
 - Manifest regeneration check and JavaScript syntax/diff checks pass.
 - `tests/loading-cache-browser.mjs` compares the original R749 worker with the new worker in real Chromium and WebKit mobile-sized contexts. It measures server request counts/bytes for an actual car image, checks reload reuse and offline reuse. The original worker fixture is from `161e375`.
-- Local browser installation failed (download was not a valid archive). The GitHub Actions workflow runs the browser checks. Do not describe full game mobile boot, physical-iPhone behaviour, or elapsed-time gains as verified until measured separately.
+- Local browser installation failed (download was not a valid archive), so browser checks ran in GitHub Actions on commit `ca8078393952ffdadc2daf47c23458d8cd88c6f9`.
+- Chromium and WebKit both passed: the original worker made two network requests (711,880 bytes) for two reads of the 355,940-byte Amuse S2000 image. The new worker made one request (355,940 bytes), with no additional download for the second read, reload or offline read. This is an asset-level measurement, not a whole-game loading-time claim.
+- Existing mobile viewport boot/reload and Oshiage browser regression workflows passed. These emulate device viewports; they are not physical iPhone/iPad testing.
+- An additional 35 local Central Tokyo startup and Arkon Story/save regressions passed (43 local checks in total).
+- CI evidence: https://github.com/azyuen/Tokyoshift/actions/runs/41246369551 (cache), https://github.com/azyuen/Tokyoshift/actions/runs/41246369432 (mobile), https://github.com/azyuen/Tokyoshift/actions/runs/41246369428 (Oshiage).
 
 ## Deployment and maintenance
 
