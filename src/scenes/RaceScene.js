@@ -388,6 +388,8 @@ export default class RaceScene extends Phaser.Scene {
     const entryCarId = this.registry.get('raceReturnScene') === 'MeetScene'
       ? this.registry.get('raceEntryCarId') : null;
     const selectedCarId = entryCarId || this.registry.get('selectedCarId');
+    // Single-use handoff: never reuse an earlier Meet's car in a later race.
+    this.registry.set('raceEntryCarId', null);
     this.selectedCarId = cars[selectedCarId] ? selectedCarId : null;
     this.invalidRaceCarSelection = !this.selectedCarId;
     if (this.selectedCarId && this.registry.get('selectedCarId') !== this.selectedCarId) {
