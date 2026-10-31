@@ -109,12 +109,21 @@ export function repairCrewRosterFromOwnedLoanCars(registry) {
   const restored = [];
   for (const regionId of CREW_REGIONS) {
     if (getCrewMemberForRegion(registry, regionId)) continue;
+    const receipt = (registry.get('crewRecruitJoinReceipts') || {})[regionId];
     const candidate = getRecruitableRegionalMembers(regionId).find(member => {
+      if (receipt?.characterId === member.characterId) return true;
       const id = getCrewLoanCarId(member.characterId);
       return owned.includes(id) && cars[id]?.crewOwnerCharacterId === member.characterId;
     });
     if (!candidate) continue;
     const loanCarId = getCrewLoanCarId(candidate.characterId);
+    if (!owned.includes(loanCarId)) {
+      registry.set('ownedCarIds', [...owned, loanCarId]);
+      const states = { ...(registry.get('carStates') || {}) };
+      states[loanCarId] = states[loanCarId] || createStockCrewCarState(candidate.characterId, candidate.baseCarId);
+      registry.set('carStates', states);
+      registry.set('carGarageLocations', { ...(registry.get('carGarageLocations') || {}), [loanCarId]: CREW_WAREHOUSE_ID });
+    }
     existing[regionId] = { regionId, characterId: candidate.characterId,
       baseCarId: candidate.baseCarId, loanCarId, recruitedAt: Date.now() };
     restored.push(regionId);
