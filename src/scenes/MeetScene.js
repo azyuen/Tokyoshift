@@ -147,7 +147,7 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261024-r676';
+} from '../data/crewSystem.js?v=20261101-r748';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261020-r619';
