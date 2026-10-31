@@ -1,16 +1,43 @@
-// Presentation only: preserve every step index, choice, action and dialogue word.
+// Visual-only Sayaka wardrobe/pose continuity across Story and Career.
+// Home and Oshiage are distinct outfits. Preserve character text and story flags.
 const pauses=new Set(['AN OLD DATSUN','THE DAY SHE NEEDED A FRIEND',
   'A SIGNATURE HE WILL NOT GIVE','THE PART SHE STILL MISSES','THE KEYS',
   'ANOTHER TIME','THE SIGNATURE','THE QUESTION','ONE LAST DOCUMENT','A RARE MOMENT OF DOUBT']);
 const suited={storyLaughing:'devLaughing',storySerious:'devSerious',storyThinking:'devNervous',
   storySheepish:'devNervous',storyBlushing:'devBlushing',storyCoolShy:'devBlushing',
   storyTalking:'devTalking',storyIdle:'devIdle'};
-// These Oshiage-named images actually show a white blouse, not the navy uniform.
-const uniform={oshiageConfident:'oshiageHappy',oshiageContemplative:'oshiageReviewing',
-  oshiageExplaining:'oshiageTalking',oshiageAlert:'oshiageConcerned'};
+// An Oshiage-labelled emotion is only appropriate when Sayaka is actually
+// teaching at the driving school. At workshop, night meet or casual scenes,
+// use the real home assets, including the four newly renamed originals.
+const civilian={
+  oshiageNeutral:'homeNormal',oshiageHappy:'homeHappy',
+  oshiageConcerned:'homeAlert',oshiageSerious:'homeSerious',
+  oshiageRelaxed:'homeNormal',oshiageReviewing:'homeContemplative',
+  oshiageTalking:'homeExplaining',oshiageExplaining:'homeExplaining',
+  oshiageConfident:'homeConfident',oshiageContemplative:'homeContemplative',
+  oshiageAlert:'homeAlert',
+};
+const uniform={
+  oshiageConfident:'oshiageHappy',oshiageContemplative:'oshiageReviewing',
+  oshiageExplaining:'oshiageTalking',oshiageAlert:'oshiageConcerned',
+};
+const homeForUniform={
+  homeNormal:'oshiageNeutral',homeHappy:'oshiageHappy',
+  homeBlushing:'oshiageHappy',homeSad:'oshiageConcerned',
+  homeSerious:'oshiageSerious',homeAlert:'oshiageConcerned',
+  homeConfident:'oshiageHappy',homeContemplative:'oshiageReviewing',
+  homeExplaining:'oshiageTalking',
+};
+const civilianChapters=new Set(['arkonChapter02','arkonChapter04',
+  'arkonChapter05','arkonChapter06','arkonChapter08']);
 export function polishArukenPresentation(script){
-  let cast=[],closingTime=false;
+  let cast=[],closingTime=false,atSchool=false;
+  const civilianByDefault=civilianChapters.has(script.id);
   for(const [index,step] of script.steps.entries()){
+    if(script.id==='arkonChapter02'&&step.type==='WAIT_SCENE'){
+      if(step.scene==='OshiageScene')atSchool=true;
+      else if(step.scene==='MeetScene'||step.scene==='GarageScene')atSchool=false;
+    }
     if(step.type==='STAGE'){
       cast=step.characters||[];
       const label=script.steps[index+1]?.label||'';
@@ -34,7 +61,16 @@ export function polishArukenPresentation(script){
         cast.some(a=>a.pose==='ginzaSuit'))step.population='private-sale';
       if(script.id==='arkonChapter10'&&label==='GINZA // OPENING EVENING')
         step.population='gallery';
-      for(const actor of cast)actor.pose=uniform[actor.pose]||actor.pose;
+      for(const actor of cast){
+        if(actor.id!=='sayakaFujieda'){actor.pose=uniform[actor.pose]||actor.pose;continue;}
+        // Chapter 01 intentionally established Sayaka in her navy uniform;
+        // Chapter 02's Oshiage lesson is the other true school appearance.
+        const school=script.id==='arkonChapter01Revised'||
+          script.id==='arkonChapter01'||script.id==='arkonChapter02'&&atSchool;
+        actor.pose=school?(homeForUniform[actor.pose]||uniform[actor.pose]||actor.pose):
+          civilianByDefault?(civilian[actor.pose]||actor.pose):
+          uniform[actor.pose]||actor.pose;
+      }
     }
     if(step.type!=='MANGA')continue;
     if(pauses.has(step.title))step.holdAfter=true;
@@ -44,20 +80,24 @@ export function polishArukenPresentation(script){
         const pose=page[key];
         if(closingTime&&id==='arkonDen')page[key]={ginzaSuit:'storyIdle',
           devBlushing:'storyBlushing',devNervous:'storySheepish'}[pose]||pose;
-        if(id==='arkonDen'&&actor?.pose==='ginzaSuit')page[key]=suited[pose]||pose;
+        if(id==='arkonDen'&&actor?.pose==='ginzaSuit')page[key]=suited[page[key]]||page[key];
         else if(id==='arkonDen'&&String(actor?.pose).startsWith('storyMechanic')&&
           !String(pose).startsWith('storyMechanic'))page[key]='storyMechanic';
-        if(id==='sayakaFujieda'){
-          if(closingTime&&page[key]==='ginzaDress')page[key]='homeNormal';
-          page[key]=uniform[page[key]]||page[key];
-          if(actor?.pose==='ginzaDress' && script.id!=='arkonChapter08')page[key]='ginzaDress';
-          else if(String(actor?.pose).startsWith('home')&&String(page[key]).startsWith('oshiage'))
-            page[key]=/Happy|Relaxed|Confident/.test(page[key])?'homeHappy':
-              /Serious|Concerned|Reviewing/.test(page[key])?'homeSerious':'homeNormal';
-          else if(String(actor?.pose).startsWith('oshiage')&&String(page[key]).startsWith('home'))
-            page[key]=/Happy|Blushing/.test(page[key])?'oshiageHappy':
-              /Serious|Sad/.test(page[key])?'oshiageConcerned':'oshiageNeutral';
-        }
+        if(id!=='sayakaFujieda')continue;
+        if(closingTime&&page[key]==='ginzaDress')page[key]='homeNormal';
+        const school=script.id==='arkonChapter01Revised'||
+          script.id==='arkonChapter01'||script.id==='arkonChapter02'&&atSchool;
+        if(actor?.pose==='ginzaDress'&&script.id!=='arkonChapter08'){
+          page[key]='ginzaDress';
+        }else if(school){
+          page[key]=homeForUniform[page[key]]||uniform[page[key]]||page[key];
+        }else if(civilianByDefault||
+          String(actor?.pose).startsWith('home')){
+          page[key]=civilian[page[key]]||page[key];
+        }else if(String(actor?.pose).startsWith('oshiage')&&
+          String(page[key]).startsWith('home')){
+          page[key]=homeForUniform[page[key]]||page[key];
+        }else page[key]=uniform[page[key]]||page[key];
       }
     }
   }
