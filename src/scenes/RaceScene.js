@@ -171,8 +171,8 @@ export default class RaceScene extends Phaser.Scene {
       queueImage('arkonSayakaWatchingStory',
         'assets/Characters/Main/arkon_sayaka_watching.png');
       for(const [id,poses] of [
-        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing']],
-        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy']],
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious','homeBlushing','homeConfident','homeContemplative']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy','storyConfidentSmirk']],
       ])for(const pose of poses){
         const asset=characters[id]?.visual?.poseAssets?.[pose];
         if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
@@ -1785,12 +1785,15 @@ export default class RaceScene extends Phaser.Scene {
     this.stakeText?.setText('SAYAKA DRIVING // TOGETHER // NO RACE');
     this.prepareRollingVehicle(this.player);
     this.setArkonMx5OpponentVisible(false);
-    this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    // Previous storyCruise default requested an un-preloaded Oshiage pose,
+    // so createGinzaBanterHud returned null and every spoken line disappeared.
+    this.arkonCh10Dialogue=createGinzaBanterHud(this,{storyCruise:true,homeClothes:true});
     this.events.once('shutdown',()=>this.arkonCh10Dialogue?.destroy?.());
   }
-  updateArkonCh10Cruise(dt){
+  updateArkonCh10Cruise(dt,realDt=dt){
     if(this.arkonCh10Leaving)return;
-    this.arkonCh10Seconds+=dt;
+    // Cinematic time must run at wall-clock speed, not the capped physics dt.
+    this.arkonCh10Seconds+=Math.max(0,Math.min(realDt,.15));
     const pt=this.advanceRollingVehicle(this.player,dt);
     this.drawScene(pt,null,dt);
     this.hud.update(pt,'YOKOHAMA // SAYAKA DRIVING // NO RACE');
@@ -2959,7 +2962,7 @@ export default class RaceScene extends Phaser.Scene {
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     if(this.isArkonCh10Cruise){
       this.raceClock+=dt;
-      this.updateArkonCh10Cruise(dt);
+      this.updateArkonCh10Cruise(dt,deltaMs/1000);
       return;
     }
     if(this.isArkonCh7Solo){
