@@ -239,7 +239,8 @@ export default class RaceScene extends Phaser.Scene {
       Boolean(this.registry.get('oshiageTrainingLesson')) ||
       this.registry.get('raceReturnScene')==='OshiageScene' ||
       String(this.registry.get('raceDistrict')||'').toUpperCase()==='OSHIAGE' ||
-      this.registry.get('oshiageLocation')==='oshiageDrivingSchool'
+      this.registry.get('oshiageLocation')==='oshiageDrivingSchool' ||
+      Boolean(this.registry.get('oshiageSchoolBooking'))
     );
     if (oshiageInstructorLesson) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
