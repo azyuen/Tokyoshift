@@ -100,6 +100,29 @@ export function isActiveCrewLoanCar(source, carId) {
   );
 }
 
+// Recover a completed recruitment if a prior save retained its loan car but
+// lost the crew roster entry. Never invent membership from ordinary cars.
+export function repairCrewRosterFromOwnedLoanCars(registry) {
+  if (!registry?.get || !registry?.set) return [];
+  const owned = registry.get('ownedCarIds') || [];
+  const existing = { ...(registry.get('crewMembers') || {}) };
+  const restored = [];
+  for (const regionId of CREW_REGIONS) {
+    if (getCrewMemberForRegion(registry, regionId)) continue;
+    const candidate = getRecruitableRegionalMembers(regionId).find(member => {
+      const id = getCrewLoanCarId(member.characterId);
+      return owned.includes(id) && cars[id]?.crewOwnerCharacterId === member.characterId;
+    });
+    if (!candidate) continue;
+    const loanCarId = getCrewLoanCarId(candidate.characterId);
+    existing[regionId] = { regionId, characterId: candidate.characterId,
+      baseCarId: candidate.baseCarId, loanCarId, recruitedAt: Date.now() };
+    restored.push(regionId);
+  }
+  if (restored.length) registry.set('crewMembers', existing);
+  return restored;
+}
+
 export function getCrewMemberForRegion(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   return getCrewMembers(source)[key] || null;
