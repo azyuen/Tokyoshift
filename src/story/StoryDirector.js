@@ -13,6 +13,8 @@ import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261028-r696';
 import {migrateArkonR678Checkpoint,isR678StoryScript} from './ArkonR678CheckpointMigration.js?v=20261024-r678';
 import {migrateArkonR679Checkpoint,isR679StoryScript} from './ArkonR679CheckpointMigration.js?v=20261024-r679';
+import {migrateArkonR748Checkpoint} from './ArkonR748CheckpointMigration.js?v=20261101-r748';
+import {showArkonStoryTimeJump} from '../ui/ArkonStoryTimeJump.js?v=20261101-r748';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261024-r675';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
@@ -156,6 +158,7 @@ export class StoryDirector {
     if(!preview && savedIndex===0 && isR679StoryScript(id))scriptVars.storyR679=true;
     if(!preview && savedIndex===0 && id==='arkonChapter07')scriptVars.storyR684=true;
     if(!preview && savedIndex===0 && id==='arkonChapter02')scriptVars.storyR685=true;
+    if(!preview && savedIndex===0 && id==='arkonChapter10')scriptVars.storyR748=true;
     this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
       vars: scriptVars };
     this.wait = null; this.error = null; this.sceneDelay = 0;
@@ -319,7 +322,9 @@ export class StoryDirector {
     const migrated678=migrateArkonR678Checkpoint(compiled,checkpoint,scene.registry);
     const intermediate=migrated678?{...checkpoint,...migrated678}:checkpoint;
     const migrated679=migrateArkonR679Checkpoint(compiled,intermediate,scene.registry);
-    return this.start(checkpoint.id, migrated679 || migrated678 ||
+    const post679=migrated679?{...intermediate,...migrated679}:intermediate;
+    const migrated748=migrateArkonR748Checkpoint(compiled,post679,scene.registry);
+    return this.start(checkpoint.id, migrated748 || migrated679 || migrated678 ||
       {index:checkpoint.index,vars:checkpoint.vars});
   }
   checkpoint() {
@@ -343,7 +348,8 @@ export class StoryDirector {
     this.clearStage();
     for (const scene of this.game.scene?.getScenes?.(true) || [])
       { scene._storyChoicePanel?.destroy?.();
-        scene._storyContinuePrompt?.destroy?.(); }
+        scene._storyContinuePrompt?.destroy?.();
+        scene._arkonStoryTimeJump?.destroy?.(); }
     if (was && !was.preview && complete && was.slot === owner()) {
       this.game.registry.set(STORY_DIRECTOR_SAVE_KEY, null);
       saveSessionState(this.game.registry);
@@ -513,6 +519,24 @@ export class StoryDirector {
             if(this.session?.index===index && this.wait?.index===index)this.advance();
           });
           if(!accepted){this.wait=null;this.error='STORY VENUE UNAVAILABLE';}
+          return;
+        }
+        if(type==='ARKON_CH10_TIME_JUMP'){
+          if(this.session.id!=='arkonChapter10'||
+             scene.registry?.get?.('gameMode')!=='arkonStory'){
+            this.error='INVALID ARUKEN TIME JUMP';return;
+          }
+          if(sceneCutsceneActive(scene)||scene._arkonStoryTimeJump?.active)return;
+          this.clearStage();
+          this.wait={kind:'dialogue',index};
+          const title=showArkonStoryTimeJump(scene,{
+            title:step.title,durationMs:step.durationMs,
+            onComplete:()=>{
+              if(this.session?.index===index&&this.wait?.index===index)
+                this.advance();
+            },
+          });
+          if(!title){this.wait=null;this.error='TIME JUMP SCREEN UNAVAILABLE';}
           return;
         }
         if (type === 'HOLD_SCENE') {
