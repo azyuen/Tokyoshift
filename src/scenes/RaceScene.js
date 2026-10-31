@@ -3,7 +3,7 @@ import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import Vehicle from '../vehicles/Vehicle.js?v=20261026-r687';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261026-r687';
-import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
+import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261031-r747';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
 import {
   DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY,
