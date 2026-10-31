@@ -15,7 +15,7 @@ export function migrateArkonR748Checkpoint(compiled,checkpoint,registry){
   if(old>=cutoff&&cutoff>=0){
     const cruise=get(registry,'arkonStoryChapter10Cruise');
     if(cruise?.active)index=cruise.completed?type('ARKON_CH10_DRIVE_RETURN'):
-      type('WAIT_SCENE');
+      find((s,i)=>s.type==='WAIT_SCENE'&&steps[i-1]?.type==='ARKON_CH10_DRIVE');
     else if(get(registry,'arkonStoryChapter10CruiseFinished'))index=type('ARKON_CH10_YOKOHAMA');
     else if(get(registry,'arkonStoryCareerSeed'))index=type('ARKON_CH10_TIME_JUMP');
     else if(get(registry,'arkonStoryGinzaPartnership'))index=type('ARKON_CH10_INVEST');
