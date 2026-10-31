@@ -11,7 +11,7 @@ import {
 } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
-import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261025-r685';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261101-r749';
 import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
 
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
