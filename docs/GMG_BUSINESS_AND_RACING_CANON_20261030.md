@@ -26,3 +26,7 @@
 Keep the ten-chapter ethics/ambition arc, RWB gift, original 240Z sale, equal Ginza partnership and Sayaka driving the Porsche at Yokohama. Their long-term committed relationship can be inferred without an explicit proposal, kiss or wedding. Existing cars, ownership data, saves, physics, money and progression are not retconned by this clarification.
 
 Source of truth alongside: `docs/CHARACTER_BIBLE.md`, `docs/CAREER_R680_PRE_PRO_CONTINUITY.md`, `docs/ARKON_R679_RECIPROCITY_AND_FINALE.md` and `docs/LBWK_R694_FULL_WORKS.md`.
+
+## R748 epilogue perspective
+
+Following the Ginza business decision, Chapter 10 intentionally jumps a few years forward into the evening **after the Tokyo Championship already won in Career Mode**. Sayaka elects to stay with the team for the next season; Aruken remembers their favourite Yokohama restaurant and deliberately clears a day for them. Their actual waterfront visit and hand-holding composition remain as originally authored. This is not a new chapter, a second championship result, a new sponsorship payout, or an explicit marital-status revelation. The future public-release unlock of the Prelude after the Tokyo Championship is still a proposal; dev-only gating is unchanged.
