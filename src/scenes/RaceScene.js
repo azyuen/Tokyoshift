@@ -245,7 +245,7 @@ export default class RaceScene extends Phaser.Scene {
     if (oshiageInstructorLesson) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
-          'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261031-r744');
+          'assets/Characters/Main/oshiage_sayaka_fujieda_' + (pose === 'explaining' ? 'talking' : pose) + '.png?v=20261031-r746');
       }
     } else if (tutorialQueued) {
       // First workshop lesson: Sayaka wears her home clothes, not her
@@ -2199,8 +2199,12 @@ export default class RaceScene extends Phaser.Scene {
     this.coachTarget = this.coachHud.value;
     this.coachTargetFoot = this.coachHud.footer;
     this.coachSetTarget();
+    const drivetrain = String(this.player?.config?.drivetrain || this.player?.config?.driveType || '').toUpperCase();
+    const ffLaunch = /^(FF|FWD|FRONT)/.test(drivetrain);
     const intro = this.coachingLesson === 'launch'
-      ? 'Hold the target RPM. On green, slide your clutch finger DOWN gradually (do not lift it at once). Build throttle as grip settles.'
+      ? (ffLaunch
+        ? 'FRONT-WHEEL DRIVE: start near the displayed RPM range. On green, release the clutch smoothly and add throttle gently. If the front tyres spin, use less throttle and release the clutch more slowly.'
+        : 'Start near the displayed RPM range. On green, release the clutch smoothly while adding throttle. If the tyres spin, ease the throttle and slow the clutch release.')
       : this.coachingLesson === 'rolling'
         ? 'At 60 km/h, choose the suggested gear. I will help with the shifts afterwards.'
         : 'Watch the target circle for each gear change. The band matters, not a single RPM.';
@@ -2281,8 +2285,8 @@ export default class RaceScene extends Phaser.Scene {
       const rpm = this.coachLaunchRPM;
       const band = this.coachLaunch;
       if (this.coachPeakSlip > 0.27) this.coachSpeak(this.coachClutchReleaseSeconds != null && this.coachClutchReleaseSeconds < this.coachLaunch.clutchSeconds * 0.7
-        ? 'Wheelspin: you released the clutch too fast. Keep your finger down and slide it back over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.'
-        : 'Wheelspin: keep the target RPM, but feed in less throttle as you slide the clutch back over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.', 'concerned');
+        ? 'Wheelspin: clutch released too quickly. Release it more slowly over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.'
+        : 'Wheelspin: use less throttle and release the clutch smoothly over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s.', 'concerned');
       else if (rpm != null && rpm < band.min) this.coachSpeak('Low launch revs. Try slightly higher next time.', 'explaining');
       else if (rpm != null && rpm > band.max) this.coachSpeak('Launch revs were high. Try a little lower.', 'concerned');
       else this.coachSpeak('Good launch. You kept the car moving.', 'happy');
@@ -2311,7 +2315,7 @@ export default class RaceScene extends Phaser.Scene {
     let feedback;
     if (timedOut) feedback = 'Practice ended. Try again when you are ready.';
     else if (isLaunch) feedback = this.coachPeakSlip > 0.27
-      ? 'Wheelspin cost you traction. Slide your clutch finger DOWN over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s, and feed throttle in gradually.'
+      ? 'Wheelspin cost you traction. Release the clutch gradually over about ' + this.coachLaunch.clutchSeconds.toFixed(2) + ' s, and feed throttle in gradually.'
       : 'Good. Repeat the launch and aim for consistency.';
     else feedback = total ? clean + ' of ' + total + ' shifts were clean and in range.'
       : 'You completed the run. Try practising your shift timing.';
