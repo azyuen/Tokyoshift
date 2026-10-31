@@ -711,6 +711,9 @@ export function removeCrewMember(registry, regionId) {
   delete states[loanCarId];
   delete locations[loanCarId];
   delete members[key];
+  const receipts = { ...(registry.get('crewRecruitJoinReceipts') || {}) };
+  delete receipts[key];
+  registry.set('crewRecruitJoinReceipts', receipts);
 
   registry.set('crewMembers', members);
   registry.set('ownedCarIds', owned);
