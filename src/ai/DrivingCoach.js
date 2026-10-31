@@ -7,8 +7,9 @@ const launchCache = new Map();
 const rpmRound = (rpm, step = 50) => Math.round(rpm / step) * step;
 
 export class DrivingCoach {
-  constructor(vehicle) {
+  constructor(vehicle, carId = '') {
     this.vehicle = vehicle;
+    this.carId = String(vehicle?.config?.crewBaseCarId || carId || vehicle?.config?.id || '').replace(/^crew__/, '').toLowerCase();
     this.model = new DrivingModel(vehicle);
     this.shiftBands = this.model.shiftPoints.slice(0, -1).map((rpm, index) => {
       const ceiling = this.model.ceiling;
@@ -94,6 +95,8 @@ export class DrivingCoach {
   getDriveLayout() {
     const v = this.vehicle.config || {};
     const id = String(v.drivetrain || v.driveType || '').toUpperCase();
+    if (['ef','ek9','crx','dc2','prelude','fto','mx6','familia','eclipse'].includes(this.carId)) return 'FF';
+    if (['sw20','nsx','mr2'].includes(this.carId)) return 'MR';
     if (['FF', 'FWD'].includes(id)) return 'FF';
     if (['AWD', '4WD'].includes(id) || Number(v.drivenAxleWeightFraction) >= 0.9) return 'AWD';
     if (['MR', 'RR'].includes(id)) return id;
