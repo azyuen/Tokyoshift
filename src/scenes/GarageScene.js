@@ -4133,7 +4133,14 @@ export default class GarageScene extends Phaser.Scene {
         !this.selectedCarId
         ? this.ownedCarIds.find(id => cars[id] && !cars[id].crewLoan) || null
         : null;
-      if (devTravelCarId) this.registry.set('selectedCarId', devTravelCarId);
+      // Registered drivers retain ordinary road use between Pro Season
+      // rounds. A workshop emptied by the three-car transfer can still open
+      // the map using a nominated paddock car; the car is not relocated.
+      const proCircuit=normaliseProCircuitState(this.registry.get('proCircuit'));
+      const proTravelCarId=!this.crewMode&&proCircuit.proGarageOrigins ?
+        proCircuit.registeredDriverCars?.find(id=>this.ownedCarIds.includes(id)&&cars[id]) : null;
+      if (devTravelCarId||proTravelCarId)
+        this.registry.set('selectedCarId',devTravelCarId||proTravelCarId);
 
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
@@ -4228,7 +4235,7 @@ export default class GarageScene extends Phaser.Scene {
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
           // Normal street meets still require a local car to drive out with.
-          if (!this.selectedCarId && !devTravelCarId &&
+          if (!this.selectedCarId && !devTravelCarId && !proTravelCarId &&
               !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
@@ -4237,7 +4244,7 @@ export default class GarageScene extends Phaser.Scene {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
           this.registry.set('cash', cash - cost);
-          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || null);
+          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || proTravelCarId || null);
           this.registry.set('meetStranded', false);
 
           if (travelTarget?.regionId === 'CENTRAL_TOKYO') {
@@ -4650,17 +4657,26 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     const ownsCarsElsewhere = this.ownedCarIds.length > 0;
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const paddockDriver=Boolean(!this.crewMode&&pro.proGarageOrigins&&
+      pro.registeredDriverCars?.some(id=>this.ownedCarIds.includes(id)));
 
     // A driver cannot leave an empty workshop without a car. OTHER WORKSHOP
     // remains available so cars stored elsewhere can still be retrieved.
-    this.meetButton?.disableInteractive()
-      .setFillStyle(0x17181d, 1)
-      .setStrokeStyle(1, 0x514f55, 1);
-    this.meetButtonLabel
-      ?.setText(this.registry.get('gameMode')==='arkonStory'
-        ? 'WORKSHOP // STORY IN PROGRESS'
-        : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
-      .setColor('#817d84');
+    if(paddockDriver){
+      this.meetButton?.setInteractive({useHandCursor:true})
+        .setFillStyle(0x0c2827,1).setStrokeStyle(2,0x62e8c7,1);
+      this.meetButtonLabel?.setText('GO TO MAP // PRO CAR').setColor('#f1fffb');
+    }else{
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel
+        ?.setText(this.registry.get('gameMode')==='arkonStory'
+          ? 'WORKSHOP // STORY IN PROGRESS'
+          : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+        .setColor('#817d84');
+    }
     this.updateMoveCarButtonState();
 
     // The first visit is deliberately empty, not a pink-slip game over.
