@@ -908,7 +908,8 @@ export function showProSeasonRegistration(s,selected={},pages={}){
   const ids=PRO_DRIVER_DRIVETRAINS.map(d=>selected[d]);
   const complete=ids.every(Boolean);
   o.label(90,723,complete?
-    'READY // '+ids.map((id,i)=>(PRO_DRIVER_DRIVETRAINS[i]==='FWD'?'FF':PRO_DRIVER_DRIVETRAINS[i])+': '+(cars[id]?.shortName||id)).join('   |   '):
+    'READY // '+PRO_GARAGE_BAYS.map(({number,drive})=>
+      number+' '+(drive==='FWD'?'FF':drive)+': '+(cars[selected[drive]]?.shortName||selected[drive])).join('   |   '):
     'SELECT THREE CARS TO START THE EIGHT-ROUND SEASON.',18)
     .setColor(complete?'#e7d28e':'#c5d0d8');
   o.btn(280,786,380,'CANCEL',o.close);
