@@ -3195,7 +3195,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         seasonChoice:activeIndex===2?'alternative':'standard',
         seasonRules:activeIndex===2?inviteRules:rules.driver};
     }
-    if (pro.activeTournament) choices[0] = fourWide;
+    if (pro.activeTournament) choices[0] = {...fourWide,seasonRules:rules.driver,label:proNames.driver};
     // Never overwrite the player's chosen card merely because a crew series
     // or another professional event is in progress.
     return choices;
