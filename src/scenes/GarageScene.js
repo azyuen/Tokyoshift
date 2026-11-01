@@ -98,6 +98,7 @@ import {
 } from '../data/crewSystem.js?v=20261101-r748';
 import {
   WORKSHOP_TIERS,
+  PRO_GARAGE_ID,
   getGarageCapacity,
   getWorkshopByLocationId,
   getWorkshopPhaseBackground,
@@ -115,6 +116,9 @@ import {
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261024-r675';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
+import { getProGarageBayCars } from '../data/proGarage.js?v=20261101-r753';
+import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
+import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261030-r741';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
@@ -215,6 +219,14 @@ export default class GarageScene extends Phaser.Scene {
     this.crewMode = explicitCrewMode == null
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
+    const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    this.proGarageMode = Boolean(currentPro.proGarageOrigins &&
+      (data?.proGarageMode || data?.workshopLocationId===PRO_GARAGE_ID ||
+        this.registry.get('workshopLocationId')===PRO_GARAGE_ID));
+    const fallbackTier=Math.max(0,Math.min(2,Number(this.registry.get('garageTier')||0)));
+    const fallbackWorkshop=WORKSHOP_TIERS[fallbackTier]?.id||'shinonomeWorkshop';
+    this.proGarageReturnWorkshopId=WORKSHOP_TIERS.some(w=>w.id===data?.returnWorkshopId) ?
+      data.returnWorkshopId : fallbackWorkshop;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
     this.storyArchiveChapter = data?.storyArchiveChapter || null;
     this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
@@ -634,7 +646,7 @@ export default class GarageScene extends Phaser.Scene {
     this.currentPaintColor = 0xffffff;
     this.pendingPaintColor = 0xffffff;
 
-    this.garagePageSize = 4;
+    this.garagePageSize = this.proGarageMode ? 3 : 4;
     this.garagePageObjects = [];
     const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
     this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
@@ -643,6 +655,7 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
+    if(this.proGarageMode)this.drawProGarageBayLineup();
     if (!this.crewMode && this.registry.get('openingChapter') === 'tutorial') {
       this.spawnOpeningCompanion('sayakaFujieda', false);
     }
@@ -664,8 +677,8 @@ export default class GarageScene extends Phaser.Scene {
     } else {
       this.buildStoreRestoreKitButton();
       this.buildWorkshopJumpButton();
-      this.buildOfficeHotspot();
-      this.buildWarehouseSpaceHotspots();
+      if(!this.proGarageMode)this.buildOfficeHotspot();
+      if(!this.proGarageMode)this.buildWarehouseSpaceHotspots();
       this.buildDynoButton();
       this.buildMeetButton();
     }
@@ -1669,14 +1682,14 @@ export default class GarageScene extends Phaser.Scene {
     this.headerTitleText = this.add.text(
       52,
       35,
-      this.crewMode ? 'CREW SPACE' : 'WORKSHOP',
+      this.crewMode ? 'CREW SPACE' : this.proGarageMode ? 'TOKYO PRO GARAGE' : 'WORKSHOP',
       {
         fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
       }
     ).setOrigin(0, 0.5).setDepth(42);
 
     this.headerCarText = this.add.text(
-      this.crewMode ? 370 : 305,
+      this.crewMode ? 370 : this.proGarageMode ? 440 : 305,
       35,
       this.crewMode ? 'CREW ' + (getCrewCount(this.registry) + 1) + '/8' : '',
       {
@@ -1903,6 +1916,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getCurrentWorkshopCars() {
+    if (this.proGarageMode) {
+      const assigned=this.syncGarageAssignments();
+      return getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
+        .map(bay=>bay.carId)
+        .filter(id=>id&&assigned[id]===PRO_GARAGE_ID);
+    }
     if (this.crewMode) {
       return Object.values(getCrewMembers(this.registry))
         .map(member => member.loanCarId)
@@ -1960,7 +1979,7 @@ export default class GarageScene extends Phaser.Scene {
     this.add.text(
       STRIP.x + 18,
       STRIP.y + 7,
-      this.crewMode ? 'CREW LOAN GARAGE' : 'MY GARAGE',
+      this.crewMode ? 'CREW LOAN GARAGE' : this.proGarageMode ? 'PADDOCK // 04 AWD · 05 RWD · 06 FF' : 'MY GARAGE',
       {
         fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
       }
@@ -2047,8 +2066,7 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
     const localCars = this.getCurrentWorkshopCars();
     const capacity = this.crewMode ? 7 : getWorkshopStorageCapacity(activeWorkshop.id);
-    const totalCapacity = this.crewMode
-      ? 7
+    const totalCapacity = this.crewMode ? 7 : this.proGarageMode ? 3
       : getGarageCapacity(this.registry.get('garageTier') || 0);
     const pageSize = this.garagePageSize || 4;
     const totalPages = Math.max(1, Math.ceil(capacity / pageSize));
@@ -2247,6 +2265,10 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showMoveCarPopup(targetWorkshopId = null) {
+    if(this.proGarageMode){
+      this.showWorkshopToast('REGISTERED CAR // LOCKED IN PRO GARAGE UNTIL SEASON ENDS');
+      return;
+    }
     if (
       !this.selectedCarId ||
       cars[this.selectedCarId]?.crewLoan ||
@@ -2823,6 +2845,21 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildWorkshopJumpButton() {
+    if(this.proGarageMode){
+      const x=SIDE.x+SIDE.w/2;
+      const button=this.add.rectangle(x,716,SIDE.w-32,40,0x122331,1)
+        .setStrokeStyle(2,0x55b8ff,1).setDepth(40)
+        .setInteractive({useHandCursor:true});
+      this.add.text(x,716,'<  BACK TO DRAG COMPLEX',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#eef8ff',
+      }).setOrigin(.5).setDepth(41);
+      button.on('pointerdown',()=>{
+        this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
+        this.saveProfile();
+        this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+      });
+      return;
+    }
     const button = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       716,
@@ -4098,7 +4135,14 @@ export default class GarageScene extends Phaser.Scene {
         !this.selectedCarId
         ? this.ownedCarIds.find(id => cars[id] && !cars[id].crewLoan) || null
         : null;
-      if (devTravelCarId) this.registry.set('selectedCarId', devTravelCarId);
+      // Registered drivers retain ordinary road use between Pro Season
+      // rounds. A workshop emptied by the three-car transfer can still open
+      // the map using a nominated paddock car; the car is not relocated.
+      const proCircuit=normaliseProCircuitState(this.registry.get('proCircuit'));
+      const proTravelCarId=!this.crewMode&&proCircuit.proGarageOrigins ?
+        proCircuit.registeredDriverCars?.find(id=>this.ownedCarIds.includes(id)&&cars[id]) : null;
+      if (devTravelCarId||proTravelCarId)
+        this.registry.set('selectedCarId',devTravelCarId||proTravelCarId);
 
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
@@ -4193,7 +4237,7 @@ export default class GarageScene extends Phaser.Scene {
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
           // Normal street meets still require a local car to drive out with.
-          if (!this.selectedCarId && !devTravelCarId &&
+          if (!this.selectedCarId && !devTravelCarId && !proTravelCarId &&
               !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
@@ -4202,7 +4246,7 @@ export default class GarageScene extends Phaser.Scene {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
           this.registry.set('cash', cash - cost);
-          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || null);
+          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || proTravelCarId || null);
           this.registry.set('meetStranded', false);
 
           if (travelTarget?.regionId === 'CENTRAL_TOKYO') {
@@ -4394,6 +4438,65 @@ export default class GarageScene extends Phaser.Scene {
     ];
   }
 
+  // Three real player-car sprites shown behind the main tuning work area.
+  // The selected car still uses the established GarageScene hero/tuning
+  // system; the paddock lineup is strictly a secondary static presentation.
+  drawProGarageBayLineup() {
+    const bays=getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds);
+    this.proGarageReadinessLabels=[];
+    const centres=[STAGE.x+205,STAGE.x+STAGE.w/2,STAGE.x+STAGE.w-205];
+    bays.forEach((bay,index)=>{
+      const x=centres[index],id=bay.carId;
+      const label=this.add.text(x,STAGE.y+24,
+        'BAY '+bay.number+'  //  '+(bay.drive==='FWD'?'FF / FWD':bay.drive),{
+          fontFamily:PIXEL_FONT,fontSize:'10px',color:'#f3d39f',
+          backgroundColor:'#09131bdd',padding:{x:8,y:5},
+        }).setOrigin(.5,0).setDepth(6);
+      if(!id||!cars[id])return;
+      const status=this.add.text(x,STAGE.y+65,'CHECKING EVENT RULES',{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e9e6e0',
+        backgroundColor:'#09131b',padding:{x:6,y:3},
+      }).setOrigin(.5,0).setDepth(6);
+      this.proGarageReadinessLabels.push({carId:id,node:status});
+      try {
+        const width=232;
+        const y=this.getBodyYForWheelBottom(cars[id],width,STAGE.y+STAGE.h-93);
+        this.createCarDisplay(cars[id],x,y,width,5);
+      } catch(error) {
+        console.warn('[Tokyo SHIFT] Pro Garage bay car rendering unavailable',id,error);
+      }
+    });
+    this.refreshProGarageScrutineering();
+    this.add.text(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h-24,
+      'DAICHI // INSTALL · UNINSTALL · RESTORE · SCRUTINEERING PREP',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f1d7a5',
+        backgroundColor:'#0b1726dd',padding:{x:12,y:7},
+      }).setOrigin(.5).setDepth(7);
+  }
+
+  refreshProGarageScrutineering(){
+    if(!this.proGarageMode)return;
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const rules=pro.seasonStatus==='ACTIVE'&&pro.calendar.round<8 ?
+      getProfessionalRoundEvents(pro.calendar.round).driver : null;
+    const states=this.registry.get('carStates')||{};
+    for(const entry of this.proGarageReadinessLabels||[]){
+      if(!entry.node?.active)continue;
+      if(!rules){
+        entry.node.setText('TOKYO / SEASON PREP').setColor('#e2d0a4');
+        continue;
+      }
+      try{
+        const check=getProfessionalCarEligibility(entry.carId,states[entry.carId]||{},rules);
+        const status=check.eligible?'NEXT DRIVER // READY':
+          'NEXT DRIVER // '+String(check.reasons?.[0]||'SETUP REQUIRED').slice(0,32);
+        entry.node.setText(status).setColor(check.eligible?'#92e9c9':'#ffb9ad');
+      }catch(error){
+        entry.node.setText('NEXT DRIVER // CHECK SETUP').setColor('#ffb9ad');
+      }
+    }
+  }
+
   buildWorkshopHeroLayout(car, visualModsOverride = null) {
     if (!car) return null;
 
@@ -4553,6 +4656,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.updateMoveCarButtonState();
     this.refreshDynoButton?.();
+    this.refreshProGarageScrutineering?.();
 
     if (this.crewMode) {
       const crewCars = this.getCurrentWorkshopCars();
@@ -4586,17 +4690,26 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     const ownsCarsElsewhere = this.ownedCarIds.length > 0;
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const paddockDriver=Boolean(!this.crewMode&&pro.proGarageOrigins&&
+      pro.registeredDriverCars?.some(id=>this.ownedCarIds.includes(id)));
 
     // A driver cannot leave an empty workshop without a car. OTHER WORKSHOP
     // remains available so cars stored elsewhere can still be retrieved.
-    this.meetButton?.disableInteractive()
-      .setFillStyle(0x17181d, 1)
-      .setStrokeStyle(1, 0x514f55, 1);
-    this.meetButtonLabel
-      ?.setText(this.registry.get('gameMode')==='arkonStory'
-        ? 'WORKSHOP // STORY IN PROGRESS'
-        : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
-      .setColor('#817d84');
+    if(paddockDriver){
+      this.meetButton?.setInteractive({useHandCursor:true})
+        .setFillStyle(0x0c2827,1).setStrokeStyle(2,0x62e8c7,1);
+      this.meetButtonLabel?.setText('GO TO MAP // PRO CAR').setColor('#f1fffb');
+    }else{
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel
+        ?.setText(this.registry.get('gameMode')==='arkonStory'
+          ? 'WORKSHOP // STORY IN PROGRESS'
+          : ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+        .setColor('#817d84');
+    }
     this.updateMoveCarButtonState();
 
     // The first visit is deliberately empty, not a pink-slip game over.

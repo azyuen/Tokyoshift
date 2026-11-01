@@ -6,6 +6,35 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## November 2026 R753 — Pro Season paddock and Daichi garage
+
+- On each new season registration, **one AWD, one RWD and one FF/FWD** owned personal car are
+  transferred atomically into the secured Tokyo Pro Garage. The physical
+  location uses dedicated storage outside the three purchasable Shinonome
+  workshops; the registered cars remain owned, usable for normal driving and
+  fixed for the season and any qualifying Tokyo Championship.
+- Paddock bay order is **04 AWD, 05 RWD, 06 FF/FWD**, independent of the
+  engine and model. All three cars retain their existing performance, mods,
+  tuning, paint and history. No changes to racing physics or class balance.
+- The paddock reuses the **existing GarageScene tuning UI and Warehouse HQ
+  tier-two access, costs, parts removal, saved kit restoration and
+  factory-stock service**. It does not introduce duplicate inventory or
+  per-location tuning state. Factory-stock requirements are checked by the
+  existing scrutineering: not every irreversible modification can be undone.
+- Registered cars cannot be sold or transferred to an ordinary workshop until
+  released; all seven crew recruits are still available for normal crew race
+  preparation. Street travel remains available even if a Shinonome property
+  becomes empty after the cars move to the paddock.
+- Withdrawal and unsuccessful season completion restore cars to their
+  prior garages. Qualifiers retain their paddock until the unified Tokyo
+  Championship is finished. Successful transitions are saved atomically and
+  can survive reloads. Legacy seasons without a nominated trio are unchanged.
+- **Art note:** The Pro Garage currently uses the existing Warehouse HQ
+  background as the built-in scene fallback. The standalone
+  `progarage_night.png` supplied in chat is not yet checked into the GitHub
+  repository; importing the exact custom background is pending a binary
+  asset transfer. Bay numbering and car sprites are part of the UI code.
+
 ## November 2026 Pro Drag driver class and season registration revision
 
 - The main Open Circuit sidebar introduces the rotating independent events and explains

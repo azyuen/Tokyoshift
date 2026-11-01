@@ -159,6 +159,7 @@ export function createDefaultProCircuitState() {
     eventTick: 0, // advances on completed in-game events, never wall-clock time
     seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
     registeredDriverCars: null, // null for grandfathered seasons; new seasons lock FWD/RWD/AWD trio
+    proGarageOrigins: null, // saved previous workshop for each temporarily transferred race car
     openCircuitTick: 0, // successful standalone event completions only
     openCircuitLastDriverSlot: -1, // once per live Open Circuit schedule slot
     openCircuitLastCrewSlot: -1,
@@ -240,6 +241,11 @@ export function normaliseProCircuitState(raw) {
       source.registeredDriverCars.length===3 &&
       source.registeredDriverCars.every(id=>typeof id==='string'&&id.length<90) &&
       new Set(source.registeredDriverCars).size===3 ? [...source.registeredDriverCars] : null,
+    proGarageOrigins: source.proGarageOrigins && typeof source.proGarageOrigins==='object' &&
+      !Array.isArray(source.proGarageOrigins) ?
+      Object.fromEntries(Object.entries(source.proGarageOrigins)
+        .filter(([id,home])=>typeof id==='string'&&id.length<90&&
+          typeof home==='string'&&home.startsWith('shinonome')).slice(0,3)) : null,
     openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
     openCircuitLastDriverSlot: boundedInteger(source.openCircuitLastDriverSlot,-1,-1,100000000),
     openCircuitLastCrewSlot: boundedInteger(source.openCircuitLastCrewSlot,-1,-1,100000000),

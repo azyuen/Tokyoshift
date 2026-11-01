@@ -5,6 +5,7 @@ import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261030-r742';
 import { PRO_DRIVER_DRIVETRAINS, getProDriverDrivetrain, getProSeasonDriverCarError, CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r741';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
+import { stageProGarage, releaseProGarage, PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters } from '../data/characters.js?v=20261010-r459';
@@ -879,13 +880,13 @@ export function showProSeasonRegistration(s,selected={},pages={}){
     owned.filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan&&
       getProDriverDrivetrain(id)===d)]));
   const o=overlay(s,'PRO SEASON // REGISTER THREE DRIVER CARS');
-  o.label(90,111,'CHOOSE ONE FF (FWD), ONE RWD AND ONE AWD CAR FROM YOUR GARAGE.',23);
-  o.label(90,151,'These three cars are locked for individual Pro Season races and Tokyo Championship entry. You may retune them between events. All seven recruited crew drivers remain available for crew events.',18)
+  o.label(90,111,'ENTER THREE CARS // BAY 04 AWD · BAY 05 RWD · BAY 06 FF.',23);
+  o.label(90,151,'The three cars transfer to Daichi’s Pro Garage for the season. Tune, uninstall or restore parts between events; factory-stock eligibility must still pass scrutineering. Crew cars remain unrestricted.',18)
     .setColor('#c5d5df');
-  PRO_DRIVER_DRIVETRAINS.forEach((drive,column)=>{
+  PRO_GARAGE_BAYS.forEach(({number,drive},column)=>{
     const x=90+column*480,rows=available[drive],page=Math.max(0,
       Math.min(Number(pages[drive])||0,Math.max(0,Math.ceil(rows.length/5)-1)));
-    o.label(x,213,(drive==='FWD'?'FF / FWD':drive)+'   //   '+rows.length+' ELIGIBLE',22)
+    o.label(x,213,'BAY '+number+'  //  '+(drive==='FWD'?'FF / FWD':drive)+'  //  '+rows.length+' OWNED',21)
       .setColor('#f2d6b2');
     rows.slice(page*5,(page+1)*5).forEach((id,index)=>{
       const choice=(selected[drive]===id?'SELECTED  ✓  ':'')+
@@ -907,7 +908,8 @@ export function showProSeasonRegistration(s,selected={},pages={}){
   const ids=PRO_DRIVER_DRIVETRAINS.map(d=>selected[d]);
   const complete=ids.every(Boolean);
   o.label(90,723,complete?
-    'READY // '+ids.map((id,i)=>(PRO_DRIVER_DRIVETRAINS[i]==='FWD'?'FF':PRO_DRIVER_DRIVETRAINS[i])+': '+(cars[id]?.shortName||id)).join('   |   '):
+    'READY // '+PRO_GARAGE_BAYS.map(({number,drive})=>
+      number+' '+(drive==='FWD'?'FF':drive)+': '+(cars[selected[drive]]?.shortName||selected[drive])).join('   |   '):
     'SELECT THREE CARS TO START THE EIGHT-ROUND SEASON.',18)
     .setColor(complete?'#e7d28e':'#c5d0d8');
   o.btn(280,786,380,'CANCEL',o.close);
@@ -918,9 +920,20 @@ export function showProSeasonRegistration(s,selected={},pages={}){
     if(s.registry.get('competitionState')?.active){
       s.proError='FINISH YOUR ACTIVE EVENT FIRST';o.close();redraw(s);return;
     }
-    const next=startProfessionalSeason(circuit(s),ids,s.registry.get('ownedCarIds')||[]);
+    const ownedNow=s.registry.get('ownedCarIds')||[];
+    const current=circuit(s);
+    const next=startProfessionalSeason(current,ids,ownedNow);
     if(next.error){s.proError=next.error;o.close();redraw(s);return;}
-    if(!commit(s,{proCircuit:next.circuit}))return;
+    // A completed previous championship may still have its old cars in the
+    // paddock. Return those before allocating this season's three bays.
+    const old=releaseProGarage(current,ownedNow,
+      s.registry.get('carGarageLocations')||{},Number(s.registry.get('garageTier')||0));
+    const staged=stageProGarage({...next.circuit,proGarageOrigins:null},
+      ownedNow,old.carGarageLocations,
+      Number(s.registry.get('garageTier')||0));
+    if(staged.error){s.proError=staged.error;o.close();redraw(s);return;}
+    if(!commit(s,{proCircuit:staged.circuit,
+      carGarageLocations:staged.carGarageLocations}))return;
     o.close();redraw(s);
     if(next.circuit.season===1&&!s.registry.get('cutscenesSeen')?.includes('proSponsorEpilogue'))
       maybePlayProSponsorStory(s);
@@ -939,7 +952,10 @@ export function showProSeasonWithdrawal(s){
       const next=forfeitProfessionalSeason(circuit(s));
       if(next.error){dialog.label(477,next.error,17,'#ff98a1');return;}
       const state=s.registry.get('competitionState');
-      const changes={proCircuit:next.circuit};
+      const released=releaseProGarage(next.circuit,s.registry.get('ownedCarIds')||[],
+        s.registry.get('carGarageLocations')||{},Number(s.registry.get('garageTier')||0));
+      const changes={proCircuit:released.circuit,
+        carGarageLocations:released.carGarageLocations};
       if(state?.active&&state.proEvent)changes.competitionState=null;
       if(!commit(s,changes))return;
       dialog.close();redraw(s);
