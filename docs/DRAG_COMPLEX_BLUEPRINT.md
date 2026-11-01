@@ -11,9 +11,17 @@
 - The main Open Circuit sidebar introduces the rotating independent events and explains
   that their results affect **persistent professional rankings**, but **do not award
   official season qualification points**. Start Pro Season for Tokyo qualification.
-- Open Circuit individual events rotate **FF/FWD-only, RWD-only and AWD-only** classes
-  at the usual day/night offer transition. Driver/crew event names use generic
-  competition names; historical event IDs and saved results are unchanged.
+- Open Circuit individual offers follow a **twelve-slot day/night rotation** that
+  independently varies **open-class (any drivetrain), FF/FWD, RWD and AWD** entry,
+  **unlimited power or class caps** (180, 260, 380, 550 or 600 kW), and
+  **NOS permitted/prohibited**. Fully open individual races allow any
+  drivetrain, unlimited power and NOS; other offers mix restricted classes.
+  Every drivetrain has both capped and unlimited opportunities.
+  Individual competition names use **Sprint** or **Open**, never **Cup**;
+  **Trophy** is reserved for the prestige competitions. Original internal
+  event IDs, saved brackets and professional rankings are unchanged.
+  Open offers persist through the existing day/night slot, and paid/unpaid
+  registrations retain their snapshotted rules if the offer rotates.
 - At each **new** eight-round Pro Season registration, the player must own and
   explicitly nominate **exactly three personal cars: one FF/FWD, one RWD, one AWD**.
   Their IDs remain fixed for all individual professional races in that season and
