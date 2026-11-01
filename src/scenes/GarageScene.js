@@ -4455,9 +4455,9 @@ export default class GarageScene extends Phaser.Scene {
   // Stage crops the uploaded 1672x941 garage art to a 1138x528 viewport.
   getProGarageBayPlacement(number){
     return {
-      '04':{x:STAGE.x+316,contactY:STAGE.y+394,width:258,depth:8},
-      '05':{x:STAGE.x+607,contactY:STAGE.y+383,width:226,depth:7},
-      '06':{x:STAGE.x+934,contactY:STAGE.y+374,width:198,depth:6},
+      '04':{x:STAGE.x+316,contactY:STAGE.y+394,width:258,depth:12},
+      '05':{x:STAGE.x+607,contactY:STAGE.y+383,width:226,depth:8},
+      '06':{x:STAGE.x+934,contactY:STAGE.y+374,width:198,depth:4},
     }[String(number)]||null;
   }
 
@@ -4485,12 +4485,12 @@ export default class GarageScene extends Phaser.Scene {
         'BAY '+bay.number+'  //  '+(bay.drive==='FWD'?'FF':bay.drive),{
           fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f3d39f',
           backgroundColor:'#09131b',padding:{x:6,y:4},
-        }).setOrigin(.5,0).setDepth(12));
+        }).setOrigin(.5,0).setDepth(19));
       if(!bay.carId)continue;
       const node=this.add.text(x,top+28,'CHECKING EVENT RULES',{
         fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e9e6e0',
         backgroundColor:'#09131b',padding:{x:5,y:3},
-      }).setOrigin(.5,0).setDepth(12);
+      }).setOrigin(.5,0).setDepth(19);
       this.proGarageBayObjects.push(node);
       this.proGarageReadinessLabels.push({carId:bay.carId,node});
     }
