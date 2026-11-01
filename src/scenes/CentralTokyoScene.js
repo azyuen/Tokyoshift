@@ -3514,7 +3514,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ]
       : selectedFourWide
       ? [
-          'TROPHY COMP // FOUR-WIDE',
+          'DRIVER COMP // FOUR-WIDE',
           '16 DRIVERS // FOUR CARS PER HEAT',
           'QUALIFYING   4 HEATS',
           'SEMIFINALS   2 HEATS',
