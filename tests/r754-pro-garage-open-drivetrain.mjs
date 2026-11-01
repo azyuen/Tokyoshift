@@ -64,7 +64,7 @@ test('pro garage uses supplied day/night images and maintains 06 behind 05 behin
 });
 test('open circuit heading and subtitle replace rather than duplicate navigation text',()=>{
   const scene=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
-  assert.match(scene,/isOpen \? 'Open Circuit' : 'PRO DRAG CIRCUIT'/);
+  assert.match(scene,/isOpen \? 'Open Circuit' : 'PRO SEASON'/);
   assert.match(scene,/Rotating professional events, contributes to ranking\. Start PRO SEASON to qualify for the Tokyo Championship\./);
   assert.doesNotMatch(scene,/ROTATING DRIVER \/ CREW \/ TROPHY EVENTS/);
   assert.equal((scene.match(/Rotating professional events, contributes to ranking\./g)||[]).length,1);
