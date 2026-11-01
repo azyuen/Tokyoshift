@@ -4451,13 +4451,15 @@ export default class GarageScene extends Phaser.Scene {
     ];
   }
 
-  // Depth-calibrated painter's order: far/right 06, then 05, then near/left 04.
-  // Stage crops the uploaded 1672x941 garage art to a 1138x528 viewport.
+  // Larger race cars parked close together in the three authored bays.
+  // Keep tyre contact pinned to the same ground line while doubling displayed
+  // body width. Each car (wheels, decals, paint, body and shadow) retains its
+  // own depth group: 06 behind 05 behind 04. Overlap is intentional.
   getProGarageBayPlacement(number){
     return {
-      '04':{x:STAGE.x+316,contactY:STAGE.y+394,width:258,depth:12},
-      '05':{x:STAGE.x+607,contactY:STAGE.y+383,width:226,depth:8},
-      '06':{x:STAGE.x+934,contactY:STAGE.y+374,width:198,depth:4},
+      '04':{x:STAGE.x+255,contactY:STAGE.y+394,width:516,depth:12},
+      '05':{x:STAGE.x+515,contactY:STAGE.y+383,width:452,depth:8},
+      '06':{x:STAGE.x+800,contactY:STAGE.y+374,width:396,depth:4},
     }[String(number)]||null;
   }
 
@@ -5191,6 +5193,10 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildEngineHotspots() {
+    // The Pro paddock is a clean vehicle display. All install/remove actions
+    // remain in the full sidebar parts list; only the callout labels/leader
+    // lines painted over the garage cars are suppressed.
+    if (this.proGarageMode) return;
     const layout = this.heroCarLayout || {
       frontWheelX: 930,
       rearWheelX: 500,
@@ -6822,6 +6828,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildSecondaryHotspots(mode) {
+    // Engine, drivetrain and exhaust/NOS parts can all still be selected from
+    // the sidebar. Hide the extra on-car workshop modification callouts here.
+    if (this.proGarageMode) return;
     const isDrivetrain = mode === 'drivetrain';
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
     const layout = this.heroCarLayout || {
