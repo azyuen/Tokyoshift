@@ -4456,11 +4456,14 @@ export default class GarageScene extends Phaser.Scene {
   // body width. Each car (wheels, decals, paint, body and shadow) retains its
   // own depth group: 06 behind 05 behind 04. Overlap is intentional.
   getProGarageBayPlacement(number){
-    return {
+    const placement={
       '04':{x:STAGE.x+255,contactY:STAGE.y+394,width:516,depth:12},
       '05':{x:STAGE.x+515,contactY:STAGE.y+383,width:452,depth:8},
       '06':{x:STAGE.x+800,contactY:STAGE.y+374,width:396,depth:4},
-    }[String(number)]||null;
+    }[String(number)];
+    // Pull the cars forward/right out of the doorways: their rears should
+    // only slightly overlap their bays. Keep headings anchored to each bay.
+    return placement?{...placement,carX:placement.x+60}:null;
   }
 
   drawProGarageBayLineup(){
@@ -4472,11 +4475,11 @@ export default class GarageScene extends Phaser.Scene {
     for(const bay of [...bays].reverse()){
       const config=this.getProGarageBayPlacement(bay.number);
       if(!config)continue;
-      const {x,contactY,width,depth}=config;
+      const {x,carX,contactY,width,depth}=config;
       if(bay.carId&&cars[bay.carId]&&bay.carId!==this.selectedCarId){
         try{
           const y=this.getBodyYForWheelBottom(cars[bay.carId],width,contactY);
-          const sprites=this.createCarDisplay(cars[bay.carId],x,y,width,depth);
+          const sprites=this.createCarDisplay(cars[bay.carId],carX,y,width,depth);
           this.proGarageBayObjects.push(...sprites);
         }catch(error){
           console.warn('[Tokyo SHIFT] Pro Garage car art unavailable',bay.number,error);
@@ -4618,7 +4621,7 @@ export default class GarageScene extends Phaser.Scene {
     const placement=selectedBay?this.getProGarageBayPlacement(selectedBay.number):null;
     this.selectedDisplay = this.createCarDisplay(
       cars[id],
-      placement?.x??this.heroCarLayout.x,
+      placement?.carX??this.heroCarLayout.x,
       placement?
         this.getBodyYForWheelBottom(cars[id],placement.width,placement.contactY):
         this.heroCarLayout.bodyY,
@@ -6221,7 +6224,7 @@ export default class GarageScene extends Phaser.Scene {
     const placement=bay?this.getProGarageBayPlacement(bay.number):null;
     this.selectedDisplay = this.createCarDisplay(
       car,
-      placement?.x??layout.x,
+      placement?.carX??layout.x,
       placement?
         this.getBodyYForWheelBottom(car,placement.width,placement.contactY,this.pendingVisualMods):
         layout.bodyY,
