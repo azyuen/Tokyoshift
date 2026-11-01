@@ -28,12 +28,26 @@ test('drivetrain aliases, hero models and duplicated owned cars use one consiste
   assert.equal(getCarDrivetrain('s2000__copy2'),'RWD');
 });
 test('actual professional scrutineering enforces drivetrain and does not pass unknowns',()=>{
+  // Headless node test: scrutineering calls the real performance/AI estimator,
+  // whose Turbo simulation normally uses Phaser's pure math helpers.
+  // Supply only those helpers; production physics and eligibility stay intact.
+  const previousPhaser=globalThis.Phaser;
+  globalThis.Phaser={
+    Math:{
+      Clamp:(value,min,max)=>Math.min(max,Math.max(min,value)),
+      Linear:(start,end,t)=>start+(end-start)*t,
+    },
+  };
+  try {
   const right=getProfessionalCarEligibility('s2000',{}, {drivetrain:'RWD'});
   const wrong=getProfessionalCarEligibility('s2000',{}, {drivetrain:'AWD'});
   assert.equal(right.eligible,true,right.reasons.join(' / '));
   assert.equal(wrong.eligible,false);
   assert.match(wrong.reasons.join(' / '),/REQUIRES AWD/);
   assert.equal(getCarDrivetrain('car-id-not-in-catalogue'),null);
+  } finally {
+    globalThis.Phaser=previousPhaser;
+  }
 });
 test('pro garage uses supplied day/night images and maintains 06 behind 05 behind 04',()=>{
   assert.equal(getWorkshopPhaseBackground(PRO_GARAGE_WORKSHOP,'day').path,
