@@ -3503,7 +3503,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const seasonRules = event.seasonRules;
     const seasonPowerOk = !seasonRules?.maxPowerKW || power <= seasonRules.maxPowerKW;
     const seasonNosOk = !seasonRules?.noNos || !build?.nosInstalled;
-    const seasonCheck=build&&seasonRules?getProfessionalCarEligibility(build.carId,(this.registry.get('carStates')||{})[build.carId]||{},seasonRules):null;
+    const seasonCheck=openCircuit&&build&&seasonRules?
+      getProfessionalCarEligibility(build.carId,(this.registry.get('carStates')||{})[build.carId]||{},seasonRules):null;
     const seasonStockOk = !seasonRules?.stock || Boolean(seasonCheck&&!seasonCheck.reasons.some(r=>r.startsWith('MODIFIED ')||r.includes('TUNE')||r.includes('NITROUS')||r.includes('CALIBRATION')||r.includes('UNVERIFIED')||r.includes('INVALID')));
     // A calendar format is only enterable when its actual race scene exists.
     // Do not silently substitute a knockout for time attack or consistency.
