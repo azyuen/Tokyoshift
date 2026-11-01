@@ -1,4 +1,4 @@
-import { completeSeasonRound, getProSeasonSkillTier } from './proSeason.js?v=20261029-r714';
+import { completeSeasonRound, getProSeasonSkillTier, getProSeasonDriverCarError } from './proSeason.js?v=20261029-r714';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
@@ -60,7 +60,8 @@ function makeHeat(id, ids, stage, index) {
 
 export function createFourWideTournament(proCircuit, carId) {
   const c = normaliseProCircuitState(proCircuit);
-  if (c.activeTournament || c.activeCrewEvent || c.calendar.round >= 8) return null;
+  if (c.activeTournament || c.activeCrewEvent || c.calendar.round >= 8 ||
+      getProSeasonDriverCarError(c,carId)) return null;
   const id = FOUR_WIDE_CUP.id + ':s' + c.season + ':e' + (c.eventTick + 1);
   const selected = selectEntrants(c, id);
   const players = selected.map((r, i) => ({
