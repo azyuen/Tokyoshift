@@ -1084,7 +1084,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
     Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):
     Math.max(30000,Math.floor(Math.max(0,Number(state.prizeCash||0))*.12));
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
-  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'DRIVER CUP':'DRIVER SPRINT'),
+  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'DRIVER STREET SPRINT':'DRIVER SPRINT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
     ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
