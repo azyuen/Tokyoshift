@@ -155,7 +155,7 @@ import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261030-r724';
 import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261025-r686';
 import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261025-r686';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
+import { getActiveMagazineIssue, getCarDrivetrain } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -305,7 +305,7 @@ export default class GarageScene extends Phaser.Scene {
       ['day', 'night'].forEach(phase => {
         const background = getWorkshopPhaseBackground(activeWorkshop, phase);
         if (background?.key && background?.path) {
-          queueImage(background.key, background.path + '?v=20261022-r645');
+          queueImage(background.key, background.path + (this.proGarageMode ? '?v=20261101-r754' : '?v=20261022-r645'));
         }
       });
 
@@ -655,7 +655,6 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
-    if(this.proGarageMode)this.drawProGarageBayLineup();
     if (!this.crewMode && this.registry.get('openingChapter') === 'tutorial') {
       this.spawnOpeningCompanion('sayakaFujieda', false);
     }
@@ -691,6 +690,7 @@ export default class GarageScene extends Phaser.Scene {
       this.showCrewOverviewState();
     } else {
       this.showEmptyGarageState();
+      if(this.proGarageMode)this.drawProGarageBayLineup();
     }
 
     if (this.crewMode) {
@@ -1792,9 +1792,22 @@ export default class GarageScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#9cc6df'
       }).setOrigin(0, 0.5).setDepth(37);
 
-      this.specValueTexts[row[1]] = this.add.text(SIDE.x + SIDE.w - 20, y, '', {
-        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
-      }).setOrigin(1, 0.5).setDepth(37);
+      if(row[1]==='class'){
+        // One compact CLASS + DRIVETRAIN row, not a sixth spec row.
+        this.specValueTexts.class=this.add.text(SIDE.x+106,y,'',{
+          fontFamily:PIXEL_FONT,fontSize:'12px',color:'#ffffff',
+        }).setOrigin(0,0.5).setDepth(37);
+        this.add.text(SIDE.x+146,y,'DRIVETRAIN',{
+          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#9cc6df',
+        }).setOrigin(0,0.5).setDepth(37);
+        this.specValueTexts.drivetrain=this.add.text(SIDE.x+SIDE.w-20,y,'',{
+          fontFamily:PIXEL_FONT,fontSize:'11px',color:'#ffffff',
+        }).setOrigin(1,0.5).setDepth(37);
+      }else{
+        this.specValueTexts[row[1]] = this.add.text(SIDE.x + SIDE.w - 20, y, '', {
+          fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
+        }).setOrigin(1, 0.5).setDepth(37);
+      }
     });
 
     this.tuningStatusText = this.add.text(
@@ -4438,40 +4451,50 @@ export default class GarageScene extends Phaser.Scene {
     ];
   }
 
-  // Three real player-car sprites shown behind the main tuning work area.
-  // The selected car still uses the established GarageScene hero/tuning
-  // system; the paddock lineup is strictly a secondary static presentation.
-  drawProGarageBayLineup() {
+  // Depth-calibrated painter's order: far/right 06, then 05, then near/left 04.
+  // Stage crops the uploaded 1672x941 garage art to a 1138x528 viewport.
+  getProGarageBayPlacement(number){
+    return {
+      '04':{x:STAGE.x+316,contactY:STAGE.y+394,width:258,depth:8},
+      '05':{x:STAGE.x+607,contactY:STAGE.y+383,width:226,depth:7},
+      '06':{x:STAGE.x+934,contactY:STAGE.y+374,width:198,depth:6},
+    }[String(number)]||null;
+  }
+
+  drawProGarageBayLineup(){
+    if(!this.proGarageMode)return;
+    (this.proGarageBayObjects||[]).forEach(obj=>obj?.destroy?.());
+    this.proGarageBayObjects=[];
     const bays=getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds);
     this.proGarageReadinessLabels=[];
-    const centres=[STAGE.x+205,STAGE.x+STAGE.w/2,STAGE.x+STAGE.w-205];
-    bays.forEach((bay,index)=>{
-      const x=centres[index],id=bay.carId;
-      const label=this.add.text(x,STAGE.y+24,
-        'BAY '+bay.number+'  //  '+(bay.drive==='FWD'?'FF / FWD':bay.drive),{
-          fontFamily:PIXEL_FONT,fontSize:'10px',color:'#f3d39f',
-          backgroundColor:'#09131bdd',padding:{x:8,y:5},
-        }).setOrigin(.5,0).setDepth(6);
-      if(!id||!cars[id])return;
-      const status=this.add.text(x,STAGE.y+65,'CHECKING EVENT RULES',{
-        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e9e6e0',
-        backgroundColor:'#09131b',padding:{x:6,y:3},
-      }).setOrigin(.5,0).setDepth(6);
-      this.proGarageReadinessLabels.push({carId:id,node:status});
-      try {
-        const width=232;
-        const y=this.getBodyYForWheelBottom(cars[id],width,STAGE.y+STAGE.h-93);
-        this.createCarDisplay(cars[id],x,y,width,5);
-      } catch(error) {
-        console.warn('[Tokyo SHIFT] Pro Garage bay car rendering unavailable',id,error);
+    for(const bay of [...bays].reverse()){
+      const config=this.getProGarageBayPlacement(bay.number);
+      if(!config)continue;
+      const {x,contactY,width,depth}=config;
+      if(bay.carId&&cars[bay.carId]&&bay.carId!==this.selectedCarId){
+        try{
+          const y=this.getBodyYForWheelBottom(cars[bay.carId],width,contactY);
+          const sprites=this.createCarDisplay(cars[bay.carId],x,y,width,depth);
+          this.proGarageBayObjects.push(...sprites);
+        }catch(error){
+          console.warn('[Tokyo SHIFT] Pro Garage car art unavailable',bay.number,error);
+        }
       }
-    });
+      const top=STAGE.y+18;
+      this.proGarageBayObjects.push(this.add.text(x,top,
+        'BAY '+bay.number+'  //  '+(bay.drive==='FWD'?'FF':bay.drive),{
+          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f3d39f',
+          backgroundColor:'#09131b',padding:{x:6,y:4},
+        }).setOrigin(.5,0).setDepth(12));
+      if(!bay.carId)continue;
+      const node=this.add.text(x,top+28,'CHECKING EVENT RULES',{
+        fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e9e6e0',
+        backgroundColor:'#09131b',padding:{x:5,y:3},
+      }).setOrigin(.5,0).setDepth(12);
+      this.proGarageBayObjects.push(node);
+      this.proGarageReadinessLabels.push({carId:bay.carId,node});
+    }
     this.refreshProGarageScrutineering();
-    this.add.text(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h-24,
-      'DAICHI // INSTALL · UNINSTALL · RESTORE · SCRUTINEERING PREP',{
-        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f1d7a5',
-        backgroundColor:'#0b1726dd',padding:{x:12,y:7},
-      }).setOrigin(.5).setDepth(7);
   }
 
   refreshProGarageScrutineering(){
@@ -4587,13 +4610,20 @@ export default class GarageScene extends Phaser.Scene {
 
     this.heroCarLayout = this.buildWorkshopHeroLayout(cars[id]);
     if (!this.heroCarLayout) return;
+    const selectedBay=this.proGarageMode ?
+      getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
+        .find(bay=>bay.carId===id):null;
+    const placement=selectedBay?this.getProGarageBayPlacement(selectedBay.number):null;
     this.selectedDisplay = this.createCarDisplay(
       cars[id],
-      this.heroCarLayout.x,
-      this.heroCarLayout.bodyY,
-      this.heroCarLayout.targetWidth,
-      10
+      placement?.x??this.heroCarLayout.x,
+      placement?
+        this.getBodyYForWheelBottom(cars[id],placement.width,placement.contactY):
+        this.heroCarLayout.bodyY,
+      placement?.width??this.heroCarLayout.targetWidth,
+      placement?.depth??10
     );
+    if(this.proGarageMode)this.drawProGarageBayLineup();
 
     const car = cars[id];
     const carStates = this.registry.get('carStates') || {};
@@ -4631,6 +4661,8 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
     // Factory class is fixed for the car's original model; tuning cannot alter it.
     this.specValueTexts.class.setText(stockClassFor(car) || '—');
+    const resolvedDrive=getCarDrivetrain(car.id);
+    this.specValueTexts.drivetrain?.setText(resolvedDrive==='FWD'?'FF':resolvedDrive||'—');
 
     this.refreshTuningCategoryAvailability();
 
@@ -4677,6 +4709,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.torque.setText('—');
     this.specValueTexts.weight.setText('—');
     this.specValueTexts.class.setText('—');
+    this.specValueTexts.drivetrain?.setText('—');
     this.tuningStatusText
       ?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel)
       .setColor('#8cc8ec');
@@ -6778,6 +6811,8 @@ export default class GarageScene extends Phaser.Scene {
     );
     this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
     this.specValueTexts.class.setText(stockClassFor(car) || '—');
+    const resolvedDrive=getCarDrivetrain(car.id);
+    this.specValueTexts.drivetrain?.setText(resolvedDrive==='FWD'?'FF':resolvedDrive||'—');
   }
 
   buildSecondaryHotspots(mode) {
