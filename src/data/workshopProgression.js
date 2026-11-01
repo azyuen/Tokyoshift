@@ -46,6 +46,26 @@ export const WORKSHOP_TIERS = [
   },
 ];
 
+// The three-car Pro paddock is a temporary locked competition allocation.
+// It is not a fourth purchasable Shinonome property and does not expand
+// ordinary garage ownership/storage capacity.
+export const PRO_GARAGE_ID = 'tokyoProGarage';
+export const PRO_GARAGE_WORKSHOP = Object.freeze({
+  tier: 2,
+  id: PRO_GARAGE_ID,
+  label: 'TOKYO PRO GARAGE',
+  shortLabel: 'PRO GARAGE',
+  capacity: 3,
+  unlockCost: 0,
+  textureKey: 'tokyoProGarageNight',
+  phaseBackgrounds: {
+    day: {key:'tokyoProGarageNight',path:'assets/CentralTokyo/dragcomplex/regozoomed_night.png'},
+    night: {key:'tokyoProGarageNight',path:'assets/CentralTokyo/dragcomplex/regozoomed_night.png'},
+  },
+  serviceMultiplier: 1.25, // Warehouse HQ pricing and full tier-two tooling.
+  description: 'Three secured professional entries at Tokyo Drag Complex.',
+});
+
 export const MAX_GARAGE_CAPACITY = WORKSHOP_TIERS
   .reduce((total, workshop) => total + Number(workshop.capacity || 0), 0);
 
@@ -88,7 +108,8 @@ export function getWorkshopTier(value = 0) {
 }
 
 export function getWorkshopByLocationId(locationId) {
-  return WORKSHOP_TIERS.find(item => item.id === locationId) || WORKSHOP_TIERS[0];
+  return locationId === PRO_GARAGE_ID ? PRO_GARAGE_WORKSHOP :
+    WORKSHOP_TIERS.find(item => item.id === locationId) || WORKSHOP_TIERS[0];
 }
 
 export function getWorkshopPhaseBackground(locationOrWorkshop, phase = 'night') {
@@ -240,6 +261,17 @@ export function normaliseCarGarageLocations(
     .forEach(carId => {
       result[carId] = 'crewSpace';
     });
+
+  // Registered personal cars occupy the three separate professional bays.
+  // Preserve these assignments before allocating the regular property slots,
+  // including when older callers normalise storage without knowing the season.
+  let proCount = 0;
+  owned.forEach(carId => {
+    if (result[carId] || inputLocations?.[carId] !== PRO_GARAGE_ID ||
+        proCount >= PRO_GARAGE_WORKSHOP.capacity) return;
+    result[carId] = PRO_GARAGE_ID;
+    proCount++;
+  });
 
   // Preserve valid existing assignments for ordinary cars only.
   owned.forEach(carId => {
