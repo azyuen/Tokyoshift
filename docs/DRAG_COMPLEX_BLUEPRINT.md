@@ -6,6 +6,31 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## November 2026 R756 — Pro Season venue and Daichi event preparation
+
+- Season screen retains the rankings and progress bars but removes the
+  redundant yellow qualification forecast above the rankings button.
+- Professional season (not rotating Open Circuit) displays authored round-based
+  Driver and Crew event titles. The three event cards use a concise event-format
+  description; **up to 20 points** appears in each card footer in place of
+  Aruken sponsorship. Event IDs and results are unchanged.
+- Right navigation shows **PRO SEASON**. Its **PRO PADDOCK** button sits
+  below the heading; the existing **GO TO MAP** button keeps its bottom position.
+- Season event sidebars contain just the event's format, class/drivetrain,
+  power and NOS rules, available season points, and cash prize information.
+  Remove duplicate status, entry, attempt and registered-car receipts from
+  this overview (active event progression still resumes safely).
+- Entry opens **DAICHI // FREE EVENT PREPARATION** even when the travel car
+  currently selected is unregistered, too powerful, modified or the wrong
+  drivetrain. Players select among their three nominated season cars.
+  Daichi can lower/remove and refit **already purchased** hardware levels
+  without charging or granting parts. Changes are staged without payment
+  and committed with the driver's car selection only after positive
+  scrutineering at **GO TO GRID**.
+- Event fees, paid race registration, eligibility and race physics remain
+  authoritative in their existing entry routines. New preparation never
+  awards free purchased upgrades. Legacy roster-less season saves still enter.
+
 ## November 2026 R754 — Pro Garage artwork, visible drivetrain and Open Circuit header
 
 - Pro Garage now uses the uploaded **progarage_day.png** and **progarage_night.png** at
