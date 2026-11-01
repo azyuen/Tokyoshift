@@ -66,7 +66,8 @@ export function driverBriefingRules(state, fallback = {}) {
       (Number.isFinite(fallback.maxPowerKW)?fallback.maxPowerKW:null),
     noNos: typeof saved.noNos === 'boolean' ? saved.noNos : Boolean(fallback.noNos),
     stock: typeof saved.stock === 'boolean' ? saved.stock : Boolean(fallback.stock),
-    drivetrain: String(saved.drivetrain || fallback.drivetrain || '').toUpperCase(),
+    drivetrain: String(Object.prototype.hasOwnProperty.call(saved,'drivetrain') ?
+      (saved.drivetrain||'') : (fallback.drivetrain||'')).toUpperCase(),
   };
 }
 
