@@ -59,8 +59,11 @@ export function purchaseDriverBriefingEntry({
 export function driverBriefingRules(state, fallback = {}) {
   const saved = state?.briefingRules || {};
   return {
-    maxPowerKW: Number.isFinite(saved.maxPowerKW) ? saved.maxPowerKW :
-      Number.isFinite(fallback.maxPowerKW) ? fallback.maxPowerKW : null,
+    // An explicit saved null means UNLIMITED. Do not inherit the old base
+    // event's capped fallback after the offer rotates mid-competition.
+    maxPowerKW: Object.prototype.hasOwnProperty.call(saved,'maxPowerKW') ?
+      (Number.isFinite(saved.maxPowerKW)?saved.maxPowerKW:null) :
+      (Number.isFinite(fallback.maxPowerKW)?fallback.maxPowerKW:null),
     noNos: typeof saved.noNos === 'boolean' ? saved.noNos : Boolean(fallback.noNos),
     stock: typeof saved.stock === 'boolean' ? saved.stock : Boolean(fallback.stock),
     drivetrain: String(saved.drivetrain || fallback.drivetrain || '').toUpperCase(),
