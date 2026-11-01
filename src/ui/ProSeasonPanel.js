@@ -928,7 +928,8 @@ export function showProSeasonRegistration(s,selected={},pages={}){
     // paddock. Return those before allocating this season's three bays.
     const old=releaseProGarage(current,ownedNow,
       s.registry.get('carGarageLocations')||{},Number(s.registry.get('garageTier')||0));
-    const staged=stageProGarage(next.circuit,ownedNow,old.carGarageLocations,
+    const staged=stageProGarage({...next.circuit,proGarageOrigins:null},
+      ownedNow,old.carGarageLocations,
       Number(s.registry.get('garageTier')||0));
     if(staged.error){s.proError=staged.error;o.close();redraw(s);return;}
     if(!commit(s,{proCircuit:staged.circuit,
