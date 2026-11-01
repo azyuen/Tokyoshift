@@ -2096,8 +2096,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedCar = cars[selectedCarId];
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
     const storyCarLocked = isArkonStory240zProtected(this.registry,selectedCarId);
+    const registered=Boolean(normaliseProCircuitState(this.registry.get('proCircuit'))
+      .proGarageOrigins?.[selectedCarId]);
     const collectorLocked = Boolean(
-      storyCarLocked || selectedCar?.tuningLocked ||
+      registered || storyCarLocked || selectedCar?.tuningLocked ||
       selectedState.collector ||
       selectedState.immutable ||
       selectedCar?.crewLoan ||
@@ -2130,7 +2132,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       canSell
         ? 'SELL ' + selectedCar.shortName + ' // ' + money(sellPrice)
         : collectorLocked
-          ? (storyCarLocked ? 'STORY 240Z // NOT FOR SALE' :
+          ? (registered ? 'PRO SEASON CAR // NOT FOR SALE' : storyCarLocked ? 'STORY 240Z // NOT FOR SALE' :
             selectedCar?.crewLoan || selectedState.crewLoan
               ? 'CREW LOAN // NOT FOR SALE'
               : 'COLLECTOR CAR NOT TRADED')
@@ -2456,6 +2458,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   sellSelectedCar(carId, salePrice) {
+    // All three cars are committed to their Pro Season garage and may not
+    // be traded, including between events or from a stale confirmation.
+    if(normaliseProCircuitState(this.registry.get('proCircuit'))
+      .proGarageOrigins?.[carId])return;
     // Registered professional tournament cars cannot be sold mid-event.
     if (normaliseProCircuitState(this.registry.get('proCircuit'))
       .activeTournament?.carId === carId) return;
