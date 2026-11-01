@@ -32,7 +32,9 @@ const rivals={
   shinjukuGodzilla:{id:'renKurosawa',carId:'evo5'},
   shibuyaDogenzaka:{id:D,carId:'ae86'},
 };
-const meet=(venue,caption,carId,cast=pair)=>{
+// Road tests use his casual driving outfit; the workshop pair stays in workwear.
+const roadPair=[{id:A,pose:'storyIdle'},{id:S,pose:'homeNormal',role:'companion'}];
+const meet=(venue,caption,carId,cast=roadPair)=>{
   const rival=rivals[venue];
   const getPose=id=>cast.find(actor=>actor.id===id)?.pose;
   const playerCar=venue==='shibuyaDogenzaka'?'$SELECTED_CAR':carId;
@@ -117,7 +119,7 @@ export const ARKON_CHAPTER_05={
       ark('I try to keep the interesting cars at the front.','storyConfidentSmirk'),
       say('You fixed the fault everyone else missed?','oshiageReviewing'),
       ark('I found it. Fixing it was the easy part.','storyMechanic'),
-      say('Then shall we find out whether it drives as well as you say?','oshiageHappy'),
+      say('Then shall we find out whether it drives as well as you say?','homeConfident'),
       ark('Shinagawa?','storyTalking'),
       say('I know somebody there who will give us a proper run.','oshiageRelaxed'),
       ark('I knew there was a reason I liked your company.','storyConfidentSmirk'),
@@ -149,7 +151,7 @@ export const ARKON_CHAPTER_05={
     {type:'LABEL',name:'r34Lost'},
     manga('THE IMPORTANT RESULT',[
       ark('The race could have gone better. The repair survived perfectly.','storyThinking'),
-      say('A test drive measures the car, not just the driver. Your client will be pleased.','oshiageHappy'),
+      say('A test drive measures the car, not just the driver. Your client will be pleased.','homeExplaining'),
     ]),
     {type:'LABEL',name:'r34Reunion'},
     manga('A WELL-EARNED INVOICE',[
@@ -187,15 +189,15 @@ export const ARKON_CHAPTER_05={
     ]),
     manga('THE DAY SHE NEEDED A FRIEND',[
       ark('You have gone very quiet. Difficult day at Oshiage?','storyThinking'),
-      say('A student froze on the start line. I thought I had helped him feel ready.','oshiageSerious'),
-      say('He went home convinced he should never drive again.','oshiageReviewing'),
+      say('A student froze on the start line. I thought I had helped him feel ready.','homeSad'),
+      say('He went home convinced he should never drive again.','homeSad'),
       ark('That sounds hard.','storySerious'),
-      say('I keep wondering whether I asked too much, too soon.','oshiageSerious'),
+      say('I keep wondering whether I asked too much, too soon.','homeContemplative'),
       ark('You are allowed a difficult day, Sayaka.','storyTalking'),
       ark('Let me put the spanner down. This can wait.','storyMechanic'),
       say('You are not going to explain the perfect clutch technique?','oshiageRelaxed'),
       ark('Not unless you ask. You came here to talk.','storySheepish'),
-      say('I did. I knew you would understand.','oshiageHappy'),
+      say('I did. I knew you would understand.','homeNormal'),
       ark('There is a chair that does not smell entirely of petrol.','storyLaughing'),
       say('Such luxury. I think I will stay a while.','oshiageHappy'),
     ]),
@@ -247,7 +249,7 @@ export const ARKON_CHAPTER_05={
     manga('MORE THAN A MECHANIC',[
       say('I passed on your number. He was looking for somebody thorough.','oshiageNeutral'),
       ark('I thought you were looking for someone to pay for dinner.','storyConfidentSmirk'),
-      say('I am perfectly capable of paying for dinner. Your business is another matter.','oshiageReviewing'),
+      say('I am perfectly capable of paying for dinner. Your business is another matter.','homeConfident'),
       ark('Then thank you. Truly.','storySerious'),
       say('Do not thank me yet. The owner expects an impressive demonstration.','oshiageHappy'),
       ark('Where?','storyThinking'),
@@ -269,7 +271,7 @@ export const ARKON_CHAPTER_05={
     ...meet('shinjukuGodzilla','AFTER THE SHINJUKU CHALLENGE','topSecretSupra'),
     manga('A NAME PEOPLE KNOW',[
       ark('That was a very expensive car to take out for a test.','storySheepish'),
-      say('And you brought it home in one piece. The client has already asked about the next project.','oshiageHappy'),
+      say('And you brought it home in one piece. The client has already asked about the next project.','homeExplaining'),
       ark('What next project?','storySurprised'),
       say('I said you would have to ask him. I have lessons in the morning.','oshiageRelaxed'),
       ark('You make a remarkably effective business partner.','storyConfidentSmirk'),
@@ -356,9 +358,9 @@ export const ARKON_CHAPTER_05={
     ]),
     manga('COMPLETELY IN SYNC',[
       ark('We are not a couple!','storyBlushing'),
-      say('We are not a couple!','oshiageHappy'),
+      say('We are not a couple!','homeBlushing'),
       ark('We just test cars together.','storyCoolShy'),
-      say('And we are friends.','oshiageRelaxed'),
+      say('And we are friends.','homeBlushing'),
     ]),
     manga('A PERFECT EXIT',[
       ['left','Even your denials arrive together. That is adorable.','idle'],
@@ -371,7 +373,7 @@ export const ARKON_CHAPTER_05={
       say('That man is insufferable.','oshiageRelaxed'),
       ark('Completely.','storySheepish'),
       ark('Fastest pair in Tokyo, though. Has a certain ring to it.','storyConfidentSmirk'),
-      say('Do not push your luck, Aruken.','oshiageHappy'),
+      say('Do not push your luck, Aruken.','homeBlushing'),
       ark('Would not dream of it.','storyCoolShy'),
     ]),
     {type:'HOLD_SCENE',label:'CHAPTER 05 COMPLETE',caption:'THE FASTEST PAIR IN TOKYO'},

@@ -49,7 +49,7 @@ function makeDialogueCard(scene, {
     layout,
     side,
     speaker,
-    initialPose: 'idle',
+    initialPose: asset?.pose || 'idle',
     spriteKeyForPose: () => asset?.key || '',
     characterVisual,
     phoneIconKey: PHONE_TEXTURE,
@@ -107,6 +107,8 @@ export function playOpeningPhonePrototype(scene, {
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || 'renMizuno';
   const assets = getOpeningPhoneAssets(callerId, callerPose, playerCharacterId);
   if(!callerId)assets.caller={key:ANONYMOUS_CALLER_TEXTURE,path:ANONYMOUS_CALLER_PATH};
+  const callerPortraits = chapter.map(page => callerId && page?.speaker !== 'player'
+    ? getCharacterVisualAsset(callerId, page?.pose || callerPose) : assets.caller);
   const fullVars = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'Driver').trim() || 'Driver',
     ...variables,
@@ -158,7 +160,7 @@ export function playOpeningPhonePrototype(scene, {
     const player = page.speaker === 'player';
     const actor = player ? characters[playerCharacterId] : characters[callerId];
     const anonymous=!player && !callerId;
-    const asset = player ? assets.player : assets.caller;
+    const asset = player ? assets.player : callerPortraits[index];
     const vars = { ...fullVars, ...(page.variables || {}) };
     const text = formatMessage(page.text, vars);
     const card = makeDialogueCard(scene, {
@@ -248,7 +250,7 @@ export function playOpeningPhonePrototype(scene, {
   };
 
   const queued = [];
-  for (const asset of [assets.caller, assets.player]) {
+  for (const asset of [assets.caller, assets.player, ...callerPortraits]) {
     if (asset?.key && asset?.path && !scene.textures.exists(asset.key) &&
         !queued.some(entry => entry[0] === asset.key)) {
       queued.push([asset.key, getCharacterAssetUrl(asset.path)]);

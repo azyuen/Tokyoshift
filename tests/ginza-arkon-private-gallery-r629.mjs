@@ -31,7 +31,7 @@ test('owner-specific dialogue is relaxed, shows both portraits and never replace
   assert.equal(scene.characters.left, 'sayakaFujieda');
   assert.equal(scene.characters.right, 'arkonDen');
   assert.deepEqual(scene.pages.map(p => p.speaker), ['left', 'right', 'left', 'left']);
-  assert.ok(scene.pages.every(p => p.leftPose === 'normal'));
+  assert.deepEqual(scene.pages.map(p => p.leftPose), ['happy', 'normal', 'serious', 'normal']);
   assert.ok(scene.pages.every(p => p.rightPose === 'ginzaSuit'));
   assert.match(scene.pages[0].text, /where are you off to/i);
   assert.match(scene.pages[1].text, /regular night out/i);

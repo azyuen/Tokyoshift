@@ -174,6 +174,9 @@ export function playPhoneConversation(scene, {
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
   const playerPortraitAsset = getPhoneCallerPortrait(playerCharacterId, 'idle');
   const playerActor = characters[playerCharacterId];
+  // Resolve once so rendering and preloading use the same authored caller poses.
+  const callerPortraits = normalisedPages.map(page => callerId && page.speaker !== 'player'
+    ? getPhoneCallerPortrait(callerId, page.pose || callerPose) : portraitAsset);
   const localVariables = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'there').trim() || 'there',
     ...variables,
@@ -248,8 +251,8 @@ export function playPhoneConversation(scene, {
         speaker: isPlayer
           ? 'YOU: ' + String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
           : 'CALL: ' + callerHeading,
-        initialPose: isPlayer ? 'idle' : callerPose,
-        spriteKeyForPose: () => (isPlayer ? playerPortraitAsset : portraitAsset)?.key || '',
+        initialPose: isPlayer ? 'idle' : page.pose || callerPose,
+        spriteKeyForPose: () => (isPlayer ? playerPortraitAsset : callerPortraits[state.pageIndex])?.key || '',
         characterVisual: !isPlayer&&!callerId
           ? ANONYMOUS_CALLER_VISUAL
           : (isPlayer ? playerActor : caller)?.visual || {},
@@ -284,7 +287,7 @@ export function playPhoneConversation(scene, {
   };
 
   const queued = [];
-  for (const asset of [portraitAsset, playerPortraitAsset]) {
+  for (const asset of [portraitAsset, playerPortraitAsset, ...callerPortraits]) {
     if (asset?.key && asset?.path && !scene.textures.exists(asset.key) &&
         !queued.some(entry => entry[0] === asset.key)) {
       queued.push([asset.key, getCharacterAssetUrl(asset.path)]);

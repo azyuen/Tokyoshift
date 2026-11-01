@@ -45,6 +45,7 @@ export function playCanalYardStory(scene, {
       callerPose: 'homeHappy', label: 'INCOMING CALL',
       pages: chapter.pages.slice(5, 12).map(page => ({
         speaker: page.speaker === 'right' ? 'player' : 'caller',
+        pose: page.speaker === 'right' ? undefined : page.leftPose || page.pose,
         text: page.text,
       })),
     },

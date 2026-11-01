@@ -250,7 +250,7 @@ export default class RaceScene extends Phaser.Scene {
     } else if (tutorialQueued) {
       // First workshop lesson: Sayaka wears her home clothes, not her
       // Oshiage instructor disguise or her eventual Ginza racing outfit.
-      for (const pose of ['homeNormal', 'homeHappy', 'homeSad']) {
+      for (const pose of ['homeNormal', 'homeHappy', 'homeSad', 'homeExplaining']) {
         const asset = characters.sayakaFujieda.visual.poseAssets[pose];
         queueImage(asset.key, getCharacterAssetUrl(asset.path));
       }
@@ -2504,7 +2504,7 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.get('oshiageLocation')==='oshiageDrivingSchool';
     const homePoses = {
       neutral: 'characterSayakaHomeNormal',
-      explaining: 'characterSayakaHomeNormal',
+      explaining: 'characterSayakaHomeExplaining',
       happy: 'characterSayakaHomeHappy',
       concerned: 'characterSayakaHomeSad',
     };
@@ -6186,4 +6186,3 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 }
-

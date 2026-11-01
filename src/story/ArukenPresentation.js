@@ -34,6 +34,9 @@ export function polishArukenPresentation(script){
   let cast=[],closingTime=false,atSchool=false;
   const civilianByDefault=civilianChapters.has(script.id);
   for(const [index,step] of script.steps.entries()){
+    // A cleared tableau must not impose its work clothes on a later school,
+    // road or off-duty conversation. Keep real mechanic scenes outfit-safe.
+    if(step.type==='CLEAR_STAGE'){cast=[];closingTime=false;}
     if(script.id==='arkonChapter02'&&step.type==='WAIT_SCENE'){
       if(step.scene==='OshiageScene')atSchool=true;
       else if(step.scene==='MeetScene'||step.scene==='GarageScene')atSchool=false;
