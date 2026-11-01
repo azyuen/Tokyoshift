@@ -16,6 +16,7 @@ import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
+import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261102-r756';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
@@ -3054,6 +3055,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
     };
   }
 
+  // Display names are round-specific, but the professional race IDs, rules,
+  // points and save records remain unchanged. The plain Sprint/Open names
+  // continue to apply exclusively to the rotating Open Circuit.
+  getProSeasonEventNames(round) {
+    return [
+      {driver:'TOKYO LAUNCH CHALLENGE',crew:'SHUTO TEAM SHOWDOWN'},
+      {driver:'MIDNIGHT PRECISION TRIAL',crew:'EASTERN EXPRESS RELAY'},
+      {driver:'NEON FOUR-WIDE CLASSIC',crew:'HARBOR TEAM SPRINT'},
+      {driver:'FF CONSISTENCY CHALLENGE',crew:'PRECISION CREW CHALLENGE'},
+      {driver:'ALL-WHEEL SHOWDOWN',crew:'METROPOLITAN FOUR-WIDE'},
+      {driver:'FACTORY PERFORMANCE TRIAL',crew:'NIGHTSHIFT RELAY'},
+      {driver:'RWD FOUR-WIDE CHALLENGE',crew:'TEAM PRECISION TRIAL'},
+      {driver:'TOKYO FINALS SPRINT',crew:'CAPITAL CREW SHOWDOWN'},
+    ][Math.max(0,Math.min(7,Number(round)||0))];
+  }
+
   getProDragEvents() {
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const legacy = this.registry.get('competitionState');
@@ -3143,9 +3160,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
+    const proNames=this.getProSeasonEventNames(round);
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
-      seasonRules: rules.driver,
-      label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };
+      seasonRules: rules.driver, label: proNames.driver };
     // Rotating Elite Invitational: five Driver/three Crew starting rounds,
     // adapting deterministically when one point requirement falls behind.
     const invitationalDiscipline=getProInvitationalDiscipline(pro);
@@ -3165,7 +3182,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       label:proCircuitSpecialEligible(this.registry)?'TOKYO CHAMPIONSHIP':'MINOR TROPHIES',
       specialSlot:true,entryFee:0,requiredWins:0};
     const choices=[driver,{...CREW_SERIES,seasonChoice:'standard',
-      format:rules.crew.format,requiredWins:0},
+      format:rules.crew.format,label:proNames.crew,requiredWins:0},
       round<8&&pro.seasonStatus==='ACTIVE'?
         (invitationalDiscipline==='DRIVER'?alternateDriver:alternateCrew):special];
     if(legacy?.active&&legacy.proEvent&&!legacy.openCircuit){
@@ -3203,7 +3220,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     const isOpen = isOpenCircuitAvailable(this.registry.get('proCircuit'));
     this.drawNavigation(
-      isOpen ? 'Open Circuit' : 'PRO DRAG CIRCUIT',
+      isOpen ? 'Open Circuit' : 'PRO SEASON',
       isOpen
         ? 'Rotating professional events, contributes to ranking. Start PRO SEASON to qualify for the Tokyo Championship.'
         : circuitOpen
@@ -3320,26 +3337,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.seasonEnd?
-        (event.reportDiscipline==='DRIVER'?'DRIVER SEASON POINTS':
-          event.reportDiscipline==='TEAM'?'CREW SEASON POINTS':'OFFICIAL FINAL REPORT') :
-        event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? (event.seasonChoice==='alternative'?'ELITE CREW // 20 POINTS MAX':(event.format||'DUEL').replaceAll('_','-')+' // CREW POINTS // 20 MAX') : event.seasonChoice==='alternative'?'ELITE DRIVER // 20 POINTS MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
-        fontFamily: BODY_FONT,
-        fontSize: '10px',
-        color: unlocked ? '#d9cacb' : '#7f7377',
-        fontStyle: '600',
+      const cardFormat=event.seasonRules?.format||event.format||
+        (event.fourWide?'FOUR_WIDE':'KNOCKOUT');
+      const formatCaption=event.seasonEnd?'FINAL STANDINGS':
+        event.trophySlotClosed?'NO INVITATION THIS CYCLE':
+        event.trophyId?'PRESTIGE // '+event.trophyFixtures+' STAGES':
+        event.openCircuit?(event.team?'THREE-DRIVER TEAM EVENT':'OPEN PROFESSIONAL RACING'):
+        event.specialSlot?'CHAMPIONSHIP & TROPHIES':
+        event.team?'CREW // '+cardFormat.replaceAll('_',' '):
+        cardFormat==='TIME_ATTACK'?'THREE RUNS // FASTEST TIME':
+        cardFormat==='CONSISTENCY'?'THREE RUNS // CLOSEST TIMES':
+        cardFormat==='FOUR_WIDE'?'FOUR-WIDE ELIMINATION':'DRIVER // HEAD-TO-HEAD';
+      this.addContent(this.add.text(x - 145,CARDS.y + 98,formatCaption,{
+        fontFamily:BODY_FONT,fontSize:'10px',
+        color:unlocked?'#d9cacb':'#7f7377',fontStyle:'600',
       }).setDepth(34));
-
-      this.addContent(this.add.text(
-        x + 145,
-        CARDS.y + 136,
-        event.seasonEnd?'RESULTS READY':event.trophySlotClosed?'':event.entryFee===0?'ARUKEN SPONSORED':'ENTRY ' + money(event.entryFee),
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: unlocked ? '#f2dadc' : '#817d84',
-        }
-      ).setOrigin(1, 0.5).setDepth(34));
+      this.addContent(this.add.text(x+145,CARDS.y + 136,
+        event.seasonEnd?'RESULTS READY':event.trophySlotClosed?'':event.openCircuit?
+          (event.entryFee===0?'ENTRY COVERED':'ENTRY '+money(event.entryFee)):
+          event.specialSlot?'CHAMPIONSHIP QUALIFICATION':'UP TO 20 SEASON POINTS',{
+          fontFamily:PIXEL_FONT,fontSize:'7px',
+          color:unlocked?'#f2dadc':'#817d84',
+        }).setOrigin(1,.5).setDepth(34));
 
       box.on('pointerdown', () => {
         this.selectedEventIndex = index;
@@ -3350,15 +3369,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawDragSide(events[this.selectedEventIndex], build);
     showProSeasonAction(this,SIDE);
     const proGarage=normaliseProCircuitState(this.registry.get('proCircuit'));
-    if(proGarage.proGarageOrigins&&proGarage.registeredDriverCars?.length===3){
-      const x=SIDE.x+SIDE.w/2,y=SIDE.y+674;
+    if(!isOpen&&proGarage.proGarageOrigins&&proGarage.registeredDriverCars?.length===3){
+      // This sits under the PRO SEASON navigation heading, not over GO TO MAP.
+      const x=SIDE.x+SIDE.w/2,y=SIDE.y+133;
       const button=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
         0x123142,1).setStrokeStyle(2,0x66c4e8,1).setDepth(38)
         .setInteractive({useHandCursor:true}));
-      const label=this.addContent(this.add.text(x,y,'PRO GARAGE  //  04 AWD · 05 RWD · 06 FF',{
+      this.addContent(this.add.text(x,y,'PRO PADDOCK  //  04 AWD · 05 RWD · 06 FF',{
         fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e8f7ff',
       }).setOrigin(.5).setDepth(39));
-      label.setScale(Math.min(1,(SIDE.w-52)/Math.max(1,label.width)));
       button.on('pointerdown',()=>{
         const latest=normaliseProCircuitState(this.registry.get('proCircuit'));
         if(!latest.proGarageOrigins)return;
