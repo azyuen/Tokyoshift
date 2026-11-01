@@ -4122,12 +4122,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Every entrant, including returning region champions, must pass the
     // PLAYER'S exact power/NOS/stock/drivetrain class before payment. A
     // pre-selected 5-star AI build is not automatically a legal 260 kW car.
+    // The Pro Season calendar replaces (rather than adds to) the reused
+    // Open Circuit base IDs' power, NOS, stock and drivetrain restrictions.
+    const effectiveRules=openCircuit?event:event.seasonRules||{};
     const rivalRules={
-      maxPowerKW:Number.isFinite(event.seasonRules?.maxPowerKW)?event.seasonRules.maxPowerKW:
-        Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
-      noNos:Boolean(event.seasonRules?.noNos||event.noNos),
-      stock:Boolean(event.stock||(!openCircuit&&event.seasonRules?.stock)),
-      drivetrain:String(event.drivetrain||(!openCircuit&&event.seasonRules?.drivetrain)||'').toUpperCase(),
+      maxPowerKW:Number.isFinite(effectiveRules.maxPowerKW)?
+        effectiveRules.maxPowerKW:null,
+      noNos:Boolean(effectiveRules.noNos),
+      stock:Boolean(effectiveRules.stock),
+      drivetrain:String(effectiveRules.drivetrain||'').toUpperCase(),
     };
     const checkedRounds=rounds.map((round,index)=>scrutineerProOpponentRound(
       round,rivalRules,{
