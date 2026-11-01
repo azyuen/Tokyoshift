@@ -314,7 +314,13 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
   if(rules.stock)reasons.push(...getFactoryStockStatus(carState).reasons);
-  if(rules.noNos&&(Boolean(carState?.nosInstalled)||Number(carState?.exhaustNosTuning?.nosKit||0)>0))reasons.push('NOS PROHIBITED');
+  // Sealed collectors may carry factory-defined nitrous even when their saved
+  // state has no aftermarket kit. Scrutineering must inspect both sources.
+  const installedNos = Boolean(carState?.nosInstalled) ||
+    Number(carState?.exhaustNosTuning?.nosKit||0)>0 ||
+    (carState?.nosInstalled!==false && Number(car.nosPower||0)>0 &&
+      Number(car.nosShots||car.nosCapacitySeconds||0)>0);
+  if(rules.noNos&&installedNos)reasons.push('NOS PROHIBITED');
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }
