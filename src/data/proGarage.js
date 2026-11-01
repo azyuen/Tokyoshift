@@ -2,7 +2,7 @@
 // vehicle ownership/tuning remains the ordinary garage registry; this only
 // changes physical workshop assignment, never car or part inventory.
 import { normaliseProCircuitState } from './proCircuit.js';
-import { getProQualification } from './proSeason.js';
+import { getProQualification, getProDriverDrivetrain } from './proSeason.js';
 import {
   PRO_GARAGE_ID, WORKSHOP_TIERS, getUnlockedWorkshops,
   normaliseCarGarageLocations,
@@ -64,11 +64,8 @@ export function getProGarageBayCars(raw,ownedCarIds=[]){
   const c=normaliseProCircuitState(raw);
   if(!c.proGarageOrigins||!Array.isArray(c.registeredDriverCars))return [];
   return PRO_GARAGE_BAYS.map(bay=>{
-    const id=c.registeredDriverCars.find(carId=>{
-      // Input registration stores the ordered FF, RWD, AWD car IDs.
-      const index=c.registeredDriverCars.indexOf(carId);
-      return ({0:'FWD',1:'RWD',2:'AWD'})[index]===bay.drive;
-    });
+    const id=c.registeredDriverCars.find(carId=>
+      getProDriverDrivetrain(carId)===bay.drive);
     return {...bay,carId:ownedCarIds.includes(id)?id:null};
   });
 }
