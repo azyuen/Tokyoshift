@@ -982,7 +982,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
       c.eventTick++;
       c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
     }
-    const summary={id:t.id,label:t.seasonChoice==='alternative'?t.label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
+    const summary={id:t.id,label:t.seasonChoice==='alternative'?t.label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
       ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,fourWidePoints,ownTotal,opponentTotal,ownSpread,opponentSpread,
       sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
@@ -1084,7 +1084,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
     Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):
     Math.max(30000,Math.floor(Math.max(0,Number(state.prizeCash||0))*.12));
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
-  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
+  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'DRIVER CUP':'DRIVER SPRINT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
     ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
