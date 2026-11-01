@@ -3549,7 +3549,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const title = activeDuelHere && (
       !activeDuel.eventId || activeDuel.eventId === 'tokyoInvitational'
-    ) ? 'ACTIVE DRIVER EVENT' : selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
+    ) ? 'ACTIVE DRIVER EVENT' : selectedFourWide&&openCircuit ? 'FOUR-WIDE OPEN' : event.label;
     drawProEventSidebarTitle(this,SIDE,title);
 
     const desc = activeDuelHere && (!activeDuel.eventId ||
@@ -3645,7 +3645,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     drawProEventSidebarDetails(this,SIDE,desc);
 
-    const label = !openCircuit&&!resuming&&canEnter?'':resuming
+    const label = !openCircuit&&!resuming&&canEnter?'':!openCircuit&&resuming?
+      'READY TO RESUME EVENT':resuming
       ? activeTimedHere ? 'READY // ATTEMPT ' + (pro.activeTimedEvent.attempts.length+1) + '/3' : selectedFourWide
         ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
         : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
