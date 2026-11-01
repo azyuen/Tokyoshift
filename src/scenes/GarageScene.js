@@ -6209,12 +6209,18 @@ export default class GarageScene extends Phaser.Scene {
     const layout = this.buildWorkshopHeroLayout(car, this.pendingVisualMods);
     if (!layout) return;
     this.heroCarLayout = layout;
+    const bay=this.proGarageMode?
+      getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
+        .find(item=>item.carId===this.selectedCarId):null;
+    const placement=bay?this.getProGarageBayPlacement(bay.number):null;
     this.selectedDisplay = this.createCarDisplay(
       car,
-      layout.x,
-      layout.bodyY,
-      layout.targetWidth,
-      10,
+      placement?.x??layout.x,
+      placement?
+        this.getBodyYForWheelBottom(car,placement.width,placement.contactY,this.pendingVisualMods):
+        layout.bodyY,
+      placement?.width??layout.targetWidth,
+      placement?.depth??10,
       this.pendingVisualMods
     );
 
