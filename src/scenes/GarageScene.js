@@ -223,9 +223,10 @@ export default class GarageScene extends Phaser.Scene {
     this.proGarageMode = Boolean(currentPro.proGarageOrigins &&
       (data?.proGarageMode || data?.workshopLocationId===PRO_GARAGE_ID ||
         this.registry.get('workshopLocationId')===PRO_GARAGE_ID));
-    this.proGarageReturnWorkshopId =
-      data?.returnWorkshopId && data.returnWorkshopId!==PRO_GARAGE_ID ?
-        data.returnWorkshopId : 'shinonomeWarehouseStrip';
+    const fallbackTier=Math.max(0,Math.min(2,Number(this.registry.get('garageTier')||0)));
+    const fallbackWorkshop=WORKSHOP_TIERS[fallbackTier]?.id||'shinonomeWorkshop';
+    this.proGarageReturnWorkshopId=WORKSHOP_TIERS.some(w=>w.id===data?.returnWorkshopId) ?
+      data.returnWorkshopId : fallbackWorkshop;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
     this.storyArchiveChapter = data?.storyArchiveChapter || null;
     this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
