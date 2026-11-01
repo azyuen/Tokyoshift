@@ -117,8 +117,8 @@ import {
 } from '../data/workshopProgression.js?v=20261024-r675';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getProGarageBayCars } from '../data/proGarage.js?v=20261101-r753';
-import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261101-r753';
-import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261101-r753';
+import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
+import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261030-r741';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
