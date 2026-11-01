@@ -51,9 +51,9 @@ test('Pro Garage bay vehicles sit farther right while the bay signs stay anchore
     assert.equal(item.carX-item.x,60,bay+' rear clears more of the doorway');
     assert.ok(item.width>0&&item.contactY>0,bay+' retains size and tyre contact');
   }
-  assert.match(source,/const \\{x,carX,contactY,width,depth\\}=config;/);
-  assert.match(source,/createCarDisplay\\(cars\\[bay\\.carId\\],carX,y,width,depth\\)/);
-  assert.match(source,/this\\.add\\.text\\(x,top,/,'bay signage does not move with vehicles');
-  assert.equal((source.match(/placement\\?\\.carX\\?\\?/g)||[]).length,2,
+  assert.ok(source.includes('const {x,carX,contactY,width,depth}=config;'));
+  assert.ok(source.includes('this.createCarDisplay(cars[bay.carId],carX,y,width,depth)'));
+  assert.ok(source.includes('this.add.text(x,top,'),'bay signage remains anchored');
+  assert.equal(source.split('placement?.carX??').length-1,2,
     'selected car and visual-mod preview must use the same shifted coordinates');
 });
