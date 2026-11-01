@@ -59,6 +59,11 @@ test('out-of-class or over-limit current selected car still opens free Daichi pr
   assert.match(briefing,/saveProTransaction\(s\.registry/);
   assert.match(briefing,/selectedCarId:selected/);
   assert.match(briefing,/GO TO GRID/);
+  // The three selected-car snapshots are committed before existing paid race
+  // registration; the season calendar, not a reused Open Circuit ID, owns
+  // knockout opponent limits.
+  assert.match(scene,/const effectiveRules=openCircuit\?event:event\.seasonRules\|\|\{\};/);
+  assert.match(scene,/if\(openCircuit&&!prepareBeforePay/);
 });
 
 test('Daichi may downgrade and restore already-owned levels without purchases',()=>{
