@@ -31,14 +31,14 @@ test('twelve independent open circuit solo offers rotate drivetrain, power and N
     assert.equal(getOpenCircuitDriverOffer(i+offers.length).maxPowerKW,offers[i].maxPowerKW);
     assert.equal(getOpenCircuitDriverOffer(i+offers.length).noNos,offers[i].noNos);
     assert.ok(PRO_DRAG_EVENTS.some(e=>e.id===offers[i].id),'persistent base ID');
-    assert.doesNotMatch(offers[i].label,/\\bCUP\\b/i);
+    assert.doesNotMatch(offers[i].label,/\bCUP\b/i);
     assert.equal(usesPrepaidDriverBriefing({...offers[i],openCircuit:true}),true);
   }
 });
 
 test('solo event base labels and rotating labels do not use cup names',()=>{
-  for(const event of PRO_DRAG_EVENTS)assert.doesNotMatch(event.label,/\\bCUP\\b/i);
-  for(const entry of OPEN_CIRCUIT_DRIVER_ROTATION)assert.doesNotMatch(entry.label,/\\bCUP\\b/i);
+  for(const event of PRO_DRAG_EVENTS)assert.doesNotMatch(event.label,/\bCUP\b/i);
+  for(const entry of OPEN_CIRCUIT_DRIVER_ROTATION)assert.doesNotMatch(entry.label,/\bCUP\b/i);
 });
 
 test('saved unlimited power and open drivetrain beat legacy fallback limits',()=>{
