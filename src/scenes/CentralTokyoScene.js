@@ -3532,10 +3532,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const canResume = circuitOpen && resuming && !(
       selectedFourWide ? activeDuel : activeCup
     ) && (!pro.activeTimedEvent || activeTimedHere) && owned.includes(registeredCar);
-    const eligible = circuitOpen && eventUnlocked &&
-      !activeCup && !pro.activeTimedEvent && !this.registry.get('competitionState')?.active &&
-      Boolean(build) && owned.includes(build.carId) &&
-      passesPower && passesNos && supportedFormat && seasonPowerOk && seasonNosOk && seasonStockOk && seasonDrivetrainOk && !seasonCarError && cash >= event.entryFee;
+    // The Pro Season screen only checks that an actual event can be entered.
+    // Car selection and free Daichi down-tuning belong in the briefing, not
+    // on this menu: an over-limit/stock-ineligible selected car must NOT lock it.
+    const hasRegisteredSeasonCar=!openCircuit&&Array.isArray(pro.registeredDriverCars)&&
+      pro.registeredDriverCars.some(id=>owned.includes(id)&&cars[id]);
+    const openEntryCarOk=Boolean(build)&&owned.includes(build.carId)&&
+      passesPower&&passesNos&&seasonPowerOk&&seasonNosOk&&seasonStockOk&&
+      seasonDrivetrainOk&&!seasonCarError;
+    const eligible=circuitOpen&&eventUnlocked&&!activeCup&&!pro.activeTimedEvent&&
+      !this.registry.get('competitionState')?.active&&supportedFormat&&
+      (openCircuit?openEntryCarOk:hasRegisteredSeasonCar)&&cash>=event.entryFee;
     const canEnter = canResume || (eligible && (openCircuit?isOpenCircuitAvailable(pro):pro.seasonStatus==='ACTIVE'&&pro.calendar.round<8) && !pro.activeCrewEvent);
 
     const title = activeDuelHere && (
@@ -3605,19 +3612,38 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
     if(!resuming&&openCircuit&&event.drivetrain&&!event.trophyId)
       desc.splice(1,0,'DRIVETRAIN  '+(event.drivetrain==='FWD'?'FF / FWD':event.drivetrain)+' ONLY');
-    if(!resuming&&!openCircuit&&pro.registeredDriverCars)
-      desc.push('REGISTERED SEASON CARS  '+pro.registeredDriverCars.length+'/3');
-    if (!resuming && seasonRules) {
-      desc.splice(1, 0, 'ROUND ' + (pro.calendar.round + 1) + '/8 // ' + seasonRules.format.replaceAll('_', ' '));
-      if (seasonRules.stock) desc.push('CAR CLASS  FACTORY STOCK ONLY');
-      if (seasonRules.drivetrain) desc.push('DRIVETRAIN  ' + seasonRules.drivetrain);
-      if (seasonRules.maxPowerKW) desc.push('SEASON LIMIT  ' + seasonRules.maxPowerKW + ' KW');
-      if (seasonRules.noNos) desc.push('SEASON NOS  PROHIBITED');
+    if(!openCircuit&&seasonRules){
+      // One compact event summary. Rules are never repeated as a second
+      // SEASON LIMIT line or hidden among entry/registration receipts.
+      const format=seasonRules.format;
+      const intro=format==='CONSISTENCY'?
+        ['THREE DRIVEN RUNS','CLOSEST TIME SPREAD WINS']:
+        format==='TIME_ATTACK'?
+        ['THREE DRIVEN RUNS','FASTEST VALID RUN WINS']:
+        format==='FOUR_WIDE'?
+        ['SIXTEEN DRIVERS / FOUR PER HEAT','TOP TWO ADVANCE THROUGH THE FIELD']:
+        ['THREE HEAD-TO-HEAD ROUNDS','WIN TO ADVANCE'];
+      const payout=format==='TIME_ATTACK'||format==='CONSISTENCY'?
+        ['WIN CASH  '+money(475000),'TIE  '+money(250000),
+          'LOSS  '+money(100000)]:
+        format==='FOUR_WIDE'?
+        ['TOP PURSE  '+money(FOUR_WIDE_CUP.prizeCash[0])]:
+        ['CHAMPION CASH  '+money(event.prizeCash||0)];
+      desc.splice(0,desc.length,...intro,
+        seasonRules.stock?'FACTORY-STOCK CLASS':null,
+        'DRIVETRAIN  '+(seasonRules.drivetrain?
+          (seasonRules.drivetrain==='FWD'?'FF':seasonRules.drivetrain)+' ONLY':'OPEN CLASS'),
+        'POWER  '+(Number.isFinite(seasonRules.maxPowerKW)?
+          seasonRules.maxPowerKW+' KW MAX':'UNLIMITED'),
+        'NOS  '+(seasonRules.noNos?'PROHIBITED':'PERMITTED'),
+        'SEASON POINTS  UP TO 20',
+        ...payout);
+      for(let i=desc.length-1;i>=0;i--)if(desc[i]==null)desc.splice(i,1);
     }
 
     drawProEventSidebarDetails(this,SIDE,desc);
 
-    const label = resuming
+    const label = !openCircuit&&!resuming&&canEnter?'':resuming
       ? activeTimedHere ? 'READY // ATTEMPT ' + (pro.activeTimedEvent.attempts.length+1) + '/3' : selectedFourWide
         ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
         : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
@@ -3628,13 +3654,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : trophyUnavailable ? 'TROPHY COOLDOWN // '+event.trophyCooldown+' OTHER EVENTS REQUIRED'
         : slotUnavailable ? 'EVENT COMPLETE // NEXT ROTATION'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
-        : !build ? 'SELECT A CAR FIRST'
+        : openCircuit&&!build ? 'SELECT A CAR FIRST'
+        : !openCircuit&&!hasRegisteredSeasonCar ? 'REGISTER THREE SEASON CARS FIRST'
         : !supportedFormat ? 'EVENT FORMAT NOT YET AVAILABLE'
-        : !seasonStockOk ? 'FACTORY STOCK ONLY // '+(seasonCheck?.reasons?.[0]||'MODIFICATIONS DETECTED')
-        : !seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
-        : seasonCarError ? seasonCarError
-        : !seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
-        : !seasonNosOk ? 'NOS PROHIBITED BY SEASON RULES'
+        : openCircuit&&!seasonStockOk ? 'FACTORY STOCK ONLY // '+(seasonCheck?.reasons?.[0]||'MODIFICATIONS DETECTED')
+        : openCircuit&&!seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
+        : openCircuit&&seasonCarError ? seasonCarError
+        : openCircuit&&!seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
+        : openCircuit&&!seasonNosOk ? 'NOS PROHIBITED BY SEASON RULES'
         : prepareBeforePay && (Number.isFinite(event.maxPowerKW)&&power>event.maxPowerKW || event.noNos&&build?.nosInstalled)
           ? 'SETUP REQUIRED // DAICHI WILL PREPARE CAR'
         : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
@@ -3645,9 +3672,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const actionText = canResume
       ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME EVENT BRIEFING'
-      : canEnter ? proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
+      : canEnter ? (!openCircuit?'ENTER DRIVER BRIEFING':proEventEntryLabel(event.entryFee)) : 'NOT ELIGIBLE';
     drawProEventSidebarEntry(this,SIDE,actionText,()=>{
-      if (activeTimedHere) this.enterProfessionalTimedEvent(event);
+      if(!openCircuit&&!canResume) {
+        showProSeasonDriverBriefing(this,event,preparedBuild=>{
+          if(selectedFourWide)this.enterFourWideCup();
+          else if(selectedTimed)this.enterProfessionalTimedEvent(event);
+          else this.startProBracket(event,preparedBuild);
+        });
+      }
+      else if (activeTimedHere) this.enterProfessionalTimedEvent(event);
       else if (activeCupHere) this.enterFourWideCup();
       else if (activeDuelHere) {
         if(isOpenDriverBriefing(activeDuel))this.showOpenCircuitDriverBriefing();
