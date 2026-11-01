@@ -1,12 +1,12 @@
 // Tokyo Drag Complex three-car secured paddock. The source of truth for
 // vehicle ownership/tuning remains the ordinary garage registry; this only
 // changes physical workshop assignment, never car or part inventory.
-import { normaliseProCircuitState } from './proCircuit.js';
-import { getProQualification, getProDriverDrivetrain } from './proSeason.js';
+import { normaliseProCircuitState } from './proCircuit.js?v=20261030-r741';
+import { getProQualification, getProDriverDrivetrain } from './proSeason.js?v=20261030-r741';
 import {
   PRO_GARAGE_ID, WORKSHOP_TIERS, getUnlockedWorkshops,
   normaliseCarGarageLocations,
-} from './workshopProgression.js';
+} from './workshopProgression.js?v=20261024-r675';
 
 export const PRO_GARAGE_BAYS = Object.freeze([
   Object.freeze({number:'04',drive:'AWD'}),
