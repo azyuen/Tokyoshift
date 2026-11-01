@@ -17,8 +17,14 @@ const shortDrive=d=>d==='FWD'?'FF':d||'—';
 export function showProSeasonDriverBriefing(s,event,onGrid){
   const initial=normaliseProCircuitState(s.registry.get('proCircuit'));
   const owned=s.registry.get('ownedCarIds')||[];
-  const roster=(initial.registeredDriverCars||[])
-    .filter(id=>cars[id]&&owned.includes(id)&&!cars[id].ginzaDemo);
+  // Roster-less historical seasons remain playable. Their legacy choice
+  // was any owned personal car; display the selected one first.
+  const legacy=!Array.isArray(initial.registeredDriverCars);
+  const legacyOrder=[s.registry.get('selectedCarId'),...owned]
+    .filter((id,i,items)=>id&&items.indexOf(id)===i);
+  const roster=(legacy?legacyOrder:initial.registeredDriverCars)
+    .filter(id=>cars[id]&&owned.includes(id)&&!cars[id].ginzaDemo&&!cars[id].crewLoan)
+    .slice(0,3);
   if(initial.seasonStatus!=='ACTIVE'||initial.calendar.round>=8||!roster.length)return false;
   if(s._proOverlayClose)s._proOverlayClose();
   const selectedId=s.registry.get('selectedCarId');
