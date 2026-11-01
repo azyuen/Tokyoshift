@@ -11,6 +11,8 @@ on:
       - 'tests/pro-garage-paddock-r753.mjs'
       - 'tests/r754-pro-garage-open-drivetrain.mjs'
       - 'tests/r755-pro-garage-display.mjs'
+      - 'src/ui/ProSeasonDriverBriefing.js'
+      - 'tests/r756-pro-season-screen.mjs'
       - 'src/data/carMagazine.js'
       - '.github/workflows/pro-garage-r753.yml'
   push:
@@ -32,9 +34,10 @@ jobs:
           node --check src/data/carMagazine.js
           node --check src/data/workshopProgression.js
           node --check src/ui/ProSeasonPanel.js
+          node --check src/ui/ProSeasonDriverBriefing.js
           node --check src/scenes/GarageScene.js
           node --check src/scenes/CentralTokyoScene.js
       - name: Paddock, previous season, workshop and championship regressions
         run: |
-          node --test tests/pro-garage-paddock-r753.mjs tests/pro-drag-season-roster-20261101.mjs tests/r754-pro-garage-open-drivetrain.mjs tests/r755-pro-garage-display.mjs
+          node --test tests/pro-garage-paddock-r753.mjs tests/pro-drag-season-roster-20261101.mjs tests/r754-pro-garage-open-drivetrain.mjs tests/r755-pro-garage-display.mjs tests/r756-pro-season-screen.mjs
           node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js

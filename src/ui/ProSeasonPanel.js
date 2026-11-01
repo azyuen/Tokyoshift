@@ -76,7 +76,7 @@ export function drawSeasonHeader(s,stage) {
   const report=getProfessionalSeasonReport(c);
   // Rank and sponsorship remain visible through both Open Circuit and Season.
   // Season controls remain beside the main race entries on the right.
-  const height=openCircuit?169:c.activeChampionship?236:213;
+  const height=openCircuit?169:c.activeChampionship?213:188;
   const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,height,0x11151c,.88)
     .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
   if(openCircuit){
@@ -117,23 +117,19 @@ export function drawSeasonHeader(s,stage) {
   };
   bar(y+39,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
   bar(y+92,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
-  const expandY=y+(c.activeChampionship?205:179);
+  const expandY=y+(c.activeChampionship?179:152);
   const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,32,0x40242a,.96)
     .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
     .setInteractive({useHandCursor:true}));
   text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
   expand.on('pointerdown',()=>showProRankings(s));
-  if(c.activeChampionship){
-    const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
-    championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
-  } else {
-    const status=report.completed?
-      (report.canEnterTokyo?'TOKYO QUALIFIED // VIEW SEASON REPORT':'SEASON COMPLETE // VIEW REPORT'):
-      report.qualified?'TARGETS MET // FINISH ALL 8 ROUNDS':
-      !report.qualificationPossible?'TOKYO QUALIFICATION OUT OF REACH':
-      'NEED '+report.driverEventsNeeded+' DRIVER + '+report.crewEventsNeeded+
-        ' CREW EVENTS // '+report.roundsRemaining+' LEFT';
-    text(s,x,y+148,status,14,{color:report.qualificationPossible?'#ecc88d':'#ec969b'});
+  // The progress bars already show the point targets. Avoid repeating a
+  // long yellow qualification forecast over the rankings button.
+  if(c.activeChampionship) {
+    const championship=text(s,x,y+144,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,15,
+      {color:'#f3cf8d'});
+    championship.setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>showTokyoChampionship(s));
   }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
@@ -179,7 +175,7 @@ export function drawCrewSidebar(s,event,side) {
     !crewSlotUsed&&Number(s.registry.get('cash')||0)>=fee;
   // Match the right-panel header typography of individual driver events.
   const crewTitle=t?.trophyId||event.trophyId?event.label:
-    short?(event.seasonChoice==='alternative'?event.label:
+    !open?event.label:short?(event.seasonChoice==='alternative'?event.label:
       ((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
       (t?.format||crewFormat)==='RELAY'?'CREW RELAY':
       (t?.format||crewFormat)==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW SPRINT')):CREW_SERIES.label;
@@ -216,8 +212,24 @@ export function drawCrewSidebar(s,event,side) {
     '1ST  '+cash(prizes[0])+' // 2ND  '+cash(prizes[1]),
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
-  drawProEventSidebarDetails(s,side,[fee===0?'GMG RACING // ENTRY COVERED':
-    'LEGACY PAID ENTRY  '+cash(fee),...lines]);
+  // Pro Season sidebar is an event overview, not the registration receipt.
+  // Keep specific fixture preparation / earnings on the actual crew briefing.
+  const seasonLines=[
+    crewFormat==='TECHNICAL'?'CONSISTENCY CHALLENGE':
+    crewFormat==='RELAY'?'THREE-LEG RELAY':
+    crewFormat==='FOUR_WIDE'?'FOUR-WIDE TEAM RACING':'THREE HEAD-TO-HEAD HEATS',
+    'SELECT THREE REGISTERED CREW DRIVERS',
+    ...(crewFormat==='TECHNICAL'?['CLOSEST COMBINED TIME SPREAD WINS']:
+      crewFormat==='RELAY'?['LOWEST COMBINED TIME WINS']:
+      crewFormat==='FOUR_WIDE'?['FOUR-CAR ELIMINATION HEATS']:
+      ['MOST HEAT WINS TAKES THE SERIES']),
+    'SEASON POINTS  UP TO 20',
+    'TOP CASH PRIZE  '+cash(prizes[0]),
+    ...(prizes[1]>0?['RUNNER-UP  '+cash(prizes[1])]:[]),
+  ];
+  drawProEventSidebarDetails(s,side,open?
+    [fee===0?'GMG RACING // ENTRY COVERED':'LEGACY PAID ENTRY '+cash(fee),...lines]:
+    seasonLines);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
