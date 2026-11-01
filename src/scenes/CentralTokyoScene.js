@@ -3174,10 +3174,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     const isOpen = isOpenCircuitAvailable(this.registry.get('proCircuit'));
     this.drawNavigation(
-      'PRO DRAG CIRCUIT',
+      circuitOpen && isOpen ? 'OPEN CIRCUIT' : 'PRO DRAG CIRCUIT',
       circuitOpen
-        ? (isOpen?'ROTATING DRIVER / CREW / TROPHY EVENTS':
-          'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP')
+        ? (isOpen
+          ? 'Rotating professional events, contributes to ranking. Start PRO SEASON to qualify for the Tokyo Championship.'
+          : 'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP')
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
