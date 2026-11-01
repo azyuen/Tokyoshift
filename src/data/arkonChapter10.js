@@ -3,18 +3,18 @@ import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=2026102
 // Direct continuation of Chapter 09: debts are handled, not magicked away.
 // A modest joint gallery, a later Career time jump, and the existing one-Porsche ending.
 const A='arkonDen',S='sayakaFujieda';
-const ark=(text,pose='storyTalking')=>['left',text,pose];
-const say=(text,pose='homeNormal')=>['right',text,pose];
+const ark=(text,pose='storyTalking',listenerPose)=>['left',text,pose,listenerPose];
+const say=(text,pose='homeNormal',listenerPose)=>['right',text,pose,listenerPose];
 const manga=(title,lines,formal=false)=>({
   type:'MANGA',title,characters:{left:A,right:S},
-  pages:lines.map(([speaker,text,pose])=>({
+  pages:lines.map(([speaker,text,pose,listenerPose])=>({
     speaker,text,
     leftPose:speaker==='left'?(formal
       ? (String(pose||'').startsWith('dev')?pose:'ginzaSuit')
       : pose||'storyTalking'):
-      formal?'ginzaSuit':'storyIdle',
+      formal?'ginzaSuit':listenerPose||'storyIdle',
     rightPose:speaker==='right'?(pose||(formal?'ginzaDress':'homeNormal')):
-      formal?'ginzaDress':'homeNormal',
+      formal?'ginzaDress':listenerPose||'homeNormal',
   })),
 });
 const staged=(label,backgroundId,cast,cars=[],options={})=>[
@@ -48,7 +48,7 @@ export const ARKON_CHAPTER_10={
       ark('What?','storyIdle'),
       say('You ignoring your phone.','homeHappy'),
       ark('They can leave a message. This car is not going to fix itself.','storyMechanic'),
-      say('How are you, Aruken? Really?','homeNormal'),
+      say('How are you, Aruken? Really?','homeContemplative'),
       ark('The advisers got some claims withdrawn. Others still have to be paid.','storySerious'),
       ark('Warehouse HQ is safe for now. But I cannot pretend the remaining bill has disappeared.','storyThinking'),
       say('And how does that feel?'),
@@ -93,7 +93,7 @@ export const ARKON_CHAPTER_10={
       ark('The one with terrible coffee?','storyConfidentSmirk'),
       say('Unfortunately, yes.','homeHappy'),
       ark('One friendly run to celebrate? The Z could use an outing.','storyConfident'),
-      say('No wagers. And no mysterious men in suits.','homeSerious'),
+      say('No wagers. And no mysterious men in suits.','homeConfident'),
       ark('Deal.','storyLaughing'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter10TestDrive',timeOfDay:'night'},
@@ -123,19 +123,19 @@ export const ARKON_CHAPTER_10={
     manga('THE COST OF KEEPING IT',[
       ark('The lawyers have a way to release the workshop from the last guarantees.','storySerious'),
       say('That sounds like good news. Why do you look so miserable?','homeNormal'),
-      ark('The money has to come from somewhere. I have agreed to sell the Z.','storyThinking'),
-      say('Your Z? After everything you put into it?','homeSerious'),
+      ark('The money has to come from somewhere. I have agreed to sell the Z.','storyThinking','homeAlert'),
+      say('Your Z? After everything you put into it?','homeAlert'),
       ark('I chose the contract. It should not be somebody else who pays for it.','storySerious'),
-      say('Are you certain? We could look for another way.','homeNormal'),
+      say('Are you certain? We could look for another way.','homeContemplative'),
       ark('I have. This is the one that lets us start clean.','storySerious'),
-      say('Then I will not talk you out of your decision. But you can be sad about it.','homeNormal'),
+      say('Then I will not talk you out of your decision. But you can be sad about it.','homeSad','storyThinking'),
     ]),
     manga('ONE LAST LOOK',[
       ark('This car got me through the worst years. I thought I would keep it forever.','storyThinking'),
-      say('I remember when it was barely holding together.','homeNormal'),
+      say('I remember when it was barely holding together.','homeContemplative'),
       ark('Then I built it into something everyone would notice. Perhaps I needed that a little too much.','storySheepish'),
       say('It was still wonderful work. You should be proud of that.','homeHappy'),
-      ark('I am. I will miss it.','storyCoolShy'),
+      ark('I am. I will miss it.','storySerious'),
       say('I know.','homeNormal'),
       ark('Alright. The buyer can take the keys.','storySerious'),
     ]),
@@ -148,7 +148,7 @@ export const ARKON_CHAPTER_10={
     ...shop('WAREHOUSE HQ // A SMALLER, QUIETER GARAGE','ae86'),
     ...shop('WAREHOUSE HQ // ONE LAST COMMISSION','r32'),
     manga('SOMETHING SPECIAL',[
-      say('This collector knows the history of every bolt on this R32.','homeNormal'),
+      say('This collector knows the history of every bolt on this R32.','homeExplaining'),
       ark('Then we should preserve what makes it special.','storyThinking'),
       say('That is almost philosophical, Aruken.','homeHappy'),
       ark('Do not worry. I am still charging for labour.','storyConfidentSmirk'),
@@ -160,17 +160,17 @@ export const ARKON_CHAPTER_10={
       say('A small gallery. Carefully chosen cars and honest restoration work. I found a place in Ginza.','homeExplaining'),
       ark('Ginza. That sounds expensive.','storySheepish'),
       say('We would start small. No strange investors, no promises we cannot keep.','homeConfident'),
-      ark('Well, you have my attention. Show me.','storyConfidentSmirk'),
+      ark('Well, you have my attention. Show me.','storyConfident'),
     ]),
     // The empty-room business decision is the end of the early timeline.
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter10Ginza',timeOfDay:'day'},
     ...staged('GINZA // AN EMPTY ROOM','central:ginzaMotorGallery:day',casual),
     manga('A RARE MOMENT OF DOUBT',[
       say('A small gallery. Exceptional cars, consignments and restorations. You handle the engineering, I handle the clients.','homeExplaining'),
-      ark('You have worked all this out already, have you?','storyConfidentSmirk'),
+      ark('You have worked all this out already, have you?','storySurprised'),
       say('Most of it. I still need a business partner.','homeConfident'),
-      ark('This was your idea, Sayaka. Half each?','storySerious'),
-      say('Fifty-fifty.','homeHappy'),
+      ark('This was your idea, Sayaka. Half each?','storySerious','homeHappy'),
+      say('Fifty-fifty.','homeConfident'),
       ark('Then let us do it properly.','storyConfident'),
     ]),
     {type:'ARKON_CH10_GINZA'},
@@ -193,7 +193,7 @@ export const ARKON_CHAPTER_10={
       ark('You looked completely at home today. I am glad you want to.','storyCoolShy'),
       say('And you? Back to the workshop tomorrow?','homeNormal'),
       ark('Not tomorrow. I have booked us dinner in Yokohama, at that little restaurant you showed me years ago. I cleared tomorrow too.','storyConfident'),
-      say('You remembered that place?','homeContemplative'),
+      say('You remembered that place?','homeBlushing','storyCoolShy'),
     ]),
     // Existing real no-input Porsche cinematic: Sayaka drives, Aruken rides.
     {type:'ARKON_CH10_DRIVE'},
@@ -209,7 +209,7 @@ export const ARKON_CHAPTER_10={
     manga('THE SAME VIEW',[
       say('It has been a while since we came here. So much has happened.','homeContemplative'),
       ark('Yeah. It has.','storyCoolShy'),
-      say('Are you happy, Aruken?','homeNormal'),
+      say('Are you happy, Aruken?','homeContemplative'),
       ark('Yeah. I really am.','storyCoolShy'),
       ark('What about you?','storyTalking'),
       say('Very.','homeHappy'),

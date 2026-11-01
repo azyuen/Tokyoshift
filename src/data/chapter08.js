@@ -131,7 +131,7 @@ export const CHAPTER08_SCENES = Object.freeze({
       player('Seriously?'),
       sayaka("I've spent more nights around Tokyo's meets than I'd care to count.", 'ginzaSerious'),
       player("So that's how you know so much about racing?"),
-      sayaka("Some of the best lessons weren't about cars at all. Preparation, teamwork... and knowing when to walk away.", 'ginzaNormal'),
+      sayaka("Some of the best lessons weren't about cars at all. Preparation, teamwork... and knowing when to walk away.", 'ginzaSad'),
       player('I had no idea.'),
       sayaka("But today isn't about our old stories.", 'ginzaNormal'),
       sayaka("It's about yours. I've watched you build something special from that first car.", 'ginzaHappy'),

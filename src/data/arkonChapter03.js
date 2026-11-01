@@ -2,17 +2,17 @@ import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=2026102
 // R656 — Aruken's independent story, following his FIRST regional title.
 // Five real customer power builds. No Daichi, no unearned MX-5 ownership.
 const A='arkonDen',S='sayakaFujieda';
-const ark=(text,pose='storyTalking')=>['left',text,pose];
-const say=(text,pose='homeNormal')=>['right',text,pose];
+const ark=(text,pose='storyTalking',listenerPose)=>['left',text,pose,listenerPose];
+const say=(text,pose='homeNormal',listenerPose)=>['right',text,pose,listenerPose];
 const unknown=text=>['system','UNKNOWN DRIVER: '+text,''];
 const manga=(title,lines,cast={left:A,right:S})=>({
   type:'MANGA',title,characters:cast,
-  pages:lines.map(([speaker,text,pose])=>({
+  pages:lines.map(([speaker,text,pose,listenerPose])=>({
     speaker,text,
     leftPose:cast.left===A
-      ? (speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
+      ? (speaker==='left'?pose||'storyTalking':listenerPose||'storyIdle'):'idle',
     rightPose:cast.right===S
-      ? (speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
+      ? (speaker==='right'?pose||'homeNormal':listenerPose||'homeNormal'):'idle',
   })),
 });
 const scene=(label,backgroundId,characters,cars=[{carId:'mx5'}],extras={})=>[
@@ -90,7 +90,7 @@ export const ARKON_CHAPTER_03={
     manga('A LITTLE CREDIT',[
       say('Takumi and Itsuki both called. They enjoyed working with you.','homeHappy'),
       ark('I learned a lot. It was good to be around people who care about getting things right.','storySerious'),
-      say('They said you had rather useful ideas of your own.','homeNormal'),
+      say('They said you had rather useful ideas of your own.','homeExplaining'),
       ark('They are polite people.','storySheepish'),
       say('Are you ever going to accept a compliment?','homeHappy'),
       ark('I did accept your invitation. That has worked out rather well.','storyCoolShy'),
@@ -121,9 +121,9 @@ export const ARKON_CHAPTER_03={
       ark('I had absolutely no idea.','storySheepish'),
       say('Well, that is reassuring.','homeHappy'),
       ark('You just look... different.','storyCoolShy'),
-      say('Different?','homeNormal'),
-      ark('I mean nice. You look nice.','storyBlushing'),
-      say('Thank you. I do occasionally wear something other than driving clothes.','homeHappy'),
+      say('Different?','homeContemplative'),
+      ark('I mean nice. You look nice.','storyBlushing','homeBlushing'),
+      say('Thank you. I do occasionally wear something other than driving clothes.','homeBlushing'),
       ark('Right. Of course.','storySheepish'),
       say('Have I interrupted something?','homeHappy'),
       ark('No! Just working.','storyMechanic'),
@@ -136,15 +136,15 @@ export const ARKON_CHAPTER_03={
       ark('Would not go that far. But it pays better than losing races.','storyShrugging'),
       say('And how is my little Mazda coming along?','homeNormal'),
       ark('Quite a bit livelier than when it arrived.','storyConfident'),
-      say('How much further could you take it?','homeSerious'),
+      say('How much further could you take it?','homeContemplative'),
       ark('Here at Canal Yard? Quite a bit.','storyThinking'),
-      say('Then let us do it. As far as this place can manage.','homeHappy'),
+      say('Then let us do it. As far as this place can manage.','homeConfident'),
       ark('Everything? You are serious?','storySurprised'),
-      say('Completely. Unless you have forgotten how to work with me standing here.','homeHappy'),
+      say('Completely. Unless you have forgotten how to work with me standing here.','homeConfident'),
       ark('Very funny.','storySheepish'),
       say('I will leave you to it. Oh, Aruken?','homeNormal'),
       ark('Yeah?','storyTalking'),
-      say('You look nice too. In a very... hardworking sort of way.','homeHappy'),
+      say('You look nice too. In a very... hardworking sort of way.','homeBlushing','storyBlushing'),
       ark('...Thanks. I think.','storyCoolShy'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter03MaxBuild'},
@@ -182,7 +182,7 @@ export const ARKON_CHAPTER_03={
     ...scene('AFTER THE RUN','meet:daikokuOpenLot:night',withSayaka),
     manga('STILL A GOOD ENGINE',[
       ark('Well. That did not go entirely to plan.','storySheepish'),
-      say('The car did what you asked it to. Perhaps you asked at the wrong moment.','homeSerious'),
+      say('The car did what you asked it to. Perhaps you asked at the wrong moment.','homeExplaining'),
       ark('I liked you better when you were complimenting my work.','storyShrugging'),
       say('I still am. The driving is a separate subject.','homeHappy'),
     ]),
@@ -223,10 +223,10 @@ export const ARKON_CHAPTER_03={
     manga('AN UNFINISHED STORY',[
       ark('You have a few stories you have not told me.','storyThinking'),
       say('I am sure you have a few of your own.','homeNormal'),
-      ark('I try to keep things simple. Fix cars, race, go home.','storySerious'),
+      ark('I try to keep things simple. Fix cars, race, go home.','storyShrugging'),
       say('You are doing remarkably well on your own.','homeHappy'),
       ark('It is simpler that way.','storyShrugging'),
-      say('Maybe. Not everything worth doing is easier alone.','homeSerious'),
+      say('Maybe. Not everything worth doing is easier alone.','homeContemplative'),
       ark('Is this another driving lesson?','storyConfidentSmirk'),
       say('Only if you are paying attention.','homeHappy'),
     ]),

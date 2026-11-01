@@ -3,19 +3,19 @@ import {polishArukenPresentation} from '../story/ArukenPresentation.js?v=2026102
 // No named criminal organisation, magical exoneration or invented race victories.
 // Sayaka gives Aruken space to choose principle; practical danger remains for Chapter 10.
 const A='arkonDen',S='sayakaFujieda',V='storyVipPromoter';
-const ark=(text,pose='storyTalking')=>['left',text,pose];
-const say=(text,pose='homeNormal')=>['right',text,pose];
+const ark=(text,pose='storyTalking',listenerPose)=>['left',text,pose,listenerPose];
+const say=(text,pose='homeNormal',listenerPose)=>['right',text,pose,listenerPose];
 const vip=(text,pose='idle')=>['right',text,pose];
 const manga=(title,lines,right=S,left=A)=>{
   const formal=lines.some(([, ,pose])=>pose==='ginzaSuit'||pose==='ginzaDress'||
     String(pose||'').startsWith('dev'));
   return {type:'MANGA',title,characters:{left,right},
-    pages:lines.map(([speaker,text,pose])=>({speaker,text,
+    pages:lines.map(([speaker,text,pose,listenerPose])=>({speaker,text,
       leftPose:left===A?(formal
         ? (speaker==='left'&&String(pose||'').startsWith('dev')?pose:'ginzaSuit')
-        : speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
+        : speaker==='left'?pose||'storyTalking':listenerPose||'storyIdle'):'idle',
       rightPose:right===S?(formal?'ginzaDress':
-        speaker==='right'?pose||'homeNormal':'homeNormal'):'idle',
+        speaker==='right'?pose||'homeNormal':listenerPose||'homeNormal'):'idle',
     })),
   };
 };
@@ -49,7 +49,7 @@ export const ARKON_CHAPTER_09={
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09Contracts',timeOfDay:'night'},
     ...hq('WAREHOUSE HQ // ANOTHER LATE NIGHT'),
     manga('THE GOLDEN CAGE',[
-      ark('The Shibuya contract paid for a great deal of new equipment.','storyConfident'),
+      ark('The Shibuya contract paid for a great deal of new equipment.','storyThinking'),
       ark('I should be happier about that.','storyThinking'),
       ark('Three cars arrived without clear histories. The same buyer appears on two sets of papers.','storySerious'),
       ark('It may be nothing. Collectors move cars every day.'),
@@ -75,7 +75,7 @@ export const ARKON_CHAPTER_09={
     manga('AN UNWELCOME QUESTION',[
       ark('I need to verify the ownership chain before I put my name to its condition report.','storySerious'),
       vip('Aruken, buyers pay you for your engineering, not your opinions about their affairs.'),
-      ark('My signature is not a decoration.'),
+      ark('My signature is not a decoration.','storySerious'),
       vip('The investors are expecting another performance test at Daikoku. Keep your attention there.'),
     ],V),
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter09Pressure',timeOfDay:'night'},
@@ -96,7 +96,7 @@ export const ARKON_CHAPTER_09={
       vip('A missed milestone leaves you with substantial contractual liabilities.'),
       ark('You want me to certify a car without knowing its real history?','storySerious'),
       vip('We want you to honour an agreement. You have a very fine workshop.'),
-      ark('That sounds like a threat.'),
+      ark('That sounds like a threat.','storySerious'),
       vip('It is a reminder that success carries obligations.'),
     ],V),
     ...hq('WAREHOUSE HQ // THE PORSCHE RETURNS',together,
@@ -105,29 +105,29 @@ export const ARKON_CHAPTER_09={
     manga('SAYAKA RETURNS',[
       say('Aruken.','homeNormal'),
       ark('Sayaka? I was going to call you.','storySheepish'),
-      say('I have heard a few things about your new clients. Nothing definite. Enough to worry me.','homeSerious'),
+      say('I have heard a few things about your new clients. Nothing definite. Enough to worry me.','homeAlert'),
       ark('I think some of their transactions are wrong. They want me to sign anyway.','storySerious'),
       say('And when did you start to suspect that?'),
       ark('Before tonight.','storyThinking'),
-      say('Oh, Aruken.','homeSerious'),
+      say('Oh, Aruken.','homeSad'),
     ]),
     manga('THE QUESTION',[
-      ark('If I refuse, I could lose Warehouse HQ. Maybe more.','storySerious'),
-      say('Then we get independent advice. Carefully. We do not confront anyone alone.','homeSerious'),
-      ark('What if I cannot get out of it?'),
+      ark('If I refuse, I could lose Warehouse HQ. Maybe more.','storySerious','homeAlert'),
+      say('Then we get independent advice. Carefully. We do not confront anyone alone.','homeConfident'),
+      ark('What if I cannot get out of it?','storyThinking'),
       say('There is something I need you to answer first.'),
       say('If walking away costs you the money, the contacts, the reputation... would you still do it?','homeSerious'),
       ark('I cannot go back to having nothing.','storyThinking'),
-      say('You never had nothing. You had me.','homeNormal'),
+      say('You never had nothing. You had me.','homeSad','storySheepish'),
       ark('Sayaka...','storySheepish'),
       say('Where is the man who refused to sign off on that Porsche?','homeSerious'),
-      ark('He made a mistake. A very big one.','storySerious'),
+      ark('He made a mistake. A very big one.','storySheepish'),
       say('Then let him make the next decision properly.'),
-      ark('I want out. No more signatures.','storySerious'),
+      ark('I want out. No more signatures.','storySerious','homeConfident'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryChapter09ResolvedToLeave',value:true},
     manga('A CAREFUL PLAN',[
-      say('We will speak to an independent adviser before the event. No disappearing records. No dramatic accusations.','homeSerious'),
+      say('We will speak to an independent adviser before the event. No disappearing records. No dramatic accusations.','homeExplaining'),
       ark('They want me at a final private sale tomorrow.'),
       say('Then do not go alone. And do not sign anything you cannot stand behind.'),
       ark('I did not deserve you coming back.','storySheepish'),
@@ -180,11 +180,11 @@ export const ARKON_CHAPTER_09={
       [{carId:'arkonLibertyWalk240z'},{carId:'rwbStellaPorsche'}]),
     manga('A SMALL BEGINNING',[
       ark('I am sorry, Sayaka. For Shibuya. For not listening. For all of it.','storySheepish'),
-      say('You really were quite an idiot.','homeSerious'),
+      say('You really were quite an idiot.','homeContemplative'),
       ark('A spectacular one?','storySheepish'),
       say('Spectacular.','homeHappy'),
       ark('There are invoices to check, lawyers to meet, and customers I owe explanations.'),
-      say('Then start with one honest job. And breakfast.','homeHappy'),
+      say('Then start with one honest job. And breakfast.','homeConfident'),
       ark('I still owe you dinner.','storySheepish'),
       say('You do. I am keeping the receipt.','homeHappy'),
     ]),
