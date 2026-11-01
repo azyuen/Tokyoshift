@@ -158,6 +158,7 @@ export function createDefaultProCircuitState() {
     season: 1,
     eventTick: 0, // advances on completed in-game events, never wall-clock time
     seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
+    registeredDriverCars: null, // null for grandfathered seasons; new seasons lock FWD/RWD/AWD trio
     openCircuitTick: 0, // successful standalone event completions only
     openCircuitLastDriverSlot: -1, // once per live Open Circuit schedule slot
     openCircuitLastCrewSlot: -1,
@@ -234,6 +235,11 @@ export function normaliseProCircuitState(raw) {
     season: boundedInteger(source.season, 1, 1, 10000),
     eventTick: boundedInteger(source.eventTick, 0, 0, 10000000),
     seasonStatus,
+    // Null exempts pre-existing active seasons; a saved trio is immutable until season rollover.
+    registeredDriverCars: Array.isArray(source.registeredDriverCars) &&
+      source.registeredDriverCars.length===3 &&
+      source.registeredDriverCars.every(id=>typeof id==='string'&&id.length<90) &&
+      new Set(source.registeredDriverCars).size===3 ? [...source.registeredDriverCars] : null,
     openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
     openCircuitLastDriverSlot: boundedInteger(source.openCircuitLastDriverSlot,-1,-1,100000000),
     openCircuitLastCrewSlot: boundedInteger(source.openCircuitLastCrewSlot,-1,-1,100000000),

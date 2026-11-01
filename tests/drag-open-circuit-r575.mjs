@@ -64,7 +64,8 @@ test('registration commits the full 8-round season, preserves garage-related pro
   const c=createDefaultProCircuitState();
   c.openCircuitTick=5;
   c.trophyWins.shutoSpeed=1;
-  const entered=startProfessionalSeason(c);
+  const roster=['ef','ae86','gc8'];
+  const entered=startProfessionalSeason(c,roster,roster);
   assert.ok(entered.circuit);
   assert.equal(entered.circuit.seasonStatus,'ACTIVE');
   assert.equal(isOpenCircuitAvailable(entered.circuit),false);
@@ -87,7 +88,8 @@ test('an officially completed season returns to open circuit until new deliberat
   assert.equal(complete.calendar.round,PRO_SEASON_LENGTH);
   assert.equal(complete.seasonStatus,'COMPLETE');
   assert.equal(isOpenCircuitAvailable(complete),true);
-  const next=startProfessionalSeason(complete);
+  const roster=['ef','ae86','gc8'];
+  const next=startProfessionalSeason(complete,roster,roster);
   assert.ok(next.circuit);
   assert.equal(next.circuit.season,2);
   assert.equal(next.circuit.calendar.round,0);

@@ -2,7 +2,7 @@ import { createProvisionalChampionship, championshipStandings, getChampionshipKn
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261030-r742';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r741';
+import { PRO_DRIVER_DRIVETRAINS, getProDriverDrivetrain, getProSeasonDriverCarError, CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getProfessionalSeasonReport, getProfessionalSeasonBonus, claimProfessionalSeasonBonus, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat, getCrewTechnicalScore } from '../data/proSeason.js?v=20261030-r741';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
@@ -181,7 +181,7 @@ export function drawCrewSidebar(s,event,side) {
     short?(event.seasonChoice==='alternative'?event.label:
       ((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
       (t?.format||crewFormat)==='RELAY'?'CREW RELAY':
-      (t?.format||crewFormat)==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW CLUB SPRINT')):CREW_SERIES.label;
+      (t?.format||crewFormat)==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW SPRINT')):CREW_SERIES.label;
   drawProEventSidebarTitle(s,side,crewTitle);
   const formatBrief=crewFormat==='FOUR_WIDE'?'3 FOUR-WIDE HEATS':
     crewFormat==='RELAY'?'3-LEG TEAM RELAY':'3 HEAD-TO-HEAD HEATS';
@@ -394,8 +394,8 @@ export function showCrewFixture(s,selection=null) {
       }
     }
     const o=overlay(s,t.trophyId?`${t.label} // FIXTURE ${t.round+1}/3`:
-      t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):
-      `CREW CLUB SERIES // FIXTURE ${t.round+1}/3`);
+      t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW SPRINT // THREE HEATS'):
+      `CREW SERIES // FIXTURE ${t.round+1}/3`);
     o.label(90,115,circuit(s).playerTeamName+' vs '+f.opponent.name+(currentFormat==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':currentFormat==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':currentFormat==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
     const prepared=f.prepared;
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
@@ -786,6 +786,9 @@ function startChampionshipRace(s,mode,carId) {
     const heat=mode==='CHAMP_KO'?getChampionshipKnockoutHeat(state):
       getChampionshipFourWideHeat(state);
     if(!heat){s.proError='NO ACTIVE CHAMPIONSHIP HEAT';return false;}
+    if(!state.driverCarId&&getProSeasonDriverCarError(c,carId)){
+      s.proError='CHOOSE A CAR FROM YOUR THREE REGISTERED SEASON CARS';return false;
+    }
     if(state.driverCarId&&state.driverCarId!==carId){
       s.proError='USE YOUR REGISTERED CHAMPIONSHIP DRIVER CAR';return false;
     }
@@ -869,32 +872,59 @@ export function showProSeasonAction(s,side){
     .on('pointerdown',()=>open?showProSeasonRegistration(s):showProSeasonWithdrawal(s));
 }
 
-/** Deliberate commitment to the official 8-round championship. */
-export function showProSeasonRegistration(s){
-  const c=circuit(s),q=getProQualification(c);
-  let dialog;
-  dialog=seasonConfirm(s,{
-    title:'START PROFESSIONAL SEASON?',
-    description:'Eight rounds. Three choices per round — you may enter only ONE.',
-    details:`TARGETS: DRIVER ${q.driverRequired} PTS / CREW ${q.crewRequired} PTS\nIndependent strip events lock until the season ends or is forfeited. Street racing and tuning remain available.`,
-    confirmLabel:'START SEASON',
-    onConfirm:()=>{
-      if(!getProCircuitAccess(s.registry).unlocked){dialog.label(477,'ACCESS NOT UNLOCKED',17,'#ff98a1');return;}
-      if(s.registry.get('competitionState')?.active){dialog.label(477,'FINISH YOUR ACTIVE EVENT FIRST',17,'#ff98a1');return;}
-      const next=startProfessionalSeason(circuit(s));
-      if(next.error){dialog.label(477,next.error,17,'#ff98a1');return;}
-      if(!commit(s,{proCircuit:next.circuit}))return;
-      dialog.close();redraw(s);
-      // First official season only: introduce the quiet Ginza sponsorship.
-      // Subsequent seasons retain the existing short registration vignette.
-      // The story runs AFTER the durable season transition, so the player
-      // cannot accidentally pay twice or lose the registration on a reload.
-      if (next.circuit.season === 1 && !s.registry.get('cutscenesSeen')?.includes('proSponsorEpilogue')) {
-        maybePlayProSponsorStory(s);
-      } else {
-        playMangaCutscene(s,'chapter09SeasonRegistration',{preloadPagePosesOnly:true});
-      }
-    },
+/** Eight-round entry locks one owned personal car per drivetrain. */
+export function showProSeasonRegistration(s,selected={},pages={}){
+  const owned=[...new Set(s.registry.get('ownedCarIds')||[])];
+  const available=Object.fromEntries(PRO_DRIVER_DRIVETRAINS.map(d=>[d,
+    owned.filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan&&
+      getProDriverDrivetrain(id)===d)]));
+  const o=overlay(s,'PRO SEASON // REGISTER THREE DRIVER CARS');
+  o.label(90,111,'CHOOSE ONE FF (FWD), ONE RWD AND ONE AWD CAR FROM YOUR GARAGE.',23);
+  o.label(90,151,'These three cars are locked for individual Pro Season races and Tokyo Championship entry. You may retune them between events. All seven recruited crew drivers remain available for crew events.',18)
+    .setColor('#c5d5df');
+  PRO_DRIVER_DRIVETRAINS.forEach((drive,column)=>{
+    const x=90+column*480,rows=available[drive],page=Math.max(0,
+      Math.min(Number(pages[drive])||0,Math.max(0,Math.ceil(rows.length/5)-1)));
+    o.label(x,213,(drive==='FWD'?'FF / FWD':drive)+'   //   '+rows.length+' ELIGIBLE',22)
+      .setColor('#f2d6b2');
+    rows.slice(page*5,(page+1)*5).forEach((id,index)=>{
+      const choice=(selected[drive]===id?'SELECTED  ✓  ':'')+
+        (cars[id]?.shortName||id);
+      o.btn(x+195,277+index*76,410,choice,()=>{
+        showProSeasonRegistration(s,{...selected,[drive]:id},pages);
+      });
+    });
+    if(!rows.length)o.label(x,315,'NO OWNED CAR IN THIS CLASS',17).setColor('#f0a0a5');
+    if(rows.length>5){
+      o.btn(x+95,672,190,'◀ PREV',()=>{
+        showProSeasonRegistration(s,selected,{...pages,[drive]:Math.max(0,page-1)});
+      });
+      o.btn(x+296,672,190,'NEXT ▶',()=>{
+        showProSeasonRegistration(s,selected,{...pages,[drive]:Math.min(Math.ceil(rows.length/5)-1,page+1)});
+      });
+    }
+  });
+  const ids=PRO_DRIVER_DRIVETRAINS.map(d=>selected[d]);
+  const complete=ids.every(Boolean);
+  o.label(90,723,complete?
+    'READY // '+ids.map((id,i)=>(PRO_DRIVER_DRIVETRAINS[i]==='FWD'?'FF':PRO_DRIVER_DRIVETRAINS[i])+': '+(cars[id]?.shortName||id)).join('   |   '):
+    'SELECT THREE CARS TO START THE EIGHT-ROUND SEASON.',18)
+    .setColor(complete?'#e7d28e':'#c5d0d8');
+  o.btn(280,786,380,'CANCEL',o.close);
+  if(complete)o.btn(1175,786,580,'REGISTER CARS / START SEASON',()=>{
+    if(!getProCircuitAccess(s.registry).unlocked){
+      s.proError='ACCESS NOT UNLOCKED';o.close();redraw(s);return;
+    }
+    if(s.registry.get('competitionState')?.active){
+      s.proError='FINISH YOUR ACTIVE EVENT FIRST';o.close();redraw(s);return;
+    }
+    const next=startProfessionalSeason(circuit(s),ids,s.registry.get('ownedCarIds')||[]);
+    if(next.error){s.proError=next.error;o.close();redraw(s);return;}
+    if(!commit(s,{proCircuit:next.circuit}))return;
+    o.close();redraw(s);
+    if(next.circuit.season===1&&!s.registry.get('cutscenesSeen')?.includes('proSponsorEpilogue'))
+      maybePlayProSponsorStory(s);
+    else playMangaCutscene(s,'chapter09SeasonRegistration',{preloadPagePosesOnly:true});
   });
 }
 export function showProSeasonWithdrawal(s){

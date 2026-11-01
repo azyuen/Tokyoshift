@@ -1,0 +1,39 @@
+name: Pro Drag three-car season registration
+on:
+  pull_request:
+    paths:
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'src/data/proTournament.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/pro-drag-season-roster-20261101.mjs'
+      - 'tests/pro-drag-open-circuit-rotation-20261101.mjs'
+      - 'src/data/proDriverBriefing.js'
+      - '.github/workflows/pro-drag-season-roster.yml'
+  push:
+    branches: [feature/pro-drag-three-car-registration-20261101]
+  workflow_dispatch:
+jobs:
+  season-roster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check changed module syntax
+        run: |
+          node --check src/data/proSeason.js
+          node --check src/data/proCircuit.js
+          node --check src/data/proTournament.js
+          node --check src/data/centralTokyo.js
+          node --check src/data/proDriverBriefing.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/ui/ProSeasonPanel.js
+      - name: Test three-car restriction and season compatibility
+        run: |
+          node --test tests/pro-drag-season-roster-20261101.mjs tests/pro-drag-open-circuit-rotation-20261101.mjs
+          node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js

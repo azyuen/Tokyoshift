@@ -6,6 +6,35 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## November 2026 Pro Drag driver class and season registration revision
+
+- The main Open Circuit sidebar introduces the rotating independent events and explains
+  that their results affect **persistent professional rankings**, but **do not award
+  official season qualification points**. Start Pro Season for Tokyo qualification.
+- Open Circuit individual offers follow a **twelve-slot day/night rotation** that
+  independently varies **open-class (any drivetrain), FF/FWD, RWD and AWD** entry,
+  **unlimited power or class caps** (180, 260, 380, 550 or 600 kW), and
+  **NOS permitted/prohibited**. Fully open individual races allow any
+  drivetrain, unlimited power and NOS; other offers mix restricted classes.
+  Every drivetrain has both capped and unlimited opportunities.
+  Individual competition names use **Sprint** or **Open**, never **Cup**;
+  **Trophy** is reserved for the prestige competitions. Original internal
+  event IDs, saved brackets and professional rankings are unchanged.
+  Open offers persist through the existing day/night slot, and paid/unpaid
+  registrations retain their snapshotted rules if the offer rotates.
+- At each **new** eight-round Pro Season registration, the player must own and
+  explicitly nominate **exactly three personal cars: one FF/FWD, one RWD, one AWD**.
+  Their IDs remain fixed for all individual professional races in that season and
+  the ensuing Tokyo Championship (the Championship independently locks one car
+  between its knockout and four-wide stages). Tuning and normal garage activity
+  continue; drivetrain and stock/power rules are still applied per event.
+- **Crew racing is not limited to the three solo cars.** All seven legitimately
+  recruited members remain available, with existing per-fixture three-car,
+  distinct-car and registration rules unchanged.
+- Older in-progress Pro Seasons with no saved nominated lineup finish under their
+  established rules; new seasons and post-forfeit restarts require registration.
+  Withdrawn/finished seasons clear the roster on rollover.
+
 ## Beta R712 Open Circuit scheduling and clarity — 2026-10-29
 
 - **Driver and Crew Open Circuit offers:** refresh only at each ordinary WorldClock

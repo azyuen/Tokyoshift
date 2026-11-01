@@ -158,7 +158,31 @@ export function finishOpenCircuitEvent(raw,summary) {
     points:0,openCircuit:true,background};
   return c;
 }
-export function startProfessionalSeason(raw) {
+// Exactly three owned, individually eligible cars; one each of the three drivetrains.
+export const PRO_DRIVER_DRIVETRAINS=Object.freeze(['FWD','RWD','AWD']);
+export function getProDriverDrivetrain(carId) {
+  const raw=String(getCarMagazineMeta(carId)?.drivetrain||'').toUpperCase();
+  return {FF:'FWD',FR:'RWD',FOUR_WHEEL_DRIVE:'AWD'}[raw]||raw;
+}
+export function validateProSeasonDriverCars(carIds,ownedCarIds=[]) {
+  if(!Array.isArray(carIds)||carIds.length!==3||new Set(carIds).size!==3)
+    return 'REGISTER EXACTLY THREE DIFFERENT DRIVER CARS';
+  if(!Array.isArray(ownedCarIds)||carIds.some(id=>!ownedCarIds.includes(id)||
+    !cars[id]||cars[id].ginzaDemo||cars[id].crewLoan))
+    return 'DRIVER CARS MUST BE OWNED, ROAD-LEGAL PERSONAL CARS';
+  const drives=carIds.map(getProDriverDrivetrain);
+  if(!PRO_DRIVER_DRIVETRAINS.every(d=>drives.filter(v=>v===d).length===1))
+    return 'REGISTER ONE FF/FWD, ONE RWD AND ONE AWD CAR';
+  return null;
+}
+// Saves which started before the registration rule carry null rather than a
+// fabricated line-up. They may finish their current season as previously.
+export function getProSeasonDriverCarError(raw,carId) {
+  const c=normaliseProCircuitState(raw);
+  return c.registeredDriverCars&&!c.registeredDriverCars.includes(carId)
+    ?'NOT ONE OF YOUR THREE REGISTERED PRO SEASON DRIVER CARS':null;
+}
+export function startProfessionalSeason(raw,driverCarIds=null,ownedCarIds=[]) {
   let c=normaliseProCircuitState(raw);
   if(!isOpenCircuitAvailable(c)||c.activeCrewEvent||c.activeTournament||c.activeTimedEvent||
     (c.activeChampionship&&!c.activeChampionship.completed))
@@ -169,6 +193,9 @@ export function startProfessionalSeason(raw) {
     c=next.circuit;
   }
   if(c.calendar.round!==0||c.calendar.history.length)return {error:'SEASON ALREADY IN PROGRESS'};
+  const rosterError=validateProSeasonDriverCars(driverCarIds,ownedCarIds);
+  if(rosterError)return {error:rosterError};
+  c.registeredDriverCars=[...PRO_DRIVER_DRIVETRAINS.map(d=>driverCarIds.find(id=>getProDriverDrivetrain(id)===d))];
   c.seasonStatus='ACTIVE';
   return {circuit:c};
 }
@@ -185,6 +212,7 @@ export function forfeitProfessionalSeason(raw) {
     archives:[...c.calendar.archives,result].slice(-20)};
   c.season++;
   c.seasonStatus='OPEN';
+  c.registeredDriverCars=null;
   c.activeCrewEvent=null;c.activeTournament=null;c.activeTimedEvent=null;c.activeChampionship=null;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
   return {circuit:c};
@@ -333,6 +361,8 @@ export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=
   // Null means the caller has not supplied a trustworthy tuning snapshot.
   if(!carState||typeof carState!=='object'||Array.isArray(carState))
     return {error:'CAR BUILD REQUIRED FOR SCRUTINEERING'};
+  const rosterError=getProSeasonDriverCarError(c,carId);
+  if(rosterError)return {error:rosterError};
   const eligibility=getProfessionalCarEligibility(carId,carState,rules);
   if(!eligibility.eligible)return {error:eligibility.reasons.join(' / ')};
   if(!Number.isSafeInteger(entryFee)||entryFee<0)return {error:'INVALID ENTRY FEE'};
@@ -468,7 +498,7 @@ export function getProfessionalSeasonReport(raw) {
     seasonBonus:getProfessionalSeasonBonus(c),
   };
 }
-export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:0,prizeCash:1050000,prizes:[1050000,450000,200000,50000],fixtures:3,squadSize:5,fieldSize:3});
+export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW SERIES',team:true,entryFee:0,prizeCash:1050000,prizes:[1050000,450000,200000,50000],fixtures:3,squadSize:5,fieldSize:3});
 
 // Professional cars must pass the SAME class rules as the player's car.
 // Select at registration and save the resulting legal build; never give a
@@ -689,6 +719,7 @@ export function nextProfessionalSeason(raw) {
   }
   c.season++;
   c.seasonStatus='OPEN';
+  c.registeredDriverCars=null;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
   return {circuit:c};
 }
@@ -951,7 +982,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
       c.eventTick++;
       c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
     }
-    const summary={id:t.id,label:t.seasonChoice==='alternative'?t.label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
+    const summary={id:t.id,label:t.seasonChoice==='alternative'?t.label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
       ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,fourWidePoints,ownTotal,opponentTotal,ownSpread,opponentSpread,
       sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
@@ -1053,7 +1084,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
     Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):
     Math.max(30000,Math.floor(Math.max(0,Number(state.prizeCash||0))*.12));
   const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
-  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
+  const summary={id,label:state.briefingLabel||trophy?.label||(state.eventId==='midnightCup'?'DRIVER STREET SPRINT':'DRIVER SPRINT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
     ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
