@@ -372,7 +372,7 @@ export function getGinzaCollectorState(carId) {
 export const PRO_DRAG_EVENTS = [
   {
     id: 'streetShootout',
-    label: 'STREET SHOOTOUT',
+    label: 'DRIVER SPRINT',
     subtitle: 'PROVING GROUNDS',
     entryFee: 0,
     prizeCash: 475000,
@@ -384,7 +384,7 @@ export const PRO_DRAG_EVENTS = [
   },
   {
     id: 'midnightCup',
-    label: 'MIDNIGHT CUP',
+    label: 'DRIVER CUP',
     subtitle: 'PRO STREET',
     entryFee: 0,
     prizeCash: 675000,
@@ -396,7 +396,7 @@ export const PRO_DRAG_EVENTS = [
   },
   {
     id: 'tokyoInvitational',
-    label: 'TOKYO INVITATIONAL',
+    label: 'DRIVER OPEN',
     subtitle: 'OPEN PRO',
     entryFee: 0,
     prizeCash: 950000,
