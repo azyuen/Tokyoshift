@@ -3978,11 +3978,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Always use current saved tuning, never the pre-cutscene build snapshot.
     build = selectedBuild;
     const prepareBeforePay=usesPrepaidDriverBriefing(event);
-    if(!prepareBeforePay && Number.isFinite(event.maxPowerKW) && Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
-    if(!prepareBeforePay && event.noNos && build.nosInstalled) return;
+    const openCircuit=isOpenCircuitAvailable(pro);
+    // Base event IDs are shared with the season, but the current official
+    // calendar has its OWN power and NOS rules. Do not reapply a 380 kW
+    // Open Circuit base cap to an AWD 550 kW Pro Season knockout.
+    if(openCircuit&&!prepareBeforePay &&
+      Number.isFinite(event.maxPowerKW)&&
+      Number(build.car?.powerKW||0)>event.maxPowerKW)return;
+    if(openCircuit&&!prepareBeforePay&&event.noNos&&build.nosInstalled)return;
     // Revalidate the real card when paying the fee: no stale UI can bypass
     // registered-season restrictions or an active minor-trophy cooldown.
-    const openCircuit=isOpenCircuitAvailable(pro);
     if(openCircuit){
       const choices=this.getProDragEvents();
       const actual=choices.find(e=>e.id===event.id&&e.openCircuit&&
