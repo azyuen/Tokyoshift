@@ -1,5 +1,5 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261101-r753';
+import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 import { releaseProGarage, shouldReleaseProGarage } from '../data/proGarage.js?v=20261101-r753';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261030-r741';
 import { materialiseProDuelOpponentIdentities, selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r741';
