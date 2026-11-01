@@ -106,6 +106,7 @@ import {
   AUTO_MARKET_LISTINGS,
   GINZA_LISTINGS,
   PRO_DRAG_EVENTS,
+  getOpenCircuitDriverOffer,
   getAutoMarketBuild,
   getAutoMarketBasePrice,
   getNewCarState,
@@ -3052,11 +3053,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Existing in-progress events keep their saved identities and fixtures.
     if (isOpenCircuitAvailable(pro)) {
       const rotation=getOpenCircuitRotation();
-      const driverBase=PRO_DRAG_EVENTS[rotation.rotationIndex%PRO_DRAG_EVENTS.length];
-      const drivetrain=['FWD','RWD','AWD'][rotation.rotationIndex%3];
-      const driver={...driverBase,
-        label:driverBase.label.replace('DRIVER ','DRIVER '+(drivetrain==='FWD'?'FF':drivetrain)+' '),
-        drivetrain,requiredWins:0,openCircuit:true,
+      const driverBase=getOpenCircuitDriverOffer(rotation.rotationIndex);
+      const driver={...driverBase,requiredWins:0,openCircuit:true,
         slotCooldown:!getOpenCircuitSlotStatus(pro,'DRIVER',rotation).available,
         entryFee:0,
         prizeCash:Math.round(driverBase.prizeCash*.6/1000)*1000};
@@ -3082,16 +3080,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }];
       if(legacy?.active&&legacy.proEvent&&legacy.openCircuit){
         const activeCard=legacy.openTrophyId?2:0;
+        const savedRules=legacy.briefingRules||null;
+        const oldBase=PRO_DRAG_EVENTS.find(e=>e.id===legacy.eventId);
         choices[activeCard]={...choices[activeCard],id:legacy.eventId,
-          label:legacy.openTrophyId?
+          label:legacy.briefingLabel||(legacy.openTrophyId?
             (PRO_CIRCUIT_TROPHIES.find(t=>t.id===legacy.openTrophyId)?.label||legacy.eventId):
-            (PRO_DRAG_EVENTS.find(e=>e.id===legacy.eventId)?.label||legacy.eventId),
+            (oldBase?.label||legacy.eventId)),
           trophyId:legacy.openTrophyId||null,team:false,trophySlotClosed:false,
           entryFee:legacy.entryFee,prizeCash:legacy.prizeCash,trophyCooldown:0,
           trophyFixtures:legacy.rounds?.length||choices[activeCard].trophyFixtures,
           trophyDescription:legacy.openTrophyId&&legacy.rounds?.length===3?
             'LEGACY THREE-ROUND TROPHY // SAVED EVENT':choices[activeCard].trophyDescription,
-          maxPowerKW:legacy.maxPowerKW??choices[activeCard].maxPowerKW};
+          maxPowerKW:savedRules?
+            (Number.isFinite(savedRules.maxPowerKW)?savedRules.maxPowerKW:undefined):
+            (legacy.maxPowerKW??oldBase?.maxPowerKW),
+          noNos:savedRules?Boolean(savedRules.noNos):Boolean(oldBase?.noNos),
+          drivetrain:savedRules?.drivetrain||undefined};
       }
       if(pro.activeCrewEvent&&!pro.activeCrewEvent.trophyId){
         choices[1]={...choices[1],label:{DUEL:'CREW SPRINT',
@@ -3484,7 +3488,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const title = activeDuelHere && (
       !activeDuel.eventId || activeDuel.eventId === 'tokyoInvitational'
-    ) ? 'ACTIVE PRO CUP' : selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
+    ) ? 'ACTIVE DRIVER EVENT' : selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
     drawProEventSidebarTitle(this,SIDE,title);
 
     const desc = activeDuelHere && (!activeDuel.eventId ||
@@ -3526,7 +3530,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
           'DRIVER // PROFESSIONAL EVENT',
           '3 ROUNDS // HEAD-TO-HEAD',
           'WIN THREE TO CLAIM PURSE',
-          'POWER LIMIT  ' + (event.maxPowerKW||'OPEN') + ' KW',
+          Number.isFinite(event.maxPowerKW)?
+            'POWER LIMIT  ' + event.maxPowerKW + ' KW':'POWER CLASS  UNLIMITED',
           'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
           'CHAMPION  ' + money(event.prizeCash),
           'ENTRY  ' + money(event.entryFee),
@@ -3609,14 +3614,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // The ONLY paid action on this screen is Go to Grid.
   showDragEventBriefing(event,onGrid){
     const fee=Number(event?.entryFee||0);
-    const rule=event?.noNos?'NOS PROHIBITED':'NOS PERMITTED';
+    const rule=event?.seasonRules?.noNos||event?.noNos?'NOS PROHIBITED':'NOS PERMITTED';
     const drive=event.seasonRules?.drivetrain||event.drivetrain;
+    const limit=event.seasonRules?.maxPowerKW??event.maxPowerKW;
     this.showTransactionConfirm({
       title:'EVENT BRIEFING // '+String(event.label||'PRO EVENT'),
       message:'FORMAT  '+String(event.seasonRules?.format||event.format||
         (event.fourWide?'FOUR-WIDE':'PRO CIRCUIT')).replaceAll('_',' ')+
         '\nENTRY  '+money(fee)+
-        '\nRULES  '+(drive?(drive==='FWD'?'FF/FWD':drive)+' ONLY // ':'')+(event.maxPowerKW?event.maxPowerKW+' KW MAX // ':'')+rule+
+        '\nRULES  '+(drive?(drive==='FWD'?'FF/FWD':drive)+' ONLY // ':'')+(Number.isFinite(limit)?limit+' KW MAX // ':'UNLIMITED POWER // ')+rule+
         '\n\nProceed to enter this competition. Your entry is charged once.',
       confirmLabel:'GO TO GRID // '+money(fee),
       onConfirm:onGrid,
@@ -3892,7 +3898,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const actual=choices.find(e=>e.id===event.id&&e.openCircuit&&
         (e.trophyId||null)===(event.trophyId||null));
       if(!actual||actual.trophyCooldown||actual.slotCooldown||actual.team||
-        actual.entryFee!==event.entryFee||actual.drivetrain!==event.drivetrain)return;
+        actual.entryFee!==event.entryFee||actual.drivetrain!==event.drivetrain||
+        actual.maxPowerKW!==event.maxPowerKW||actual.noNos!==event.noNos||
+        actual.label!==event.label)return;
       if(event.drivetrain){
         const classCheck=getProfessionalCarEligibility(build.carId,build.state,{drivetrain:event.drivetrain});
         if(!classCheck.eligible){
