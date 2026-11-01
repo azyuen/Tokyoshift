@@ -2064,8 +2064,7 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
     const localCars = this.getCurrentWorkshopCars();
     const capacity = this.crewMode ? 7 : getWorkshopStorageCapacity(activeWorkshop.id);
-    const totalCapacity = this.crewMode
-      ? 7
+    const totalCapacity = this.crewMode ? 7 : this.proGarageMode ? 3
       : getGarageCapacity(this.registry.get('garageTier') || 0);
     const pageSize = this.garagePageSize || 4;
     const totalPages = Math.max(1, Math.ceil(capacity / pageSize));
