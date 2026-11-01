@@ -118,6 +118,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getProGarageBayCars } from '../data/proGarage.js?v=20261101-r753';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261101-r753';
+import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261101-r753';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
@@ -1687,7 +1688,7 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(42);
 
     this.headerCarText = this.add.text(
-      this.crewMode ? 370 : 305,
+      this.crewMode ? 370 : this.proGarageMode ? 440 : 305,
       35,
       this.crewMode ? 'CREW ' + (getCrewCount(this.registry) + 1) + '/8' : '',
       {
@@ -4441,6 +4442,7 @@ export default class GarageScene extends Phaser.Scene {
   // system; the paddock lineup is strictly a secondary static presentation.
   drawProGarageBayLineup() {
     const bays=getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds);
+    this.proGarageReadinessLabels=[];
     const centres=[STAGE.x+205,STAGE.x+STAGE.w/2,STAGE.x+STAGE.w-205];
     bays.forEach((bay,index)=>{
       const x=centres[index],id=bay.carId;
@@ -4450,6 +4452,11 @@ export default class GarageScene extends Phaser.Scene {
           backgroundColor:'#09131bdd',padding:{x:8,y:5},
         }).setOrigin(.5,0).setDepth(6);
       if(!id||!cars[id])return;
+      const status=this.add.text(x,STAGE.y+65,'CHECKING EVENT RULES',{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e9e6e0',
+        backgroundColor:'#09131b',padding:{x:6,y:3},
+      }).setOrigin(.5,0).setDepth(6);
+      this.proGarageReadinessLabels.push({carId:id,node:status});
       try {
         const width=232;
         const y=this.getBodyYForWheelBottom(cars[id],width,STAGE.y+STAGE.h-93);
@@ -4458,11 +4465,35 @@ export default class GarageScene extends Phaser.Scene {
         console.warn('[Tokyo SHIFT] Pro Garage bay car rendering unavailable',id,error);
       }
     });
+    this.refreshProGarageScrutineering();
     this.add.text(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h-24,
       'DAICHI // INSTALL · UNINSTALL · RESTORE · SCRUTINEERING PREP',{
         fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f1d7a5',
         backgroundColor:'#0b1726dd',padding:{x:12,y:7},
       }).setOrigin(.5).setDepth(7);
+  }
+
+  refreshProGarageScrutineering(){
+    if(!this.proGarageMode)return;
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const rules=pro.seasonStatus==='ACTIVE'&&pro.calendar.round<8 ?
+      getProfessionalRoundEvents(pro.calendar.round).driver : null;
+    const states=this.registry.get('carStates')||{};
+    for(const entry of this.proGarageReadinessLabels||[]){
+      if(!entry.node?.active)continue;
+      if(!rules){
+        entry.node.setText('TOKYO / SEASON PREP').setColor('#e2d0a4');
+        continue;
+      }
+      try{
+        const check=getProfessionalCarEligibility(entry.carId,states[entry.carId]||{},rules);
+        const status=check.eligible?'NEXT DRIVER // READY':
+          'NEXT DRIVER // '+String(check.reasons?.[0]||'SETUP REQUIRED').slice(0,32);
+        entry.node.setText(status).setColor(check.eligible?'#92e9c9':'#ffb9ad');
+      }catch(error){
+        entry.node.setText('NEXT DRIVER // CHECK SETUP').setColor('#ffb9ad');
+      }
+    }
   }
 
   buildWorkshopHeroLayout(car, visualModsOverride = null) {
@@ -4624,6 +4655,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.updateMoveCarButtonState();
     this.refreshDynoButton?.();
+    this.refreshProGarageScrutineering?.();
 
     if (this.crewMode) {
       const crewCars = this.getCurrentWorkshopCars();
