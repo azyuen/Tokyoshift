@@ -384,7 +384,7 @@ export const PRO_DRAG_EVENTS = [
   },
   {
     id: 'midnightCup',
-    label: 'DRIVER CUP',
+    label: 'DRIVER STREET SPRINT',
     subtitle: 'PRO STREET',
     entryFee: 0,
     prizeCash: 675000,
@@ -407,6 +407,36 @@ export const PRO_DRAG_EVENTS = [
     opponentCars: ['r32', 'gc8', 'r32'],
   },
 ];
+
+
+// These twelve day/night offers intentionally vary drivetrain, power and NOS
+// independently. IDs remain the original stable event IDs so old saved duel
+// states and ranking records keep working after an offer rotates.
+export const OPEN_CIRCUIT_DRIVER_ROTATION = Object.freeze([
+  { baseEventId:'tokyoInvitational', label:'DRIVER OPEN', drivetrain:null, maxPowerKW:null, noNos:false },
+  { baseEventId:'streetShootout', label:'DRIVER FF SPRINT', drivetrain:'FWD', maxPowerKW:260, noNos:true },
+  { baseEventId:'tokyoInvitational', label:'DRIVER RWD OPEN', drivetrain:'RWD', maxPowerKW:null, noNos:false },
+  { baseEventId:'midnightCup', label:'DRIVER AWD SPRINT', drivetrain:'AWD', maxPowerKW:550, noNos:true },
+  { baseEventId:'midnightCup', label:'DRIVER 380 SPRINT', drivetrain:null, maxPowerKW:380, noNos:true },
+  { baseEventId:'tokyoInvitational', label:'DRIVER FF OPEN', drivetrain:'FWD', maxPowerKW:null, noNos:true },
+  { baseEventId:'streetShootout', label:'DRIVER RWD SPRINT', drivetrain:'RWD', maxPowerKW:260, noNos:true },
+  { baseEventId:'tokyoInvitational', label:'DRIVER AWD OPEN', drivetrain:'AWD', maxPowerKW:null, noNos:false },
+  { baseEventId:'midnightCup', label:'DRIVER NO-NOS OPEN', drivetrain:null, maxPowerKW:null, noNos:true },
+  { baseEventId:'streetShootout', label:'DRIVER FF SPRINT', drivetrain:'FWD', maxPowerKW:180, noNos:false },
+  { baseEventId:'midnightCup', label:'DRIVER RWD SPRINT', drivetrain:'RWD', maxPowerKW:380, noNos:false },
+  { baseEventId:'tokyoInvitational', label:'DRIVER AWD SPRINT', drivetrain:'AWD', maxPowerKW:600, noNos:false },
+].map(item=>Object.freeze(item)));
+
+export function getOpenCircuitDriverOffer(rotationIndex=0) {
+  const count=OPEN_CIRCUIT_DRIVER_ROTATION.length;
+  const n=Number.isFinite(Number(rotationIndex))?Math.trunc(Number(rotationIndex)):0;
+  const offer=OPEN_CIRCUIT_DRIVER_ROTATION[((n%count)+count)%count];
+  const base=PRO_DRAG_EVENTS.find(event=>event.id===offer.baseEventId);
+  return {
+    ...base, label:offer.label, drivetrain:offer.drivetrain||undefined,
+    maxPowerKW:offer.maxPowerKW??undefined, noNos:offer.noNos,
+  };
+}
 
 function value(source, key, fallback = null) {
   if (source && typeof source.get === 'function') {
