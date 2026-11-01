@@ -3535,8 +3535,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // The Pro Season screen only checks that an actual event can be entered.
     // Car selection and free Daichi down-tuning belong in the briefing, not
     // on this menu: an over-limit/stock-ineligible selected car must NOT lock it.
-    const hasRegisteredSeasonCar=!openCircuit&&Array.isArray(pro.registeredDriverCars)&&
-      pro.registeredDriverCars.some(id=>owned.includes(id)&&cars[id]);
+    const hasRegisteredSeasonCar=!openCircuit&&(
+      Array.isArray(pro.registeredDriverCars)?
+        pro.registeredDriverCars.some(id=>owned.includes(id)&&cars[id]):
+        owned.some(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan));
     const openEntryCarOk=Boolean(build)&&owned.includes(build.carId)&&
       passesPower&&passesNos&&seasonPowerOk&&seasonNosOk&&seasonStockOk&&
       seasonDrivetrainOk&&!seasonCarError;
