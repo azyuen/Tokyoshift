@@ -1842,7 +1842,8 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => {
         if (!this.selectedCarId) return;
-        if (this.isSelectedCarTuningLocked()) {
+        if (this.isSelectedCarTuningLocked() &&
+            !(name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) {
           this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
           return;
         }
@@ -1878,6 +1879,19 @@ export default class GarageScene extends Phaser.Scene {
       car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
   }
 
+  canSelectedCollectorInstallNos() {
+    const car = cars[this.selectedCarId];
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    return Boolean(this.selectedCarId && !this.crewMode &&
+      !isArkonRwbRestoration(this.registry, this.selectedCarId) &&
+      (car?.collector || car?.tuningLocked || state.collector) &&
+      !car?.ginzaDemo && !car?.crewLoan &&
+      // A factory-installed nitrous system must not be overwritten by a
+      // second aftermarket kit.
+      !(Number(car?.nosPower || 0) > 0 &&
+        Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0));
+  }
+
   refreshTuningCategoryAvailability() {
     const locked = Boolean(this.selectedCarId && this.isSelectedCarTuningLocked());
 
@@ -1895,7 +1909,8 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.upgradeButtons.forEach(item => {
-      if (locked || !this.selectedCarId) {
+      if ((locked && !(item.name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) ||
+          !this.selectedCarId) {
         item.box.disableInteractive()
           .setFillStyle(0x111318, 1)
           .setStrokeStyle(1, 0x4e4149, 1);
@@ -6562,7 +6577,8 @@ export default class GarageScene extends Phaser.Scene {
 
   enterSecondaryTuningMode(mode) {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
-    if (this.isSelectedCarTuningLocked()) {
+    if (this.isSelectedCarTuningLocked() &&
+        !(mode === 'exhaustNos' && this.canSelectedCollectorInstallNos())) {
       this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
       return;
     }
@@ -7183,6 +7199,12 @@ export default class GarageScene extends Phaser.Scene {
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
     const part = parts[partId];
     if (!part) return;
+    if (this.isSelectedCarTuningLocked() &&
+        !(this.canSelectedCollectorInstallNos() &&
+          ['nosKit', 'nitrousShot'].includes(partId))) {
+      this.showWorkshopToast('COLLECTOR SPEC // ONLY NOS IS AVAILABLE');
+      return;
+    }
 
     const add = obj => {
       this.secondaryModalObjects.push(obj);
@@ -7333,6 +7355,16 @@ export default class GarageScene extends Phaser.Scene {
 
   applyPendingSecondaryUpgrades() {
     if (!this.secondaryMode) return;
+    if (this.isSelectedCarTuningLocked()) {
+      if (this.secondaryMode !== 'exhaustNos' || !this.canSelectedCollectorInstallNos()) return;
+      const current = this.currentSecondaryTuning || {};
+      const pending = this.pendingSecondaryTuning || {};
+      if (['headers', 'exhaust', 'muffler'].some(part =>
+        Number(pending[part] || 0) !== Number(current[part] || 0))) {
+        this.showWorkshopToast('COLLECTOR SPEC // ONLY NOS IS AVAILABLE');
+        return;
+      }
+    }
 
     const category = this.secondaryMode === 'drivetrain' ? 'drivetrain' : 'exhaustNos';
     const partOrder = this.secondaryMode === 'drivetrain'
@@ -8297,7 +8329,8 @@ export default class GarageScene extends Phaser.Scene {
   selectUpgrade(name) {
     this.selectedUpgrade = name;
 
-    if (this.selectedCarId && this.isSelectedCarTuningLocked()) {
+    if (this.selectedCarId && this.isSelectedCarTuningLocked() &&
+        !(name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) {
       this.refreshTuningCategoryAvailability();
       return;
     }
