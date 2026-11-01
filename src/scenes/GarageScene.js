@@ -6929,6 +6929,7 @@ export default class GarageScene extends Phaser.Scene {
         };
 
     Object.entries(hotspots).forEach(([partId, p]) => {
+      if (this.isSelectedCarTuningLocked() && !['nosKit', 'nitrousShot'].includes(partId)) return;
       const part = parts[partId];
       if (!part) return;
 
@@ -7132,6 +7133,11 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     Object.entries(this.secondaryPartRows || {}).forEach(([partId, row]) => {
+      if (this.isSelectedCarTuningLocked() && !['nosKit', 'nitrousShot'].includes(partId)) {
+        row.box.disableInteractive();
+        row.box.setFillStyle(0x111318, 1);
+        row.label.setColor('#756873');
+      }
       const current = this.currentSecondaryTuning[partId];
       const pending = this.pendingSecondaryTuning[partId];
       const spec = parts[partId].levels[pending];
@@ -7417,7 +7423,9 @@ export default class GarageScene extends Phaser.Scene {
       const kit = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[tuning.nosKit];
       const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[tuning.nitrousShot];
       updated.nosInstalled = true;
-      updated.nosCapacitySeconds = Number(kit.capacitySeconds || 0);
+      updated.nosShots = Number(kit.shots || 0);
+      updated.nosShotDurationSeconds = Number(kit.shotDurationSeconds || 1);
+      updated.nosCapacitySeconds = updated.nosShots * updated.nosShotDurationSeconds;
       updated.nosPower = Number(shot.powerHp || 0);
     }
 
