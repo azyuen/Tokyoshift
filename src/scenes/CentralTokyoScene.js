@@ -3203,11 +3203,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     const isOpen = isOpenCircuitAvailable(this.registry.get('proCircuit'));
     this.drawNavigation(
-      'PRO DRAG CIRCUIT',
-      circuitOpen
-        ? (isOpen?'ROTATING DRIVER / CREW / TROPHY EVENTS':
-          'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP')
-        : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
+      isOpen ? 'Open Circuit' : 'PRO DRAG CIRCUIT',
+      isOpen
+        ? 'Rotating professional events, contributes to ranking. Start PRO SEASON to qualify for the Tokyo Championship.'
+        : circuitOpen
+          ? 'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP'
+          : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
     // Dev-only refresh is in the venue pane, never the sidebar.
@@ -3346,16 +3347,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     });
 
-    if(isOpen) {
-      this.addContent(this.add.text(SIDE.x+20,SIDE.y+34,'Open Circuit',{
-        fontFamily:PIXEL_FONT,fontSize:'15px',color:'#f8f3f2',
-      }).setDepth(34));
-      this.addContent(this.add.text(SIDE.x+20,SIDE.y+79,
-        'Rotating professional events, contributes to ranking. Start PRO SEASON to qualify for the Tokyo Championship.',{
-          fontFamily:BODY_FONT,fontSize:'17px',fontStyle:'600',
-          color:'#ccd7de',lineSpacing:4,wordWrap:{width:SIDE.w-40},
-        }).setDepth(34));
-    }
     this.drawDragSide(events[this.selectedEventIndex], build);
     showProSeasonAction(this,SIDE);
     const proGarage=normaliseProCircuitState(this.registry.get('proCircuit'));

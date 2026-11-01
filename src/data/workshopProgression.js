@@ -59,8 +59,8 @@ export const PRO_GARAGE_WORKSHOP = Object.freeze({
   unlockCost: 0,
   textureKey: 'tokyoProGarageNight',
   phaseBackgrounds: {
-    day: {key:'tokyoProGarageDay',path:'assets/Garage/shinonome_warehouse_night.png'},
-    night: {key:'tokyoProGarageNight',path:'assets/Garage/shinonome_warehouse_night.png'},
+    day: {key:'tokyoProGarageDay',path:'assets/CentralTokyo/dragcomplex/progarage_day.png'},
+    night: {key:'tokyoProGarageNight',path:'assets/CentralTokyo/dragcomplex/progarage_night.png'},
   },
   serviceMultiplier: 1.25, // Warehouse HQ pricing and full tier-two tooling.
   description: 'Three secured professional entries at Tokyo Drag Complex.',

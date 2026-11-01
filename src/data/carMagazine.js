@@ -21,6 +21,7 @@ export function getActiveMagazineIssue(source = null) {
 }
 
 export const CAR_MAGAZINE_META = Object.freeze({
+  s2000: { year: 1999, drivetrain: 'RWD' },
   gf8: { year: 1999, drivetrain: 'AWD', fact: 'The five-door WRX STI GF8 paired Subaru AWD with a 206 kW EJ207 turbo boxer in Version VI form.' },
   "gdb": {"year": 2002, "drivetrain": "AWD"},
   "s15": {"year": 1999, "drivetrain": "RWD"},
@@ -77,6 +78,46 @@ const HERO_LABELS = Object.freeze({
   junEvo5: 'JUN HYPER LEMON EVO V',
 });
 
+// One shared competition/garage resolver. Many sealed hero and converted cars
+// were not in the magazine's original road-car catalogue; that returned
+// SPECIAL and silently disqualified otherwise legal drivetrain-only races.
+// Keep the canonical car model, not engine axle-load physics, authoritative.
+export const SPECIAL_CAR_DRIVETRAINS = Object.freeze({
+  minesR34:'AWD',topSecretSupra:'RWD',libertyWalkR35:'AWD',
+  veilsideFortuneRx7:'RWD',rwbStellaPorsche:'RWD',
+  renownMazda787B:'RWD',amuseS2000Gt1:'RWD',spoonEk9:'FWD',
+  reAmemiyaRx7:'RWD',junHyperLemonEvo5:'AWD',espritNsx:'RWD',
+  essoToyotaGtOne:'RWD',cleanToyotaGtOne:'RWD',
+  calsonicR390:'RWD',cleanR390:'RWD',cleanMazda787B:'RWD',
+  zeroSportsGc8:'AWD',castrolMugenNsx:'RWD',
+  mcrae22B:'AWD',tommiEvo6:'AWD',
+  arkonLibertyWalk240z:'RWD',arkonGinza240z:'RWD',
+  libertyWalk240z:'RWD',lbwk180sx:'RWD',lbwkA60:'RWD',
+  lbwk350z:'RWD',lbwkS15:'RWD',lbwkR34:'AWD',
+  lbwkMx5:'RWD',lbwkR32:'AWD',
+});
+
+export function normaliseCarDrivetrain(raw) {
+  const drive=String(raw||'').trim().toUpperCase().replace(/[- ]/g,'_');
+  if(['FWD','FF','FRONT','FRONT_WHEEL_DRIVE'].includes(drive))return 'FWD';
+  if(['RWD','FR','REAR','REAR_WHEEL_DRIVE'].includes(drive))return 'RWD';
+  if(['AWD','4WD','4X4','FOUR_WHEEL_DRIVE','ALL_WHEEL_DRIVE'].includes(drive))return 'AWD';
+  return null;
+}
+
+export function getCarDrivetrain(carId) {
+  const requested=String(carId||'');
+  const id=getBaseCarId(requested);
+  const car=cars[requested]||cars[id];
+  const base=car?.ownedBaseCarId||car?.crewBaseCarId||id;
+  const demo=String(base).replace(/^ginzaDemo_/,'');
+  return normaliseCarDrivetrain(
+    car?.drivetrain||cars[base]?.drivetrain||
+    CAR_MAGAZINE_META[base]?.drivetrain||CAR_MAGAZINE_META[demo]?.drivetrain||
+    SPECIAL_CAR_DRIVETRAINS[base]||SPECIAL_CAR_DRIVETRAINS[demo]
+  );
+}
+
 export function getCarMagazineMeta(carId) {
   const instanceId = String(carId || '');
   const id = getBaseCarId(instanceId);
@@ -87,7 +128,7 @@ export function getCarMagazineMeta(carId) {
     name: car?.name || HERO_LABELS[id] || id.replaceAll('_', ' ').toUpperCase(),
     shortName: car?.shortName || HERO_LABELS[id] || id.toUpperCase(),
     year: Number(meta.year || 0),
-    drivetrain: meta.drivetrain || 'SPECIAL',
+    drivetrain: getCarDrivetrain(instanceId) || 'SPECIAL',
     fact: meta.fact || car?.description || 'A noteworthy build spotted during this Tokyo SHIFT save.',
     isHero: !car && Boolean(HERO_LABELS[id]),
   };
