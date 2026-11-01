@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { createFourWideTournament } from '../src/data/proTournament.js';
 import assert from 'node:assert/strict';
 import { createDefaultProCircuitState, normaliseProCircuitState } from '../src/data/proCircuit.js';
 import {
@@ -45,4 +46,23 @@ test('older in-progress seasons without a saved car roster remain playable',()=>
   const migrated=normaliseProCircuitState(legacy);
   assert.equal(migrated.registeredDriverCars,null);
   assert.equal(getProSeasonDriverCarError(migrated,'fc3s'),null);
+});
+
+
+test('Four Wide cup rejects unregistered individual car IDs at tournament creation',()=>{
+  const started=startProfessionalSeason(createDefaultProCircuitState(),roster,roster);
+  assert.ok(started.circuit,started.error);
+  started.circuit.calendar.round=2; // official Four Wide round
+  assert.equal(createFourWideTournament(started.circuit,'fc3s'),null);
+  const approved=createFourWideTournament(started.circuit,'ae86');
+  assert.ok(approved);
+  assert.equal(approved.carId,'ae86');
+});
+
+test('the driver trio survives normalisation without restricting crew state',()=>{
+  const c=startProfessionalSeason(createDefaultProCircuitState(),roster,roster).circuit;
+  const stored={...c,activeCrewEvent:{id:'crew:fixture',squadIds:['one','two','three','four','five','six','seven']}};
+  const reloaded=normaliseProCircuitState(stored);
+  assert.deepEqual(reloaded.registeredDriverCars,roster);
+  assert.equal(reloaded.activeCrewEvent.squadIds.length,7);
 });
