@@ -1,4 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
+import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261101-r753';
+import { releaseProGarage, shouldReleaseProGarage } from '../data/proGarage.js?v=20261101-r753';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261030-r741';
 import { materialiseProDuelOpponentIdentities, selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r741';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261030-r723';
@@ -3177,6 +3179,20 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawDragComplex() {
+    // Return the three race cars once an unsuccessful season or a completed
+    // Tokyo Championship is finished. This is an atomic once-only save;
+    // qualified players retain the paddock while their championship awaits.
+    const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    if(shouldReleaseProGarage(currentPro)){
+      const released=releaseProGarage(currentPro,this.registry.get('ownedCarIds')||[],
+        this.registry.get('carGarageLocations')||{},
+        Number(this.registry.get('garageTier')||0));
+      if(released.changed)try{
+        saveProTransaction(this.registry,{
+          proCircuit:released.circuit,carGarageLocations:released.carGarageLocations,
+        });
+      }catch(error){console.warn('[Tokyo SHIFT] Pro Garage release save failed',error);}
+    }
     const access = getProCircuitAccess(this.registry);
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     const isOpen = isOpenCircuitAvailable(this.registry.get('proCircuit'));
@@ -3336,6 +3352,26 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
     this.drawDragSide(events[this.selectedEventIndex], build);
     showProSeasonAction(this,SIDE);
+    const proGarage=normaliseProCircuitState(this.registry.get('proCircuit'));
+    if(proGarage.proGarageOrigins&&proGarage.registeredDriverCars?.length===3){
+      const x=SIDE.x+SIDE.w/2,y=SIDE.y+674;
+      const button=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
+        0x123142,1).setStrokeStyle(2,0x66c4e8,1).setDepth(38)
+        .setInteractive({useHandCursor:true}));
+      const label=this.addContent(this.add.text(x,y,'PRO GARAGE  //  04 AWD · 05 RWD · 06 FF',{
+        fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e8f7ff',
+      }).setOrigin(.5).setDepth(39));
+      label.setScale(Math.min(1,(SIDE.w-52)/Math.max(1,label.width)));
+      button.on('pointerdown',()=>{
+        const latest=normaliseProCircuitState(this.registry.get('proCircuit'));
+        if(!latest.proGarageOrigins)return;
+        const previous=this.registry.get('workshopLocationId')||'shinonomeWarehouseStrip';
+        this.scene.start('GarageScene',{
+          proGarageMode:true,workshopLocationId:PRO_GARAGE_ID,
+          returnWorkshopId:previous===PRO_GARAGE_ID?'shinonomeWarehouseStrip':previous,
+        });
+      });
+    }
   }
 
   enterProfessionalTimedEvent(event) {
