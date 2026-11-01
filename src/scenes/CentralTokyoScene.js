@@ -3373,7 +3373,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(!latest.proGarageOrigins)return;
         const previous=this.registry.get('workshopLocationId')||'shinonomeWarehouseStrip';
         this.scene.start('GarageScene',{
-          proGarageMode:true,workshopLocationId:PRO_GARAGE_ID,
+          proGarageMode:true,crewMode:false,workshopLocationId:PRO_GARAGE_ID,
           returnWorkshopId:previous===PRO_GARAGE_ID?'shinonomeWarehouseStrip':previous,
         });
       });
