@@ -242,6 +242,12 @@ export function getProfessionalSeasonOrder(season=1,discipline='DRIVER') {
   if(snapshot?.season===n&&Array.isArray(saved)&&saved.length===PRO_SEASON_LENGTH&&
     [...saved].sort((a,b)=>a-b).every((v,i)=>v===i))return [...saved];
   const order=Array.from({length:PRO_SEASON_LENGTH},(_,i)=>i);
+  // Legacy careers had a fixed schedule regardless of season number. Never
+  // reshuffle an ACTIVE or COMPLETE season which predates saved calendars:
+  // a resumed heat and previously earned points must keep their original
+  // fixture sequence. Only NEW season registrations use the seeded shuffle.
+  if(season&&typeof season==='object'&&!snapshot&&
+      ['ACTIVE','COMPLETE'].includes(season.seasonStatus))return order;
   if(n===1)return order;
   let seed=(Math.imul(n,0x9e3779b1) ^ (discipline==='TEAM'?0x5bd1e995:0x27d4eb2d))>>>0;
   const next=()=>{
