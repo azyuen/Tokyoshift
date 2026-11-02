@@ -3058,6 +3058,60 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // Display names are round-specific, but the professional race IDs, rules,
   // points and save records remain unchanged. The plain Sprint/Open names
   // continue to apply exclusively to the rotating Open Circuit.
+  showProSeasonCalendarPreview() {
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const overlay=[];
+    const add=obj=>{overlay.push(obj);return obj;};
+    const depth=160;
+    const scrim=add(this.add.rectangle(780,420,1560,840,0x020710,.88)
+      .setDepth(depth).setInteractive());
+    const panel=add(this.add.rectangle(780,420,1230,720,0x0b1927,1)
+      .setStrokeStyle(2,0x57bfe7).setDepth(depth+1));
+    const title='PRO SEASON '+pro.season+' // EIGHT-ROUND CALENDAR';
+    add(this.add.text(780,100,title,{fontFamily:PIXEL_FONT,fontSize:'16px',
+      color:'#e8f7ff'}).setOrigin(.5).setDepth(depth+2));
+    add(this.add.text(780,137,'DRIVER EVENTS / CREW EVENTS // FIXED FOR THIS SEASON',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#8bc9e1'
+    }).setOrigin(.5).setDepth(depth+2));
+    for(let i=0;i<8;i++){
+      const event=getProfessionalRoundEvents(i,pro);
+      const names=this.getProSeasonEventNames(i,pro);
+      const y=183+i*68;
+      const format=e=>String(e.format||'DUEL').replaceAll('_',' ');
+      const rules=event.driver;
+      const details=[
+        format(rules),
+        rules.drivetrain||'ALL DRIVES',
+        rules.maxPowerKW?rules.maxPowerKW+' KW MAX':'OPEN POWER',
+        rules.noNos?'NOS OFF':rules.maxNosShots+' NOS SHOTS MAX'
+      ].join(' · ');
+      add(this.add.rectangle(780,y+23,1160,61,i===pro.calendar.round?0x17364a:0x102331,1)
+        .setStrokeStyle(1,i===pro.calendar.round?0x68d7ff:0x28465a)
+        .setDepth(depth+1));
+      add(this.add.text(225,y+4,'R'+(i+1)+(i===pro.calendar.round?'  NOW':''),{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f4d28d'
+      }).setDepth(depth+2));
+      add(this.add.text(335,y+3,names.driver+'  //  '+names.crew,{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f0f6ff'
+      }).setDepth(depth+2));
+      add(this.add.text(335,y+27,details+'  |  CREW '+format(event.crew),{
+        fontFamily:BODY_FONT,fontSize:'11px',color:'#a6c3d2'
+      }).setDepth(depth+2));
+    }
+    const close=()=>{
+      overlay.forEach(obj=>obj?.destroy?.());
+    };
+    scrim.on('pointerdown',close);
+    panel.setInteractive().on('pointerdown',()=>{});
+    const button=add(this.add.rectangle(780,741,230,36,0x18455a,1)
+      .setStrokeStyle(1,0x7ddfff).setDepth(depth+3)
+      .setInteractive({useHandCursor:true}));
+    add(this.add.text(780,741,'CLOSE CALENDAR',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffffff'
+    }).setOrigin(.5).setDepth(depth+4));
+    button.on('pointerdown',close);
+  }
+
   getProSeasonEventNames(round,season=1) {
     const names=[
       {driver:'TOKYO LAUNCH CHALLENGE',crew:'SHUTO TEAM SHOWDOWN'},
@@ -3305,6 +3359,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
       fontSize: '11px',
       color: '#8fe7ff',
     }).setDepth(33));
+    if(!isOpen&&circuitOpen){
+      const x=CARDS.x+CARDS.w-155,y=CARDS.y+16;
+      const preview=this.addContent(this.add.rectangle(x,y,286,32,0x153a4d,1)
+        .setStrokeStyle(1,0x69c7e8).setDepth(34)
+        .setInteractive({useHandCursor:true}));
+      this.addContent(this.add.text(x,y,'VIEW ALL 8 ROUNDS',{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e5f8ff'
+      }).setOrigin(.5).setDepth(35));
+      preview.on('pointerdown',()=>this.showProSeasonCalendarPreview());
+    }
     if(isOpen) this.addContent(this.add.text(
       CARDS.x + CARDS.w - 18,CARDS.y + 15,
       'DRIVER / CREW: DAY-NIGHT  ·  TROPHIES: FULL DAY',
