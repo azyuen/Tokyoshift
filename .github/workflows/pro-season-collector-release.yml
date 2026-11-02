@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'src/data/proSeason.js'
+      - 'src/data/proDriverBriefing.js'
+      - 'src/ui/ProSeasonDriverBriefing.js'
       - 'src/data/proCircuit.js'
       - 'src/vehicles/VehiclePerformance.js'
       - 'src/scenes/GarageScene.js'
@@ -24,6 +26,8 @@ jobs:
       - name: Syntax checks
         run: |
           node --check src/data/proSeason.js
+          node --check src/data/proDriverBriefing.js
+          node --check src/ui/ProSeasonDriverBriefing.js
           node --check src/data/proCircuit.js
           node --check src/vehicles/VehiclePerformance.js
           node --check src/scenes/GarageScene.js
