@@ -900,6 +900,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const location = LOCATION_BY_ID[this.activeLocationId] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
     const background = this.getLocationBackgroundConfig(location, nextPhase);
     this.updateLocationHeaderForPhase(location);
+    if (location.kind === 'proDrag' && this.proSeasonFullscreenImage?.active &&
+        background?.key && this.textures.exists(background.key)) {
+      const full = this.proSeasonFullscreenImage;
+      full.setTexture(background.key);
+      const source = this.textures.get(background.key).getSourceImage();
+      full.setScale(Math.max(1560 / (source?.width || 1672), 760 / (source?.height || 941)));
+    }
 
     if (
       !this.centralBackgroundImage?.active ||
