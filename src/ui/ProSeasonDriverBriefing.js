@@ -258,7 +258,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       .setStrokeStyle(3,0x48c9e9).setDepth(260));
     const header=label(440,282,heading,23,'#ffffff');header.setDepth(261);
     const copy=label(440,335,body,19,'#e3edf4',{wrap:680});copy.setDepth(261);
-    button(780,526,320,48,'RETURN TO BRIEFING',renderBriefing);
+    const back=add(s.add.rectangle(780,526,320,48,0x123047,1)
+      .setStrokeStyle(2,0x56d6f2).setDepth(263).setInteractive({useHandCursor:true}));
+    const caption=label(780,526,'RETURN TO BRIEFING',15,'#ffffff')
+      .setOrigin(.5).setDepth(264);
+    back.on('pointerdown',renderBriefing);
   }
   if(pending){
     discard();
