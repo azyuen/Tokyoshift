@@ -348,7 +348,10 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
     Number(carState?.exhaustNosTuning?.nosKit||0)>0 ||
     (carState?.nosInstalled!==false && Number(car.nosPower||0)>0 &&
       Number(car.nosShots||car.nosCapacitySeconds||0)>0);
-  if(rules.noNos&&installedNos)reasons.push('NOS PROHIBITED');
+  // NOS can remain fitted when the driver explicitly disables the system.
+  // Missing nosEnabled means enabled for backwards compatibility.
+  const activeNos=installedNos&&carState?.nosEnabled!==false;
+  if(rules.noNos&&activeNos)reasons.push('NOS MUST BE DISABLED');
   // Installed bottle capacity is inspected independently of the engine's
   // continuous power. Drivers must refit a legal kit before entering a
   // restricted event; scrutineering never silently changes their setup.
@@ -357,7 +360,7 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
     : (carState?.nosInstalled===false ? 0 :
       Number(carState?.nosShots ?? car.nosShots ?? 0));
   if(!rules.noNos&&Number.isFinite(rules.maxNosShots)&&
-      installedNos&&installedShots>rules.maxNosShots)
+      activeNos&&installedShots>rules.maxNosShots)
     reasons.push('NOS LIMIT '+rules.maxNosShots+' SHOT'+(rules.maxNosShots===1?'':'S'));
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
