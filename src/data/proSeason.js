@@ -230,15 +230,31 @@ export const PRO_SEASON_CALENDAR = Object.freeze([
   {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:450,maxNosShots:1},crew:{format:'TECHNICAL'}},
   {driver:{id:'tokyoInvitational',format:'KNOCKOUT',maxNosShots:3},crew:{format:'DUEL'}},
 ]);
-// Rotate formats and restrictions by season, deterministically. The season
-// number is the seed, not wall-clock time, so saves/reloads never reroll.
-export function getProfessionalSeasonCalendar(season=1) {
+// Deterministic Fisher-Yates shuffles preserve the eight-event balance while
+// mixing both disciplines independently for every new season. Never use time
+// or Math.random: the season number is persisted in legacy circuit saves.
+export function getProfessionalSeasonOrder(season=1,discipline='DRIVER') {
   const n=Math.max(1,Math.floor(Number(season)||1));
-  if(n===1)return PRO_SEASON_CALENDAR;
-  const offset=(n-1)%PRO_SEASON_LENGTH;
-  const driver=PRO_SEASON_CALENDAR.map((_,i)=>PRO_SEASON_CALENDAR[(i+offset)%PRO_SEASON_LENGTH].driver);
-  const crew=PRO_SEASON_CALENDAR.map((_,i)=>PRO_SEASON_CALENDAR[(i+offset*3)%PRO_SEASON_LENGTH].crew);
-  return driver.map((event,i)=>({driver:{...event},crew:{...crew[i]}}));
+  const order=Array.from({length:PRO_SEASON_LENGTH},(_,i)=>i);
+  if(n===1)return order;
+  let seed=(Math.imul(n,0x9e3779b1) ^ (discipline==='TEAM'?0x5bd1e995:0x27d4eb2d))>>>0;
+  const next=()=>{
+    seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;
+    return (seed>>>0)/4294967296;
+  };
+  for(let i=order.length-1;i>0;i--){
+    const j=Math.floor(next()*(i+1));
+    [order[i],order[j]]=[order[j],order[i]];
+  }
+  return order;
+}
+export function getProfessionalSeasonCalendar(season=1) {
+  const drivers=getProfessionalSeasonOrder(season,'DRIVER');
+  const crews=getProfessionalSeasonOrder(season,'TEAM');
+  return drivers.map((source,i)=>({
+    driver:{...PRO_SEASON_CALENDAR[source].driver},
+    crew:{...PRO_SEASON_CALENDAR[crews[i]].crew}
+  }));
 }
 export function getProfessionalRoundEvents(round,season=1){
   return getProfessionalSeasonCalendar(season)[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];
