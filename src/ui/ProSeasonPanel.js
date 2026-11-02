@@ -8,7 +8,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { stageProGarage, releaseProGarage, PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
-import { characters } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterVisualAsset } from '../data/characters.js?v=20261024-r680';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261030-r728';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
@@ -81,60 +81,63 @@ export function drawSeasonHeader(s,stage) {
     text(s,x,86,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)}`,28,race)
       .setInteractive({useHandCursor:true})
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-    // Put both Tokyo qualification targets in one mid-left card. Keep the
-    // large header limited to the season/round identity.
-    const qualifyX=stage.x+22,qualifyY=stage.y+202,qualifyW=536,qualifyH=147;
-    const qualifyBox=s.addContent(s.add.rectangle(qualifyX,qualifyY,qualifyW,qualifyH,
-      0x0a1523,.9).setOrigin(0,0).setStrokeStyle(2,0x657f98,.95).setDepth(37)
-      .setInteractive({useHandCursor:true}));
-    s.addContent(s.add.rectangle(qualifyX+5,qualifyY+5,7,qualifyH-10,
-      0xb92f43,1).setOrigin(0,0).setDepth(38));
-    text(s,qualifyX+24,qualifyY+10,'CHAMPIONSHIP QUALIFICATION',22,
+    // Eight-stage progress strip: orange indicates the current round.
+    const round=Math.min(8,Math.max(1,c.calendar.round+1));
+    for(let i=0;i<8;i++){
+      const bx=x+7+i*58,by=135;
+      s.addContent(s.add.rectangle(bx,by,48,30,i<round?0xc46b25:0x172638,.94)
+        .setStrokeStyle(1,i===round-1?0xffc06b:0x536a7a).setDepth(38));
+      text(s,bx,by,'R'+(i+1),15,{...race,strokeThickness:1,
+        color:i<round?'#fff3dd':'#98aabb'}).setOrigin(.5);
+    }
+    // Wide, low-profile qualification progress, above the event cards.
+    const progressX=stage.x+22,progressY=stage.y+468,progressW=1050;
+    text(s,progressX,progressY-32,'TOKYO CHAMPIONSHIP QUALIFICATION',20,
       {...race,strokeThickness:2});
-    s.addContent(s.add.rectangle(qualifyX+qualifyW/2,qualifyY+47,
-      qualifyW-28,1,0x688298,.85).setDepth(38));
-    s.addContent(s.add.rectangle(qualifyX+207,qualifyY+95,
-      1,76,0x688298,.7).setDepth(38));
-    text(s,qualifyX+45,qualifyY+64,'TOKYO',29,
-      {...race,color:'#e6c783',strokeThickness:2});
-    text(s,qualifyX+23,qualifyY+104,'CHAMPIONSHIP',18,
-      {...race,color:'#e7ecf1',strokeThickness:2});
-    const qualificationLine=(yy,label,points,required)=>{
-      text(s,qualifyX+226,qualifyY+yy,label,18,
-        {...race,strokeThickness:2});
-      text(s,qualifyX+qualifyW-20,qualifyY+yy,
-        points+' / '+required,22,{...race,color:points>=required?'#f0d08c':'#edf1f5',
-          strokeThickness:2}).setOrigin(1,0);
+    const meter=(offset,label,points,required)=>{
+      const yy=progressY+offset;
+      text(s,progressX,yy,label,17,{...race,strokeThickness:1});
+      s.addContent(s.add.rectangle(progressX+160,yy+9,700,14,0x172a3c,.95)
+        .setOrigin(0,0).setStrokeStyle(1,0x708294).setDepth(38));
+      s.addContent(s.add.rectangle(progressX+160,yy+9,
+        700*Math.max(0,Math.min(1,points/required)),14,0xe58c32,1)
+        .setOrigin(0,0).setDepth(39));
+      text(s,progressX+884,yy,points+' / '+required,17,
+        {...race,strokeThickness:1,color:'#f6e4c9'});
     };
-    qualificationLine(65,'DRIVER POINTS',q.driver,q.driverRequired);
-    qualificationLine(106,'CREW POINTS',q.crew,q.crewRequired);
-    qualifyBox.on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
+    meter(0,'DRIVER',q.driver,q.driverRequired);
+    meter(34,'CREW',q.crew,q.crewRequired);
 
-    // These are this season's standings, NOT the separate Open Circuit
-    // lifetime ratings. A new season starts without a race rank.
-    const rankX=stage.x+1158,rankY=stage.y+28,rankW=324,rankH=128;
+    // Player dashboard: live cash and persistent professional rankings.
+    const rankX=stage.x+1140,rankY=stage.y+22,rankW=354,rankH=167;
     const rankBox=s.addContent(s.add.rectangle(rankX,rankY,rankW,rankH,
-      0x0a1523,.91).setOrigin(0,0).setStrokeStyle(2,0x657f98,.95).setDepth(37)
+      0x091725,.93).setOrigin(0,0).setStrokeStyle(2,0x657f98).setDepth(37)
       .setInteractive({useHandCursor:true}));
-    s.addContent(s.add.rectangle(rankX+5,rankY+5,6,rankH-10,
-      0xb48a47,1).setOrigin(0,0).setDepth(38));
-    text(s,rankX+23,rankY+10,'SEASON RANK',22,
-      {...race,color:'#f1d6a0',strokeThickness:2});
-    s.addContent(s.add.rectangle(rankX+rankW/2,rankY+47,rankW-31,
-      1,0x688298,.85).setDepth(38));
-    const seasonReport=getProfessionalSeasonReport(c);
-    const hasCompletedRound=c.calendar.round>0;
-    const rankLine=(yy,label,standing)=>{
-      text(s,rankX+24,rankY+yy,label,21,{...race,strokeThickness:2});
-      text(s,rankX+rankW-23,rankY+yy,
-        hasCompletedRound&&standing?'#'+standing:'—',23,
-        {...race,color:'#e9eef5',strokeThickness:2}).setOrigin(1,0);
-    };
-    rankLine(55,'DRIVER',seasonReport.driverStanding);
-    rankLine(91,'CREW',seasonReport.crewStanding);
-    rankBox.on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-
-    if(s.proError)text(s,x,208,s.proError,18,{color:'#ef939b',wordWrap:{width:600}});
+    const playerId=s.registry.get('playerCharacterId')||'renMizuno';
+    const playerAsset=getCharacterVisualAsset(playerId,'idle',{
+      playerCharacterId:playerId,proCircuit:true});
+    s.addContent(s.add.rectangle(rankX+54,rankY+57,86,98,0x23374a,.98)
+      .setStrokeStyle(1,0xb98b50).setDepth(38));
+    if(playerAsset?.key&&s.textures.exists(playerAsset.key)){
+      const portrait=s.addContent(s.add.image(rankX+54,rankY+105,playerAsset.key)
+        .setDepth(39));
+      const source=s.textures.get(playerAsset.key).getSourceImage();
+      portrait.setScale(Math.min(82/Math.max(1,source.width),
+        94/Math.max(1,source.height)));
+    }
+    text(s,rankX+110,rankY+9,'PRO DRIVER',20,
+      {...race,color:'#f3d49c',strokeThickness:1});
+    text(s,rankX+110,rankY+43,
+      '¥ '+Number(s.registry.get('cash')||0).toLocaleString('en-US'),19,
+      {...race,strokeThickness:1});
+    text(s,rankX+110,rankY+80,'DRIVER  #'+(driver?.seed||'—'),18,
+      {...race,strokeThickness:1});
+    text(s,rankX+110,rankY+110,'CREW     #'+(team?.seed||'—'),18,
+      {...race,strokeThickness:1});
+    text(s,rankX+110,rankY+140,'FULL RANKINGS  ▼',14,
+      {...race,color:'#8ed8f5',strokeThickness:1});
+    rankBox.on('pointerdown',()=>showProRankings(s));
+    if(s.proError)text(s,x,200,s.proError,18,{color:'#ef939b',wordWrap:{width:600}});
     return;
   }
   // Rank and sponsorship remain visible through both Open Circuit and Season.

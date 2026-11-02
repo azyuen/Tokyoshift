@@ -11,12 +11,12 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r765';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r766';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
-import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261102-r763';
+import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261103-r766';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
@@ -3389,8 +3389,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       [
         { characterId: playerId, pose: 'idle', x: STAGE.x + 700, feetY: STAGE.y + 728, height: 290, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 840, feetY: STAGE.y + 728, height: 285, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 980, feetY: STAGE.y + 728, height: 280, depth: 20 },
-        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1146, feetY: STAGE.y + 728, height: 280, depth: 19 },
+        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 980, feetY: STAGE.y + 728, height: 302, depth: 20 },
+        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1370, feetY: STAGE.y + 728, height: 285, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
       [
@@ -3413,16 +3413,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       fontSize: '11px',
       color: '#8fe7ff',
     }).setDepth(33));
-    if(!isOpen&&circuitOpen){
-      const x=CARDS.x+CARDS.w-155,y=CARDS.y+16;
-      const preview=this.addContent(this.add.rectangle(x,y,286,32,0x153a4d,1)
-        .setStrokeStyle(1,0x69c7e8).setDepth(34)
-        .setInteractive({useHandCursor:true}));
-      this.addContent(this.add.text(x,y,'VIEW ALL 8 ROUNDS',{
-        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e5f8ff'
-      }).setOrigin(.5).setDepth(35));
-      preview.on('pointerdown',()=>this.showProSeasonCalendarPreview());
-    }
     if(isOpen) this.addContent(this.add.text(
       CARDS.x + CARDS.w - 18,CARDS.y + 15,
       'DRIVER / CREW: DAY-NIGHT  ·  TROPHIES: FULL DAY',
@@ -3497,25 +3487,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
     showProSeasonAction(this,SIDE);
-    const proGarage=normaliseProCircuitState(this.registry.get('proCircuit'));
-    if(!isOpen&&proGarage.proGarageOrigins&&proGarage.registeredDriverCars?.length===3){
-      // Fourth action, directly above the retained entry/withdraw/map stack.
-      const x=SIDE.x+SIDE.w/2,y=SIDE.y+524;
-      const button=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
-        0x123142,1).setStrokeStyle(2,0x66c4e8,1).setDepth(38)
+    if(!isOpen&&circuitOpen){
+      const x=SIDE.x+SIDE.w/2,y=SIDE.y+466;
+      const preview=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
+        0x123142,1).setStrokeStyle(2,0x66c4e8).setDepth(38)
         .setInteractive({useHandCursor:true}));
-      this.addContent(this.add.text(x,y,'PRO PADDOCK',{
-        fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e8f7ff',
+      this.addContent(this.add.text(x,y,'VIEW ALL 8 ROUNDS',{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e8f7ff',
       }).setOrigin(.5).setDepth(39));
-      button.on('pointerdown',()=>{
-        const latest=normaliseProCircuitState(this.registry.get('proCircuit'));
-        if(!latest.proGarageOrigins)return;
-        const previous=this.registry.get('workshopLocationId')||'shinonomeWarehouseStrip';
-        this.scene.start('GarageScene',{
-          proGarageMode:true,crewMode:false,workshopLocationId:PRO_GARAGE_ID,
-          returnWorkshopId:previous===PRO_GARAGE_ID?'shinonomeWarehouseStrip':previous,
-        });
-      });
+      preview.on('pointerdown',()=>this.showProSeasonCalendarPreview());
     }
   }
 

@@ -11,6 +11,7 @@ import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741'
 import { BRIEFING_POWER_PARTS,getDriverPowerPartLevelInfo,
   setDriverPowerPartLevels } from '../data/proDriverBriefing.js?v=20261030-r740';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
+import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
@@ -236,6 +237,15 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     label(464,218,'SCRUTINEERING // '+(check.eligible?'PASSED':check.reasons.slice(0,2).join(' / ')),
       14,check.eligible?'#96eac7':'#ffb5b9',{wrap:625});
     button(187,580,238,48,'CAR SETUP',renderSetup);
+    if(initial.proGarageOrigins&&initial.registeredDriverCars?.length===3)
+      button(680,778,248,52,'PRO PADDOCK',()=>{
+        close();
+        const previous=s.registry.get('workshopLocationId')||'shinonomeWarehouseStrip';
+        s.scene.start('GarageScene',{
+          proGarageMode:true,crewMode:false,workshopLocationId:PRO_GARAGE_ID,
+          returnWorkshopId:previous===PRO_GARAGE_ID?'shinonomeWarehouseStrip':previous,
+        });
+      });
     button(1120,580,228,48,'SAYAKA // ADVICE',()=>{
       renderDialogue('SAYAKA // STRATEGY',
         'Select your registered '+shortDrive(rules.drivetrain||'')+
