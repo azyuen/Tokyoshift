@@ -3157,25 +3157,25 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ];
     }
     const driverPool = PRO_DRAG_EVENTS;
-    const rules = getProfessionalRoundEvents(round,pro.season);
+    const rules = getProfessionalRoundEvents(round,pro);
     const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];
     const fourWide = {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
-    const proNames=this.getProSeasonEventNames(round,pro.season);
+    const proNames=this.getProSeasonEventNames(round,pro);
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
       seasonRules: rules.driver, label: proNames.driver };
     // Rotating Elite Invitational: five Driver/three Crew starting rounds,
     // adapting deterministically when one point requirement falls behind.
     const invitationalDiscipline=getProInvitationalDiscipline(pro);
-    const alternateFormat=getAlternativeProCrewFormat(round,pro.season);
+    const alternateFormat=getAlternativeProCrewFormat(round,pro);
     const alternateCrew={...CREW_SERIES,id:'crewAlt',team:true,
       seasonChoice:'alternative',format:alternateFormat,
       label:'ELITE CREW '+alternateFormat.replaceAll('_','-'),
       entryFee:PRO_ALT_CREW_ENTRY_FEE,prizeCash:PRO_ALT_CREW_PRIZES[0],
       prizes:[...PRO_ALT_CREW_PRIZES],requiredWins:0};
-    const inviteRules=getProDriverInvitationRules(round,pro.season);
+    const inviteRules=getProDriverInvitationRules(round,pro);
     const alternateDriver={...PRO_DRAG_EVENTS[2],id:inviteRules.id,
       label:'ELITE DRIVER INVITATIONAL',seasonChoice:'alternative',
       seasonRules:inviteRules,requiredWins:0,
@@ -3439,7 +3439,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!carId || !owned.includes(carId) || cars[carId]?.ginzaDemo) return;
     const rosterError=getProSeasonDriverCarError(pro,carId);
     if(rosterError){this.proError=rosterError;this.renderLocation(this.activeLocationId);return;}
-    const rules = getProfessionalRoundEvents(pro.calendar.round,pro.season).driver;
+    const rules = getProfessionalRoundEvents(pro.calendar.round,pro).driver;
     if (rules.id !== 'fourWideOpen' || rules.format !== 'FOUR_WIDE' || rules.stock) return;
     if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
     if (rules.noNos && build.nosInstalled) return;
@@ -4010,9 +4010,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if(pro.seasonStatus!=='ACTIVE')return;
       const rosterError=getProSeasonDriverCarError(pro,build.carId);
       if(rosterError){this.proError=rosterError;this.renderLocation(this.activeLocationId);return;}
-      const official=getProfessionalRoundEvents(pro.calendar.round,pro.season).driver;
+      const official=getProfessionalRoundEvents(pro.calendar.round,pro).driver;
       const rules=event.seasonChoice==='alternative'?
-        getProDriverInvitationRules(pro.calendar.round,pro.season):official;
+        getProDriverInvitationRules(pro.calendar.round,pro):official;
       const card=this.getProDragEvents().find(e=>e.id===event.id&&!e.team);
       if(!card||card.entryFee!==event.entryFee||event.id!==rules.id||
         rules.format!=='KNOCKOUT')return;
