@@ -1892,6 +1892,17 @@ export default class GarageScene extends Phaser.Scene {
         Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0));
   }
 
+  canSelectedCollectorAccessNos() {
+    const car=cars[this.selectedCarId];
+    const state=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
+    const factoryNos=Number(car?.nosPower||0)>0 &&
+      Number(car?.nosShots||car?.nosCapacitySeconds||0)>0;
+    return this.canSelectedCollectorInstallNos() ||
+      Boolean(this.selectedCarId&&!this.crewMode&&!car?.ginzaDemo&&!car?.crewLoan&&
+        !isArkonRwbRestoration(this.registry,this.selectedCarId)&&
+        (car?.tuningLocked||state.tuningLocked||state.collector||car?.collector)&&factoryNos);
+  }
+
   refreshTuningCategoryAvailability() {
     const locked = Boolean(this.selectedCarId && this.isSelectedCarTuningLocked());
 
@@ -1909,7 +1920,7 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.upgradeButtons.forEach(item => {
-      if ((locked && !(item.name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) ||
+      if ((locked && !(item.name === 'EXHAUST / NOS' && this.canSelectedCollectorAccessNos())) ||
           !this.selectedCarId) {
         item.box.disableInteractive()
           .setFillStyle(0x111318, 1)
@@ -6578,7 +6589,7 @@ export default class GarageScene extends Phaser.Scene {
   enterSecondaryTuningMode(mode) {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
     if (this.isSelectedCarTuningLocked() &&
-        !(mode === 'exhaustNos' && this.canSelectedCollectorInstallNos())) {
+        !(mode === 'exhaustNos' && this.canSelectedCollectorAccessNos())) {
       this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
       return;
     }
