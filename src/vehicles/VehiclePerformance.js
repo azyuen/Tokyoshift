@@ -5,7 +5,7 @@ import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261026-r687';
+import { applySecondaryTuning, getExhaustNosTuning, EXHAUST_NOS_TUNING_PARTS } from '../data/secondaryTuning.js?v=20261026-r687';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
 import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261026-r687';
 
@@ -43,9 +43,11 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engine = clone(engineConfig || {});
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
-    // Ginza full-works and Denzaki one-off have factory-sealed NOS hardware.
-    // Do not apply player parts or strip their authored three-shot system.
-    if (config.lbwkFullWorks || config.arkonOneOff) {
+    // Factory-authorised NOS remains part of the car's sealed specification.
+    // Never overwrite a factory system with purchased aftermarket parts.
+    const factoryNos = Number(config.nosPower || 0) > 0 &&
+      Number(config.nosShots || config.nosCapacitySeconds || 0) > 0;
+    if (factoryNos) {
       if (state.nosEnabled === false) {
         config.nosPower = 0;
         config.nosShots = 0;
@@ -53,13 +55,18 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
       }
       return { car: config, engine };
     }
-    // Collectors remain mechanically sealed, except for their explicitly
-    // purchased NOS kit. Never apply engine, drivetrain or exhaust upgrades.
-    const shots = Math.max(0,Math.min(3,Number(state.exhaustNosTuning?.nosKit || 0)));
-    if (shots > 0 && state.nosEnabled !== false) {
-      config.nosPower = Math.max(0,Number(state.nosPower || 0));
+
+    // Additional NOS is the sole allowed modification to a sealed collector.
+    // Derive shot count / power from the actual purchased parts, not a cached
+    // state.nosPower value, so legacy saves and imported cars remain correct.
+    const kit = getExhaustNosTuning(state);
+    const bottle = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[kit.nosKit];
+    const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[kit.nitrousShot];
+    const shots = Number(bottle?.shots || 0);
+    if (shots > 0 && Number(shot?.powerHp || 0) > 0 && state.nosEnabled !== false) {
+      config.nosPower = Number(shot.powerHp);
       config.nosShots = shots;
-      config.nosShotDurationSeconds = Math.max(0.1,Number(state.nosShotDurationSeconds || 1));
+      config.nosShotDurationSeconds = Number(bottle.shotDurationSeconds || 1);
       config.nosCapacitySeconds = shots * config.nosShotDurationSeconds;
     } else {
       config.nosPower = 0;
