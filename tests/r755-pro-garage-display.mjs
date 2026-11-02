@@ -48,7 +48,7 @@ test('Pro Garage bay vehicles sit farther right while the bay signs stay anchore
     ({x:24,y:92});
   for(const bay of ['04','05','06']){
     const item=placement(bay);
-    assert.equal(item.carX-item.x,60+(bay==='04'?30:bay==='05'?452*0.30:396*0.50),bay+' requested horizontal shift');
+    assert.ok(Math.abs((item.carX-item.x)-(60+(bay==='04'?30:bay==='05'?452*0.30:396*0.50)))<0.001,bay+' requested horizontal shift');
     assert.ok(item.width>0&&item.contactY>0,bay+' retains size and tyre contact');
   }
   assert.ok(source.includes('const {x,carX,contactY,width,depth}=config;'));
