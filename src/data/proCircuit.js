@@ -156,6 +156,7 @@ export function createDefaultProCircuitState() {
   return {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: 1,
+    seasonCalendar: null, // frozen driver/crew permutation saved at season registration
     eventTick: 0, // advances on completed in-game events, never wall-clock time
     seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
     registeredDriverCars: null, // null for grandfathered seasons; new seasons lock FWD/RWD/AWD trio
@@ -234,6 +235,13 @@ export function normaliseProCircuitState(raw) {
   return {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: boundedInteger(source.season, 1, 1, 10000),
+    seasonCalendar: source.seasonCalendar?.season===boundedInteger(source.season,1,1,10000) &&
+      ['driver','crew'].every(key=>Array.isArray(source.seasonCalendar[key]) &&
+        source.seasonCalendar[key].length===8 &&
+        [...source.seasonCalendar[key]].sort((a,b)=>a-b).every((n,i)=>n===i))
+      ? {season:source.seasonCalendar.season,
+          driver:[...source.seasonCalendar.driver],crew:[...source.seasonCalendar.crew]}
+      : null,
     eventTick: boundedInteger(source.eventTick, 0, 0, 10000000),
     seasonStatus,
     // Null exempts pre-existing active seasons; a saved trio is immutable until season rollover.
