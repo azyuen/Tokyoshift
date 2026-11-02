@@ -366,7 +366,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
       });
-      if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
+      if (!isOpenCircuitAvailable(this.registry.get('proCircuit'))) {
+        queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle');
+        queued += this.queueCharacterPose('sayakaFujieda', 'track');
+        queued += this.queueCharacterPose('daichiSakamoto', 'normal');
+      } else if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
       }
     }
@@ -631,7 +635,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       0
     ).setStrokeStyle(2, 0x24475f, 1).setDepth(39);
 
-    this.add.rectangle(
+    this.centralSidePanel = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + SIDE.h / 2,
       SIDE.w,
@@ -640,7 +644,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       0.99
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
 
-    this.add.rectangle(
+    this.centralCardsPanel = this.add.rectangle(
       CARDS.x + CARDS.w / 2,
       CARDS.y + CARDS.h / 2,
       CARDS.w,
@@ -775,7 +779,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     saveSessionState(this.registry);
 
     this.updateLocationHeaderForPhase(location);
+    const seasonVenue = location.kind === 'proDrag' &&
+      !isOpenCircuitAvailable(this.registry.get('proCircuit'));
+    this.centralSidePanel?.setFillStyle(0x07111d, seasonVenue ? 0.76 : 0.99);
+    this.centralCardsPanel?.setFillStyle(0x07111d, seasonVenue ? 0.70 : 0.99);
     this.drawBackground(location);
+    if (seasonVenue) this.drawProSeasonFullscreenBackdrop();
 
     if (location.kind === 'autoMarket') {
       this.drawAutoMarket();
@@ -981,6 +990,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
           this.textures.remove(key);
       });
     }
+  }
+
+  // Keep the venue as a real Phaser background, not baked-in UI.
+  drawProSeasonFullscreenBackdrop() {
+    const phase = String(this.worldPhase || getWorldPhase()).toLowerCase() === 'day' ? 'day' : 'night';
+    const key = 'centralProSeason' + (phase === 'day' ? 'Day' : 'Night') + 'Bg';
+    if (!this.textures.exists(key)) return;
+    const image = this.addContent(this.add.image(780, 445, key).setDepth(-9));
+    const source = this.textures.get(key).getSourceImage();
+    const scale = Math.max(1560 / (source?.width || 1672), 760 / (source?.height || 941));
+    image.setScale(scale).setAlpha(0.96);
+    this.proSeasonFullscreenImage = image;
+    this.addContent(this.add.rectangle(780, 712, 1560, 256, 0x06111c, 0.30).setDepth(-7));
   }
 
   drawNavigation(title, subtitle) {
@@ -3314,6 +3336,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(27));
     }
 
+    if (!isOpen) {
+      this.addContent(this.add.text(STAGE.x + 490, STAGE.y + 24, 'PRO SEASON', {
+        fontFamily: PIXEL_FONT, fontSize: '26px', color: '#ffffff',
+        stroke: '#0b1827', strokeThickness: 6,
+      }).setDepth(33));
+      this.addContent(this.add.text(STAGE.x + 493, STAGE.y + 82,
+        'TOKYO DRAG COMPLEX  //  PROFESSIONAL CHAMPIONSHIP', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e5f8ff',
+          stroke: '#0b1827', strokeThickness: 3,
+        }).setDepth(33));
+    }
     drawSeasonHeader(this, STAGE);
 
     this.proOpenRotationKey = isOpen ? getOpenCircuitRotation().rotationIndex : null;
@@ -3380,24 +3413,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // staff, grandstands, player car and event controls unchanged.
 
     const dragStaff = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex;
-    [
-      { characterId: dragStaff.owner, x: STAGE.x + 72, feetY: STAGE.y + 505, height: 210, flip: false, depth: 19 },
-      { characterId: dragStaff.mechanic, x: STAGE.x + 704, feetY: STAGE.y + 508, height: 184, flip: false, depth: 18 },
-      { characterId: dragStaff.starter, x: STAGE.x + 824, feetY: STAGE.y + 505, height: 202, flip: false, depth: 20 },
-      { characterId: dragStaff.telemetry, x: STAGE.x + 950, feetY: STAGE.y + 508, height: 182, flip: true, depth: 18 },
-      { characterId: dragStaff.manager, x: STAGE.x + STAGE.w - 68, feetY: STAGE.y + 505, height: 216, flip: true, depth: 21 },
-    ].forEach(config => this.addVenueCharacter({ ...config, pose: 'normal' }));
-
-    if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
-      this.addVenueCharacter({
-        characterId: 'sayakaFujieda',
-        pose: 'track',
-        x: STAGE.x + 230,
-        feetY: STAGE.y + 505,
-        height: 202,
-        flip: false,
-        depth: 20,
-      });
+    if (!isOpen && circuitOpen) {
+      const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+      [
+        { characterId: playerId, pose: 'idle', x: STAGE.x + 700, feetY: STAGE.y + 510, height: 290, depth: 20 },
+        { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 840, feetY: STAGE.y + 510, height: 285, depth: 21 },
+        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 980, feetY: STAGE.y + 510, height: 280, depth: 20 },
+        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1092, feetY: STAGE.y + 510, height: 220, depth: 19 },
+      ].forEach(config => this.addVenueCharacter(config));
+    } else {
+      [
+        { characterId: dragStaff.owner, x: STAGE.x + 72, feetY: STAGE.y + 505, height: 210, flip: false, depth: 19 },
+        { characterId: dragStaff.mechanic, x: STAGE.x + 704, feetY: STAGE.y + 508, height: 184, flip: false, depth: 18 },
+        { characterId: dragStaff.starter, x: STAGE.x + 824, feetY: STAGE.y + 505, height: 202, flip: false, depth: 20 },
+        { characterId: dragStaff.telemetry, x: STAGE.x + 950, feetY: STAGE.y + 508, height: 182, flip: true, depth: 18 },
+        { characterId: dragStaff.manager, x: STAGE.x + STAGE.w - 68, feetY: STAGE.y + 505, height: 216, flip: true, depth: 21 },
+      ].forEach(config => this.addVenueCharacter({ ...config, pose: 'normal' }));
+      if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
+        this.addVenueCharacter({
+          characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 230,
+          feetY: STAGE.y + 505, height: 202, flip: false, depth: 20,
+        });
+      }
     }
 
     this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'EVENT SELECTION', {
