@@ -4461,9 +4461,16 @@ export default class GarageScene extends Phaser.Scene {
       '05':{x:STAGE.x+515,contactY:STAGE.y+383,width:452,depth:8},
       '06':{x:STAGE.x+800,contactY:STAGE.y+374,width:396,depth:4},
     }[String(number)];
-    // Pull the cars forward/right out of the doorways: their rears should
-    // only slightly overlap their bays. Keep headings anchored to each bay.
-    return placement?{...placement,carX:placement.x+60}:null;
+    if(!placement)return null;
+    // Offsets are relative to the R757 car centre, not the bay labels.
+    // 04 grows 10%; 05 advances 30% of its sprite width; 06 shrinks 15%
+    // and advances 50% of its original width. Wheel-bottom contact stays fixed.
+    const widthScale=String(number)==='04'?1.10:String(number)==='06'?0.85:1;
+    const rightShift=String(number)==='04'?30:
+      String(number)==='05'?placement.width*0.30:
+      String(number)==='06'?placement.width*0.50:0;
+    return {...placement,width:placement.width*widthScale,
+      carX:placement.x+60+rightShift};
   }
 
   drawProGarageBayLineup(){
