@@ -192,7 +192,7 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
   if (partId === 'nosKit') {
     const nosStash = carState.proBriefingNosStash;
     const savedKit = nosStash?.exhaustNosTuning || {};
-    const current = nosStash ? 0 : Math.max(
+    const current = Math.max(
       Number(active.nosKit || 0), Boolean(carState.nosInstalled) ? 1 : 0
     );
     return {
@@ -217,10 +217,29 @@ export function setDriverPowerPartLevel(carState = {}, partId, targetLevel = 0) 
       targetLevel < 0 || targetLevel > info.original) return carState;
   if (targetLevel === info.current) return carState;
   if (partId === 'nosKit') {
-    // NOS is regulated as a complete equipment installation rather than an
-    // arbitrary power toggle. Keep the reversible full-kit stash.
-    if (targetLevel !== 0 && targetLevel !== info.original) return carState;
-    return toggleBriefingNos(carState);
+    // Pro Season can manually fit any lower-capacity bottle the player has
+    // already purchased (L1/L2/L3). Preserve the original kit in the same
+    // existing reversible stash used by Open Circuit's OFF/FIT control.
+    const stash=carState.proBriefingNosStash || {
+      nosInstalled:Boolean(carState.nosInstalled),
+      exhaustNosTuning:{...(carState.exhaustNosTuning||{})},
+    };
+    const next={...carState,
+      exhaustNosTuning:{...(carState.exhaustNosTuning||{})}};
+    if(targetLevel===info.original){
+      next.nosInstalled=Boolean(stash.nosInstalled);
+      next.exhaustNosTuning.nosKit=Number(stash.exhaustNosTuning?.nosKit||0);
+      next.exhaustNosTuning.nitrousShot=Number(stash.exhaustNosTuning?.nitrousShot||0);
+      delete next.proBriefingNosStash;
+    }else{
+      next.proBriefingNosStash=stash;
+      next.nosInstalled=targetLevel>0;
+      next.exhaustNosTuning.nosKit=targetLevel;
+      next.exhaustNosTuning.nitrousShot=targetLevel>0
+        ?Number(stash.exhaustNosTuning?.nitrousShot||0):0;
+    }
+    if(carState.dyno)next.dyno={...carState.dyno,officialReading:null};
+    return next;
   }
 
   const source = part.group === 'tuning'

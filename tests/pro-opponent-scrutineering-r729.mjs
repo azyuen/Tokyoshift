@@ -71,7 +71,9 @@ test('missing historic AI build must never fall back to an unrestricted NOS buil
     targetPowerKW:235,seed:'legacy:no-build',
   });
   assert.ok(fixed?.repaired);
-  assert.deepEqual(fixed.round.opponentBuildState,{});
+  assert.ok(fixed.round.opponentBuildState && typeof fixed.round.opponentBuildState==='object');
+  // Historical entrants may be rebuilt with legal tuning instead of stock,
+  // but must never inherit an uninspected NOS configuration.
   legal(fixed.round,street);
   assert.match(runtime,/rivalRound\?\.opponentBuildState \|\| createRivalBuildState/);
   assert.match(runtime,/if\(result\.repaired \|\| !entry\.briefingRules\)\{/);
@@ -152,4 +154,20 @@ test('Tri-Drive rival crews obey player drivetrain mix',()=>{
   const source=file('src/data/proSeason.js');
   assert.match(source,/trophy\?\.id==='triDrive'&&r\.id!==PLAYER\?\['FWD','RWD','AWD'\]\[n\]:null/);
   assert.match(source,/getCarMagazineMeta\(carId\)\.drivetrain===requiredDrivetrain/);
+});
+
+test('restricted Pro Season nitrous capacities apply to AI and live builds',()=>{
+  const rules={maxPowerKW:600,maxNosShots:1};
+  const high=makeRound('r32',{nosInstalled:true,
+    exhaustNosTuning:{nosKit:3,nitrousShot:2}});
+  const before=inspectProOpponent(high.carId,high.opponentBuildState,rules);
+  assert.ok(before.reasons.some(reason=>reason.includes('NOS LIMIT')));
+  const fixed=scrutineerProOpponentRound(high,rules,{
+    targetPowerKW:340,seed:'pro-season:nos-1'
+  });
+  assert.ok(fixed,'a legal opponent should be found');
+  const accepted=inspectProOpponent(fixed.round.carId,fixed.round.opponentBuildState,rules);
+  assert.equal(accepted.eligible,true,accepted.reasons.join('/'));
+  const built=getBuiltCar(fixed.round.carId,fixed.round.opponentBuildState);
+  assert.ok(Number(built.car.nosShots||0)<=1);
 });

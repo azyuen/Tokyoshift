@@ -196,6 +196,7 @@ export function startProfessionalSeason(raw,driverCarIds=null,ownedCarIds=[]) {
   const rosterError=validateProSeasonDriverCars(driverCarIds,ownedCarIds);
   if(rosterError)return {error:rosterError};
   c.registeredDriverCars=[...PRO_DRIVER_DRIVETRAINS.map(d=>driverCarIds.find(id=>getProDriverDrivetrain(id)===d))];
+  c.seasonCalendar={season:c.season,driver:getProfessionalSeasonOrder(c.season,'DRIVER'),crew:getProfessionalSeasonOrder(c.season,'TEAM')};
   c.seasonStatus='ACTIVE';
   return {circuit:c};
 }
@@ -211,6 +212,7 @@ export function forfeitProfessionalSeason(raw) {
   c.calendar={round:0,history:[],result:null,
     archives:[...c.calendar.archives,result].slice(-20)};
   c.season++;
+  c.seasonCalendar=null;
   c.seasonStatus='OPEN';
   c.registeredDriverCars=null;
   c.activeCrewEvent=null;c.activeTournament=null;c.activeTimedEvent=null;c.activeChampionship=null;
@@ -221,16 +223,54 @@ export const PRO_QUALIFICATION = Object.freeze({driver:60,crew:40});
 // One official entry per round, with equal maximum points for driver and crew.
 export const PRO_EVENT_POINTS = Object.freeze([20,17,15,13,12,11,10,9,8,7,6,5,4,3,2,1]);
 export const PRO_SEASON_CALENDAR = Object.freeze([
-  {driver:{id:'streetShootout',format:'KNOCKOUT',stock:true,maxPowerKW:180,noNos:true},crew:{format:'DUEL'}},
-  {driver:{id:'midnightCup',format:'TIME_ATTACK',drivetrain:'RWD',maxPowerKW:380},crew:{format:'RELAY'}},
-  {driver:{id:'fourWideOpen',format:'FOUR_WIDE'},crew:{format:'DUEL'}},
-  {driver:{id:'streetShootout',format:'CONSISTENCY',drivetrain:'FWD',maxPowerKW:180},crew:{format:'TECHNICAL'}},
-  {driver:{id:'midnightCup',format:'KNOCKOUT',drivetrain:'AWD',maxPowerKW:550},crew:{format:'FOUR_WIDE'}},
-  {driver:{id:'streetShootout',format:'TIME_ATTACK',stock:true,maxPowerKW:300,noNos:true},crew:{format:'RELAY'}},
-  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:260},crew:{format:'TECHNICAL'}},
-  {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
+  {driver:{id:'streetShootout',format:'KNOCKOUT',maxPowerKW:380,maxNosShots:1},crew:{format:'DUEL'}},
+  {driver:{id:'midnightCup',format:'TIME_ATTACK',drivetrain:'RWD',maxPowerKW:550,maxNosShots:2},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',maxNosShots:3},crew:{format:'DUEL'}},
+  {driver:{id:'streetShootout',format:'CONSISTENCY',drivetrain:'FWD',maxPowerKW:300,noNos:true,maxNosShots:0},crew:{format:'TECHNICAL'}},
+  {driver:{id:'midnightCup',format:'KNOCKOUT',drivetrain:'AWD',maxPowerKW:600,maxNosShots:2},crew:{format:'FOUR_WIDE'}},
+  {driver:{id:'streetShootout',format:'TIME_ATTACK',maxPowerKW:450,noNos:true,maxNosShots:0},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:450,maxNosShots:1},crew:{format:'TECHNICAL'}},
+  {driver:{id:'tokyoInvitational',format:'KNOCKOUT',maxNosShots:3},crew:{format:'DUEL'}},
 ]);
-export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
+// Deterministic Fisher-Yates shuffles preserve the eight-event balance while
+// mixing both disciplines independently for every new season. Never use time
+// or Math.random: the season number is persisted in legacy circuit saves.
+export function getProfessionalSeasonOrder(season=1,discipline='DRIVER') {
+  const snapshot=season&&typeof season==='object'?season.seasonCalendar:null;
+  const n=Math.max(1,Math.floor(Number(season&&typeof season==='object'?season.season:season)||1));
+  const saved=discipline==='TEAM'?snapshot?.crew:snapshot?.driver;
+  if(snapshot?.season===n&&Array.isArray(saved)&&saved.length===PRO_SEASON_LENGTH&&
+    [...saved].sort((a,b)=>a-b).every((v,i)=>v===i))return [...saved];
+  const order=Array.from({length:PRO_SEASON_LENGTH},(_,i)=>i);
+  // Legacy careers had a fixed schedule regardless of season number. Never
+  // reshuffle an ACTIVE or COMPLETE season which predates saved calendars:
+  // a resumed heat and previously earned points must keep their original
+  // fixture sequence. Only NEW season registrations use the seeded shuffle.
+  if(season&&typeof season==='object'&&!snapshot&&
+      ['ACTIVE','COMPLETE'].includes(season.seasonStatus))return order;
+  if(n===1)return order;
+  let seed=(Math.imul(n,0x9e3779b1) ^ (discipline==='TEAM'?0x5bd1e995:0x27d4eb2d))>>>0;
+  const next=()=>{
+    seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;
+    return (seed>>>0)/4294967296;
+  };
+  for(let i=order.length-1;i>0;i--){
+    const j=Math.floor(next()*(i+1));
+    [order[i],order[j]]=[order[j],order[i]];
+  }
+  return order;
+}
+export function getProfessionalSeasonCalendar(season=1) {
+  const drivers=getProfessionalSeasonOrder(season,'DRIVER');
+  const crews=getProfessionalSeasonOrder(season,'TEAM');
+  return drivers.map((source,i)=>({
+    driver:{...PRO_SEASON_CALENDAR[source].driver},
+    crew:{...PRO_SEASON_CALENDAR[crews[i]].crew}
+  }));
+}
+export function getProfessionalRoundEvents(round,season=1){
+  return getProfessionalSeasonCalendar(season)[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];
+}
 
 // End-game ladder. Skill tiers use the existing AI engine unchanged:
 // 3 Skilled, 4 Expert, 5 Elite. The short repeating fields avoid rerolls.
@@ -257,11 +297,12 @@ export function getProInvitationalDiscipline(raw) {
   if(q.crewEventsNeeded>q.driverEventsNeeded+1)return 'TEAM';
   return PRO_INVITATIONAL_DRIVER_ROUNDS.includes(c.calendar.round)?'DRIVER':'TEAM';
 }
-export function getProDriverInvitationRules(round) {
-  const regular=getProfessionalRoundEvents(round).driver;
+export function getProDriverInvitationRules(round,season=1) {
+  // An Elite Invitational is a genuine alternative to a power-restricted
+  // Driver event. Collector and regional tuner cars still have to use a
+  // legal NOS configuration, but are never rejected for being over 380 kW.
   return {id:'proDriverInvitational',format:'KNOCKOUT',
-    maxPowerKW:regular.maxPowerKW?Math.max(regular.maxPowerKW,380):undefined,
-    noNos:false};
+    maxNosShots:3,noNos:false};
 }
 
 // Scrutineering checks the actual installed parts, not just horsepower.
@@ -314,7 +355,17 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
   if(rules.stock)reasons.push(...getFactoryStockStatus(carState).reasons);
-  if(rules.noNos&&(Boolean(carState?.nosInstalled)||Number(carState?.exhaustNosTuning?.nosKit||0)>0))reasons.push('NOS PROHIBITED');
+  // Scrutineer the SAME effective nitrous specification used in the race.
+  // This also handles factory-NOS collectors, purchased kits and the manual
+  // master switch without treating an installed-but-disabled bottle as active.
+  const activeNos = Number(performance?.car?.nosPower || 0) > 0 &&
+    Number(performance?.car?.nosShots || 0) > 0;
+  const activeShots = Number(performance?.car?.nosShots || 0);
+  if(rules.noNos && activeNos)reasons.push('NOS MUST BE DISABLED');
+  if(!rules.noNos && Number.isFinite(rules.maxNosShots) &&
+      activeNos && activeShots > rules.maxNosShots)
+    reasons.push('NOS LIMIT '+rules.maxNosShots+
+      ' SHOT'+(rules.maxNosShots===1?'':'S'));
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }
@@ -353,7 +404,7 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
 export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=null) {
   const c=normaliseProCircuitState(raw);
   if(c.seasonStatus!=='ACTIVE'||c.calendar.round>=PRO_SEASON_LENGTH)return {error:'SEASON NOT ACTIVE'};
-  const rules=getProfessionalRoundEvents(c.calendar.round).driver;
+  const rules=getProfessionalRoundEvents(c.calendar.round,c).driver;
   if(!['TIME_ATTACK','CONSISTENCY'].includes(rules.format)||
     c.activeTimedEvent||c.activeTournament||c.activeCrewEvent||
     c.activeChampionship||!cars[carId])return {error:'TIMED EVENT UNAVAILABLE'};
@@ -577,8 +628,8 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
 // Deliberately separate from Open Circuit trophies and the normal crew slot.
 export const PRO_ALT_CREW_ENTRY_FEE = 0;
 export const PRO_ALT_CREW_PRIZES = Object.freeze([1250000,575000,250000,50000]);
-export function getAlternativeProCrewFormat(round) {
-  const standard=getProfessionalRoundEvents(round).crew.format;
+export function getAlternativeProCrewFormat(round,season=1) {
+  const standard=getProfessionalRoundEvents(round,season).crew.format;
   return {DUEL:'FOUR_WIDE',RELAY:'TECHNICAL',TECHNICAL:'DUEL',FOUR_WIDE:'RELAY'}[standard]||'DUEL';
 }
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -635,7 +686,7 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
       rating:e.rating
     }));
   }
-  return {season:c.season,round:index,events:getProfessionalRoundEvents(index),results};
+  return {season:c.season,round:index,events:getProfessionalRoundEvents(index,c),results};
 }
 export function getProfessionalAttendance(raw,{prestige=1,stage=0,final=false,team=false}={}) {
   const c=normaliseProCircuitState(raw),rank=(team?getProCircuitTeamSeeds(c):getProCircuitDriverSeeds(c)).find(r=>r.id=== (team?PLAYER:'player:driver'))?.seed||32;
@@ -718,6 +769,7 @@ export function nextProfessionalSeason(raw) {
     c.activeChampionship=null;
   }
   c.season++;
+  c.seasonCalendar=null;
   c.seasonStatus='OPEN';
   c.registeredDriverCars=null;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
@@ -745,7 +797,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonCh
   if(c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(!isOpenCircuitAvailable(c)&&c.seasonStatus!=='ACTIVE')return 'FINISH THE CHAMPIONSHIP';
   if(c.calendar.round>=PRO_SEASON_LENGTH&&!isOpenCircuitAvailable(c))return 'BEGIN THE NEXT SEASON';
-  if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))
+  if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round,c).crew.format))
     return 'CREW FORMAT NOT AVAILABLE';
   if(Number(value(source,'cash',0))<(isOpenCircuitAvailable(c)?OPEN_CIRCUIT_CREW_FEE:seasonChoice==='alternative'?PRO_ALT_CREW_ENTRY_FEE:CREW_SERIES.entryFee))return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
@@ -791,7 +843,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
   const id=(trophyId?'trophy:'+trophyId:alternative?'crewAlt':'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
   const format=trophy?.formats?.[0]||(openCircuit?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
-    alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round).crew.format);
+    alternative?getAlternativeProCrewFormat(c.calendar.round,c):getProfessionalRoundEvents(c.calendar.round,c).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
   const selected=(trophy||alternative?

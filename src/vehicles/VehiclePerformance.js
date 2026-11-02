@@ -5,7 +5,7 @@ import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261026-r687';
+import { applySecondaryTuning, getExhaustNosTuning, EXHAUST_NOS_TUNING_PARTS } from '../data/secondaryTuning.js?v=20261026-r687';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
 import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261026-r687';
 
@@ -43,13 +43,37 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engine = clone(engineConfig || {});
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
-    // Ginza full-works and Denzaki one-off have factory-sealed NOS hardware.
-    // Do not apply player parts or strip their authored three-shot system.
-    if (config.lbwkFullWorks || config.arkonOneOff) return { car: config, engine };
-    config.nosPower = 0;
-    config.nosShots = 0;
-    config.nosShotDurationSeconds = 1.0;
-    config.nosCapacitySeconds = 0;
+    // Factory-authorised NOS remains part of the car's sealed specification.
+    // Never overwrite a factory system with purchased aftermarket parts.
+    const factoryNos = Number(config.nosPower || 0) > 0 &&
+      Number(config.nosShots || config.nosCapacitySeconds || 0) > 0;
+    if (factoryNos) {
+      if (state.nosEnabled === false) {
+        config.nosPower = 0;
+        config.nosShots = 0;
+        config.nosCapacitySeconds = 0;
+      }
+      return { car: config, engine };
+    }
+
+    // Additional NOS is the sole allowed modification to a sealed collector.
+    // Derive shot count / power from the actual purchased parts, not a cached
+    // state.nosPower value, so legacy saves and imported cars remain correct.
+    const kit = getExhaustNosTuning(state);
+    const bottle = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[kit.nosKit];
+    const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[kit.nitrousShot];
+    const shots = Number(bottle?.shots || 0);
+    if (shots > 0 && Number(shot?.powerHp || 0) > 0 && state.nosEnabled !== false) {
+      config.nosPower = Number(shot.powerHp);
+      config.nosShots = shots;
+      config.nosShotDurationSeconds = Number(bottle.shotDurationSeconds || 1);
+      config.nosCapacitySeconds = shots * config.nosShotDurationSeconds;
+    } else {
+      config.nosPower = 0;
+      config.nosShots = 0;
+      config.nosShotDurationSeconds = 1.0;
+      config.nosCapacitySeconds = 0;
+    }
     return { car: config, engine };
   }
 
@@ -85,6 +109,13 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
     }
   }
 
+  // Driver-operated NOS master switch: fitted hardware stays in the save,
+  // but the race vehicle cannot fire a disabled system.
+  if (state.nosEnabled === false) {
+    tuned.car.nosPower = 0;
+    tuned.car.nosShots = 0;
+    tuned.car.nosCapacitySeconds = 0;
+  }
   return tuned;
 }
 

@@ -28,7 +28,9 @@ test('season rankings box omits redundant yellow forecast while preserving stand
 });
 
 test('season cards display round names and single-line possible points rather than sponsorship',()=>{
-  assert.match(scene,/getProSeasonEventNames\(round\)/);
+  assert.match(scene,/getProSeasonEventNames\(round,pro\)/);
+  assert.match(scene,/getProfessionalSeasonOrder\(season,'DRIVER'\)/);
+  assert.match(scene,/getProfessionalSeasonOrder\(season,'TEAM'\)/);
   assert.match(scene,/label:proNames\.crew/);
   assert.match(scene,/label: proNames\.driver/);
   assert.match(scene,/UP TO 20 SEASON POINTS/);

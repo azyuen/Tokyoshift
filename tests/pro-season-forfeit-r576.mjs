@@ -14,7 +14,7 @@ test('forfeit button remains accessible from the right panel throughout Tokyo Ch
   assert.match(block,/showProSeasonWithdrawal\(s\)/);
   assert.match(block,/side\.y\+624/);
   const header=panel.slice(panel.indexOf('export function drawSeasonHeader'),panel.indexOf('export function drawCrewSidebar'));
-  assert.match(header,/const height=openCircuit\?111:c\.activeChampionship\?176:158/);
+  assert.match(header,/const height=openCircuit\?169:c\.activeChampionship\?213:188/);
   assert.doesNotMatch(header,/WITHDRAW \/ FORFEIT SEASON/);
 });
 

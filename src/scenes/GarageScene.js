@@ -1842,7 +1842,8 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => {
         if (!this.selectedCarId) return;
-        if (this.isSelectedCarTuningLocked()) {
+        if (this.isSelectedCarTuningLocked() &&
+            !(name === 'EXHAUST / NOS' && this.canSelectedCollectorAccessNos())) {
           this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
           return;
         }
@@ -1878,6 +1879,31 @@ export default class GarageScene extends Phaser.Scene {
       car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
   }
 
+  canSelectedCollectorInstallNos() {
+    const car = cars[this.selectedCarId];
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    return Boolean(this.selectedCarId && !this.crewMode &&
+      !isArkonRwbRestoration(this.registry, this.selectedCarId) &&
+      (car?.collector || car?.tuningLocked || state.tuningLocked ||
+        state.immutable || state.collector) &&
+      !car?.ginzaDemo && !car?.crewLoan &&
+      // A factory-installed nitrous system must not be overwritten by a
+      // second aftermarket kit.
+      !(Number(car?.nosPower || 0) > 0 &&
+        Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0));
+  }
+
+  canSelectedCollectorAccessNos() {
+    const car=cars[this.selectedCarId];
+    const state=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
+    const factoryNos=Number(car?.nosPower||0)>0 &&
+      Number(car?.nosShots||car?.nosCapacitySeconds||0)>0;
+    return this.canSelectedCollectorInstallNos() ||
+      Boolean(this.selectedCarId&&!this.crewMode&&!car?.ginzaDemo&&!car?.crewLoan&&
+        !isArkonRwbRestoration(this.registry,this.selectedCarId)&&
+        (car?.tuningLocked||state.tuningLocked||state.immutable||state.collector||car?.collector)&&factoryNos);
+  }
+
   refreshTuningCategoryAvailability() {
     const locked = Boolean(this.selectedCarId && this.isSelectedCarTuningLocked());
 
@@ -1895,7 +1921,8 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.upgradeButtons.forEach(item => {
-      if (locked || !this.selectedCarId) {
+      if ((locked && !(item.name === 'EXHAUST / NOS' && this.canSelectedCollectorAccessNos())) ||
+          !this.selectedCarId) {
         item.box.disableInteractive()
           .setFillStyle(0x111318, 1)
           .setStrokeStyle(1, 0x4e4149, 1);
@@ -6574,7 +6601,8 @@ export default class GarageScene extends Phaser.Scene {
 
   enterSecondaryTuningMode(mode) {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
-    if (this.isSelectedCarTuningLocked()) {
+    if (this.isSelectedCarTuningLocked() &&
+        !(mode === 'exhaustNos' && this.canSelectedCollectorAccessNos())) {
       this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
       return;
     }
@@ -6697,6 +6725,50 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(73));
 
+    if (!isDrivetrain) {
+      // The switch stays visible even before a bottle is purchased, so
+      // installing NOS immediately enables manual event preparation.
+      const fittedNos = current => {
+        const car = cars[this.selectedCarId] || {};
+        const factory = Number(car.nosPower || 0) > 0 &&
+          Number(car.nosShots || car.nosCapacitySeconds || 0) > 0;
+        return factory || Boolean(current.nosInstalled) ||
+          Number(current.exhaustNosTuning?.nosKit || 0) > 0;
+      };
+      const toggle=add(this.add.rectangle(
+        SIDE.x+SIDE.w/2,SIDE.y+565,SIDE.w-36,38,0x162538,1
+      ).setStrokeStyle(1,0x55b8ff,1).setDepth(72)
+        .setInteractive({useHandCursor:true}));
+      this.secondaryNosSwitchLabel=add(this.add.text(
+        SIDE.x+SIDE.w/2,SIDE.y+565,'',{
+          fontFamily:PIXEL_FONT,fontSize:'8px',color:'#dff3ff'
+        }).setOrigin(0.5).setDepth(73));
+      const refreshSwitch=()=>{
+        const current=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
+        const fitted=fittedNos(current);
+        this.secondaryNosSwitchLabel?.setText(
+          !fitted?'NOS MASTER // NO KIT':
+          current.nosEnabled===false?'NOS MASTER // OFF':'NOS MASTER // ON');
+        toggle.setFillStyle(fitted?0x162538:0x111318,1);
+      };
+      toggle.on('pointerdown',()=>{
+        const carStates={...(this.registry.get('carStates')||{})};
+        const current=carStates[this.selectedCarId]||{};
+        if(!fittedNos(current)){
+          this.showWorkshopToast('INSTALL A NOS KIT FIRST');
+          return;
+        }
+        carStates[this.selectedCarId]={...current,nosEnabled:current.nosEnabled===false};
+        this.registry.set('carStates',carStates);
+        saveSessionState(this.registry);
+        refreshSwitch();
+        this.refreshSecondaryTuningMode();
+        this.showWorkshopToast(carStates[this.selectedCarId].nosEnabled?'NOS ENABLED':'NOS DISABLED');
+      });
+      this.refreshSecondaryNosSwitch=refreshSwitch;
+      refreshSwitch();
+    }
+
     this.secondaryApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 624,
@@ -6789,6 +6861,8 @@ export default class GarageScene extends Phaser.Scene {
     this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
     this.secondaryPartRows = {};
+    this.secondaryNosSwitchLabel = null;
+    this.refreshSecondaryNosSwitch = null;
     this.secondarySpriteImage = null;
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
@@ -6925,6 +6999,7 @@ export default class GarageScene extends Phaser.Scene {
         };
 
     Object.entries(hotspots).forEach(([partId, p]) => {
+      if (this.isSelectedCarTuningLocked() && !['nosKit', 'nitrousShot'].includes(partId)) return;
       const part = parts[partId];
       if (!part) return;
 
@@ -7128,6 +7203,11 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     Object.entries(this.secondaryPartRows || {}).forEach(([partId, row]) => {
+      if (this.isSelectedCarTuningLocked() && !['nosKit', 'nitrousShot'].includes(partId)) {
+        row.box.disableInteractive();
+        row.box.setFillStyle(0x111318, 1);
+        row.label.setColor('#756873');
+      }
       const current = this.currentSecondaryTuning[partId];
       const pending = this.pendingSecondaryTuning[partId];
       const spec = parts[partId].levels[pending];
@@ -7195,6 +7275,12 @@ export default class GarageScene extends Phaser.Scene {
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
     const part = parts[partId];
     if (!part) return;
+    if (this.isSelectedCarTuningLocked() &&
+        !(this.canSelectedCollectorInstallNos() &&
+          ['nosKit', 'nitrousShot'].includes(partId))) {
+      this.showWorkshopToast('COLLECTOR SPEC // ONLY NOS IS AVAILABLE');
+      return;
+    }
 
     const add = obj => {
       this.secondaryModalObjects.push(obj);
@@ -7345,6 +7431,16 @@ export default class GarageScene extends Phaser.Scene {
 
   applyPendingSecondaryUpgrades() {
     if (!this.secondaryMode) return;
+    if (this.isSelectedCarTuningLocked()) {
+      if (this.secondaryMode !== 'exhaustNos' || !this.canSelectedCollectorInstallNos()) return;
+      const current = this.currentSecondaryTuning || {};
+      const pending = this.pendingSecondaryTuning || {};
+      if (['headers', 'exhaust', 'muffler'].some(part =>
+        Number(pending[part] || 0) !== Number(current[part] || 0))) {
+        this.showWorkshopToast('COLLECTOR SPEC // ONLY NOS IS AVAILABLE');
+        return;
+      }
+    }
 
     const category = this.secondaryMode === 'drivetrain' ? 'drivetrain' : 'exhaustNos';
     const partOrder = this.secondaryMode === 'drivetrain'
@@ -7397,7 +7493,9 @@ export default class GarageScene extends Phaser.Scene {
       const kit = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[tuning.nosKit];
       const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[tuning.nitrousShot];
       updated.nosInstalled = true;
-      updated.nosCapacitySeconds = Number(kit.capacitySeconds || 0);
+      updated.nosShots = Number(kit.shots || 0);
+      updated.nosShotDurationSeconds = Number(kit.shotDurationSeconds || 1);
+      updated.nosCapacitySeconds = updated.nosShots * updated.nosShotDurationSeconds;
       updated.nosPower = Number(shot.powerHp || 0);
     }
 
@@ -7411,6 +7509,7 @@ export default class GarageScene extends Phaser.Scene {
       ? getDrivetrainTuning(updated)
       : getExhaustNosTuning(updated);
     this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+    this.refreshSecondaryNosSwitch?.();
     this.refreshSecondaryTuningMode();
     this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
@@ -8309,7 +8408,8 @@ export default class GarageScene extends Phaser.Scene {
   selectUpgrade(name) {
     this.selectedUpgrade = name;
 
-    if (this.selectedCarId && this.isSelectedCarTuningLocked()) {
+    if (this.selectedCarId && this.isSelectedCarTuningLocked() &&
+        !(name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) {
       this.refreshTuningCategoryAvailability();
       return;
     }
