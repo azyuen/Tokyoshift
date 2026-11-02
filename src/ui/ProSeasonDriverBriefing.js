@@ -59,7 +59,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
   const spec=(rules.stock?'FACTORY STOCK  /  ':'')+
     (rules.drivetrain?shortDrive(rules.drivetrain)+' ONLY  /  ':'ANY DRIVETRAIN  /  ')+
     (limit!=null?limit+' KW MAX':'UNLIMITED POWER')+'  /  '+
-    (rules.noNos?'NO NOS':'NOS PERMITTED');
+    (rules.noNos?'NOS OFF REQUIRED':
+      Number.isFinite(rules.maxNosShots)
+        ?rules.maxNosShots+' NOS SHOTS MAX':'NOS PERMITTED');
 
   function render(){
     discard();
@@ -116,7 +118,23 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
         });
       });
     });
-    label(65,701,'EVENT FORMAT  '+String(rules.format||'KNOCKOUT').replaceAll('_',' ')+
+    // Manual NOS switch is available during the free preparation briefing,
+    // including for sealed collectors with a factory NOS system. Nothing
+    // changes in the saved garage until the player confirms GO TO GRID.
+    const configured = originals[selected] || {};
+    const factory = cars[selected] || {};
+    const hasNos = Boolean(configured.nosInstalled) ||
+      Number(configured.exhaustNosTuning?.nosKit || 0) > 0 ||
+      (Number(factory.nosPower || 0) > 0 &&
+        Number(factory.nosShots || factory.nosCapacitySeconds || 0) > 0);
+    const nosEnabled = draft.nosEnabled !== false;
+    button(345,694,555,38,hasNos?
+      'NOS MASTER // '+(nosEnabled?'ON':'OFF')+'   ·   TOGGLE':
+      'NOS MASTER // NO KIT INSTALLED',()=>{
+      drafts[selected]={...draft,nosEnabled:!nosEnabled};
+      render();
+    },hasNos);
+    label(65,731,'EVENT FORMAT  '+String(rules.format||'KNOCKOUT').replaceAll('_',' ')+
       '  ·  MAX 20 SEASON POINTS  ·  TOP PURSE '+money(event.prizeCash||0),
       16,'#d7c49d');
     button(247,777,338,50,'BACK TO PRO SEASON',close);
