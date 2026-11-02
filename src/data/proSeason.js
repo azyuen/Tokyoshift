@@ -196,6 +196,7 @@ export function startProfessionalSeason(raw,driverCarIds=null,ownedCarIds=[]) {
   const rosterError=validateProSeasonDriverCars(driverCarIds,ownedCarIds);
   if(rosterError)return {error:rosterError};
   c.registeredDriverCars=[...PRO_DRIVER_DRIVETRAINS.map(d=>driverCarIds.find(id=>getProDriverDrivetrain(id)===d))];
+  c.seasonCalendar={season:c.season,driver:getProfessionalSeasonOrder(c.season,'DRIVER'),crew:getProfessionalSeasonOrder(c.season,'TEAM')};
   c.seasonStatus='ACTIVE';
   return {circuit:c};
 }
@@ -211,6 +212,7 @@ export function forfeitProfessionalSeason(raw) {
   c.calendar={round:0,history:[],result:null,
     archives:[...c.calendar.archives,result].slice(-20)};
   c.season++;
+  c.seasonCalendar=null;
   c.seasonStatus='OPEN';
   c.registeredDriverCars=null;
   c.activeCrewEvent=null;c.activeTournament=null;c.activeTimedEvent=null;c.activeChampionship=null;
@@ -234,7 +236,11 @@ export const PRO_SEASON_CALENDAR = Object.freeze([
 // mixing both disciplines independently for every new season. Never use time
 // or Math.random: the season number is persisted in legacy circuit saves.
 export function getProfessionalSeasonOrder(season=1,discipline='DRIVER') {
-  const n=Math.max(1,Math.floor(Number(season)||1));
+  const snapshot=season&&typeof season==='object'?season.seasonCalendar:null;
+  const n=Math.max(1,Math.floor(Number(season&&typeof season==='object'?season.season:season)||1));
+  const saved=discipline==='TEAM'?snapshot?.crew:snapshot?.driver;
+  if(snapshot?.season===n&&Array.isArray(saved)&&saved.length===PRO_SEASON_LENGTH&&
+    [...saved].sort((a,b)=>a-b).every((v,i)=>v===i))return [...saved];
   const order=Array.from({length:PRO_SEASON_LENGTH},(_,i)=>i);
   if(n===1)return order;
   let seed=(Math.imul(n,0x9e3779b1) ^ (discipline==='TEAM'?0x5bd1e995:0x27d4eb2d))>>>0;
@@ -400,7 +406,7 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
 export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=null) {
   const c=normaliseProCircuitState(raw);
   if(c.seasonStatus!=='ACTIVE'||c.calendar.round>=PRO_SEASON_LENGTH)return {error:'SEASON NOT ACTIVE'};
-  const rules=getProfessionalRoundEvents(c.calendar.round,c.season).driver;
+  const rules=getProfessionalRoundEvents(c.calendar.round,c).driver;
   if(!['TIME_ATTACK','CONSISTENCY'].includes(rules.format)||
     c.activeTimedEvent||c.activeTournament||c.activeCrewEvent||
     c.activeChampionship||!cars[carId])return {error:'TIMED EVENT UNAVAILABLE'};
@@ -682,7 +688,7 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
       rating:e.rating
     }));
   }
-  return {season:c.season,round:index,events:getProfessionalRoundEvents(index,c.season),results};
+  return {season:c.season,round:index,events:getProfessionalRoundEvents(index,c),results};
 }
 export function getProfessionalAttendance(raw,{prestige=1,stage=0,final=false,team=false}={}) {
   const c=normaliseProCircuitState(raw),rank=(team?getProCircuitTeamSeeds(c):getProCircuitDriverSeeds(c)).find(r=>r.id=== (team?PLAYER:'player:driver'))?.seed||32;
@@ -765,6 +771,7 @@ export function nextProfessionalSeason(raw) {
     c.activeChampionship=null;
   }
   c.season++;
+  c.seasonCalendar=null;
   c.seasonStatus='OPEN';
   c.registeredDriverCars=null;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
@@ -792,7 +799,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonCh
   if(c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(!isOpenCircuitAvailable(c)&&c.seasonStatus!=='ACTIVE')return 'FINISH THE CHAMPIONSHIP';
   if(c.calendar.round>=PRO_SEASON_LENGTH&&!isOpenCircuitAvailable(c))return 'BEGIN THE NEXT SEASON';
-  if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round,c.season).crew.format))
+  if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round,c).crew.format))
     return 'CREW FORMAT NOT AVAILABLE';
   if(Number(value(source,'cash',0))<(isOpenCircuitAvailable(c)?OPEN_CIRCUIT_CREW_FEE:seasonChoice==='alternative'?PRO_ALT_CREW_ENTRY_FEE:CREW_SERIES.entryFee))return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
@@ -838,7 +845,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
   const id=(trophyId?'trophy:'+trophyId:alternative?'crewAlt':'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
   const format=trophy?.formats?.[0]||(openCircuit?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
-    alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round,c.season).crew.format);
+    alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round,c).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
   const selected=(trophy||alternative?
