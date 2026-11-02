@@ -1843,7 +1843,7 @@ export default class GarageScene extends Phaser.Scene {
       box.on('pointerdown', () => {
         if (!this.selectedCarId) return;
         if (this.isSelectedCarTuningLocked() &&
-            !(name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) {
+            !(name === 'EXHAUST / NOS' && this.canSelectedCollectorAccessNos())) {
           this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
           return;
         }
