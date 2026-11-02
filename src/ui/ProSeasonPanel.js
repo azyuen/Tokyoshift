@@ -81,9 +81,59 @@ export function drawSeasonHeader(s,stage) {
     text(s,x,86,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)}`,28,race)
       .setInteractive({useHandCursor:true})
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-    text(s,x,132,'TOKYO CHAMPIONSHIP',20,{...race,color:'#8fe7ff'});
-    text(s,x,164,`DRIVER  ${q.driver} / ${q.driverRequired} PTS     CREW  ${q.crew} / ${q.crewRequired} PTS`,23,
-      {...race,color:'#f5e9e5'});
+    // Put both Tokyo qualification targets in one mid-left card. Keep the
+    // large header limited to the season/round identity.
+    const qualifyX=stage.x+22,qualifyY=stage.y+202,qualifyW=536,qualifyH=147;
+    const qualifyBox=s.addContent(s.add.rectangle(qualifyX,qualifyY,qualifyW,qualifyH,
+      0x0a1523,.9).setOrigin(0,0).setStrokeStyle(2,0x657f98,.95).setDepth(37)
+      .setInteractive({useHandCursor:true}));
+    s.addContent(s.add.rectangle(qualifyX+5,qualifyY+5,7,qualifyH-10,
+      0xb92f43,1).setOrigin(0,0).setDepth(38));
+    text(s,qualifyX+24,qualifyY+10,'CHAMPIONSHIP QUALIFICATION',22,
+      {...race,strokeThickness:2});
+    s.addContent(s.add.rectangle(qualifyX+qualifyW/2,qualifyY+47,
+      qualifyW-28,1,0x688298,.85).setDepth(38));
+    s.addContent(s.add.rectangle(qualifyX+207,qualifyY+95,
+      1,76,0x688298,.7).setDepth(38));
+    text(s,qualifyX+45,qualifyY+64,'TOKYO',29,
+      {...race,color:'#e6c783',strokeThickness:2});
+    text(s,qualifyX+23,qualifyY+104,'CHAMPIONSHIP',18,
+      {...race,color:'#e7ecf1',strokeThickness:2});
+    const qualificationLine=(yy,label,points,required)=>{
+      text(s,qualifyX+226,qualifyY+yy,label,18,
+        {...race,strokeThickness:2});
+      text(s,qualifyX+qualifyW-20,qualifyY+yy,
+        points+' / '+required,22,{...race,color:points>=required?'#f0d08c':'#edf1f5',
+          strokeThickness:2}).setOrigin(1,0);
+    };
+    qualificationLine(65,'DRIVER POINTS',q.driver,q.driverRequired);
+    qualificationLine(106,'CREW POINTS',q.crew,q.crewRequired);
+    qualifyBox.on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
+
+    // These are this season's standings, NOT the separate Open Circuit
+    // lifetime ratings. A new season starts without a race rank.
+    const rankX=stage.x+1158,rankY=stage.y+28,rankW=324,rankH=128;
+    const rankBox=s.addContent(s.add.rectangle(rankX,rankY,rankW,rankH,
+      0x0a1523,.91).setOrigin(0,0).setStrokeStyle(2,0x657f98,.95).setDepth(37)
+      .setInteractive({useHandCursor:true}));
+    s.addContent(s.add.rectangle(rankX+5,rankY+5,6,rankH-10,
+      0xb48a47,1).setOrigin(0,0).setDepth(38));
+    text(s,rankX+23,rankY+10,'SEASON RANK',22,
+      {...race,color:'#f1d6a0',strokeThickness:2});
+    s.addContent(s.add.rectangle(rankX+rankW/2,rankY+47,rankW-31,
+      1,0x688298,.85).setDepth(38));
+    const seasonReport=getProfessionalSeasonReport(c);
+    const hasCompletedRound=c.calendar.round>0;
+    const rankLine=(yy,label,standing)=>{
+      text(s,rankX+24,rankY+yy,label,21,{...race,strokeThickness:2});
+      text(s,rankX+rankW-23,rankY+yy,
+        hasCompletedRound&&standing?'#'+standing:'—',23,
+        {...race,color:'#e9eef5',strokeThickness:2}).setOrigin(1,0);
+    };
+    rankLine(55,'DRIVER',seasonReport.driverStanding);
+    rankLine(91,'CREW',seasonReport.crewStanding);
+    rankBox.on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
+
     if(s.proError)text(s,x,208,s.proError,18,{color:'#ef939b',wordWrap:{width:600}});
     return;
   }
