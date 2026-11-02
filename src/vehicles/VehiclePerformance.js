@@ -45,11 +45,28 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
     // Ginza full-works and Denzaki one-off have factory-sealed NOS hardware.
     // Do not apply player parts or strip their authored three-shot system.
-    if (config.lbwkFullWorks || config.arkonOneOff) return { car: config, engine };
-    config.nosPower = 0;
-    config.nosShots = 0;
-    config.nosShotDurationSeconds = 1.0;
-    config.nosCapacitySeconds = 0;
+    if (config.lbwkFullWorks || config.arkonOneOff) {
+      if (state.nosEnabled === false) {
+        config.nosPower = 0;
+        config.nosShots = 0;
+        config.nosCapacitySeconds = 0;
+      }
+      return { car: config, engine };
+    }
+    // Collectors remain mechanically sealed, except for their explicitly
+    // purchased NOS kit. Never apply engine, drivetrain or exhaust upgrades.
+    const shots = Math.max(0,Math.min(3,Number(state.exhaustNosTuning?.nosKit || 0)));
+    if (shots > 0 && state.nosEnabled !== false) {
+      config.nosPower = Math.max(0,Number(state.nosPower || 0));
+      config.nosShots = shots;
+      config.nosShotDurationSeconds = Math.max(0.1,Number(state.nosShotDurationSeconds || 1));
+      config.nosCapacitySeconds = shots * config.nosShotDurationSeconds;
+    } else {
+      config.nosPower = 0;
+      config.nosShots = 0;
+      config.nosShotDurationSeconds = 1.0;
+      config.nosCapacitySeconds = 0;
+    }
     return { car: config, engine };
   }
 
