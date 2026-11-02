@@ -103,9 +103,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       label(x+325,y,'OWNED L'+original.original,12,'#91b7cc');
       const max=original.original||0;
       const current=info.current||0;
-      const levels=part.id==='nosKit'?
-        [{level:0,caption:'OFF'},{level:max,caption:'FIT'}]:
-        [0,1,2,3].map(level=>({level,caption:level===0?'STOCK':'L'+level}));
+      const levels=[0,1,2,3].map(level=>({
+        level,caption:part.id==='nosKit'
+          ?(level===0?'OFF':level+' SHOT'+(level===1?'':'S'))
+          :(level===0?'STOCK':'L'+level)
+      }));
       levels.filter((row,i,list)=>i===0||row.level!==list[0].level).forEach((row,j)=>{
         const bx=x+34+j*97,by=y+37,enabled=row.level<=max,active=row.level===current;
         const box=add(s.add.rectangle(bx,by,83,29,active?0x237e7b:0x142a3d,
