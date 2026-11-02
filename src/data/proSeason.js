@@ -348,26 +348,17 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
   if(rules.stock)reasons.push(...getFactoryStockStatus(carState).reasons);
-  // Sealed collectors may carry factory-defined nitrous even when their saved
-  // state has no aftermarket kit. Scrutineering must inspect both sources.
-  const installedNos = Boolean(carState?.nosInstalled) ||
-    Number(carState?.exhaustNosTuning?.nosKit||0)>0 ||
-    (carState?.nosInstalled!==false && Number(car.nosPower||0)>0 &&
-      Number(car.nosShots||car.nosCapacitySeconds||0)>0);
-  // NOS can remain fitted when the driver explicitly disables the system.
-  // Missing nosEnabled means enabled for backwards compatibility.
-  const activeNos=installedNos&&carState?.nosEnabled!==false;
-  if(rules.noNos&&activeNos)reasons.push('NOS MUST BE DISABLED');
-  // Installed bottle capacity is inspected independently of the engine's
-  // continuous power. Drivers must refit a legal kit before entering a
-  // restricted event; scrutineering never silently changes their setup.
-  const installedShots=Number(carState?.exhaustNosTuning?.nosKit||0)>0
-    ? Number(carState.exhaustNosTuning.nosKit)
-    : (carState?.nosInstalled===false ? 0 :
-      Number(carState?.nosShots ?? car.nosShots ?? 0));
-  if(!rules.noNos&&Number.isFinite(rules.maxNosShots)&&
-      activeNos&&installedShots>rules.maxNosShots)
-    reasons.push('NOS LIMIT '+rules.maxNosShots+' SHOT'+(rules.maxNosShots===1?'':'S'));
+  // Scrutineer the SAME effective nitrous specification used in the race.
+  // This also handles factory-NOS collectors, purchased kits and the manual
+  // master switch without treating an installed-but-disabled bottle as active.
+  const activeNos = Number(performance?.car?.nosPower || 0) > 0 &&
+    Number(performance?.car?.nosShots || 0) > 0;
+  const activeShots = Number(performance?.car?.nosShots || 0);
+  if(rules.noNos && activeNos)reasons.push('NOS MUST BE DISABLED');
+  if(!rules.noNos && Number.isFinite(rules.maxNosShots) &&
+      activeNos && activeShots > rules.maxNosShots)
+    reasons.push('NOS LIMIT '+rules.maxNosShots+
+      ' SHOT'+(rules.maxNosShots===1?'':'S'));
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }
