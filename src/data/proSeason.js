@@ -845,7 +845,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
   const id=(trophyId?'trophy:'+trophyId:alternative?'crewAlt':'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
   const format=trophy?.formats?.[0]||(openCircuit?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
-    alternative?getAlternativeProCrewFormat(c.calendar.round):getProfessionalRoundEvents(c.calendar.round,c).crew.format);
+    alternative?getAlternativeProCrewFormat(c.calendar.round,c):getProfessionalRoundEvents(c.calendar.round,c).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
   const selected=(trophy||alternative?
