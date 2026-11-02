@@ -3573,7 +3573,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const power = Math.round(Number(build?.car?.powerKW || 0));
     const seasonRules = event.seasonRules;
     const seasonPowerOk = !seasonRules?.maxPowerKW || power <= seasonRules.maxPowerKW;
-    const seasonNosOk = !seasonRules?.noNos || !build?.nosInstalled;
+    const activeNos = Number(build?.car?.nosPower || 0) > 0 &&
+      Number(build?.car?.nosShots || 0) > 0;
+    const seasonNosOk = !seasonRules?.noNos || !activeNos;
     const seasonCheck=openCircuit&&build&&seasonRules?
       getProfessionalCarEligibility(build.carId,(this.registry.get('carStates')||{})[build.carId]||{},seasonRules):null;
     const seasonStockOk = !seasonRules?.stock || Boolean(seasonCheck&&!seasonCheck.reasons.some(r=>r.startsWith('MODIFIED ')||r.includes('TUNE')||r.includes('NITROUS')||r.includes('CALIBRATION')||r.includes('UNVERIFIED')||r.includes('INVALID')));
@@ -3590,7 +3592,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // power belong to Daichi's pre-payment scrutineering, not registration.
     const prepareBeforePay=usesPrepaidDriverBriefing(event);
     const passesPower = selectedFourWide || prepareBeforePay || Boolean(build) && (!Number.isFinite(event.maxPowerKW) || power <= event.maxPowerKW);
-    const passesNos = selectedFourWide || prepareBeforePay || Boolean(build) && (!event.noNos || !build.nosInstalled);
+    const passesNos = selectedFourWide || prepareBeforePay || Boolean(build) && (!event.noNos || !activeNos);
     const owned = this.registry.get('ownedCarIds') || [];
     const activeCupHere = selectedFourWide && activeCup?.eventId === FOUR_WIDE_CUP.id &&
       Boolean(getPlayerProHeat(activeCup));
@@ -3709,7 +3711,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
           (seasonRules.drivetrain==='FWD'?'FF':seasonRules.drivetrain)+' ONLY':'OPEN CLASS'),
         'POWER  '+(Number.isFinite(seasonRules.maxPowerKW)?
           seasonRules.maxPowerKW+' KW MAX':'UNLIMITED'),
-        'NOS  '+(seasonRules.noNos?'PROHIBITED':'PERMITTED'),
+        'NOS  '+(seasonRules.noNos?'OFF REQUIRED':
+          Number.isFinite(seasonRules.maxNosShots)
+            ?seasonRules.maxNosShots+' SHOTS MAX':'UNRESTRICTED'),
         'SEASON POINTS  UP TO 20',
         ...payout);
       for(let i=desc.length-1;i>=0;i--)if(desc[i]==null)desc.splice(i,1);
