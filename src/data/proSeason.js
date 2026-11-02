@@ -221,14 +221,14 @@ export const PRO_QUALIFICATION = Object.freeze({driver:60,crew:40});
 // One official entry per round, with equal maximum points for driver and crew.
 export const PRO_EVENT_POINTS = Object.freeze([20,17,15,13,12,11,10,9,8,7,6,5,4,3,2,1]);
 export const PRO_SEASON_CALENDAR = Object.freeze([
-  {driver:{id:'streetShootout',format:'KNOCKOUT',maxPowerKW:380},crew:{format:'DUEL'}},
-  {driver:{id:'midnightCup',format:'TIME_ATTACK',drivetrain:'RWD',maxPowerKW:550},crew:{format:'RELAY'}},
-  {driver:{id:'fourWideOpen',format:'FOUR_WIDE'},crew:{format:'DUEL'}},
-  {driver:{id:'streetShootout',format:'CONSISTENCY',drivetrain:'FWD',maxPowerKW:300,noNos:true},crew:{format:'TECHNICAL'}},
-  {driver:{id:'midnightCup',format:'KNOCKOUT',drivetrain:'AWD',maxPowerKW:600},crew:{format:'FOUR_WIDE'}},
-  {driver:{id:'streetShootout',format:'TIME_ATTACK',maxPowerKW:450,noNos:true},crew:{format:'RELAY'}},
-  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:450},crew:{format:'TECHNICAL'}},
-  {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
+  {driver:{id:'streetShootout',format:'KNOCKOUT',maxPowerKW:380,maxNosShots:1},crew:{format:'DUEL'}},
+  {driver:{id:'midnightCup',format:'TIME_ATTACK',drivetrain:'RWD',maxPowerKW:550,maxNosShots:2},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',maxNosShots:3},crew:{format:'DUEL'}},
+  {driver:{id:'streetShootout',format:'CONSISTENCY',drivetrain:'FWD',maxPowerKW:300,noNos:true,maxNosShots:0},crew:{format:'TECHNICAL'}},
+  {driver:{id:'midnightCup',format:'KNOCKOUT',drivetrain:'AWD',maxPowerKW:600,maxNosShots:2},crew:{format:'FOUR_WIDE'}},
+  {driver:{id:'streetShootout',format:'TIME_ATTACK',maxPowerKW:450,noNos:true,maxNosShots:0},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:450,maxNosShots:1},crew:{format:'TECHNICAL'}},
+  {driver:{id:'tokyoInvitational',format:'KNOCKOUT',maxNosShots:3},crew:{format:'DUEL'}},
 ]);
 export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
 
@@ -321,6 +321,16 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
     (carState?.nosInstalled!==false && Number(car.nosPower||0)>0 &&
       Number(car.nosShots||car.nosCapacitySeconds||0)>0);
   if(rules.noNos&&installedNos)reasons.push('NOS PROHIBITED');
+  // Installed bottle capacity is inspected independently of the engine's
+  // continuous power. Drivers must refit a legal kit before entering a
+  // restricted event; scrutineering never silently changes their setup.
+  const installedShots=Number(carState?.exhaustNosTuning?.nosKit||0)>0
+    ? Number(carState.exhaustNosTuning.nosKit)
+    : (carState?.nosInstalled===false ? 0 :
+      Number(carState?.nosShots ?? car.nosShots ?? 0));
+  if(!rules.noNos&&Number.isFinite(rules.maxNosShots)&&
+      installedNos&&installedShots>rules.maxNosShots)
+    reasons.push('NOS LIMIT '+rules.maxNosShots+' SHOT'+(rules.maxNosShots===1?'':'S'));
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }
