@@ -269,8 +269,8 @@ export function getProInvitationalDiscipline(raw) {
   if(q.crewEventsNeeded>q.driverEventsNeeded+1)return 'TEAM';
   return PRO_INVITATIONAL_DRIVER_ROUNDS.includes(c.calendar.round)?'DRIVER':'TEAM';
 }
-export function getProDriverInvitationRules(round) {
-  const regular=getProfessionalRoundEvents(round).driver;
+export function getProDriverInvitationRules(round,season=1) {
+  const regular=getProfessionalRoundEvents(round,season).driver;
   return {id:'proDriverInvitational',format:'KNOCKOUT',
     maxPowerKW:regular.maxPowerKW?Math.max(regular.maxPowerKW,380):undefined,
     noNos:false};
@@ -605,8 +605,8 @@ export function getProfessionalOpponentBuild(rules,playerPowerKW,rating,seed='',
 // Deliberately separate from Open Circuit trophies and the normal crew slot.
 export const PRO_ALT_CREW_ENTRY_FEE = 0;
 export const PRO_ALT_CREW_PRIZES = Object.freeze([1250000,575000,250000,50000]);
-export function getAlternativeProCrewFormat(round) {
-  const standard=getProfessionalRoundEvents(round).crew.format;
+export function getAlternativeProCrewFormat(round,season=1) {
+  const standard=getProfessionalRoundEvents(round,season).crew.format;
   return {DUEL:'FOUR_WIDE',RELAY:'TECHNICAL',TECHNICAL:'DUEL',FOUR_WIDE:'RELAY'}[standard]||'DUEL';
 }
 const clone=x=>JSON.parse(JSON.stringify(x));
