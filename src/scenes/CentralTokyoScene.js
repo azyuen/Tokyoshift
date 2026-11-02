@@ -227,6 +227,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getLocationBackgroundConfig(location, phase = this.worldPhase || getWorldPhase()) {
     const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
 
+    if (location?.kind === 'proDrag' && !isOpenCircuitAvailable(this.registry.get('proCircuit'))) {
+      return {
+        key: 'centralProSeason' + (safePhase === 'day' ? 'Day' : 'Night') + 'Bg',
+        path: 'assets/CentralTokyo/dragcomplex/proseason_' + safePhase + '.png',
+      };
+    }
+
     if (location?.kind === 'proDrag') {
       // The home crowd is stable across Driver, Crew and Trophy selection.
       // Only the player's individual Pro Driver ranking (and world phase)
@@ -3314,7 +3321,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const build = this.getSelectedBuild();
     const selectedCar = build ? cars[build.carId] : null;
 
-    if (selectedCar) {
+    // The season briefing uses a dedicated race-control suite rather than
+    // the Open Circuit's showroom car display. The paddock remains a separate
+    // selectable GarageScene destination.
+    if (selectedCar && isOpen) {
       const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
       const playerCharacter = characters[playerCharacterId] || characters.renMizuno;
 
@@ -3328,6 +3338,42 @@ export default class CentralTokyoScene extends Phaser.Scene {
         playerCharacter
       );
       carObjects.forEach(obj => this.addContent(obj));
+    }
+
+    if (!isOpen && circuitOpen) {
+      const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
+      const round = Math.min(8, Math.max(0, Number(pro.calendar?.round) || 0));
+      const ribbonX = STAGE.x + 24, ribbonY = STAGE.y + 302;
+      this.addContent(this.add.rectangle(ribbonX, ribbonY, 610, 155, 0x08131f, 0.91)
+        .setOrigin(0, 0).setStrokeStyle(2, 0x54b9d8, 0.9).setDepth(27));
+      this.addContent(this.add.text(ribbonX + 18, ribbonY + 13,
+        'TOKYO CHAMPIONSHIP // SEASON PROGRESS', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#83e7ff',
+        }).setDepth(32));
+      const completed = pro.calendar?.round >= 8;
+      for (let i = 0; i < 8; i++) {
+        const x = ribbonX + 49 + i * 73;
+        const active = !completed && i === round;
+        const done = i < round;
+        const tile = this.addContent(this.add.rectangle(x, ribbonY + 76, 62, 53,
+          active ? 0x155a75 : done ? 0x164c4e : 0x17202d, 0.96)
+          .setStrokeStyle(active ? 2 : 1, active ? 0x6ceaff : done ? 0x65cdbd : 0x58677a)
+          .setDepth(30));
+        this.addContent(this.add.text(x, ribbonY + 68, 'R' + (i + 1), {
+          fontFamily: PIXEL_FONT, fontSize: '9px',
+          color: done ? '#92f6df' : active ? '#ffffff' : '#98a6b8',
+        }).setOrigin(0.5).setDepth(32));
+        this.addContent(this.add.text(x, ribbonY + 88,
+          done ? '✓' : active ? '▶' : '·', {
+            fontFamily: BODY_FONT, fontSize: '17px',
+            color: done ? '#92f6df' : active ? '#ffffff' : '#778697',
+          }).setOrigin(0.5).setDepth(32));
+      }
+      this.addContent(this.add.text(ribbonX + 18, ribbonY + 125,
+        completed ? 'EIGHT ROUNDS COMPLETE // VIEW YOUR SEASON RESULTS'
+          : 'ROUND ' + (round + 1) + ' OF 8  //  CHOOSE ONE PROFESSIONAL EVENT BELOW', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d8e7ee',
+        }).setDepth(32));
     }
 
     // R638: Remove ambient back-row rivals completely. Keep authored venue
