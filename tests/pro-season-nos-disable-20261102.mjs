@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+globalThis.Phaser={Math:{Clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),Linear:(a,b,t)=>a+(b-a)*t}};
 import {getProfessionalCarEligibility} from '../src/data/proSeason.js';
 
 test('manual NOS off allows fitted NOS at no-NOS scrutineering',()=>{
