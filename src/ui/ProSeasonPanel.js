@@ -74,6 +74,19 @@ export function drawSeasonHeader(s,stage) {
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
   const report=getProfessionalSeasonReport(c);
+  if (!openCircuit) {
+    const race = {fontFamily:'"Exo 2", sans-serif',fontStyle:'900 italic',
+      stroke:'#07111d',strokeThickness:4};
+    text(s,x,28,'PRO SEASON',46,race);
+    text(s,x,86,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)}`,28,race)
+      .setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
+    text(s,x,132,'TOKYO CHAMPIONSHIP',20,{...race,color:'#8fe7ff'});
+    text(s,x,164,`DRIVER  ${q.driver} / ${q.driverRequired} PTS     CREW  ${q.crew} / ${q.crewRequired} PTS`,23,
+      {...race,color:'#f5e9e5'});
+    if(s.proError)text(s,x,208,s.proError,18,{color:'#ef939b',wordWrap:{width:600}});
+    return;
+  }
   // Rank and sponsorship remain visible through both Open Circuit and Season.
   // Season controls remain beside the main race entries on the right.
   const height=openCircuit?169:c.activeChampionship?213:188;

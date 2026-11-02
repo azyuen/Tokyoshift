@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261030-r742';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r764';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -367,7 +367,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += this.queueCharacterPose(id, 'normal');
       });
       if (!isOpenCircuitAvailable(this.registry.get('proCircuit'))) {
-        queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle');
+        queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle', { proCircuit: true });
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
         queued += this.queueCharacterPose('daichiSakamoto', 'normal');
       } else if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
@@ -569,6 +569,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawShell() {
     this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
 
+    const shellStart = this.children.list.length;
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
@@ -608,6 +609,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }).setOrigin(1, 0.5).setDepth(42);
 
     addSettingsButton(this, 955, 35);
+    this.centralTopPanelObjects = this.children.list.slice(shellStart);
 
     this.add.rectangle(
       STAGE.x + STAGE.w / 2,
@@ -712,7 +714,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         0x000000,
         0.48
       ).setDepth(depth - 0.1);
-      if (this.centralStageMask) venueShadow.setMask(this.centralStageMask);
+      if (this.centralStageMask && !this.isProSeasonHome()) venueShadow.setMask(this.centralStageMask);
       this.addContent(venueShadow);
     }
 
@@ -721,7 +723,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       .setScale(displayHeight / safeHeight)
       .setFlipX(Boolean(flip))
       .setDepth(depth);
-    if (this.centralStageMask) venueCharacter.setMask(this.centralStageMask);
+    if (this.centralStageMask && !this.isProSeasonHome()) venueCharacter.setMask(this.centralStageMask);
     return this.addContent(venueCharacter);
   }
 
@@ -781,7 +783,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.updateLocationHeaderForPhase(location);
     const seasonVenue = location.kind === 'proDrag' &&
       !isOpenCircuitAvailable(this.registry.get('proCircuit'));
-    this.centralSidePanel?.setFillStyle(0x07111d, seasonVenue ? 0.76 : 0.99);
+    this.centralSidePanel?.setVisible(!seasonVenue);
+    this.centralTopPanelObjects?.forEach(obj => obj.setVisible(!seasonVenue));
+    this.centralStageBorderOverlay?.setVisible(!seasonVenue);
     this.centralCardsPanel?.setFillStyle(0x07111d, seasonVenue ? 0.70 : 0.99);
     this.drawBackground(location);
     if (seasonVenue) this.drawProSeasonFullscreenBackdrop();
@@ -1012,8 +1016,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.addContent(this.add.rectangle(780, 712, 1560, 256, 0x06111c, 0.30).setDepth(-7));
   }
 
+  isProSeasonHome() {
+    return this.activeLocationId === 'tokyoDragComplex' &&
+      !isOpenCircuitAvailable(this.registry.get('proCircuit'));
+  }
+
   drawNavigation(title, subtitle) {
     const dragTheme = LOCATION_BY_ID[this.activeLocationId]?.kind === 'proDrag';
+    if (!this.isProSeasonHome()) {
     this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 18, title, {
       fontFamily: PIXEL_FONT,
       fontSize: '14px',
@@ -1028,6 +1038,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(33));
 
+    }
     // Central destinations are intentionally reached through the region map.
     // There are no shortcut buttons between Auto Market, Ginza and Drag.
     // Keep navigation as the final action in the side panel.
@@ -3321,8 +3332,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
           : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
-    // Dev-only refresh is in the venue pane, never the sidebar.
-    if (isArkonDen(this.registry)) {
+    // Keep developer refresh on Open Circuit only.
+    if (isOpen && isArkonDen(this.registry)) {
       const x = STAGE.x + STAGE.w - 135, y = STAGE.y + 19;
       const dev = this.addContent(this.add.rectangle(
         x, y, 250, 30, 0x211317, 0.96
@@ -3343,17 +3354,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(27));
     }
 
-    if (!isOpen) {
-      this.addContent(this.add.text(STAGE.x + 490, STAGE.y + 24, 'PRO SEASON', {
-        fontFamily: PIXEL_FONT, fontSize: '26px', color: '#ffffff',
-        stroke: '#0b1827', strokeThickness: 6,
-      }).setDepth(33));
-      this.addContent(this.add.text(STAGE.x + 493, STAGE.y + 82,
-        'TOKYO DRAG COMPLEX  //  PROFESSIONAL CHAMPIONSHIP', {
-          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e5f8ff',
-          stroke: '#0b1827', strokeThickness: 3,
-        }).setDepth(33));
-    }
     drawSeasonHeader(this, STAGE);
 
     this.proOpenRotationKey = isOpen ? getOpenCircuitRotation().rotationIndex : null;
@@ -3380,42 +3380,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       carObjects.forEach(obj => this.addContent(obj));
     }
 
-    if (!isOpen && circuitOpen) {
-      const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
-      const round = Math.min(8, Math.max(0, Number(pro.calendar?.round) || 0));
-      const ribbonX = STAGE.x + 24, ribbonY = STAGE.y + 302;
-      this.addContent(this.add.rectangle(ribbonX, ribbonY, 610, 155, 0x08131f, 0.91)
-        .setOrigin(0, 0).setStrokeStyle(2, 0x54b9d8, 0.9).setDepth(27));
-      this.addContent(this.add.text(ribbonX + 18, ribbonY + 13,
-        'TOKYO CHAMPIONSHIP // SEASON PROGRESS', {
-          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#83e7ff',
-        }).setDepth(32));
-      const completed = pro.calendar?.round >= 8;
-      for (let i = 0; i < 8; i++) {
-        const x = ribbonX + 49 + i * 73;
-        const active = !completed && i === round;
-        const done = i < round;
-        const tile = this.addContent(this.add.rectangle(x, ribbonY + 76, 62, 53,
-          active ? 0x155a75 : done ? 0x164c4e : 0x17202d, 0.96)
-          .setStrokeStyle(active ? 2 : 1, active ? 0x6ceaff : done ? 0x65cdbd : 0x58677a)
-          .setDepth(30));
-        this.addContent(this.add.text(x, ribbonY + 68, 'R' + (i + 1), {
-          fontFamily: PIXEL_FONT, fontSize: '9px',
-          color: done ? '#92f6df' : active ? '#ffffff' : '#98a6b8',
-        }).setOrigin(0.5).setDepth(32));
-        this.addContent(this.add.text(x, ribbonY + 88,
-          done ? '✓' : active ? '▶' : '·', {
-            fontFamily: BODY_FONT, fontSize: '17px',
-            color: done ? '#92f6df' : active ? '#ffffff' : '#778697',
-          }).setOrigin(0.5).setDepth(32));
-      }
-      this.addContent(this.add.text(ribbonX + 18, ribbonY + 125,
-        completed ? 'EIGHT ROUNDS COMPLETE // VIEW YOUR SEASON RESULTS'
-          : 'ROUND ' + (round + 1) + ' OF 8  //  CHOOSE ONE PROFESSIONAL EVENT BELOW', {
-          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d8e7ee',
-        }).setDepth(32));
-    }
-
     // R638: Remove ambient back-row rivals completely. Keep authored venue
     // staff, grandstands, player car and event controls unchanged.
 
@@ -3423,10 +3387,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!isOpen && circuitOpen) {
       const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
       [
-        { characterId: playerId, pose: 'idle', x: STAGE.x + 700, feetY: STAGE.y + 510, height: 290, depth: 20 },
-        { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 840, feetY: STAGE.y + 510, height: 285, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 980, feetY: STAGE.y + 510, height: 280, depth: 20 },
-        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1092, feetY: STAGE.y + 510, height: 220, depth: 19 },
+        { characterId: playerId, pose: 'idle', x: STAGE.x + 700, feetY: STAGE.y + 728, height: 290, depth: 20 },
+        { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 840, feetY: STAGE.y + 728, height: 285, depth: 21 },
+        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 980, feetY: STAGE.y + 728, height: 280, depth: 20 },
+        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1092, feetY: STAGE.y + 728, height: 220, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
       [
@@ -3523,16 +3487,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     });
 
+    const sidebarStart = this.contentObjects.length;
     this.drawDragSide(events[this.selectedEventIndex], build);
+    if (!isOpen) {
+      // Preserve all event-specific entry/resume handlers, remove only the
+      // overview above them. Detailed rules remain in the event briefings.
+      this.contentObjects.slice(sidebarStart).forEach(obj => {
+        if (obj.y < SIDE.y + 550) obj.setVisible(false).disableInteractive();
+      });
+    }
     showProSeasonAction(this,SIDE);
     const proGarage=normaliseProCircuitState(this.registry.get('proCircuit'));
     if(!isOpen&&proGarage.proGarageOrigins&&proGarage.registeredDriverCars?.length===3){
-      // This sits under the PRO SEASON navigation heading, not over GO TO MAP.
-      const x=SIDE.x+SIDE.w/2,y=SIDE.y+133;
+      // Fourth action, directly above the retained entry/withdraw/map stack.
+      const x=SIDE.x+SIDE.w/2,y=SIDE.y+524;
       const button=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
         0x123142,1).setStrokeStyle(2,0x66c4e8,1).setDepth(38)
         .setInteractive({useHandCursor:true}));
-      this.addContent(this.add.text(x,y,'PRO PADDOCK  //  04 AWD · 05 RWD · 06 FF',{
+      this.addContent(this.add.text(x,y,'PRO PADDOCK',{
         fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e8f7ff',
       }).setOrigin(.5).setDepth(39));
       button.on('pointerdown',()=>{

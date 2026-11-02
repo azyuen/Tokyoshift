@@ -10,10 +10,10 @@ const scene=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.met
 const panel=readFileSync(new URL('../src/ui/ProSeasonPanel.js',import.meta.url),'utf8');
 const briefing=readFileSync(new URL('../src/ui/ProSeasonDriverBriefing.js',import.meta.url),'utf8');
 
-test('PRO SEASON replaces generic page header and Pro Paddock sits above the race cards',()=>{
+test('PRO SEASON replaces generic page header and Pro Paddock sits above the action stack',()=>{
   assert.match(scene,/isOpen \? 'Open Circuit' : 'PRO SEASON'/);
-  assert.match(scene,/const x=SIDE\.x\+SIDE\.w\/2,y=SIDE\.y\+133/);
-  assert.match(scene,/PRO PADDOCK  \/\/  04 AWD · 05 RWD · 06 FF/);
+  assert.match(scene,/const x=SIDE\.x\+SIDE\.w\/2,y=SIDE\.y\+524/);
+  assert.match(scene,/'PRO PADDOCK'/);
   assert.doesNotMatch(scene,/PRO GARAGE  \/\/  04 AWD/);
   // Main drawNavigation owns the footer GO TO MAP action at y+674.
   assert.match(scene,/this\.drawNavigation\(/);
