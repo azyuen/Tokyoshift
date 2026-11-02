@@ -4462,13 +4462,15 @@ export default class GarageScene extends Phaser.Scene {
       '06':{x:STAGE.x+800,contactY:STAGE.y+374,width:396,depth:4},
     }[String(number)];
     if(!placement)return null;
-    // Offsets are relative to the R757 car centre, not the bay labels.
-    // 04 grows 10%; 05 advances 30% of its sprite width; 06 shrinks 15%
-    // and advances 50% of its original width. Wheel-bottom contact stays fixed.
-    const widthScale=String(number)==='04'?1.10:String(number)==='06'?0.85:1;
-    const rightShift=String(number)==='04'?30:
-      String(number)==='05'?placement.width*0.30:
-      String(number)==='06'?placement.width*0.50:0;
+    // R759: fine-tune the three paddock sprites without moving the bay signs
+    // or changing the tyre contact/ground line.
+    // 04: 5% smaller than R758; 05: 5% smaller and 60px left;
+    // 06: 10% smaller than R758 and 120px left.
+    const bay=String(number);
+    const widthScale=bay==='04'?1.10*0.95:bay==='05'?0.95:0.85*0.90;
+    const rightShift=bay==='04'?30:
+      bay==='05'?placement.width*0.30-60:
+      placement.width*0.50-120;
     return {...placement,width:placement.width*widthScale,
       carX:placement.x+60+rightShift};
   }
