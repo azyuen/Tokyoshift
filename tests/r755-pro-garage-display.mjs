@@ -19,7 +19,7 @@ test('all three Pro Garage cars are twice R754 size and shifted left',()=>{
   const actual=before.map(([bay,x,width,contactY,depth])=>{
     const item=placement(bay);
     assert.ok(item,bay+' placement');
-    assert.equal(item.width,width*2,bay+' doubled size');
+    assert.equal(item.width,width*2*(bay==='04'?1.10*0.95:bay==='05'?0.95:0.85*0.90),bay+' adjusted size');
     assert.ok(item.x<24+x,bay+' shifted left');
     assert.equal(item.contactY,92+contactY,bay+' maintains original tyre contact');
     assert.equal(item.depth,depth,bay+' keeps layer depth');
@@ -38,4 +38,22 @@ test('Pro Garage hides only workshop car callouts while part selectors are kept'
   assert.match(source,/this\.openEnginePartSelector\(partId\)/);
   assert.match(source,/this\.openSecondaryPartSelector\(partId\)/);
   assert.match(source,/this\.createCarDisplay\([\s\S]*?placement\?\.width/);
+});
+
+test('Pro Garage bay vehicles sit farther right while the bay signs stay anchored',()=>{
+  const start=source.indexOf('  getProGarageBayPlacement(number){');
+  const end=source.indexOf('\n  drawProGarageBayLineup(){',start);
+  const method=source.slice(start,end);
+  const placement=new Function('STAGE',`return ({${method}}).getProGarageBayPlacement;`)
+    ({x:24,y:92});
+  for(const bay of ['04','05','06']){
+    const item=placement(bay);
+    assert.ok(Math.abs((item.carX-item.x)-(60+(bay==='04'?30:bay==='05'?452*0.30-60:396*0.50-120)))<0.001,bay+' requested horizontal shift');
+    assert.ok(item.width>0&&item.contactY>0,bay+' retains size and tyre contact');
+  }
+  assert.ok(source.includes('const {x,carX,contactY,width,depth}=config;'));
+  assert.ok(source.includes('this.createCarDisplay(cars[bay.carId],carX,y,width,depth)'));
+  assert.ok(source.includes('this.add.text(x,top,'),'bay signage remains anchored');
+  assert.equal(source.split('placement?.carX??').length-1,2,
+    'selected car and visual-mod preview must use the same shifted coordinates');
 });
