@@ -192,7 +192,7 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
   if (partId === 'nosKit') {
     const nosStash = carState.proBriefingNosStash;
     const savedKit = nosStash?.exhaustNosTuning || {};
-    const current = nosStash ? 0 : Math.max(
+    const current = Math.max(
       Number(active.nosKit || 0), Boolean(carState.nosInstalled) ? 1 : 0
     );
     return {
