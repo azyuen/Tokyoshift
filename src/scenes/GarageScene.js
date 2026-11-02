@@ -6701,6 +6701,35 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(73));
 
+    if (!isDrivetrain) {
+      const factoryNos = Number(carStates[this.selectedCarId]?.nosShots || cars[this.selectedCarId]?.nosShots || 0)>0;
+      const fittedNos = factoryNos || Number(state.exhaustNosTuning?.nosKit || 0)>0 || Boolean(state.nosInstalled);
+      if (fittedNos) {
+        const toggle=add(this.add.rectangle(
+          SIDE.x+SIDE.w/2,SIDE.y+565,SIDE.w-36,38,0x162538,1
+        ).setStrokeStyle(1,0x55b8ff,1).setDepth(72)
+          .setInteractive({useHandCursor:true}));
+        this.secondaryNosSwitchLabel=add(this.add.text(
+          SIDE.x+SIDE.w/2,SIDE.y+565,'',{
+            fontFamily:PIXEL_FONT,fontSize:'8px',color:'#dff3ff'
+          }).setOrigin(0.5).setDepth(73));
+        const refreshSwitch=()=>{
+          const current=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
+          this.secondaryNosSwitchLabel?.setText(current.nosEnabled===false?'NOS MASTER // OFF':'NOS MASTER // ON');
+        };
+        toggle.on('pointerdown',()=>{
+          const carStates={...(this.registry.get('carStates')||{})};
+          const current=carStates[this.selectedCarId]||{};
+          carStates[this.selectedCarId]={...current,nosEnabled:current.nosEnabled===false};
+          this.registry.set('carStates',carStates);
+          refreshSwitch();
+          this.refreshSecondaryTuningMode();
+          this.showWorkshopToast(carStates[this.selectedCarId].nosEnabled?'NOS ENABLED':'NOS DISABLED');
+        });
+        refreshSwitch();
+      }
+    }
+
     this.secondaryApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 624,
