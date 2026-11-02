@@ -1,6 +1,9 @@
 // Free Pro Season driver preparation. Cars are registered at the Pro Paddock;
 // this briefing chooses which of those cars will race and allows Daichi to
 // fit/remove levels ALREADY OWNED, without charging or altering physics.
+import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261024-r680';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { getProDriverDrivetrain,getProfessionalCarEligibility,
   getProfessionalRoundEvents,getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
@@ -63,7 +66,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       Number.isFinite(rules.maxNosShots)
         ?rules.maxNosShots+' NOS SHOTS MAX':'NOS PERMITTED');
 
-  function render(){
+  function renderSetup(){
     discard();
     add(s.add.rectangle(780,420,1560,840,0x06101b,.99).setDepth(250).setInteractive());
     add(s.add.rectangle(780,420,1494,786,0x0a1725,.98)
@@ -82,7 +85,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
         (cars[id]?.shortName||id)+' // '+shortDrive(getProDriverDrivetrain(id)),
         17,active?'#ffffff':'#c9d9e2');
       if(caption.width>400)caption.setScale(400/caption.width);
-      hit.on('pointerdown',()=>{selected=id;render();});
+      hit.on('pointerdown',()=>{selected=id;renderSetup();});
     });
     const draft=drafts[selected]||{};
     const check=getProfessionalCarEligibility(selected,draft,rules);
@@ -116,7 +119,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
           .setOrigin(.5);
         if(enabled)box.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
           drafts[selected]=setDriverPowerPartLevels(draft,{[part.id]:row.level});
-          render();
+          renderSetup();
         });
       });
     });
@@ -134,39 +137,142 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       'NOS MASTER // '+(nosEnabled?'ON':'OFF')+'   ·   TOGGLE':
       'NOS MASTER // NO KIT INSTALLED',()=>{
       drafts[selected]={...draft,nosEnabled:!nosEnabled};
-      render();
+      renderSetup();
     },hasNos);
     label(65,731,'EVENT FORMAT  '+String(rules.format||'KNOCKOUT').replaceAll('_',' ')+
       '  ·  MAX 20 SEASON POINTS  ·  TOP PURSE '+money(event.prizeCash||0),
       16,'#d7c49d');
-    button(247,777,338,50,'BACK TO PRO SEASON',close);
+    button(247,777,338,50,'BACK TO BRIEFING',renderBriefing);
     button(785,777,370,50,'RESET UNSAVED SETUP',()=>{
-      drafts[selected]=originals[selected]||{};render();
+      drafts[selected]=originals[selected]||{};renderSetup();
     });
     button(1304,777,394,50,canStart?'GO TO GRID // '+money(event.entryFee):
       'PASS SCRUTINEERING FIRST',()=>{
-      const now=normaliseProCircuitState(s.registry.get('proCircuit'));
-      const latest=s.getProDragEvents?.().find(e=>e.id===event.id&&
-        e.seasonChoice===event.seasonChoice);
-      const actual=s.registry.get('carStates')||{};
-      if(now.seasonStatus!=='ACTIVE'||now.calendar.round!==initial.calendar.round||
-        !latest||latest.seasonRules?.format!==rules.format||
-        getProSeasonDriverCarError(now,selected)||
-        now.activeTournament||now.activeTimedEvent||now.activeCrewEvent||
-        s.registry.get('competitionState')?.active||
-        !getProfessionalCarEligibility(selected,drafts[selected],rules).eligible){
-        s.proError='EVENT OR SETUP CHANGED // REOPEN BRIEFING';
-        close();s.renderLocation(s.activeLocationId);return;
-      }
-      try{
-        saveProTransaction(s.registry,{
-          selectedCarId:selected,
-          carStates:{...actual,[selected]:drafts[selected]},
-        });
-      }catch(error){s.proError=error.message;close();s.renderLocation(s.activeLocationId);return;}
-      close();
-      onGrid?.(s.getSelectedBuild?.());
+      proceedToGrid();
     },canStart);
   }
-  render();return true;
+
+  const assets=[
+    ['proSeasonBriefRoomDay','assets/CentralTokyo/dragcomplex/regoroom_day.png'],
+    ['proSeasonBriefRoomNight','assets/CentralTokyo/dragcomplex/regoroom_night.png'],
+    ['proSeasonBriefDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
+    ['proSeasonBriefSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
+    ['proSeasonBriefHiroshi','assets/Characters/Central/hiroshi_sato_normal.png'],
+  ];
+  const playerAsset=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno','idle',{proCircuit:true});
+  if(playerAsset?.key&&playerAsset.path)assets.push([playerAsset.key,playerAsset.path]);
+  let pending=0;
+  for(const [key,path] of assets)if(!s.textures.exists(key)){
+    s.load.image(key,getCharacterAssetUrl(path));pending++;
+  }
+  const selectedModels=Object.fromEntries(roster.filter(id=>cars[id]).map(id=>[getBaseCarId(id),cars[id]]));
+  pending+=preloadCarAppearanceAssets(s,selectedModels,'20261019-r598');
+  for(const id of roster)if(cars[id])pending+=preloadCarWheel(s,cars[id],drafts[id]||{});
+  function proceedToGrid(){
+          const now=normaliseProCircuitState(s.registry.get('proCircuit'));
+          const latest=s.getProDragEvents?.().find(e=>e.id===event.id&&
+            e.seasonChoice===event.seasonChoice);
+          const actual=s.registry.get('carStates')||{};
+          if(now.seasonStatus!=='ACTIVE'||now.calendar.round!==initial.calendar.round||
+            !latest||latest.seasonRules?.format!==rules.format||
+            getProSeasonDriverCarError(now,selected)||
+            now.activeTournament||now.activeTimedEvent||now.activeCrewEvent||
+            s.registry.get('competitionState')?.active||
+            !getProfessionalCarEligibility(selected,drafts[selected],rules).eligible){
+            s.proError='EVENT OR SETUP CHANGED // REOPEN BRIEFING';
+            close();s.renderLocation(s.activeLocationId);return;
+          }
+          try{
+            saveProTransaction(s.registry,{
+              selectedCarId:selected,
+              carStates:{...actual,[selected]:drafts[selected]},
+            });
+          }catch(error){s.proError=error.message;close();s.renderLocation(s.activeLocationId);return;}
+          close();
+          onGrid?.(s.getSelectedBuild?.());
+    
+  }
+  function renderBriefing(){
+    discard();
+    const phase=String(s.worldPhase||'night').toLowerCase()==='day'?'Day':'Night';
+    const room='proSeasonBriefRoom'+phase;
+    add(s.add.rectangle(780,420,1560,840,0x06101b,1).setDepth(250).setInteractive());
+    if(s.textures.exists(room)){
+      const source=s.textures.get(room).getSourceImage();
+      add(s.add.image(780,420,room).setScale(Math.max(1560/source.width,840/source.height)).setDepth(251));
+    }
+    add(s.add.rectangle(780,420,1560,840,0x04101b,.22).setDepth(251));
+    const title=String(event.label||'DRIVER EVENT').toUpperCase();
+    label(48,35,'PRO SEASON // ROUND '+(initial.calendar.round+1)+' OF 8',23,'#ffffff');
+    label(48,77,title,32,'#f7faff');
+    label(50,124,'DRIVER EVENT  //  '+String(rules.format||'KNOCKOUT').replaceAll('_',' '),17,'#8de5f8');
+    const positions=[
+      {key:'proSeasonBriefDaichi',x:190,feet:732,height:510,max:280},
+      {key:playerAsset?.key,x:402,feet:716,height:492,max:260},
+      {key:'proSeasonBriefSayaka',x:1152,feet:739,height:495,max:275},
+      {key:'proSeasonBriefHiroshi',x:1398,feet:723,height:490,max:250},
+    ];
+    for(const p of positions){
+      if(!p.key||!s.textures.exists(p.key))continue;
+      const source=s.textures.get(p.key).getSourceImage();
+      const scale=Math.min(p.height/source.height,p.max/source.width);
+      add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1).setScale(scale).setFlipX(true).setDepth(254));
+    }
+    const draft=drafts[selected]||{};
+    const check=getProfessionalCarEligibility(selected,draft,rules);
+    const canStart=check.eligible&&Number(s.registry.get('cash')||0)>=Number(event.entryFee||0);
+    // Use the same vehicle display helper as the Open Circuit briefing.
+    if(cars[selected]&&typeof s.createCarDisplay==='function'){
+      try{
+        ensureDerivedModularCarTextures(s,{[getBaseCarId(selected)]:cars[selected]});
+        for(const part of s.createCarDisplay(cars[selected],790,502,610,253,
+          getCarPaintColor(draft),null,false,draft)||[])if(part)add(part);
+      }catch(error){console.warn('[Tokyo SHIFT] Season briefing car preview',error);}
+    }
+    const info=add(s.add.rectangle(777,203,685,105,0x071625,.87)
+      .setStrokeStyle(2,0x36cce9).setDepth(258));
+    label(464,161,'REGISTERED CAR // '+(cars[selected]?.shortName||selected),18,'#ffffff');
+    label(464,190,spec,14,'#f2d4a5',{wrap:625});
+    label(464,218,'SCRUTINEERING // '+(check.eligible?'PASSED':check.reasons.slice(0,2).join(' / ')),
+      14,check.eligible?'#96eac7':'#ffb5b9',{wrap:625});
+    button(187,580,238,48,'CAR SETUP',renderSetup);
+    button(1120,580,228,48,'SAYAKA // ADVICE',()=>{
+      renderDialogue('SAYAKA // STRATEGY',
+        'Select your registered '+shortDrive(rules.drivetrain||'')+
+        ' car, verify the power and NOS restrictions, then prepare your launch. '+
+        'This season event awards up to 20 championship points.');
+    });
+    button(1394,580,225,48,'RACE BRIEFING',()=>{
+      renderDialogue('HIROSHI // EVENT RULES',
+        title+'\n'+spec+'\nFORMAT: '+String(rules.format||'KNOCKOUT').replaceAll('_',' ')+
+        '\nENTRY: '+money(event.entryFee)+'  //  PURSE: '+money(event.prizeCash)+
+        '\nSEASON POINTS: UP TO 20');
+    });
+    button(1068,778,244,52,'BACK TO SEASON',close);
+    button(1365,778,246,52,canStart?'GO TO GRID // '+money(event.entryFee):
+      'SETUP REQUIRED',proceedToGrid,canStart);
+  }
+  function renderDialogue(heading,body){
+    renderBriefing();
+    add(s.add.rectangle(780,417,750,335,0x071626,.98)
+      .setStrokeStyle(3,0x48c9e9).setDepth(260));
+    const header=label(440,282,heading,23,'#ffffff');header.setDepth(261);
+    const copy=label(440,335,body,19,'#e3edf4',{wrap:680});copy.setDepth(261);
+    const back=add(s.add.rectangle(780,526,320,48,0x123047,1)
+      .setStrokeStyle(2,0x56d6f2).setDepth(263).setInteractive({useHandCursor:true}));
+    const caption=label(780,526,'RETURN TO BRIEFING',15,'#ffffff')
+      .setOrigin(.5).setDepth(264);
+    back.on('pointerdown',renderBriefing);
+  }
+  if(pending){
+    discard();
+    add(s.add.rectangle(780,420,1560,840,0x07111d,.99).setDepth(250).setInteractive());
+    label(590,407,'PREPARING PRO SEASON BRIEFING',19,'#ffffff');
+    s.load.once('complete',()=>{
+      if(closed||!s.sys?.isActive?.())return;
+      renderBriefing();
+    });
+    s.load.start();
+  }else renderBriefing();
+  return true;
 }

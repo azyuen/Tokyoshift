@@ -1,10 +1,10 @@
-const BUILD = 'R762';
+const BUILD = 'R763';
 // Stable across releases: keys include the SHA-256 of each asset's contents.
 // Generate the manifest after asset edits; never key these files by game build.
 importScripts('./asset-manifest.js');
 const SCOPE = new URL('./', self.location.href);
 const ASSET_CACHE = 'tokyoshift-content-v1-' + encodeURIComponent(SCOPE.pathname);
-const RUNTIME_CACHE = 'tokyoshift-runtime-r762';
+const RUNTIME_CACHE = 'tokyoshift-runtime-r763';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => {
