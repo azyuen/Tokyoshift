@@ -1,0 +1,36 @@
+name: Pro Season collector and rotation release checks
+on:
+  pull_request:
+    paths:
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'src/vehicles/VehiclePerformance.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/pro-season-*.mjs'
+      - '.github/workflows/pro-season-collector-release.yml'
+  push:
+    branches: [feature/pro-season-collector-eligibility-20261102]
+  workflow_dispatch:
+jobs:
+  targeted-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/data/proSeason.js
+          node --check src/data/proCircuit.js
+          node --check src/vehicles/VehiclePerformance.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Collector NOS and season calendar tests
+        run: |
+          node --test tests/pro-season-calendar-rotation-20261102.mjs tests/pro-season-calendar-save-20261102.mjs tests/pro-season-nos-disable-20261102.mjs tests/pro-season-nos-vehicle-build-20261102.mjs
+      - name: Existing season progression simulations
+        run: |
+          node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js tests/pro-drag-season-roster-20261101.mjs
