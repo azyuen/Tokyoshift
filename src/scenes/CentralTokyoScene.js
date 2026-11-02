@@ -3505,9 +3505,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if(rosterError){this.proError=rosterError;this.renderLocation(this.activeLocationId);return;}
     const rules = getProfessionalRoundEvents(pro.calendar.round,pro).driver;
     if (rules.id !== 'fourWideOpen' || rules.format !== 'FOUR_WIDE' || rules.stock) return;
-    if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
-    if (rules.noNos && build.nosInstalled) return;
-    if (rules.drivetrain && proDriveClass(getCarMagazineMeta(carId)?.drivetrain) !== proDriveClass(rules.drivetrain)) return;
+    const state=(this.registry.get('carStates')||{})[carId]||{};
+    const eligibility=getProfessionalCarEligibility(carId,state,rules);
+    if(!eligibility.eligible){
+      this.proError=eligibility.reasons.join(' / ');
+      this.renderLocation(this.activeLocationId);
+      return;
+    }
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < FOUR_WIDE_CUP.entryFee) return;
     const tournament = createFourWideTournament(pro, carId);
