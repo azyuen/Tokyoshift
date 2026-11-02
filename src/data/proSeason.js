@@ -292,10 +292,11 @@ export function getProInvitationalDiscipline(raw) {
   return PRO_INVITATIONAL_DRIVER_ROUNDS.includes(c.calendar.round)?'DRIVER':'TEAM';
 }
 export function getProDriverInvitationRules(round,season=1) {
-  const regular=getProfessionalRoundEvents(round,season).driver;
+  // An Elite Invitational is a genuine alternative to a power-restricted
+  // Driver event. Collector and regional tuner cars still have to use a
+  // legal NOS configuration, but are never rejected for being over 380 kW.
   return {id:'proDriverInvitational',format:'KNOCKOUT',
-    maxPowerKW:regular.maxPowerKW?Math.max(regular.maxPowerKW,380):undefined,
-    noNos:false};
+    maxNosShots:3,noNos:false};
 }
 
 // Scrutineering checks the actual installed parts, not just horsepower.
