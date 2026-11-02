@@ -1884,7 +1884,8 @@ export default class GarageScene extends Phaser.Scene {
     const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
     return Boolean(this.selectedCarId && !this.crewMode &&
       !isArkonRwbRestoration(this.registry, this.selectedCarId) &&
-      (car?.collector || car?.tuningLocked || state.collector) &&
+      (car?.collector || car?.tuningLocked || state.tuningLocked ||
+        state.immutable || state.collector) &&
       !car?.ginzaDemo && !car?.crewLoan &&
       // A factory-installed nitrous system must not be overwritten by a
       // second aftermarket kit.
@@ -1900,7 +1901,7 @@ export default class GarageScene extends Phaser.Scene {
     return this.canSelectedCollectorInstallNos() ||
       Boolean(this.selectedCarId&&!this.crewMode&&!car?.ginzaDemo&&!car?.crewLoan&&
         !isArkonRwbRestoration(this.registry,this.selectedCarId)&&
-        (car?.tuningLocked||state.tuningLocked||state.collector||car?.collector)&&factoryNos);
+        (car?.tuningLocked||state.tuningLocked||state.immutable||state.collector||car?.collector)&&factoryNos);
   }
 
   refreshTuningCategoryAvailability() {
