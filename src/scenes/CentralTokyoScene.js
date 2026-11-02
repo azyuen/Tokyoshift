@@ -3058,8 +3058,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // Display names are round-specific, but the professional race IDs, rules,
   // points and save records remain unchanged. The plain Sprint/Open names
   // continue to apply exclusively to the rotating Open Circuit.
-  getProSeasonEventNames(round) {
-    return [
+  getProSeasonEventNames(round,season=1) {
+    const offset=(Math.max(1,Math.floor(Number(season)||1))-1)%8;
+    const names=[
       {driver:'TOKYO LAUNCH CHALLENGE',crew:'SHUTO TEAM SHOWDOWN'},
       {driver:'MIDNIGHT PRECISION TRIAL',crew:'EASTERN EXPRESS RELAY'},
       {driver:'NEON FOUR-WIDE CLASSIC',crew:'HARBOR TEAM SPRINT'},
@@ -3068,7 +3069,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       {driver:'FACTORY PERFORMANCE TRIAL',crew:'NIGHTSHIFT RELAY'},
       {driver:'RWD FOUR-WIDE CHALLENGE',crew:'TEAM PRECISION TRIAL'},
       {driver:'TOKYO FINALS SPRINT',crew:'CAPITAL CREW SHOWDOWN'},
-    ][Math.max(0,Math.min(7,Number(round)||0))];
+    ];
+    const index=Math.max(0,Math.min(7,Math.floor(Number(round)||0)));
+    return {driver:names[(index+offset)%8].driver,
+      crew:names[(index+offset*3)%8].crew};
   }
 
   getProDragEvents() {
@@ -3160,7 +3164,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
-    const proNames=this.getProSeasonEventNames(round);
+    const proNames=this.getProSeasonEventNames(round,pro.season);
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
       seasonRules: rules.driver, label: proNames.driver };
     // Rotating Elite Invitational: five Driver/three Crew starting rounds,
