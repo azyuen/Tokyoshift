@@ -34,3 +34,4 @@ jobs:
       - name: Existing season progression simulations
         run: |
           node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js tests/pro-drag-season-roster-20261101.mjs
+          node --test tests/r756-pro-season-screen.mjs tests/pro-opponent-scrutineering-r729.mjs
