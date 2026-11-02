@@ -102,6 +102,13 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
     }
   }
 
+  // Driver-operated NOS master switch: fitted hardware stays in the save,
+  // but the race vehicle cannot fire a disabled system.
+  if (state.nosEnabled === false) {
+    tuned.car.nosPower = 0;
+    tuned.car.nosShots = 0;
+    tuned.car.nosCapacitySeconds = 0;
+  }
   return tuned;
 }
 
