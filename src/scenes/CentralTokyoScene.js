@@ -10,7 +10,7 @@ import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
+import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261030-r742';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
@@ -3059,7 +3059,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // points and save records remain unchanged. The plain Sprint/Open names
   // continue to apply exclusively to the rotating Open Circuit.
   getProSeasonEventNames(round,season=1) {
-    const offset=(Math.max(1,Math.floor(Number(season)||1))-1)%8;
     const names=[
       {driver:'TOKYO LAUNCH CHALLENGE',crew:'SHUTO TEAM SHOWDOWN'},
       {driver:'MIDNIGHT PRECISION TRIAL',crew:'EASTERN EXPRESS RELAY'},
@@ -3071,8 +3070,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       {driver:'TOKYO FINALS SPRINT',crew:'CAPITAL CREW SHOWDOWN'},
     ];
     const index=Math.max(0,Math.min(7,Math.floor(Number(round)||0)));
-    return {driver:names[(index+offset)%8].driver,
-      crew:names[(index+offset*3)%8].crew};
+    return {driver:names[getProfessionalSeasonOrder(season,'DRIVER')[index]].driver,
+      crew:names[getProfessionalSeasonOrder(season,'TEAM')[index]].crew};
   }
 
   getProDragEvents() {
