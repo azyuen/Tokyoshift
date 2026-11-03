@@ -372,6 +372,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle', { proCircuit: true });
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
         queued += this.queueCharacterPose('daichiSakamoto', 'normal');
+        if (!this.textures.exists('proSeasonDaichiMechanic')) {
+          this.load.image('proSeasonDaichiMechanic',
+            'assets/Characters/Main/pro_daichi_sakamoto.png');
+          queued++;
+        }
       } else if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
       }
@@ -723,6 +728,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   addVenueCharacter({
     characterId,
     pose = 'normal',
+    assetKey = null,
     x,
     feetY,
     height = 220,
@@ -739,7 +745,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       playerCharacterId: this.registry.get('playerCharacterId') || '',
       proCircuit,
     });
-    const key = asset?.key;
+    const key = assetKey && this.textures.exists(assetKey) ? assetKey : asset?.key;
     if (!key || !this.textures.exists(key)) return null;
 
     const texture = this.textures.get(key);
@@ -3482,7 +3488,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       [
         { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'proMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 }
+        { characterId: 'daichiSakamoto', pose: 'normal', assetKey: 'proSeasonDaichiMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 }
         { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1165, feetY: STAGE.y + 685, height: 320, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
