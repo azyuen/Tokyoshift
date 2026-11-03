@@ -196,11 +196,42 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     panel.fillStyle(0x071728,.92);panel.fillPoints(pts,true);
     panel.lineStyle(3,0x35d6ff,1);panel.strokePoints(pts,true);
     label(89,652,'NEXT OPPONENT',24,'#35d6ff');
-    label(89,687,opponent()?.name||'PRO DRIVER',21,'#ffffff');
-    label(89,721,'YOUR CAR // '+(selected?(cars[selected]?.shortName||selected):'SELECT IN PADDOCK'),15,'#f2d4a5',{wrap:585});
-    label(89,771,'SCRUTINEERING // '+(check.eligible?'PASSED':
-      check.reasons.slice(0,2).join(' / ')),15,
-      check.eligible?'#96eac7':'#ffb5b9',{wrap:585});
+    const next=opponent();
+    const frame=add(s.add.graphics().setDepth(220));
+    const shape=[{x:90,y:681},{x:223,y:681},{x:203,y:789},{x:70,y:789}];
+    frame.fillStyle(0x165578,.87);frame.fillPoints(shape,true);
+    frame.lineStyle(4,0x050a10,1);frame.strokePoints(shape,true);
+    const faceKey=portrait?.key&&s.textures.exists(portrait.key)?portrait.key:
+      s.textures.exists('seasonOpponentHelmet')?'seasonOpponentHelmet':null;
+    if(faceKey){
+      const img=s.textures.get(faceKey).getSourceImage();
+      const scale=Math.max(170/img.width,165/img.height);
+      const face=add(s.add.image(146,682,faceKey).setOrigin(.5,0)
+        .setScale(scale).setDepth(225));
+      const maskShape=s.make.graphics({add:false});
+      maskShape.fillStyle(0xffffff,1);maskShape.fillPoints(shape,true);
+      face.setMask(maskShape.createGeometryMask());
+      add({destroy:()=>maskShape.destroy()});
+    }
+    const rivalName=label(231,684,next?.name||'PRO DRIVER',19,'#ffffff');
+    if(rivalName.width>245)rivalName.setScale(245/rivalName.width);
+    const carName=next?.carId&&cars[next.carId]?
+      cars[next.carId].shortName||cars[next.carId].name:
+      rivalCarId&&cars[rivalCarId]?cars[rivalCarId].shortName||cars[rivalCarId].name:
+      'CAR CONFIRMED ON ENTRY';
+    const carLabel=label(231,712,carName,15,'#7fe0f1');
+    if(carLabel.width>235)carLabel.setScale(235/carLabel.width);
+    label(231,742,'CLASS  '+(rules.stock?'STOCK':shortDrive(rules.drivetrain||'OPEN')),13,'#e3eaf0');
+    label(231,764,'NOS  '+(rules.noNos?'PROHIBITED':'PERMITTED'),13,'#e3eaf0');
+    if(rivalCarId&&cars[rivalCarId]&&typeof s.createCarDisplay==='function'){
+      try{
+        ensureDerivedModularCarTextures(s,{[getBaseCarId(rivalCarId)]:cars[rivalCarId]});
+        for(const part of s.createCarDisplay(cars[rivalCarId],562,751,205,225,
+          next?.paintColor||0x7f8899,null,false,next?.opponentBuildState||{})||[])
+          if(part)add(part);
+      }catch(err){console.warn('[Tokyo SHIFT] Opponent preview',err);}
+    }
+    if(!resume)label(231,787,'PROVISIONAL OPPONENT CAR',11,'#9ebac9');
     // Same Open Circuit mechanic hotspot; the Pro Season action always
     // opens the real paddock, never the legacy free-tuning shortcut.
     addProGlowingHotspot(s,add,{x:190,y:576,w:229,h:44,
