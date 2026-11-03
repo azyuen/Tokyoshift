@@ -578,6 +578,18 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.get('carGarageLocations') || {},
       Number(this.registry.get('garageTier') || 0)
     );
+    // Migrate older saves: registered cars should remain in their home garages.
+    const oldOrigins=normaliseProCircuitState(this.registry.get('proCircuit')).proGarageOrigins;
+    if(oldOrigins){
+      for(const [id,home] of Object.entries(oldOrigins)){
+        if(this.carGarageLocations[id]===PRO_GARAGE_ID&&
+          WORKSHOP_TIERS.some(w=>w.id===home))
+          this.carGarageLocations[id]=home;
+      }
+      this.carGarageLocations=normaliseCarGarageLocations(
+        this.ownedCarIds,this.carGarageLocations,
+        Number(this.registry.get('garageTier')||0));
+    }
     this.registry.set('carGarageLocations', this.carGarageLocations);
 
     const localCars = this.getCurrentWorkshopCars();
@@ -4143,11 +4155,23 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MAP  >', {
+    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770,
+      this.proGarageMode?'RETURN TO BRIEFING  >':'GO TO MAP  >', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
     button.on('pointerdown', () => {
+      if(this.proGarageMode){
+        this.registry.set('selectedCarId',this.selectedCarId);
+        if(this.selectedCarId)choosePersonalCar(this.registry,this.selectedCarId);
+        this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
+        this.saveProfile();
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',
+          proBriefingReturn:this.proBriefingReturn,
+        });
+        return;
+      }
       if (
         this.crewMode &&
         (this.engineMode || this.secondaryMode || this.chassisMode)
@@ -4773,7 +4797,11 @@ export default class GarageScene extends Phaser.Scene {
 
     // A driver cannot leave an empty workshop without a car. OTHER WORKSHOP
     // remains available so cars stored elsewhere can still be retrieved.
-    if(paddockDriver){
+    if(this.proGarageMode){
+      this.meetButton?.setInteractive({useHandCursor:true})
+        .setFillStyle(0x0c2827,1).setStrokeStyle(2,0x62e8c7,1);
+      this.meetButtonLabel?.setText('RETURN TO BRIEFING  >').setColor('#f1fffb');
+    }else if(paddockDriver){
       this.meetButton?.setInteractive({useHandCursor:true})
         .setFillStyle(0x0c2827,1).setStrokeStyle(2,0x62e8c7,1);
       this.meetButtonLabel?.setText('GO TO MAP // PRO CAR').setColor('#f1fffb');
