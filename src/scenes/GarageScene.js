@@ -316,7 +316,7 @@ export default class GarageScene extends Phaser.Scene {
           path:'assets/CentralTokyo/dragcomplex/crewgarage_'+phase+'.png',
         } : getWorkshopPhaseBackground(activeWorkshop, phase);
         if (background?.key && background?.path) {
-          queueImage(background.key, background.path + (this.proGarageMode ? '?v=20261101-r754' : '?v=20261022-r645'));
+          queueImage(background.key, background.path + (this.crewProPaddockMode ? '?v=20261104-crew-bg-fix' : this.proGarageMode ? '?v=20261101-r754' : '?v=20261022-r645'));
         }
       });
 
@@ -1558,6 +1558,8 @@ export default class GarageScene extends Phaser.Scene {
     );
     const workshopTexture = this.crewMode
       ? (this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : this.crewProPaddockMode
+        ? (this.worldPhase === 'day' ? 'tokyoCrewProGarageDay' : 'tokyoCrewProGarageNight')
       : (() => {
           const phaseBackground = getWorkshopPhaseBackground(
             activeWorkshop,
