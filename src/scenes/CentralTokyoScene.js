@@ -16,7 +16,7 @@ import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
-import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261103-r774';
+import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261103-r776';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
@@ -173,6 +173,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.autoShowProVictory = data?.autoShowProVictory || null;
     this.autoOpenTokyoChampionship = Boolean(data?.autoOpenTokyoChampionship);
     this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
+    this.autoOpenProSeasonHeatBriefing=Boolean(data?.autoOpenProSeasonHeatBriefing);
     this.proBriefingReturn=data?.proBriefingReturn||null;
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
@@ -458,6 +459,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(this.promptProCrewForfeit)confirmCrewForfeit(this);
       });
     }
+    // A paid season knockout retains its saved opponent and round. Reopen
+    // the full briefing, but resume without charging the entry fee twice.
+    if(this.autoOpenProSeasonHeatBriefing){
+      this.time.delayedCall(0,()=>{
+        if(!this.sys?.isActive?.())return;
+        const state=this.registry.get('competitionState');
+        if(!state?.active||state.openCircuit!==false||!state.proEvent)return;
+        const event=this.getProDragEvents().find(item=>item.id===state.eventId&&!item.team);
+        if(event)showProSeasonDriverBriefing(this,event,()=>{
+          this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});
+        },{resume:true});
+      });
+    }
     // Return from the Pro Paddock directly to the same season event,
     // using the current saved car build rather than a stale preview.
     if(this.proBriefingReturn&&this.activeLocationId==='tokyoDragComplex'){
@@ -471,13 +485,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const event=this.getProDragEvents().find(item=>
           item.id===marker.eventId&&item.seasonChoice===marker.seasonChoice);
         if(!event)return;
+        const paid=this.registry.get('competitionState');
+        const resume=Boolean(paid?.active&&paid.openCircuit===false&&
+          paid.eventId===event.id);
         showProSeasonDriverBriefing(this,event,preparedBuild=>{
+          if(resume){
+            this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});return;
+          }
           const format=event.seasonRules?.format;
           if(format==='FOUR_WIDE')this.enterFourWideCup();
           else if(format==='TIME_ATTACK'||format==='CONSISTENCY')
             this.enterProfessionalTimedEvent(event);
           else this.startProBracket(event,preparedBuild);
-        });
+        },{resume});
       });
     }
     if (this.autoOpenProDriverBriefing && isOpenDriverBriefing(this.registry.get('competitionState'))) {

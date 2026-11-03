@@ -15,8 +15,10 @@ const BODY='"Rajdhani", sans-serif';
 const money=n=>'¥'+Math.round(Number(n)||0).toLocaleString('en-US');
 const shortDrive=d=>d==='FWD'?'FF':d||'—';
 
-export function showProSeasonDriverBriefing(s,event,onGrid){
+export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const initial=normaliseProCircuitState(s.registry.get('proCircuit'));
+  const resume=Boolean(options.resume);
+  const paidState=s.registry.get('competitionState');
   const owned=s.registry.get('ownedCarIds')||[];
   // Roster-less historical seasons remain playable. Their legacy choice
   // was any owned personal car; display the selected one first.
@@ -100,7 +102,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     const currentSelection=s.registry.get('selectedCarId');
     const actual=s.registry.get('carStates')||{};
     const cash=Number(s.registry.get('cash')||0);
-    const error=!currentSelection||!roster.includes(currentSelection)
+    const error=resume&&currentSelection!==paidState?.playerCarId
+      ?'USE THE CAR ENTERED IN THIS EVENT':
+      !currentSelection||!roster.includes(currentSelection)
       ?'SELECT A REGISTERED CAR IN PRO PADDOCK':
       getProSeasonDriverCarError(now,currentSelection)||
       getProfessionalCarEligibility(currentSelection,actual[currentSelection]||{},rules)
@@ -108,7 +112,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     if(now.seasonStatus!=='ACTIVE'||now.calendar.round!==initial.calendar.round||
       !latest||latest.seasonRules?.format!==rules.format||
       now.activeTournament||now.activeTimedEvent||now.activeCrewEvent||
-      s.registry.get('competitionState')?.active||cash<Number(event.entryFee||0)||error){
+      (resume?(!paidState?.active||paidState?.eventId!==event.id||
+        paidState?.openCircuit!==false):s.registry.get('competitionState')?.active)||
+      (!resume&&cash<Number(event.entryFee||0))||error){
       s.proError=error||'EVENT OR SETUP CHANGED // REOPEN BRIEFING';
       close();s.renderLocation(s.activeLocationId);return;
     }
@@ -147,7 +153,8 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     const check=selected?getProfessionalCarEligibility(selected,draft,rules):
       {eligible:false,reasons:['SELECT A CAR IN PRO PADDOCK']};
     const canStart=Boolean(selected)&&check.eligible&&
-      Number(s.registry.get('cash')||0)>=Number(event.entryFee||0);
+      (!resume||selected===paidState?.playerCarId)&&
+      (resume||Number(s.registry.get('cash')||0)>=Number(event.entryFee||0));
     // Use the same vehicle display helper as the Open Circuit briefing.
     if(cars[selected]&&typeof s.createCarDisplay==='function'){
       try{
@@ -176,7 +183,8 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
     button(1070,779,246,54,'BACK TO SEASON',close);
-    button(1368,779,246,54,canStart?'GO TO GRID // '+money(event.entryFee):
+    button(1368,779,246,54,canStart?
+      (resume?'RESUME NEXT HEAT':'GO TO GRID // '+money(event.entryFee)):
       'SELECT / SET UP CAR',proceedToGrid,canStart);
   }
   // Same two-page steward and cream advice bubble used by Open Circuit.

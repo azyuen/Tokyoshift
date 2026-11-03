@@ -1679,8 +1679,11 @@ export default class FourLaneTestScene extends RaceScene {
         'ROUND ' + this.proDuelInfo.roundNumber + '/' + this.proDuelInfo.totalRounds)
       : FOUR_WIDE_CUP.stageNames[this.proTournament.stage];
     const advanced = outcome?.status === 'ADVANCED';
+    // Season knockout heats use the same winning tableau and return-to-
+    // briefing choice as Open Circuit, not an automatic next-race jump.
     const individualHeatPreview = advanced && duel &&
-      isOpenDriverBriefing(this.registry.get('competitionState'));
+      (isOpenDriverBriefing(this.registry.get('competitionState')) ||
+       (this.proDuelState?.openCircuit===false));
     const champion = outcome?.status === 'CHAMPION' ||
       (outcome?.summary?.stagesCompleted === 3 && outcome?.summary?.placing === 1);
     const finalist = !duel && outcome?.summary?.stagesCompleted === 3;
@@ -1864,7 +1867,10 @@ export default class FourLaneTestScene extends RaceScene {
       tap.disableInteractive();
       if(briefing && paidNextDriver){
         this.scene.start('CentralTokyoScene',{
-          locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,
+          locationId:'tokyoDragComplex',
+          ...(this.proDuelState?.openCircuit===false
+            ? {autoOpenProSeasonHeatBriefing:true}
+            : {autoOpenProDriverBriefing:true}),
         });
       } else if(this.proCrew&&outcome?.status==='CREW_HEAT'){
         this.scene.start('CentralTokyoScene',{
