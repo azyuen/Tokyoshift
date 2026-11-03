@@ -1,6 +1,7 @@
 // Pro Season driver briefing uses Open Circuit room geometry and dialogue chrome.
 // Daichi directs setup to the real Pro Paddock; no temporary tuning is allowed.
-import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261024-r680';
+import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -9,13 +10,15 @@ import { getProDriverDrivetrain,getProfessionalCarEligibility,
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 import { selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r741';
-import { driverOpponentAdvice } from '../data/proDriverBriefing.js?v=20261030-r740';
-import { getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
+import { driverOpponentAdvice, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r740';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot, renderPagedStewardBriefing } from './ProBriefingChrome.js?v=20261020-r613';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
+const DISPLAY='"Exo 2", sans-serif';
+const CYAN=0x35d6ff;
+const fit=(node,max)=>{if(node?.width>max)node.setScale(max/node.width);return node;};
 const money=n=>'¥'+Math.round(Number(n)||0).toLocaleString('en-US');
 const shortDrive=d=>d==='FWD'?'FF':d||'—';
 
@@ -68,13 +71,30 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     s.add.text(x,y,value,{fontFamily:BODY,fontSize:size+'px',fontStyle:'700',
       color,wordWrap:{width:extra.wrap||1380},lineSpacing:3})
       .setDepth(230));
-  const button=(x,y,w,h,caption,callback,enabled=true)=>{
-    const bg=add(s.add.rectangle(x,y,w,h,enabled?0x163044:0x152029,.98)
-      .setStrokeStyle(2,enabled?0x57b6d2:0x506070).setDepth(246));
-    const txt=label(x,y,caption,14,enabled?'#e9f9ff':'#8097a3')
-      .setOrigin(.5).setDepth(248);
-    if(txt.width>w-14)txt.setScale((w-14)/txt.width);
+  // Match the Open Circuit driver's Exo headings, Silkscreen rules and skewed panels.
+  const text=(x,y,value,size=16,color='#f5f7fa',pixel=false,depth=230)=>add(
+    s.add.text(x,y,String(value),{fontFamily:pixel?PIXEL:BODY,
+      fontSize:size+'px',fontStyle:pixel?'normal':'600',color,
+      wordWrap:{width:780}}).setFontSize(size).setDepth(depth));
+  const display=(x,y,value,size,color='#fff')=>add(
+    s.add.text(x,y,String(value),{fontFamily:DISPLAY,fontSize:size+'px',
+      fontStyle:'italic 900',color,stroke:'#081321',strokeThickness:2})
+      .setFontSize(size).setDepth(230));
+  const poly=(x,y,w,h,fill=0x061321,line=CYAN,depth=216)=>{
+    const points=[{x:x+25,y},{x:x+w+25,y},{x:x+w-25,y:y+h},{x:x-25,y:y+h}];
+    const g=add(s.add.graphics().setDepth(depth));
+    g.fillStyle(fill,.84);g.fillPoints(points,true);
+    g.lineStyle(3,line,1);g.strokePoints(points,true);return g;
+  };
+  const button=(x,y,w,h,caption,callback,enabled=true,{grey=false}={})=>{
+    const bg=add(s.add.rectangle(x,y,w,h,
+      !enabled||grey?0x30353d:0x0e2839,1)
+      .setStrokeStyle(2,!enabled?0x737b83:grey?0x8a939d:CYAN)
+      .setDepth(246));
+    const txt=fit(text(x,y,caption,13,
+      enabled?'#ffffff':'#bac0c6',true,247).setOrigin(.5),w-18);
     if(enabled)bg.setInteractive({useHandCursor:true}).on('pointerdown',callback);
+    return bg;
   };
   const rules=event.seasonRules||{};
   const limit=Number.isFinite(rules.maxPowerKW)?rules.maxPowerKW:null;
@@ -106,10 +126,18 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const playerAsset=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno','idle',{proCircuit:true});
   if(playerAsset?.key&&playerAsset.path)assets.push([playerAsset.key,playerAsset.path]);
   const preview=opponent();
-  const portrait=preview?.characterId?getCharacterVisualAsset(preview.characterId,'idle',{proCircuit:true,rivalContext:true}):null;
+  const portrait=preview?.characterId
+    ?getCharacterVisualAsset(preview.characterId,'idle',{proCircuit:true,rivalContext:true})
+    :null;
   if(portrait?.key&&portrait.path)assets.push([portrait.key,portrait.path]);
-  const helmet=preview&&!portrait?getProCircuitGenericDriverAsset(0):null;
-  if(helmet?.path)assets.push(['seasonOpponentHelmet',helmet.path]);
+  // House professionals do not have authored character portraits. A zero
+  // index is invalid for this asset resolver and caused empty blue frames.
+  const helmet=getProCircuitGenericDriverAsset(getProDriverHelmetIndex(
+    {proSeasonId:event.id,roundIndex:initial.calendar.round},{
+      opponentDriverId:preview?.opponentDriverId||preview?.id,
+      characterId:preview?.characterId,opponentName:preview?.name,
+    }));
+  if(helmet?.path)assets.push([helmet.key,helmet.path]);
   let pending=0;
   for(const [key,path] of assets)if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));pending++;
@@ -158,12 +186,18 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     if(s.textures.exists(room)){
       const source=s.textures.get(room).getSourceImage();
       add(s.add.image(780,420,room).setScale(Math.max(1560/source.width,840/source.height)).setDepth(201));
+      s.textures.get(room).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     }
-    add(s.add.rectangle(780,420,1560,840,0x04101b,.22).setDepth(202));
+    add(s.add.rectangle(780,420,1560,840,0x020714,.10).setDepth(202));
     const title=String(event.label||'DRIVER EVENT').toUpperCase();
-    label(63,43,'PRO SEASON',21,'#ff8197');
-    label(55,83,title,41,'#f7faff');
-    label(55,136,'ROUND '+(initial.calendar.round+1)+' / 8  //  '+String(rules.format||'KNOCKOUT').replaceAll('_',' '),16,'#8de5f8');
+    poly(40,34,268,42,0x03070c,0x03070c,218);
+    display(63,43,'PRO SEASON',21,'#ff8197');
+    fit(display(55,83,title,41),790);
+    add(s.add.text(58,136,'ROUND '+(initial.calendar.round+1)+' / 8  //  '+
+      String(rules.format||'KNOCKOUT').replaceAll('_',' '),{
+      fontFamily:DISPLAY,fontSize:'16px',fontStyle:'italic 900',
+      color:'#c5cbd3',stroke:'#090d16',strokeThickness:3,
+    }).setDepth(230));
     const positions=[
       {key:'proSeasonBriefDaichi',x:193,feet:727,height:560,max:280},
       {key:playerAsset?.key,x:410,feet:691,height:519,max:256},
@@ -174,7 +208,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       if(!p.key||!s.textures.exists(p.key))continue;
       const source=s.textures.get(p.key).getSourceImage();
       const scale=Math.min(p.height/source.height,p.max/source.width);
-      add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1).setScale(scale).setFlipX(true).setDepth(214));
+      s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+      add(s.add.ellipse(p.x,p.feet-(p.key==='proSeasonBriefSayaka'?16:6),
+        p.max*.84,22,0,.27).setDepth(209));
+      add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1).setScale(scale)
+        .setFlipX(true).setDepth(214));
     }
     const draft=selected?(s.registry.get('carStates')||{})[selected]||{}:{};
     const check=selected?getProfessionalCarEligibility(selected,draft,rules):
@@ -190,48 +228,80 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
           getCarPaintColor(draft),null,false,draft)||[])if(part)add(part);
       }catch(error){console.warn('[Tokyo SHIFT] Season briefing car preview',error);}
     }
-    // Open Circuit-style skewed technical panel.
-    const panel=add(s.add.graphics().setDepth(219));
-    const pts=[{x:77,y:643},{x:706,y:643},{x:680,y:807},{x:52,y:807}];
-    panel.fillStyle(0x071728,.92);panel.fillPoints(pts,true);
-    panel.lineStyle(3,0x35d6ff,1);panel.strokePoints(pts,true);
-    label(89,652,'NEXT OPPONENT',24,'#35d6ff');
+    // Exact Open Circuit geometry and type hierarchy for the opponent card.
+    poly(52,643,654,164,0x071728,CYAN,219);
+    display(89,652,'NEXT OPPONENT',24,'#35d6ff');
     const next=opponent();
-    const frame=add(s.add.graphics().setDepth(220));
-    const shape=[{x:90,y:681},{x:223,y:681},{x:203,y:789},{x:70,y:789}];
-    frame.fillStyle(0x165578,.87);frame.fillPoints(shape,true);
-    frame.lineStyle(4,0x050a10,1);frame.strokePoints(shape,true);
-    const faceKey=portrait?.key&&s.textures.exists(portrait.key)?portrait.key:
-      s.textures.exists('seasonOpponentHelmet')?'seasonOpponentHelmet':null;
-    if(faceKey){
-      const img=s.textures.get(faceKey).getSourceImage();
-      const scale=Math.max(170/img.width,165/img.height);
-      const face=add(s.add.image(146,682,faceKey).setOrigin(.5,0)
-        .setScale(scale).setDepth(225));
-      const maskShape=s.make.graphics({add:false});
-      maskShape.fillStyle(0xffffff,1);maskShape.fillPoints(shape,true);
-      face.setMask(maskShape.createGeometryMask());
-      add({destroy:()=>maskShape.destroy()});
+    const frameX=74,frameY=683,frameW=129,frameH=106,skew=16;
+    const framePoints=[
+      {x:frameX+skew,y:frameY},{x:frameX+frameW+skew,y:frameY},
+      {x:frameX+frameW-skew,y:frameY+frameH},
+      {x:frameX-skew,y:frameY+frameH},
+    ];
+    const border=add(s.add.graphics().setDepth(220));
+    border.fillStyle(0x165578,.87);border.fillPoints(framePoints,true);
+    border.lineStyle(4,0x050a10,1);border.strokePoints(framePoints,true);
+    const clipPortrait=image=>{
+      const shape=s.make.graphics({add:false});
+      shape.fillStyle(0xffffff,1);shape.fillPoints(framePoints,true);
+      image.setMask(shape.createGeometryMask());
+      add({destroy:()=>shape.destroy()});
+    };
+    const px=frameX+frameW/2-9,py=frameY+frameH/2;
+    const isMainRival=Boolean(next?.mainRivalTier||
+      characters[next?.characterId]?.mainRival);
+    const helmetKey=helmet?.key;
+    const drawHelmet=()=>{
+      if(!helmetKey||!s.textures.exists(helmetKey))return false;
+      const source=s.textures.get(helmetKey).getSourceImage();
+      const scale=Math.max(frameW*1.6/Math.max(1,source.width),
+        frameH*2.2/Math.max(1,source.height));
+      s.textures.get(helmetKey).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+      const profile=add(s.add.image(px,frameY+18,helmetKey)
+        .setOrigin(.5,0).setScale(scale).setDepth(225));
+      clipPortrait(profile);
+      return true;
+    };
+    if(!isMainRival||!next?.characterId){
+      if(!drawHelmet())text(px,py,'PRO DRIVER',11,'#b8d7e7',true,226).setOrigin(.5);
+    }else{
+      const profile=createCharacterProfile(s,{
+        characterId:next.characterId,pose:'idle',x:px,y:py+10,
+        frameWidth:frameW*1.55,frameHeight:frameH*1.5,
+        side:'center',depth:225,mask:false,
+        playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',
+        rivalContext:true,proCircuit:true,
+      });
+      if(profile?.image){add(profile);clipPortrait(profile.image);}
+      else if(!drawHelmet())text(px,py,'PRO DRIVER',11,'#b8d7e7',true,226).setOrigin(.5);
     }
-    const rivalName=label(231,684,next?.name||'PRO DRIVER',19,'#ffffff');
-    if(rivalName.width>245)rivalName.setScale(245/rivalName.width);
-    const carName=next?.carId&&cars[next.carId]?
-      cars[next.carId].shortName||cars[next.carId].name:
-      rivalCarId&&cars[rivalCarId]?cars[rivalCarId].shortName||cars[rivalCarId].name:
-      'CAR CONFIRMED ON ENTRY';
-    const carLabel=label(231,712,carName,15,'#7fe0f1');
-    if(carLabel.width>235)carLabel.setScale(235/carLabel.width);
-    label(231,742,'CLASS  '+(rules.stock?'STOCK':shortDrive(rules.drivetrain||'OPEN')),13,'#e3eaf0');
-    label(231,764,'NOS  '+(rules.noNos?'PROHIBITED':'PERMITTED'),13,'#e3eaf0');
-    if(rivalCarId&&cars[rivalCarId]&&typeof s.createCarDisplay==='function'){
+    const rivalName=String(next?.name||'PRO DRIVER').toUpperCase();
+    fit(text(231,684,rivalName,18,'#ffffff'),239);
+    const shownCarId=next?.carId||rivalCarId;
+    const carName=shownCarId&&cars[shownCarId]
+      ?cars[shownCarId].name||cars[shownCarId].shortName||shownCarId
+      :'CAR CONFIRMED ON ENTRY';
+    fit(text(231,708,String(carName).toUpperCase(),14,'#7fe0f1'),247);
+    // Reveal event restrictions, not confidential AI power or tuning.
+    text(231,733,'CLASS CAP',10,'#b1cddb',true);
+    text(326,730,limit==null?'OPEN':limit+' KW MAX',15);
+    text(231,753,'NOS',10,'#b1cddb',true);
+    text(326,750,rules.noNos?'PROHIBITED':'PERMITTED',15);
+    text(231,775,'CLASS',10,'#b1cddb',true);
+    text(326,771,rules.stock?'FACTORY STOCK':rules.drivetrain||'OPEN',15);
+    if(shownCarId&&cars[shownCarId]&&typeof s.createCarDisplay==='function'){
       try{
-        ensureDerivedModularCarTextures(s,{[getBaseCarId(rivalCarId)]:cars[rivalCarId]});
-        for(const part of s.createCarDisplay(cars[rivalCarId],562,751,205,225,
-          next?.paintColor||0x7f8899,null,false,next?.opponentBuildState||{})||[])
+        ensureDerivedModularCarTextures(s,{
+          [getBaseCarId(shownCarId)]:cars[shownCarId]});
+        const parts=s.createCarDisplay(cars[shownCarId],545,743,211,225,
+          next?.paintColor??0x7f8899,null,false,
+          next?.opponentBuildState||{})||[];
+        for(const [index,part] of parts.entries()){
+          if(index===2){part?.destroy?.();continue;}
           if(part)add(part);
+        }
       }catch(err){console.warn('[Tokyo SHIFT] Opponent preview',err);}
     }
-    if(!resume)label(231,787,'PROVISIONAL OPPONENT CAR',11,'#9ebac9');
     // Same Open Circuit mechanic hotspot; the Pro Season action always
     // opens the real paddock, never the legacy free-tuning shortcut.
     addProGlowingHotspot(s,add,{x:190,y:576,w:229,h:44,
@@ -255,7 +325,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       }});
     addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
-    button(1070,779,246,54,'BACK TO SEASON',close);
+    button(1070,779,246,54,'BACK TO SEASON',close,true,{grey:true});
     button(1368,779,246,54,canStart?
       (resume?'RESUME NEXT HEAT':'GO TO GRID // SPONSORED'):
       'SELECT / SET UP CAR',proceedToGrid,canStart);
