@@ -90,33 +90,17 @@ export function driverBriefingEligibility(state, carState = {}, powerKW = 0, own
   return { eligible: problems.length === 0, problems, rules };
 }
 
-// Advice is shared with the already-shipped Pro Crew cooldown counter: once
-// now, then finish the current competition plus two OTHER competitions.
-export function driverAdviceStatus(circuit = {}, state = {}) {
-  const remaining = Math.max(0, Number(circuit.crewAdviceCooldownUntil || 0) -
-    Number(circuit.eventTick || 0));
-  const usedThisEvent = Boolean(state.briefingAdviceUsed);
-  return { remaining, usedThisEvent,
-    available: isOpenDriverBriefing(state) && !usedThisEvent && remaining === 0 };
+// Each driver event permits one consultation; no cooldown between events.
+export function driverAdviceStatus(circuit={},state={}) {
+  const usedThisEvent=Boolean(state.briefingAdviceUsed);
+  return {remaining:0,usedThisEvent,
+    available:isOpenDriverBriefing(state)&&!usedThisEvent};
 }
-
-export function consumeDriverAdvice(circuit = {}, state = {}) {
-  const status = driverAdviceStatus(circuit, state);
-  if (!isOpenDriverBriefing(state)) return { error: 'DRIVER EVENT NO LONGER AVAILABLE' };
-  if (status.usedThisEvent) return { error: 'SAYAKA ADVICE ALREADY USED' };
-  // One consultation per paid event, but an unused consultation remains
-  // available from the optional between-heats Race Briefing screen.
-  if (!status.available) return { error: 'SAYAKA AVAILABLE AFTER ' + status.remaining + ' MORE PROFESSIONAL EVENTS' };
-  return {
-    // A trophy consultation covers the entire competition but blocks
-    // another consultation until the trophy plus FIVE other official events
-    // have settled. Normal driver events retain the 3-event global cooldown.
-    circuit: { ...circuit, crewAdviceCooldownUntil: Number(circuit.eventTick || 0) +
-      (state.openTrophyId ? 6 : 3) },
-    competitionState: { ...state, briefingAdviceUsed: true },
-  };
+export function consumeDriverAdvice(circuit={},state={}) {
+  if(!isOpenDriverBriefing(state))return {error:'DRIVER EVENT NO LONGER AVAILABLE'};
+  if(state.briefingAdviceUsed)return {error:'SAYAKA ADVICE ALREADY USED'};
+  return {circuit:{...circuit},competitionState:{...state,briefingAdviceUsed:true}};
 }
-
 export function driverOpponentAdvice(opponentCar = {}, opponent = {}, playerCar = {}) {
   const drivetrain = String(opponentCar.drivetrain || opponentCar.drive || '').toUpperCase();
   const carName = String(opponentCar.shortName || 'car');
