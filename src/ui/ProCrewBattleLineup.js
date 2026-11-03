@@ -71,7 +71,7 @@ function loadAssets(s,units){
   }
   for(const [key,path] of [
     ['proCrewSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
-    ['proCrewDaichi','assets/Characters/Main/home_daichi_engine_inspect.png'],
+    ['proCrewDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
     ['proCrewHiroshi','assets/Characters/Central/hiroshi_sato_focus.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));count++;
