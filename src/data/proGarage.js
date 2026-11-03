@@ -1,16 +1,16 @@
 // Tokyo Drag Complex Pro Paddock is a virtual view of registered personal cars.
 // Car ownership, workshop assignment and tuning have one shared registry state.
 import { normaliseProCircuitState } from './proCircuit.js?v=20261030-r741';
-import { getProQualification, getProDriverDrivetrain } from './proSeason.js?v=20261030-r741';
+import { getProQualification } from './proSeason.js?v=20261030-r741';
 import {
   PRO_GARAGE_ID, WORKSHOP_TIERS, getUnlockedWorkshops,
   normaliseCarGarageLocations,
 } from './workshopProgression.js?v=20261024-r675';
 
 export const PRO_GARAGE_BAYS = Object.freeze([
-  Object.freeze({number:'04',drive:'AWD'}),
-  Object.freeze({number:'05',drive:'RWD'}),
-  Object.freeze({number:'06',drive:'FWD'}),
+  Object.freeze({number:'04'}),
+  Object.freeze({number:'05'}),
+  Object.freeze({number:'06'}),
 ]);
 
 export function stageProGarage(raw,ownedCarIds=[],locations={},garageTier=0){
@@ -70,9 +70,8 @@ export function shouldReleaseProGarage(raw){
 export function getProGarageBayCars(raw,ownedCarIds=[]){
   const c=normaliseProCircuitState(raw);
   if(!c.proGarageOrigins||!Array.isArray(c.registeredDriverCars))return [];
-  return PRO_GARAGE_BAYS.map(bay=>{
-    const id=c.registeredDriverCars.find(carId=>
-      getProDriverDrivetrain(carId)===bay.drive);
+  return PRO_GARAGE_BAYS.map((bay,index)=>{
+    const id=c.registeredDriverCars[index];
     return {...bay,carId:ownedCarIds.includes(id)?id:null};
   });
 }
