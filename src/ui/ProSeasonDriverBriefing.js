@@ -195,7 +195,20 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     addProGlowingHotspot(s,add,{x:190,y:576,w:229,h:44,
       label:'CAR SETUP',onClick:openProPaddock});
     addProGlowingHotspot(s,add,{x:1111,y:576,w:225,h:44,
-      label:'VIEW ADVICE',onClick:()=>toggleDialogue('sayaka',check)});
+      label:adviceUsed()?'VIEW ADVICE':'ASK FOR ADVICE',
+      onClick:()=>{
+        if(!adviceUsed()){
+          const circuit=normaliseProCircuitState(s.registry.get('proCircuit'));
+          try{
+            saveProTransaction(s.registry,{proCircuit:{
+              ...circuit,seasonDriverAdviceUsed:{
+                ...(circuit.seasonDriverAdviceUsed||{}),[adviceKey]:true,
+              },
+            }});
+          }catch(error){console.warn('[Tokyo SHIFT] Advice save failed',error);return;}
+        }
+        toggleDialogue('sayaka',check);
+      }});
     addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
     button(1070,779,246,54,'BACK TO SEASON',close);
@@ -243,11 +256,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       put(s.add.text(x+18,y+11,'Sayaka',{
         fontFamily:BODY,fontSize:'16px',color:'#252227',fontStyle:'700',
       }).setDepth(261));
-      const message='For this '+shortDrive(rules.drivetrain||'open')+
-        ' event, confirm your registered car in the Pro Paddock. Check the '+
-        (limit==null?'open power class':limit+' kW power limit')+
-        (rules.noNos?' and disable NOS.':' and your NOS allowance.')+
-        ' Keep your launch consistent to maximise championship points.';
+      const next=opponent();
+      const rivalCar=next?.carId?cars[next.carId]:null;
+      const message=next?driverOpponentAdvice(rivalCar||{},
+        {name:next.name},selected?cars[selected]||{}:{})
+        :'Check your selected car and launch setup before racing.';
       const speech=put(s.add.text(x+18,y+38,message,{
         fontFamily:BODY,fontSize:'16px',fontStyle:'600',color:'#111111',
         wordWrap:{width:w-37},
