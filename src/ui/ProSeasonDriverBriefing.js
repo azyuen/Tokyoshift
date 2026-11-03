@@ -1,16 +1,12 @@
-// Free Pro Season driver preparation. Cars are registered at the Pro Paddock;
-// this briefing chooses which of those cars will race and allows Daichi to
-// fit/remove levels ALREADY OWNED, without charging or altering physics.
+// Pro Season driver briefing uses Open Circuit room geometry and dialogue chrome.
+// Daichi directs setup to the real Pro Paddock; no temporary tuning is allowed.
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261024-r680';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { getProDriverDrivetrain,getProfessionalCarEligibility,
-  getProfessionalRoundEvents,getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
+  getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
-import { BRIEFING_POWER_PARTS,getDriverPowerPartLevelInfo,
-  setDriverPowerPartLevels } from '../data/proDriverBriefing.js?v=20261030-r740';
-import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 import { addProGlowingHotspot, renderPagedStewardBriefing } from './ProBriefingChrome.js?v=20261020-r613';
 
@@ -38,8 +34,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
   let selected=roster.includes(selectedId)?selectedId:null;
   const originals=s.registry.get('carStates')||{};
   const drafts=Object.fromEntries(roster.map(id=>[id,originals[id]||{}]));
-  let closed=false,nodes=[];
-  const discard=()=>{nodes.forEach(node=>node?.destroy?.());nodes=[];};
+  let closed=false,nodes=[],dialogueNodes=[],activeDialogue=null;
+  const clearDialogue=()=>{dialogueNodes.forEach(node=>node?.destroy?.());dialogueNodes=[];activeDialogue=null;};
+  const discard=()=>{clearDialogue();nodes.forEach(node=>node?.destroy?.());nodes=[];};
   const close=()=>{
     if(closed)return;closed=true;discard();
     if(s._proOverlayClose===close)s._proOverlayClose=null;
@@ -129,9 +126,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     }
     add(s.add.rectangle(780,420,1560,840,0x04101b,.22).setDepth(251));
     const title=String(event.label||'DRIVER EVENT').toUpperCase();
-    label(48,35,'PRO SEASON // ROUND '+(initial.calendar.round+1)+' OF 8',23,'#ffffff');
-    label(48,77,title,41,'#f7faff');
-    label(50,124,'DRIVER EVENT  //  '+String(rules.format||'KNOCKOUT').replaceAll('_',' '),17,'#8de5f8');
+    label(63,43,'PRO SEASON',21,'#ff8197');
+    label(55,83,title,41,'#f7faff');
+    label(55,136,'ROUND '+(initial.calendar.round+1)+' / 8  //  '+String(rules.format||'KNOCKOUT').replaceAll('_',' '),16,'#8de5f8');
     const positions=[
       {key:'proSeasonBriefDaichi',x:193,feet:727,height:560,max:280},
       {key:playerAsset?.key,x:410,feet:691,height:519,max:256},
@@ -153,48 +150,84 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     if(cars[selected]&&typeof s.createCarDisplay==='function'){
       try{
         ensureDerivedModularCarTextures(s,{[getBaseCarId(selected)]:cars[selected]});
-        for(const part of s.createCarDisplay(cars[selected],790,502,610,253,
+        for(const part of s.createCarDisplay(cars[selected],796,492,670,207,
           getCarPaintColor(draft),null,false,draft)||[])if(part)add(part);
       }catch(error){console.warn('[Tokyo SHIFT] Season briefing car preview',error);}
     }
-    const info=add(s.add.rectangle(777,203,685,105,0x071625,.87)
-      .setStrokeStyle(2,0x36cce9).setDepth(258));
-    label(464,161,'REGISTERED CAR // '+(selected?(cars[selected]?.shortName||selected):
-      'SELECT IN PRO PADDOCK'),18,'#ffffff');
-    label(464,190,spec,14,'#f2d4a5',{wrap:625});
-    label(464,218,'SCRUTINEERING // '+(check.eligible?'PASSED':check.reasons.slice(0,2).join(' / ')),
-      14,check.eligible?'#96eac7':'#ffb5b9',{wrap:625});
+    // Open Circuit-style skewed technical panel.
+    const panel=add(s.add.graphics().setDepth(258));
+    const pts=[{x:77,y:643},{x:706,y:643},{x:680,y:807},{x:52,y:807}];
+    panel.fillStyle(0x071728,.92);panel.fillPoints(pts,true);
+    panel.lineStyle(3,0x35d6ff,1);panel.strokePoints(pts,true);
+    label(89,652,'YOUR REGISTERED CAR',24,'#35d6ff');
+    label(89,687,selected?(cars[selected]?.shortName||selected):'NONE SELECTED',21,'#ffffff');
+    label(89,721,spec,15,'#f2d4a5',{wrap:585});
+    label(89,771,'SCRUTINEERING // '+(check.eligible?'PASSED':
+      check.reasons.slice(0,2).join(' / ')),15,
+      check.eligible?'#96eac7':'#ffb5b9',{wrap:585});
     // Same Open Circuit mechanic hotspot; the Pro Season action always
     // opens the real paddock, never the legacy free-tuning shortcut.
     addProGlowingHotspot(s,add,{x:190,y:576,w:229,h:44,
-      label:'PRO PADDOCK',onClick:openProPaddock});
-    addProGlowingHotspot(s,add,{x:1111,y:576,w:225,h:44,label:'ASK FOR ADVICE',onClick:()=>{
-      renderDialogue('SAYAKA // STRATEGY',
-        'Select your registered '+shortDrive(rules.drivetrain||'')+
-        ' car, verify the power and NOS restrictions, then prepare your launch. '+
-        'This season event awards up to 20 championship points.');
-    }});
-    addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,label:'RACE BRIEFING',onClick:()=>{
-      renderDialogue('HIROSHI // EVENT RULES',
-        title+'\n'+spec+'\nFORMAT: '+String(rules.format||'KNOCKOUT').replaceAll('_',' ')+
-        '\nENTRY: '+money(event.entryFee)+'  //  PURSE: '+money(event.prizeCash)+
-        '\nSEASON POINTS: UP TO 20');
-    }});
-    button(1068,778,244,52,'BACK TO SEASON',close);
-    button(1365,778,246,52,canStart?'GO TO GRID // '+money(event.entryFee):
+      label:'CAR SETUP',onClick:openProPaddock});
+    addProGlowingHotspot(s,add,{x:1111,y:576,w:225,h:44,
+      label:'VIEW ADVICE',onClick:()=>toggleDialogue('sayaka',check)});
+    addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
+      label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
+    button(1070,779,246,54,'BACK TO SEASON',close);
+    button(1368,779,246,54,canStart?'GO TO GRID // '+money(event.entryFee):
       'SELECT / SET UP CAR',proceedToGrid,canStart);
   }
-  function renderDialogue(heading,body){
-    renderBriefing();
-    add(s.add.rectangle(780,417,750,335,0x071626,.98)
-      .setStrokeStyle(3,0x48c9e9).setDepth(260));
-    const header=label(440,282,heading,23,'#ffffff');header.setDepth(261);
-    const copy=label(440,335,body,19,'#e3edf4',{wrap:680});copy.setDepth(261);
-    const back=add(s.add.rectangle(780,526,320,48,0x123047,1)
-      .setStrokeStyle(2,0x56d6f2).setDepth(263).setInteractive({useHandCursor:true}));
-    const caption=label(780,526,'RETURN TO BRIEFING',15,'#ffffff')
-      .setOrigin(.5).setDepth(264);
-    back.on('pointerdown',renderBriefing);
+  // Same two-page steward and cream advice bubble used by Open Circuit.
+  function toggleDialogue(which,check){
+    if(activeDialogue===which){clearDialogue();return;}
+    clearDialogue();activeDialogue=which;
+    if(which==='hiroshi'){
+      const title=String(event.label||'DRIVER EVENT').toUpperCase();
+      const format=String(rules.format||'KNOCKOUT').replaceAll('_',' ');
+      renderPagedStewardBriefing(s,node=>{dialogueNodes.push(node);return add(node);},[
+        {sections:[
+          {text:'PRO SEASON · ROUND '+(initial.calendar.round+1)+' / 8',large:true},
+          {label:'HOW IT WORKS',paragraphs:[
+            'Race under the published '+format.toLowerCase()+' rules for this round.',
+            'Earn up to 20 championship points. Your car must pass scrutineering before entry.',
+          ]},
+        ]},
+        {rows:[
+          ['EVENT',title],
+          ['CAR',selected?(cars[selected]?.shortName||selected):'NOT SELECTED'],
+          ['DRIVETRAIN',rules.drivetrain?shortDrive(rules.drivetrain):'OPEN'],
+          ['POWER LIMIT',limit==null?'OPEN':limit+' KW MAX'],
+          ['NOS',rules.noNos?'PROHIBITED':
+            Number.isFinite(rules.maxNosShots)?rules.maxNosShots+' SHOTS MAX':'ALLOWED'],
+          ['ENTRY',money(event.entryFee)],
+          ['PRIZE',money(event.prizeCash)],
+          ['STATUS',check.eligible?'ELIGIBLE':check.reasons.join(' / '),
+            check.eligible?'#81efc4':'#ffb6ba'],
+        ]},
+      ],{anchorX:1402});
+    }else if(which==='sayaka'){
+      const put=node=>{dialogueNodes.push(node);return add(node);};
+      const x=558,y=405,w=470,h=146,edge=x+w,half=18,mid=y+41;
+      const pts=[{x,y},{x:edge,y},{x:edge,y:mid-half},
+        {x:edge+Math.sqrt(3)*half,y:mid},{x:edge,y:mid+half},
+        {x:edge,y:y+h},{x,y:y+h}];
+      const bubble=put(s.add.graphics().setDepth(260));
+      bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(pts,true);
+      bubble.lineStyle(5,0x111111,1);bubble.strokePoints(pts,true);
+      put(s.add.text(x+18,y+11,'Sayaka',{
+        fontFamily:BODY,fontSize:'16px',color:'#252227',fontStyle:'700',
+      }).setDepth(261));
+      const message='For this '+shortDrive(rules.drivetrain||'open')+
+        ' event, confirm your registered car in the Pro Paddock. Check the '+
+        (limit==null?'open power class':limit+' kW power limit')+
+        (rules.noNos?' and disable NOS.':' and your NOS allowance.')+
+        ' Keep your launch consistent to maximise championship points.';
+      const speech=put(s.add.text(x+18,y+38,message,{
+        fontFamily:BODY,fontSize:'16px',fontStyle:'600',color:'#111111',
+        wordWrap:{width:w-37},
+      }).setDepth(261));
+      if(speech.height>h-49)speech.setScale((h-49)/speech.height);
+    }
   }
   if(pending){
     discard();
