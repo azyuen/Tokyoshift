@@ -48,12 +48,12 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
   const label=(x,y,value,size=17,color='#dceaf0',extra={})=>add(
     s.add.text(x,y,value,{fontFamily:BODY,fontSize:size+'px',fontStyle:'700',
       color,wordWrap:{width:extra.wrap||1380},lineSpacing:3})
-      .setDepth(252));
+      .setDepth(230));
   const button=(x,y,w,h,caption,callback,enabled=true)=>{
     const bg=add(s.add.rectangle(x,y,w,h,enabled?0x163044:0x152029,.98)
-      .setStrokeStyle(2,enabled?0x57b6d2:0x506070).setDepth(252));
+      .setStrokeStyle(2,enabled?0x57b6d2:0x506070).setDepth(246));
     const txt=label(x,y,caption,14,enabled?'#e9f9ff':'#8097a3')
-      .setOrigin(.5);
+      .setOrigin(.5).setDepth(248);
     if(txt.width>w-14)txt.setScale((w-14)/txt.width);
     if(enabled)bg.setInteractive({useHandCursor:true}).on('pointerdown',callback);
   };
@@ -119,12 +119,12 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     discard();
     const phase=String(s.worldPhase||'night').toLowerCase()==='day'?'Day':'Night';
     const room='proSeasonBriefRoom'+phase;
-    add(s.add.rectangle(780,420,1560,840,0x06101b,1).setDepth(250).setInteractive());
+    add(s.add.rectangle(780,420,1560,840,0x06101b,1).setDepth(200).setInteractive());
     if(s.textures.exists(room)){
       const source=s.textures.get(room).getSourceImage();
-      add(s.add.image(780,420,room).setScale(Math.max(1560/source.width,840/source.height)).setDepth(251));
+      add(s.add.image(780,420,room).setScale(Math.max(1560/source.width,840/source.height)).setDepth(201));
     }
-    add(s.add.rectangle(780,420,1560,840,0x04101b,.22).setDepth(251));
+    add(s.add.rectangle(780,420,1560,840,0x04101b,.22).setDepth(202));
     const title=String(event.label||'DRIVER EVENT').toUpperCase();
     label(63,43,'PRO SEASON',21,'#ff8197');
     label(55,83,title,41,'#f7faff');
@@ -139,7 +139,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       if(!p.key||!s.textures.exists(p.key))continue;
       const source=s.textures.get(p.key).getSourceImage();
       const scale=Math.min(p.height/source.height,p.max/source.width);
-      add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1).setScale(scale).setFlipX(true).setDepth(254));
+      add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1).setScale(scale).setFlipX(true).setDepth(214));
     }
     const draft=selected?(s.registry.get('carStates')||{})[selected]||{}:{};
     const check=selected?getProfessionalCarEligibility(selected,draft,rules):
@@ -155,7 +155,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
       }catch(error){console.warn('[Tokyo SHIFT] Season briefing car preview',error);}
     }
     // Open Circuit-style skewed technical panel.
-    const panel=add(s.add.graphics().setDepth(258));
+    const panel=add(s.add.graphics().setDepth(219));
     const pts=[{x:77,y:643},{x:706,y:643},{x:680,y:807},{x:52,y:807}];
     panel.fillStyle(0x071728,.92);panel.fillPoints(pts,true);
     panel.lineStyle(3,0x35d6ff,1);panel.strokePoints(pts,true);
@@ -231,7 +231,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
   }
   if(pending){
     discard();
-    add(s.add.rectangle(780,420,1560,840,0x07111d,.99).setDepth(250).setInteractive());
+    add(s.add.rectangle(780,420,1560,840,0x07111d,.99).setDepth(200).setInteractive());
     label(590,407,'PREPARING PRO SEASON BRIEFING',19,'#ffffff');
     s.load.once('complete',()=>{
       if(closed||!s.sys?.isActive?.())return;
