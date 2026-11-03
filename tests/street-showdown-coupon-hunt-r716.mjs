@@ -32,7 +32,7 @@ test('60% per newly generated offer, with fixed threshold and unchanged entry pr
   assert.match(meet,/getStreetShowdownScheduledOffer\(this.selectedMeetLocation/);
   assert.match(meet,/getStreetShowdownScheduleSlot\(\)\.rotationIndex/);
   assert.match(meet,/couponCarPool/);
-  assert.match(meet,/R716-clock-class-coupons/);
+  assert.match(meet,/R788-fair-coupon-cycle/);
   assert.match(meet,/getStreetShowdownCouponEntryFee\(carValue, couponRequirement\)/);
   assert.match(read('src/scenes/RaceScene.js'),/couponCount = Math.max\(0, Number\(coupons\[prizeCouponCarId\] \|\| 0\)\) \+ 1/);
 });
@@ -130,15 +130,15 @@ test('Office pages all collected coupons and supports tap-to-select region sugge
   assert.match(office,/scene.showCouponsPopup\(\)/);
 });
 
-test('R716 client release changes only runtime modules and does not reset asset cache',()=>{
-  assert.equal(JSON.parse(read('version.json')).build,'R716');
-  assert.match(read('index.html'),/id="build-stamp">R716/);
-  assert.match(read('index.html'),/main\.js\?v=20261029-r716/);
-  assert.match(read('src/main.js'),/GarageScene\.js\?v=20261029-r716/);
-  assert.match(read('src/main.js'),/MeetScene\.js\?v=20261029-r716/);
-  assert.match(read('src/scenes/MeetScene.js'),/streetShowdowns\.js\?v=20261029-r716/);
-  assert.match(read('sw.js'),/const BUILD = 'R716'/);
-  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
+test('current client release invalidates stale coupon offers without resetting persistent art cache',()=>{
+  assert.equal(JSON.parse(read('version.json')).build,'R788');
+  assert.match(read('index.html'),/id="build-stamp">R788/);
+  assert.match(read('index.html'),/main\\.js\\?v=20261104-r788/);
+  assert.match(read('src/main.js'),/MeetScene\\.js\\?v=20261104-r788/);
+  assert.match(read('sw.js'),/const BUILD = 'R788'/);
+  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-content-v1-'/);
+  assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\\.js\\?v=20261104-r788/);
+  assert.match(read('src/scenes/MeetScene.js'),/R788-fair-coupon-cycle/);
 });
 
 test('shared slot: Office and every Meet return the exact same prize, unchanged by selected car',()=>{
@@ -158,29 +158,29 @@ test('shared slot: Office and every Meet return the exact same prize, unchanged 
   assert.equal(getStreetShowdownScheduledOffer('ginzaMotorGallery',{rotationIndex:1}),null);
 });
 
-test('60% coupon rate is schedule-wide, class focus dominates while wildcards still occur',()=>{
-  let all=0,coupons=0,focused=0,wildcards=0;
-  for(let rotation=1;rotation<=70;rotation++){
+test('coupon schedule is 60% per venue and every regular car has finite Meet availability',()=>{
+  let all=0,coupons=0;
+  const seen=new Set();
+  for(let rotation=0;rotation<240;rotation++){
     for(const regionId of REGIONS){
-      const focus=STREET_SHOWDOWN_CLASS_FOCUS[regionId];
-      assert.ok(focus.length>0);
       for(const loc of TRAVEL_REGIONS[regionId].locations){
         const offer=getStreetShowdownScheduledOffer(loc.id,{rotationIndex:rotation});
         all++;
         if(offer.prizeType!=='COUPON')continue;
         coupons++;
         assert.ok(carOrder.includes(offer.prizeCarId));
-        assert.ok(STOCK_CLASS_DATA[offer.prizeCarId]);
-        const actualClass=STOCK_CLASS_DATA[offer.prizeCarId]?.stockClass;
-        assert.ok(STREET_SHOWDOWN_CLASS_ENVELOPE[regionId].includes(actualClass));
-        if(focus.includes(actualClass))focused++;
-        else wildcards++;
+        assert.ok(STREET_SHOWDOWN_CLASS_ENVELOPE[regionId].includes(
+          STOCK_CLASS_DATA[offer.prizeCarId]?.stockClass));
+        seen.add(offer.prizeCarId);
       }
     }
   }
-  assert.ok(coupons/all>.53&&coupons/all<.67,'offer odds expected about 60%, found '+coupons/all);
-  assert.ok(focused/coupons>.85,'regional class focus should dominate coupon events');
-  assert.ok(wildcards>0,'rare adjacent-class wildcards should actually be possible');
+  assert.equal(coupons/all,0.60,'three coupon slots per five venue rotations');
+  assert.deepEqual([...seen].sort(),[...carOrder].sort(),
+    'every ordinary Auto Market car must be offered through a street Meet');
+  // Existing bonus milestones stay optional, not the exclusive source.
+  const race=read('src/scenes/RaceScene.js');
+  assert.match(race,/processEasyCouponMilestone/);
 });
 
 test('live Office board matches authoritative location schedule, including locked venues',()=>{
