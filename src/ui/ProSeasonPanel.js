@@ -971,44 +971,41 @@ export function showProSeasonAction(s,side){
     .on('pointerdown',()=>open?showProSeasonRegistration(s):showProSeasonWithdrawal(s));
 }
 
-/** Eight-round entry locks one owned personal car per drivetrain. */
+/** Eight-round entry locks any three different owned personal cars. */
 export function showProSeasonRegistration(s,selected={},pages={}){
   const owned=[...new Set(s.registry.get('ownedCarIds')||[])];
-  const available=Object.fromEntries(PRO_DRIVER_DRIVETRAINS.map(d=>[d,
-    owned.filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan&&
-      getProDriverDrivetrain(id)===d)]));
+  const available=owned.filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan);
   const o=overlay(s,'PRO SEASON // REGISTER THREE DRIVER CARS');
-  o.label(90,111,'ENTER THREE CARS // BAY 04 AWD · BAY 05 RWD · BAY 06 FF.',23);
-  o.label(90,151,'The three cars transfer to Daichi’s Pro Garage for the season. Tune, uninstall or restore parts between events; factory-stock eligibility must still pass scrutineering. Crew cars remain unrestricted.',18)
+  o.label(90,111,'ENTER ANY THREE DIFFERENT CARS // BAYS 04 · 05 · 06.',23);
+  o.label(90,151,'Any drivetrain combination is allowed. Event-specific eligibility still applies. Registered cars remain in their personal workshops and appear in the Pro Paddock.',18)
     .setColor('#c5d5df');
-  PRO_GARAGE_BAYS.forEach(({number,drive},column)=>{
-    const x=90+column*480,rows=available[drive],page=Math.max(0,
-      Math.min(Number(pages[drive])||0,Math.max(0,Math.ceil(rows.length/5)-1)));
-    o.label(x,213,'BAY '+number+'  //  '+(drive==='FWD'?'FF / FWD':drive)+'  //  '+rows.length+' OWNED',21)
-      .setColor('#f2d6b2');
+  PRO_GARAGE_BAYS.forEach(({number},column)=>{
+    const slot=String(column),x=90+column*480;
+    const rows=available.filter(id=>!Object.entries(selected).some(([key,value])=>key!==slot&&value===id));
+    const page=Math.max(0,Math.min(Number(pages[slot])||0,Math.max(0,Math.ceil(rows.length/5)-1)));
+    o.label(x,213,'BAY '+number+'  //  '+rows.length+' AVAILABLE',21).setColor('#f2d6b2');
     rows.slice(page*5,(page+1)*5).forEach((id,index)=>{
-      const choice=(selected[drive]===id?'SELECTED  ✓  ':'')+
-        (cars[id]?.shortName||id);
+      const drive=getProDriverDrivetrain(id);
+      const choice=(selected[slot]===id?'SELECTED  ✓  ':'')+
+        (cars[id]?.shortName||id)+'  ['+(drive==='FWD'?'FF':drive)+']';
       o.btn(x+195,277+index*76,410,choice,()=>{
-        showProSeasonRegistration(s,{...selected,[drive]:id},pages);
+        showProSeasonRegistration(s,{...selected,[slot]:id},pages);
       });
     });
-    if(!rows.length)o.label(x,315,'NO OWNED CAR IN THIS CLASS',17).setColor('#f0a0a5');
+    if(!rows.length)o.label(x,315,'NO AVAILABLE PERSONAL CAR',17).setColor('#f0a0a5');
     if(rows.length>5){
-      o.btn(x+95,672,190,'◀ PREV',()=>{
-        showProSeasonRegistration(s,selected,{...pages,[drive]:Math.max(0,page-1)});
-      });
-      o.btn(x+296,672,190,'NEXT ▶',()=>{
-        showProSeasonRegistration(s,selected,{...pages,[drive]:Math.min(Math.ceil(rows.length/5)-1,page+1)});
-      });
+      o.btn(x+95,672,190,'◀ PREV',()=>showProSeasonRegistration(s,selected,
+        {...pages,[slot]:Math.max(0,page-1)}));
+      o.btn(x+296,672,190,'NEXT ▶',()=>showProSeasonRegistration(s,selected,
+        {...pages,[slot]:Math.min(Math.ceil(rows.length/5)-1,page+1)}));
     }
   });
-  const ids=PRO_DRIVER_DRIVETRAINS.map(d=>selected[d]);
-  const complete=ids.every(Boolean);
+  const ids=PRO_GARAGE_BAYS.map((_,index)=>selected[String(index)]);
+  const complete=ids.every(Boolean)&&new Set(ids).size===3;
   o.label(90,723,complete?
-    'READY // '+PRO_GARAGE_BAYS.map(({number,drive})=>
-      number+' '+(drive==='FWD'?'FF':drive)+': '+(cars[selected[drive]]?.shortName||selected[drive])).join('   |   '):
-    'SELECT THREE CARS TO START THE EIGHT-ROUND SEASON.',18)
+    'READY // '+PRO_GARAGE_BAYS.map(({number},index)=>
+      number+': '+(cars[ids[index]]?.shortName||ids[index])).join('   |   '):
+    'SELECT THREE DIFFERENT CARS TO START THE EIGHT-ROUND SEASON.',18)
     .setColor(complete?'#e7d28e':'#c5d0d8');
   o.btn(280,786,380,'CANCEL',o.close);
   if(complete)o.btn(1175,786,580,'REGISTER CARS / START SEASON',()=>{

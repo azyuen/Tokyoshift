@@ -158,7 +158,7 @@ export function finishOpenCircuitEvent(raw,summary) {
     points:0,openCircuit:true,background};
   return c;
 }
-// Exactly three owned, individually eligible cars; one each of the three drivetrains.
+// Exactly three distinct, owned personal cars; any drivetrain mix.
 export const PRO_DRIVER_DRIVETRAINS=Object.freeze(['FWD','RWD','AWD']);
 export function getProDriverDrivetrain(carId) {
   const raw=String(getCarMagazineMeta(carId)?.drivetrain||'').toUpperCase();
@@ -170,9 +170,6 @@ export function validateProSeasonDriverCars(carIds,ownedCarIds=[]) {
   if(!Array.isArray(ownedCarIds)||carIds.some(id=>!ownedCarIds.includes(id)||
     !cars[id]||cars[id].ginzaDemo||cars[id].crewLoan))
     return 'DRIVER CARS MUST BE OWNED, ROAD-LEGAL PERSONAL CARS';
-  const drives=carIds.map(getProDriverDrivetrain);
-  if(!PRO_DRIVER_DRIVETRAINS.every(d=>drives.filter(v=>v===d).length===1))
-    return 'REGISTER ONE FF/FWD, ONE RWD AND ONE AWD CAR';
   return null;
 }
 // Saves which started before the registration rule carry null rather than a
@@ -195,7 +192,7 @@ export function startProfessionalSeason(raw,driverCarIds=null,ownedCarIds=[]) {
   if(c.calendar.round!==0||c.calendar.history.length)return {error:'SEASON ALREADY IN PROGRESS'};
   const rosterError=validateProSeasonDriverCars(driverCarIds,ownedCarIds);
   if(rosterError)return {error:rosterError};
-  c.registeredDriverCars=[...PRO_DRIVER_DRIVETRAINS.map(d=>driverCarIds.find(id=>getProDriverDrivetrain(id)===d))];
+  c.registeredDriverCars=[...driverCarIds];
   c.seasonCalendar={season:c.season,driver:getProfessionalSeasonOrder(c.season,'DRIVER'),crew:getProfessionalSeasonOrder(c.season,'TEAM')};
   c.seasonStatus='ACTIVE';
   return {circuit:c};
