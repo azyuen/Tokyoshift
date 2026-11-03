@@ -132,8 +132,14 @@ async function startTokyoShift() {
     // Phaser starts its first scene. Put the test scene first only when asked.
     if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
 
+    // Avoid dozens of simultaneous full-resolution PNG/WebP decode/uploads
+    // overwhelming older mobile Safari WebGL processes. Total artwork is
+    // unchanged; only peak in-flight asset pressure is bounded on small CPUs.
+    const olderMobile = /iPad|iPhone|iPod/i.test(navigator.userAgent) &&
+      (navigator.hardwareConcurrency || 4) <= 4;
     const config = {
       type: Phaser.AUTO,
+      loader: { maxParallelDownloads: olderMobile ? 4 : 16 },
       parent: 'game',
       width: GAME_WIDTH,
       height: GAME_HEIGHT,
