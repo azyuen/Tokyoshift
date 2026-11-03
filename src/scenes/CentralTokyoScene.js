@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r768';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r769';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -3430,7 +3430,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
         { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
-        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1365, feetY: STAGE.y + 728, height: 356, depth: 19 },
+        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1235, feetY: STAGE.y + 728, height: 356, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
       [
@@ -3524,6 +3524,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // overview above them. Detailed rules remain in the event briefings.
       this.contentObjects.slice(sidebarStart).forEach(obj => {
         if (obj.y < SIDE.y + 550) obj.setVisible(false).disableInteractive();
+      });
+    }
+    if(!isOpen){
+      // Shift the right-hand action stack down together without moving the
+      // briefing text or changing any of the existing button handlers.
+      this.contentObjects.slice(sidebarStart).forEach(obj=>{
+        if(obj.visible&&obj.y>=SIDE.y+550&&obj.y<=SIDE.y+760&&
+          typeof obj.setY==='function')obj.setY(obj.y+12);
       });
     }
     showProSeasonAction(this,SIDE);

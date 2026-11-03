@@ -85,29 +85,29 @@ export function drawSeasonHeader(s,stage) {
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
     const round=Math.min(8,Math.max(1,c.calendar.round+1));
     // Qualification card: fixed to the mid-left, clear of event cards.
-    const qx=left,qy=stage.y+207,qw=535,qh=138;
-    s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x081523,.92)
-      .setStrokeStyle(2,0x9eafbf).setDepth(37));
+    const qx=stage.x+12,qy=stage.y+320,qw=540,qh=238;
+    s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x172436,.65)
+      .setStrokeStyle(2,0x8197ac,.8).setDepth(37));
     text(s,qx+24,qy+10,'🏆  TOKYO CHAMPIONSHIP QUALIFICATION',21,
       {...race,strokeThickness:1,color:'#f4e8cf'});
     const qualification=(yy,label,points,required)=>{
       text(s,qx+23,qy+yy,label,20,{...race,strokeThickness:1});
-      const bx=qx+124,by=qy+yy+8,bw=277;
+      const bx=qx+124,by=qy+yy+8,bw=256;
       s.addContent(s.add.rectangle(bx+bw/2,by+6,bw,17,0x132338,1)
         .setStrokeStyle(2,0x8c9cad).setDepth(38));
       if(points>0)s.addContent(s.add.rectangle(bx,by-2,
         bw*Math.min(1,Math.max(0,points/required)),17,0xf18c34,1)
         .setOrigin(0,0).setDepth(39));
-      text(s,qx+qw-23,qy+yy,points+' / '+required,20,
+      text(s,qx+qw-17,qy+yy,points+' / '+required,20,
         {...race,color:'#f4d69c',strokeThickness:1}).setOrigin(1,0);
     };
     qualification(55,'DRIVER',q.driver,q.driverRequired);
     qualification(97,'CREW',q.crew,q.crewRequired);
     // Round controls open a single-round preview, without changing progress.
-    text(s,left,qy+qh+15,'ROUND '+round+' / 8',26,
+    text(s,qx+22,qy+145,'ROUND '+round+' / 8',25,
       {...race,strokeThickness:2});
     for(let i=0;i<8;i++){
-      const bx=left+30+i*64,by=qy+qh+88;
+      const bx=qx+47+i*62,by=qy+211;
       const current=i===round-1,completed=i<round;
       const hit=s.addContent(s.add.rectangle(bx,by,57,38,
         current?0xc91834:completed?0x995126:0x1a2b40,.96)
@@ -122,25 +122,31 @@ export function drawSeasonHeader(s,stage) {
     const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
       0x081523,.95).setStrokeStyle(2,0x9aafc1).setDepth(37)
       .setInteractive({useHandCursor:true}));
-    const faceX=rx+83,faceY=ry+93,faceW=142,faceH=153;
+    const faceX=rx+82,faceY=ry+107,faceW=142,faceH=146;
     // No separate portrait frame: face cutout sits directly on the dashboard.
     const playerId=s.registry.get('playerCharacterId')||'renMizuno';
     const asset=getCharacterVisualAsset(playerId,'idle',{
       playerCharacterId:playerId,proCircuit:true});
     if(asset?.key&&s.textures.exists(asset.key)){
       const source=s.textures.get(asset.key).getSourceImage();
-      const sw=source.width,sh=source.height;
-      // A source-independent head-and-shoulders crop: keep the face visible
-      // even when the full-body source sprite has a different canvas height.
-      const cropW=Math.max(1,Math.floor(sw*.52));
-      const cropH=Math.max(1,Math.floor(sh*.21));
-      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.035);
+      const sw=Math.max(1,source.width),sh=Math.max(1,source.height);
+      // Keep original source aspect ratio. Phaser's crop does not resize the
+      // image bounds, so size the source image BEFORE applying a face crop.
+      const cropW=Math.max(1,Math.floor(sw*.65));
+      const cropH=Math.max(1,Math.floor(Math.min(sh*.32,cropW*1.10)));
+      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.025);
       const portrait=s.addContent(s.add.image(faceX,faceY,asset.key)
-        .setDepth(39).setCrop(cx,cy,cropW,cropH));
-      portrait.setDisplaySize(faceW+8,faceH+4);
+        .setDepth(39).setOrigin(.5,.5));
+      const scale=Math.min(faceW/cropW,faceH/cropH);
+      portrait.setScale(scale);
+      portrait.setCrop(cx,cy,cropW,cropH);
+      // Cropped sprites retain the source image origin; offset by the crop
+      // centre so the face is actually centred in the allotted region.
+      portrait.setPosition(faceX+(sw/2-cx-cropW/2)*scale,
+        faceY+(sh/2-cy-cropH/2)*scale);
     }
-    text(s,rx+164,ry+14,'PRO DRIVER',27,
-      {...race,color:'#f4dcac',strokeThickness:1});
+    text(s,rx+rw/2,ry+14,'PRO RANKING',27,
+      {...race,color:'#f4dcac',strokeThickness:1}).setOrigin(.5,0);
     text(s,rx+164,ry+58,'¥ '+Number(s.registry.get('cash')||0)
       .toLocaleString('en-US'),20,{...race,strokeThickness:1});
     text(s,rx+164,ry+99,'DRIVER   #'+(driver?.seed||'—'),20,
@@ -951,7 +957,7 @@ export function showProSeasonAction(s,side){
     s.registry.get('competitionState')?.active);
   // All three Pro Circuit actions use 40px-high buttons centred at offsets
   // 574, 624 and 674. The 50px centre step gives equal 10px vertical gaps.
-  const x=side.x+side.w/2,y=side.y+624;
+  const x=side.x+side.w/2,y=side.y+(open?624:636);
   const available=!locked;
   const label=open?(c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON'):'WITHDRAW / FORFEIT SEASON';
   const b=s.addContent(s.add.rectangle(x,y,side.w-36,40,
