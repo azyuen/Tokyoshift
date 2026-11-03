@@ -5897,6 +5897,7 @@ export default class GarageScene extends Phaser.Scene {
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
       .setInteractive());
+    blocker.on('pointerdown',()=>this.closeSecondaryPartSelector());
 
     add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
