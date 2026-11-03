@@ -83,7 +83,7 @@ async function startTokyoShift() {
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261026-r687'),
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261026-r687'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261026-r687'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261103-r779'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261103-r785'),
       loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261026-r687'),
       loadScene('MEET', './scenes/MeetScene.js?v=20261029-r717'),
       loadScene('RACE', './scenes/RaceScene.js?v=20261101-r749'),
@@ -91,7 +91,7 @@ async function startTokyoShift() {
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261103-r784'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261026-r687'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261026-r687'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261029-r712'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261103-r785'),
       loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261026-r687'),
     ]);
 
