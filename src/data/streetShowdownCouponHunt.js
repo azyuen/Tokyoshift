@@ -135,7 +135,7 @@ export function getStreetShowdownCouponHunts(carId,source) {
       (getEncounterProfile(loc.id).likelyCars||[]).includes(carId));
     const huntTier=focusMatch
       ? favourites.length?'REGIONAL FAVOURITE':'CLASS MATCH'
-      : 'RARE WILDCARD';
+      : 'NEIGHBOUR CLASS';
     const unlocked=matching.filter(loc=>isTravelLocationUnlocked(source,loc.id));
     const suggested=unlocked.find(loc=>favourites.includes(loc))||
       unlocked[0]||favourites[0]||matching[0];
