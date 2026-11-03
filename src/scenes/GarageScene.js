@@ -2957,23 +2957,11 @@ export default class GarageScene extends Phaser.Scene {
       const button=this.add.rectangle(x,716,SIDE.w-32,40,0x122331,1)
         .setStrokeStyle(2,0x55b8ff,1).setDepth(40)
         .setInteractive({useHandCursor:true});
-      const nosLabel=this.crewProPaddockMode?'TOGGLE NOS ON / OFF':this.proBriefingReturn?'RETURN TO BRIEFING  >':'<  BACK TO DRAG COMPLEX';
+      const nosLabel=this.proCrewPaddockReturn||this.proBriefingReturn?'RETURN TO BRIEFING  >':'<  BACK TO DRAG COMPLEX';
       this.add.text(x,716,nosLabel,{
         fontFamily:PIXEL_FONT,fontSize:'9px',color:'#eef8ff',
       }).setOrigin(.5).setDepth(41);
       button.on('pointerdown',()=>{
-        if(this.crewProPaddockMode){
-          const id=this.selectedCarId;
-          if(!id||!this.crewProPaddockCars.includes(id))return;
-          const states={...(this.registry.get('carStates')||{})};
-          const current={...(states[id]||{})};
-          current.nosEnabled=current.nosEnabled===false;
-          states[id]=current;
-          this.registry.set('carStates',states);
-          saveSessionState(this.registry);
-          this.showWorkshopToast(current.nosEnabled?'NOS ENABLED':'NOS DISABLED // READY FOR SCRUTINEERING');
-          return;
-        }
         this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
         this.saveProfile();
         this.scene.start('CentralTokyoScene',{
