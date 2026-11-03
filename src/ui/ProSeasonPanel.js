@@ -77,67 +77,82 @@ export function drawSeasonHeader(s,stage) {
   if (!openCircuit) {
     const race = {fontFamily:'"Exo 2", sans-serif',fontStyle:'900 italic',
       stroke:'#07111d',strokeThickness:4};
-    text(s,x,28,'PRO SEASON',46,race);
-    text(s,x,86,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)}`,28,race)
+    // Full-screen Pro Season presentation, matched to the reference mockup.
+    text(s,x+38,20,'PRO SEASON',54,race);
+    const seasonTag=s.addContent(s.add.rectangle(x+110,133,210,44,0xa9162c,.96)
+      .setStrokeStyle(2,0xef5962).setDepth(38));
+    text(s,x+21,109,'SEASON '+c.season,25,{...race,strokeThickness:2})
       .setInteractive({useHandCursor:true})
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-    // Eight-stage progress strip: orange indicates the current round.
+    s.addContent(s.add.rectangle(x+351,133,244,44,0x0d1b2d,.96)
+      .setStrokeStyle(2,0x9cb7ca).setDepth(38));
+    text(s,x+243,109,'ROUND '+Math.min(8,c.calendar.round+1)+' / 8',25,
+      {...race,strokeThickness:2});
     const round=Math.min(8,Math.max(1,c.calendar.round+1));
     for(let i=0;i<8;i++){
-      const bx=x+7+i*58,by=135;
-      s.addContent(s.add.rectangle(bx,by,48,30,i<round?0xc46b25:0x172638,.94)
-        .setStrokeStyle(1,i===round-1?0xffc06b:0x536a7a).setDepth(38));
-      text(s,bx,by,'R'+(i+1),15,{...race,strokeThickness:1,
-        color:i<round?'#fff3dd':'#98aabb'}).setOrigin(.5);
+      const bx=x+30+i*66,by=185;
+      const current=i===round-1,completed=i<round;
+      s.addContent(s.add.rectangle(bx,by,59,40,current?0xc91834:
+        completed?0x9d4b27:0x1a2b40,.96)
+        .setStrokeStyle(current?3:2,current?0xff7584:0x8a9aab).setDepth(38));
+      text(s,bx,by,'R'+(i+1),19,{...race,strokeThickness:1,
+        color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
     }
-    // Wide, low-profile qualification progress, above the event cards.
-    const progressX=stage.x+22,progressY=stage.y+468,progressW=1050;
-    text(s,progressX,progressY-32,'TOKYO CHAMPIONSHIP QUALIFICATION',20,
-      {...race,strokeThickness:2});
-    const meter=(offset,label,points,required)=>{
-      const yy=progressY+offset;
-      text(s,progressX,yy,label,17,{...race,strokeThickness:1});
-      s.addContent(s.add.rectangle(progressX+160,yy+9,700,14,0x172a3c,.95)
-        .setOrigin(0,0).setStrokeStyle(1,0x708294).setDepth(38));
-      s.addContent(s.add.rectangle(progressX+160,yy+9,
-        700*Math.max(0,Math.min(1,points/required)),14,0xe58c32,1)
+    // Qualification card: fixed to the mid-left, clear of event cards.
+    const qx=stage.x+24,qy=stage.y+334,qw=535,qh=138;
+    s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x081523,.92)
+      .setStrokeStyle(2,0x9eafbf).setDepth(37));
+    text(s,qx+24,qy+10,'🏆  TOKYO CHAMPIONSHIP QUALIFICATION',21,
+      {...race,strokeThickness:1,color:'#f4e8cf'});
+    const qualification=(yy,label,points,required)=>{
+      text(s,qx+23,qy+yy,label,20,{...race,strokeThickness:1});
+      const bx=qx+124,by=qy+yy+8,bw=277;
+      s.addContent(s.add.rectangle(bx+bw/2,by+6,bw,17,0x132338,1)
+        .setStrokeStyle(2,0x8c9cad).setDepth(38));
+      if(points>0)s.addContent(s.add.rectangle(bx,by-2,
+        bw*Math.min(1,Math.max(0,points/required)),17,0xf18c34,1)
         .setOrigin(0,0).setDepth(39));
-      text(s,progressX+884,yy,points+' / '+required,17,
-        {...race,strokeThickness:1,color:'#f6e4c9'});
+      text(s,qx+qw-23,qy+yy,points+' / '+required,20,
+        {...race,color:'#f4d69c',strokeThickness:1}).setOrigin(1,0);
     };
-    meter(0,'DRIVER',q.driver,q.driverRequired);
-    meter(34,'CREW',q.crew,q.crewRequired);
-
-    // Player dashboard: live cash and persistent professional rankings.
-    const rankX=stage.x+1140,rankY=stage.y+22,rankW=354,rankH=167;
-    const rankBox=s.addContent(s.add.rectangle(rankX,rankY,rankW,rankH,
-      0x091725,.93).setOrigin(0,0).setStrokeStyle(2,0x657f98).setDepth(37)
+    qualification(55,'DRIVER',q.driver,q.driverRequired);
+    qualification(97,'CREW',q.crew,q.crewRequired);
+    // Top-right personal Pro dashboard, with a cropped face portrait.
+    const rx=stage.x+1126,ry=stage.y-67,rw=364,rh=212;
+    const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
+      0x081523,.95).setStrokeStyle(2,0x9aafc1).setDepth(37)
       .setInteractive({useHandCursor:true}));
+    const faceX=rx+83,faceY=ry+93,faceW=142,faceH=153;
+    s.addContent(s.add.rectangle(faceX,faceY,faceW,faceH,0x1c2e40,1)
+      .setStrokeStyle(2,0xc6a06a).setDepth(38));
     const playerId=s.registry.get('playerCharacterId')||'renMizuno';
-    const playerAsset=getCharacterVisualAsset(playerId,'idle',{
+    const asset=getCharacterVisualAsset(playerId,'idle',{
       playerCharacterId:playerId,proCircuit:true});
-    s.addContent(s.add.rectangle(rankX+54,rankY+57,86,98,0x23374a,.98)
-      .setStrokeStyle(1,0xb98b50).setDepth(38));
-    if(playerAsset?.key&&s.textures.exists(playerAsset.key)){
-      const portrait=s.addContent(s.add.image(rankX+54,rankY+105,playerAsset.key)
-        .setDepth(39));
-      const source=s.textures.get(playerAsset.key).getSourceImage();
-      portrait.setScale(Math.min(82/Math.max(1,source.width),
-        94/Math.max(1,source.height)));
+    if(asset?.key&&s.textures.exists(asset.key)){
+      const source=s.textures.get(asset.key).getSourceImage();
+      const sw=source.width,sh=source.height;
+      // A source-independent head-and-shoulders crop: keep the face visible
+      // even when the full-body source sprite has a different canvas height.
+      const cropW=Math.max(1,Math.floor(sw*.78));
+      const cropH=Math.max(1,Math.floor(sh*.39));
+      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.04);
+      const portrait=s.addContent(s.add.image(faceX,faceY,asset.key)
+        .setDepth(39).setCrop(cx,cy,cropW,cropH));
+      portrait.setDisplaySize(faceW-8,faceH-8);
     }
-    text(s,rankX+110,rankY+9,'PRO DRIVER',20,
-      {...race,color:'#f3d49c',strokeThickness:1});
-    text(s,rankX+110,rankY+43,
-      '¥ '+Number(s.registry.get('cash')||0).toLocaleString('en-US'),19,
+    text(s,rx+164,ry+14,'PRO DRIVER',27,
+      {...race,color:'#f4dcac',strokeThickness:1});
+    text(s,rx+164,ry+58,'¥ '+Number(s.registry.get('cash')||0)
+      .toLocaleString('en-US'),20,{...race,strokeThickness:1});
+    text(s,rx+164,ry+99,'DRIVER   #'+(driver?.seed||'—'),20,
       {...race,strokeThickness:1});
-    text(s,rankX+110,rankY+80,'DRIVER  #'+(driver?.seed||'—'),18,
+    text(s,rx+164,ry+137,'CREW     #'+(team?.seed||'—'),20,
       {...race,strokeThickness:1});
-    text(s,rankX+110,rankY+110,'CREW     #'+(team?.seed||'—'),18,
-      {...race,strokeThickness:1});
-    text(s,rankX+110,rankY+140,'FULL RANKINGS  ▼',14,
-      {...race,color:'#8ed8f5',strokeThickness:1});
-    rankBox.on('pointerdown',()=>showProRankings(s));
-    if(s.proError)text(s,x,200,s.proError,18,{color:'#ef939b',wordWrap:{width:600}});
+    text(s,rx+140,ry+179,'FULL RANKINGS  ▼',17,
+      {...race,color:'#9de8f4',strokeThickness:1});
+    card.on('pointerdown',()=>showProRankings(s));
+    if(s.proError)text(s,x,qy-45,s.proError,17,
+      {color:'#ef939b',wordWrap:{width:520}});
     return;
   }
   // Rank and sponsorship remain visible through both Open Circuit and Season.
