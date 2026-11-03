@@ -3169,31 +3169,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const close=()=>objects.forEach(obj=>obj?.destroy?.());
     const backdrop=add(this.add.rectangle(780,420,1560,840,0x020810,.82)
       .setDepth(depth).setInteractive());
-    add(this.add.rectangle(780,420,960,458,0x0a192a,.98)
+    add(this.add.rectangle(780,420,960,630,0x0a192a,.98)
       .setStrokeStyle(2,0x8ab5cf).setDepth(depth+1));
     const label=(y,value,size,color='#edf4fc')=>add(this.add.text(780,y,value,{
       fontFamily:PIXEL_FONT,fontSize:size+'px',color,align:'center',
       wordWrap:{width:880},
     }).setOrigin(.5).setDepth(depth+2));
-    label(242,'PRO SEASON '+pro.season+'  //  ROUND '+(round+1)+' OF 8',18,'#f6d397');
-    label(328,'DRIVER EVENT',13,'#9cdef2');
-    label(364,names.driver,19);
-    label(427,'CREW EVENT',13,'#9cdef2');
-    label(463,names.crew,19);
+    label(174,'PRO SEASON '+pro.season+'  //  ROUND '+(round+1)+' OF 8',18,'#f6d397');
+    label(266,'DRIVER EVENT',13,'#9cdef2');
+    label(304,names.driver,19);
+    label(444,'CREW EVENT',13,'#9cdef2');
+    label(482,names.crew,19);
     const ruleText=rule=>[
       String(rule.format||'DUEL').replaceAll('_',' '),
       rule.drivetrain||'ANY DRIVETRAIN',
       Number.isFinite(rule.maxPowerKW)?rule.maxPowerKW+' KW MAX':'OPEN POWER',
       rule.noNos?'NOS OFF':Number.isFinite(rule.maxNosShots)?rule.maxNosShots+' NOS SHOTS MAX':'NOS PERMITTED',
     ].join('  ·  ');
-    label(398,ruleText(events.driver),11,'#a9c1d3');
-    label(497,ruleText(events.crew),11,'#a9c1d3');
-    label(560,round===pro.calendar.round?'CURRENT ROUND':round<pro.calendar.round?
-      'COMPLETED ROUND':'UPCOMING ROUND',13,'#f3cb8b');
-    const button=add(this.add.rectangle(780,608,238,42,0x19445a,1)
+    label(349,ruleText(events.driver),11,'#a9c1d3');
+    label(527,ruleText(events.crew),11,'#a9c1d3');
+    
+    const button=add(this.add.rectangle(780,654,238,48,0x19445a,1)
       .setStrokeStyle(2,0x82dafa).setDepth(depth+3).setInteractive({useHandCursor:true}));
-    label(608,'CLOSE',13);
-    backdrop.on('pointerdown',close);
+    const closeLabel=label(654,'CLOSE',16);
+    closeLabel.setDepth(depth+4);
+    closeLabel.setInteractive({useHandCursor:true}).on('pointerdown',close);
+    // The backdrop blocks the underlying screen but does not dismiss this dialog.
     button.on('pointerdown',close);
   }
 
@@ -3481,7 +3482,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       [
         { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
+        { characterId: 'daichiSakamoto', pose: 'proMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 }
         { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1165, feetY: STAGE.y + 685, height: 320, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
