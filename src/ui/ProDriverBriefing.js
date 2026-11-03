@@ -192,7 +192,7 @@ function draw(s,state,options){
   const currentOpponentCar={...oppCar,drivetrain:
     getCarMagazineMeta(round.carId)?.drivetrain||oppCar.drivetrain};
   const currentHeatAdvice=advice.usedThisEvent
-    ? driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar) : null;
+    ? (state.briefingAdviceText||driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar)) : null;
   const stageNo=state.roundIndex+1,stageTotal=state.rounds.length;
   const playerId=s.registry.get('playerCharacterId')||'renMizuno';
 
@@ -544,8 +544,8 @@ function draw(s,state,options){
       options.state||s.registry.get('competitionState')||{}).available)return;
     showProSayakaAdviceConfirm(s,{
       message:state.openTrophyId
-        ? 'One consultation covers this trophy. Sayaka updates her advice for each opponent. Available again next event.'
-        : 'One consultation covers this event. Sayaka updates her advice for each opponent. Available again next event.',
+        ? 'One consultation covers this trophy. The advice stays fixed for this event. Available again next event.'
+        : 'One consultation covers this event. The advice stays fixed for this event. Available again next event.',
       onConfirm:()=>{
         close();
         options.onAdvice?.(driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar));
