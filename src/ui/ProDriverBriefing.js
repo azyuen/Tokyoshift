@@ -544,8 +544,8 @@ function draw(s,state,options){
       options.state||s.registry.get('competitionState')||{}).available)return;
     showProSayakaAdviceConfirm(s,{
       message:state.openTrophyId
-        ? 'One consultation covers the entire trophy. Sayaka will update her advice for each remaining opponent. Cooldown: this trophy plus five other professional events.'
-        : 'One consultation covers this event. Sayaka will update her advice for each remaining opponent. Cooldown: this event plus two other professional events.',
+        ? 'One consultation covers this trophy. Sayaka updates her advice for each opponent. Available again next event.'
+        : 'One consultation covers this event. Sayaka updates her advice for each opponent. Available again next event.',
       onConfirm:()=>{
         close();
         options.onAdvice?.(driverOpponentAdvice(currentOpponentCar,currentOpponent,playerCar));
