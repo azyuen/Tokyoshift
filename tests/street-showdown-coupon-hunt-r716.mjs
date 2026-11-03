@@ -228,8 +228,8 @@ test('hunting leads describe regional favourites, general class matches and rare
     for(const hint of hints){
       const cls=STOCK_CLASS_DATA[id].stockClass;
       assert.equal(hint.focusMatch,STREET_SHOWDOWN_CLASS_FOCUS[hint.regionId].includes(cls));
-      assert.ok(['REGIONAL FAVOURITE','CLASS MATCH','RARE WILDCARD'].includes(hint.huntTier));
-      if(!hint.focusMatch)assert.equal(hint.huntTier,'RARE WILDCARD');
+      assert.ok(['REGIONAL FAVOURITE','CLASS MATCH','NEIGHBOUR CLASS'].includes(hint.huntTier));
+      if(!hint.focusMatch)assert.equal(hint.huntTier,'NEIGHBOUR CLASS');
     }
   }
 });
