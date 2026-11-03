@@ -19,7 +19,12 @@ function worker({ body = 'original', revision = hash(body), shared = new Map(), 
       if (!shared.has(name)) shared.set(name, new Map());
       const cache = shared.get(name);
       const key = request => typeof request === 'string' ? request : request.url;
-      return { match: async r => cache.get(key(r))?.clone(), put: async (r, response) => cache.set(key(r), response.clone()) };
+      return {
+        match: async r => cache.get(key(r))?.clone(),
+        put: async (r, response) => cache.set(key(r), response.clone()),
+        keys: async () => [...cache.keys()].map(url => ({url})),
+        delete: async r => cache.delete(key(r)),
+      };
     }
   };
   vm.runInNewContext(source, { self, caches, URL, Request, Response, Uint8Array, crypto: webcrypto, importScripts() {},
@@ -70,4 +75,26 @@ test('build reconciliation retains content assets and manual recovery can clear 
   assert.match(boot,/!key.startsWith\('tokyoshift-content-v1-'\)/);
   assert.doesNotMatch(refresh,/!key.startsWith\('tokyoshift-content-v1-'\)/);
   assert.doesNotMatch(refresh,/localStorage\.(clear|removeItem)|indexedDB.deleteDatabase/);
+});
+
+test('simultaneous requests to the same large asset share one network read and hash', async () => {
+  const w=worker({body:'large character art'});
+  const results=await Promise.all(Array.from({length:8},() => w.get()));
+  assert.deepEqual(await Promise.all(results.map(r=>r.text())),
+    Array(8).fill('large character art'));
+  assert.equal(w.calls.length,1);
+});
+test('worker activation discards obsolete asset hashes but retains verified current bytes', async () => {
+  const old=worker({body:'old art'});
+  await old.get();
+  const next=worker({body:'new art',shared:old.shared});
+  await next.activate();
+  assert.equal(await (await next.get()).text(),'new art');
+  const assets=old.shared.get([...old.shared.keys()].find(k=>k.startsWith('tokyoshift-content-v1-')));
+  assert.equal(assets.size,1,'old revised image must not accumulate in iOS cache');
+  const warm=worker({body:'new art',shared:old.shared});
+  await warm.activate();
+  warm.setOffline(true);
+  assert.equal(await (await warm.get()).text(),'new art');
+  assert.equal(warm.calls.length,0);
 });
