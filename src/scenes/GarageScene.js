@@ -4592,19 +4592,6 @@ export default class GarageScene extends Phaser.Scene {
           console.warn('[Tokyo SHIFT] Pro Garage car art unavailable',bay.number,error);
         }
       }
-      const top=STAGE.y+18;
-      this.proGarageBayObjects.push(this.add.text(x,top,
-        'BAY '+bay.number,{
-          fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f3d39f',
-          backgroundColor:'#09131b',padding:{x:6,y:4},
-        }).setOrigin(.5,0).setDepth(19));
-      if(!bay.carId)continue;
-      const node=this.add.text(x,top+28,'CHECKING EVENT RULES',{
-        fontFamily:PIXEL_FONT,fontSize:'7px',color:'#e9e6e0',
-        backgroundColor:'#09131b',padding:{x:5,y:3},
-      }).setOrigin(.5,0).setDepth(19);
-      this.proGarageBayObjects.push(node);
-      this.proGarageReadinessLabels.push({carId:bay.carId,node});
     }
     this.refreshProGarageScrutineering();
   }
