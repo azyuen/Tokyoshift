@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r770';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261104-r789';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -372,6 +372,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle', { proCircuit: true });
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
         queued += this.queueCharacterPose('daichiSakamoto', 'normal');
+        if (!this.textures.exists('proSeasonDaichiMechanic')) {
+          this.load.image('proSeasonDaichiMechanic',
+            'assets/Characters/Main/pro_daichi_sakamoto.png');
+          queued++;
+        }
       } else if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
       }
@@ -723,6 +728,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   addVenueCharacter({
     characterId,
     pose = 'normal',
+    assetKey = null,
     x,
     feetY,
     height = 220,
@@ -739,7 +745,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       playerCharacterId: this.registry.get('playerCharacterId') || '',
       proCircuit,
     });
-    const key = asset?.key;
+    const key = assetKey && this.textures.exists(assetKey) ? assetKey : asset?.key;
     if (!key || !this.textures.exists(key)) return null;
 
     const texture = this.textures.get(key);
@@ -3169,31 +3175,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const close=()=>objects.forEach(obj=>obj?.destroy?.());
     const backdrop=add(this.add.rectangle(780,420,1560,840,0x020810,.82)
       .setDepth(depth).setInteractive());
-    add(this.add.rectangle(780,420,960,458,0x0a192a,.98)
+    add(this.add.rectangle(780,420,960,630,0x0a192a,.98)
       .setStrokeStyle(2,0x8ab5cf).setDepth(depth+1));
     const label=(y,value,size,color='#edf4fc')=>add(this.add.text(780,y,value,{
       fontFamily:PIXEL_FONT,fontSize:size+'px',color,align:'center',
       wordWrap:{width:880},
     }).setOrigin(.5).setDepth(depth+2));
-    label(242,'PRO SEASON '+pro.season+'  //  ROUND '+(round+1)+' OF 8',18,'#f6d397');
-    label(328,'DRIVER EVENT',13,'#9cdef2');
-    label(364,names.driver,19);
-    label(427,'CREW EVENT',13,'#9cdef2');
-    label(463,names.crew,19);
+    label(174,'PRO SEASON '+pro.season+'  //  ROUND '+(round+1)+' OF 8',18,'#f6d397');
+    label(266,'DRIVER EVENT',13,'#9cdef2');
+    label(304,names.driver,19);
+    label(444,'CREW EVENT',13,'#9cdef2');
+    label(482,names.crew,19);
     const ruleText=rule=>[
       String(rule.format||'DUEL').replaceAll('_',' '),
       rule.drivetrain||'ANY DRIVETRAIN',
       Number.isFinite(rule.maxPowerKW)?rule.maxPowerKW+' KW MAX':'OPEN POWER',
       rule.noNos?'NOS OFF':Number.isFinite(rule.maxNosShots)?rule.maxNosShots+' NOS SHOTS MAX':'NOS PERMITTED',
     ].join('  ·  ');
-    label(398,ruleText(events.driver),11,'#a9c1d3');
-    label(497,ruleText(events.crew),11,'#a9c1d3');
-    label(560,round===pro.calendar.round?'CURRENT ROUND':round<pro.calendar.round?
-      'COMPLETED ROUND':'UPCOMING ROUND',13,'#f3cb8b');
-    const button=add(this.add.rectangle(780,608,238,42,0x19445a,1)
+    label(349,ruleText(events.driver),11,'#a9c1d3');
+    label(527,ruleText(events.crew),11,'#a9c1d3');
+    
+    const button=add(this.add.rectangle(780,654,238,48,0x19445a,1)
       .setStrokeStyle(2,0x82dafa).setDepth(depth+3).setInteractive({useHandCursor:true}));
-    label(608,'CLOSE',13);
-    backdrop.on('pointerdown',close);
+    const closeLabel=label(654,'CLOSE',16);
+    closeLabel.setDepth(depth+4);
+    closeLabel.setInteractive({useHandCursor:true}).on('pointerdown',close);
+    // The backdrop blocks the underlying screen but does not dismiss this dialog.
     button.on('pointerdown',close);
   }
 
@@ -3481,7 +3488,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       [
         { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
+        { characterId: 'daichiSakamoto', pose: 'normal', assetKey: 'proSeasonDaichiMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
         { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1165, feetY: STAGE.y + 685, height: 320, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {

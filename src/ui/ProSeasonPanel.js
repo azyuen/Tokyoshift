@@ -85,9 +85,9 @@ export function drawSeasonHeader(s,stage) {
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
     const round=Math.min(8,Math.max(1,c.calendar.round+1));
     // Qualification card: fixed to the mid-left, clear of event cards.
-    const qx=stage.x+4,qy=stage.y+282,qw=540,qh=238;
+    const qx=stage.x-2,qy=stage.y+282,qw=540,qh=238;
     s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x172436,.75)
-      .setStrokeStyle(2,0x8197ac,1).setDepth(37));
+      .setStrokeStyle(2,0x28465a,1).setDepth(37));
     text(s,qx+24,qy+10,'🏆  TOKYO CHAMPIONSHIP QUALIFICATION',21,
       {...race,strokeThickness:1,color:'#f4e8cf'});
     const qualification=(yy,label,points,required)=>{
@@ -107,11 +107,11 @@ export function drawSeasonHeader(s,stage) {
     text(s,qx+22,qy+145,'ROUND '+round+' / 8',25,
       {...race,strokeThickness:2});
     for(let i=0;i<8;i++){
-      const bx=qx+47+i*62,by=qy+211;
-      const current=i===round-1,completed=i<round;
+      const bx=qx+47+i*62,by=qy+205;
+      const current=i===round-1,completed=i<round-1;
       const hit=s.addContent(s.add.rectangle(bx,by,57,38,
-        current?0x254761:completed?0x21394b:0x172436,.96)
-        .setStrokeStyle(current?2:1,current?0x8fcde8:0x8197ac)
+        current?0xa94e1f:completed?0x7d2631:0x172436,.96)
+        .setStrokeStyle(current?2:1,current?0xf6a251:completed?0xd65a66:0x8197ac)
         .setDepth(38).setInteractive({useHandCursor:true}));
       text(s,bx,by,'R'+(i+1),18,{...race,strokeThickness:1,
         color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
@@ -120,7 +120,7 @@ export function drawSeasonHeader(s,stage) {
     // Top-right personal Pro dashboard, with a cropped face portrait.
     const rx=stage.x+1126,ry=stage.y-67,rw=364,rh=212;
     const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
-      0x172436,.75).setStrokeStyle(2,0x8197ac).setDepth(37)
+      0x172436,.75).setStrokeStyle(2,0x28465a).setDepth(37)
       .setInteractive({useHandCursor:true}));
     const faceX=rx+82,faceY=ry+107,faceW=142,faceH=146;
     // No separate portrait frame: face cutout sits directly on the dashboard.
