@@ -1691,6 +1691,10 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildHeader() {
+    if(this.proGarageMode){
+      addSettingsButton(this,925,35);
+      return;
+    }
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
@@ -2031,7 +2035,7 @@ export default class GarageScene extends Phaser.Scene {
     this.add.text(
       STRIP.x + 18,
       STRIP.y + 7,
-      this.crewMode ? 'CREW LOAN GARAGE' : this.proGarageMode ? 'PADDOCK // 04 AWD · 05 RWD · 06 FF' : 'MY GARAGE',
+      this.crewMode ? 'CREW LOAN GARAGE' : this.proGarageMode ? 'PRO PADDOCK' : 'MY GARAGE',
       {
         fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
       }
@@ -4594,7 +4598,7 @@ export default class GarageScene extends Phaser.Scene {
       }
       const top=STAGE.y+18;
       this.proGarageBayObjects.push(this.add.text(x,top,
-        'BAY '+bay.number+'  //  '+(bay.drive==='FWD'?'FF':bay.drive),{
+        'BAY '+bay.number,{
           fontFamily:PIXEL_FONT,fontSize:'9px',color:'#f3d39f',
           backgroundColor:'#09131b',padding:{x:6,y:4},
         }).setOrigin(.5,0).setDepth(19));
