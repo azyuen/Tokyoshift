@@ -267,12 +267,17 @@ export function getCrewRecruitmentChallengeRules(
 
   return {
     playerDifficulty: difficulty,
-    // Recruitment driver skill: Easy Rookie, Standard Expert, Hard Expert.
-    // Factory-stock car and exact permanent stock class eligibility.
-    aiTier: difficulty === 'HARD' ? 'EXPERT'
-      : difficulty === 'STANDARD' ? 'EXPERT' : 'ROOKIE',
-    aiRating: difficulty === 'HARD' ? 4
-      : difficulty === 'STANDARD' ? 4 : 2,
+    // Recruitment is always a stock-class duel, not a vehicle-stat boost.
+    // Late-region standard recruits and all Hard recruits drive at Elite
+    // level; early Standard recruits remain Expert so progression is fair.
+    aiTier: difficulty === 'EASY' ? 'ROOKIE'
+      : difficulty === 'HARD' ||
+        ['DAIKOKU', 'SHINJUKU'].includes(String(challenge?.regionId || '').toUpperCase())
+        ? 'ELITE' : 'EXPERT',
+    aiRating: difficulty === 'EASY' ? 2
+      : difficulty === 'HARD' ||
+        ['DAIKOKU', 'SHINJUKU'].includes(String(challenge?.regionId || '').toUpperCase())
+        ? 5 : 4,
     carRule: 'STOCK',
     powerClass,
     powerClassLabel: powerClass.label,
