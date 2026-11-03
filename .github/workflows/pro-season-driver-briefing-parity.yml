@@ -1,0 +1,36 @@
+name: Pro Season driver briefing parity
+on:
+  pull_request:
+    paths:
+      - 'src/ui/ProSeasonDriverBriefing.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'tests/pro-season-driver-briefing-parity-20261104.mjs'
+      - '.github/workflows/pro-season-driver-briefing-parity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/ProSeasonDriverBriefing.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'tests/pro-season-driver-briefing-parity-20261104.mjs'
+      - '.github/workflows/pro-season-driver-briefing-parity.yml'
+jobs:
+  briefing-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify edited JavaScript modules
+        run: |
+          node --check src/ui/ProSeasonDriverBriefing.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
+      - name: Confirm Open Circuit visual parity
+        run: |
+          node --test tests/pro-season-driver-briefing-parity-20261104.mjs tests/pro-briefing-layout-r610.mjs
