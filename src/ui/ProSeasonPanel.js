@@ -77,29 +77,15 @@ export function drawSeasonHeader(s,stage) {
   if (!openCircuit) {
     const race = {fontFamily:'"Exo 2", sans-serif',fontStyle:'900 italic',
       stroke:'#07111d',strokeThickness:4};
-    // Full-screen Pro Season presentation, matched to the reference mockup.
-    text(s,x+38,20,'PRO SEASON',54,race);
-    const seasonTag=s.addContent(s.add.rectangle(x+110,133,210,44,0xa9162c,.96)
-      .setStrokeStyle(2,0xef5962).setDepth(38));
-    text(s,x+21,109,'SEASON '+c.season,25,{...race,strokeThickness:2})
+    // One left-hand axis for title, season, qualification and round progress.
+    const left=x+8;
+    text(s,left,22,'PRO SEASON',54,race);
+    text(s,left,94,'SEASON '+c.season,28,{...race,strokeThickness:2})
       .setInteractive({useHandCursor:true})
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-    s.addContent(s.add.rectangle(x+351,133,244,44,0x0d1b2d,.96)
-      .setStrokeStyle(2,0x9cb7ca).setDepth(38));
-    text(s,x+243,109,'ROUND '+Math.min(8,c.calendar.round+1)+' / 8',25,
-      {...race,strokeThickness:2});
     const round=Math.min(8,Math.max(1,c.calendar.round+1));
-    for(let i=0;i<8;i++){
-      const bx=x+30+i*66,by=185;
-      const current=i===round-1,completed=i<round;
-      s.addContent(s.add.rectangle(bx,by,59,40,current?0xc91834:
-        completed?0x9d4b27:0x1a2b40,.96)
-        .setStrokeStyle(current?3:2,current?0xff7584:0x8a9aab).setDepth(38));
-      text(s,bx,by,'R'+(i+1),19,{...race,strokeThickness:1,
-        color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
-    }
     // Qualification card: fixed to the mid-left, clear of event cards.
-    const qx=stage.x+24,qy=stage.y+334,qw=535,qh=138;
+    const qx=left,qy=stage.y+207,qw=535,qh=138;
     s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x081523,.92)
       .setStrokeStyle(2,0x9eafbf).setDepth(37));
     text(s,qx+24,qy+10,'🏆  TOKYO CHAMPIONSHIP QUALIFICATION',21,
@@ -117,14 +103,27 @@ export function drawSeasonHeader(s,stage) {
     };
     qualification(55,'DRIVER',q.driver,q.driverRequired);
     qualification(97,'CREW',q.crew,q.crewRequired);
+    // Round controls open a single-round preview, without changing progress.
+    text(s,left,qy+qh+15,'ROUND '+round+' / 8',26,
+      {...race,strokeThickness:2});
+    for(let i=0;i<8;i++){
+      const bx=left+30+i*64,by=qy+qh+88;
+      const current=i===round-1,completed=i<round;
+      const hit=s.addContent(s.add.rectangle(bx,by,57,38,
+        current?0xc91834:completed?0x995126:0x1a2b40,.96)
+        .setStrokeStyle(current?3:2,current?0xff7584:0x8a9aab)
+        .setDepth(38).setInteractive({useHandCursor:true}));
+      text(s,bx,by,'R'+(i+1),18,{...race,strokeThickness:1,
+        color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
+      hit.on('pointerdown',()=>s.showProSeasonRoundPreview(i));
+    }
     // Top-right personal Pro dashboard, with a cropped face portrait.
     const rx=stage.x+1126,ry=stage.y-67,rw=364,rh=212;
     const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
       0x081523,.95).setStrokeStyle(2,0x9aafc1).setDepth(37)
       .setInteractive({useHandCursor:true}));
     const faceX=rx+83,faceY=ry+93,faceW=142,faceH=153;
-    s.addContent(s.add.rectangle(faceX,faceY,faceW,faceH,0x1c2e40,1)
-      .setStrokeStyle(2,0xc6a06a).setDepth(38));
+    // No separate portrait frame: face cutout sits directly on the dashboard.
     const playerId=s.registry.get('playerCharacterId')||'renMizuno';
     const asset=getCharacterVisualAsset(playerId,'idle',{
       playerCharacterId:playerId,proCircuit:true});
@@ -133,12 +132,12 @@ export function drawSeasonHeader(s,stage) {
       const sw=source.width,sh=source.height;
       // A source-independent head-and-shoulders crop: keep the face visible
       // even when the full-body source sprite has a different canvas height.
-      const cropW=Math.max(1,Math.floor(sw*.78));
-      const cropH=Math.max(1,Math.floor(sh*.39));
-      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.04);
+      const cropW=Math.max(1,Math.floor(sw*.52));
+      const cropH=Math.max(1,Math.floor(sh*.21));
+      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.035);
       const portrait=s.addContent(s.add.image(faceX,faceY,asset.key)
         .setDepth(39).setCrop(cx,cy,cropW,cropH));
-      portrait.setDisplaySize(faceW-8,faceH-8);
+      portrait.setDisplaySize(faceW+8,faceH+4);
     }
     text(s,rx+164,ry+14,'PRO DRIVER',27,
       {...race,color:'#f4dcac',strokeThickness:1});
@@ -148,8 +147,8 @@ export function drawSeasonHeader(s,stage) {
       {...race,strokeThickness:1});
     text(s,rx+164,ry+137,'CREW     #'+(team?.seed||'—'),20,
       {...race,strokeThickness:1});
-    text(s,rx+140,ry+179,'FULL RANKINGS  ▼',17,
-      {...race,color:'#9de8f4',strokeThickness:1});
+    text(s,rx+rw/2,ry+179,'FULL RANKINGS  ▼',17,
+      {...race,color:'#9de8f4',strokeThickness:1}).setOrigin(.5,0);
     card.on('pointerdown',()=>showProRankings(s));
     if(s.proError)text(s,x,qy-45,s.proError,17,
       {color:'#ef939b',wordWrap:{width:520}});

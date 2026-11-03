@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r767';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261103-r768';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -3105,6 +3105,46 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // Display names are round-specific, but the professional race IDs, rules,
   // points and save records remain unchanged. The plain Sprint/Open names
   // continue to apply exclusively to the rotating Open Circuit.
+  // Round-by-round pop-up shared by all eight square selectors.
+  showProSeasonRoundPreview(index) {
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const round=Math.max(0,Math.min(7,Math.floor(Number(index)||0)));
+    const events=getProfessionalRoundEvents(round,pro);
+    const names=this.getProSeasonEventNames(round,pro);
+    const objects=[];
+    const add=obj=>{objects.push(obj);return obj;};
+    const depth=180;
+    const close=()=>objects.forEach(obj=>obj?.destroy?.());
+    const backdrop=add(this.add.rectangle(780,420,1560,840,0x020810,.82)
+      .setDepth(depth).setInteractive());
+    add(this.add.rectangle(780,420,960,458,0x0a192a,.98)
+      .setStrokeStyle(2,0x8ab5cf).setDepth(depth+1));
+    const label=(y,value,size,color='#edf4fc')=>add(this.add.text(780,y,value,{
+      fontFamily:PIXEL_FONT,fontSize:size+'px',color,align:'center',
+      wordWrap:{width:880},
+    }).setOrigin(.5).setDepth(depth+2));
+    label(242,'PRO SEASON '+pro.season+'  //  ROUND '+(round+1)+' OF 8',18,'#f6d397');
+    label(328,'DRIVER EVENT',13,'#9cdef2');
+    label(364,names.driver,19);
+    label(427,'CREW EVENT',13,'#9cdef2');
+    label(463,names.crew,19);
+    const ruleText=rule=>[
+      String(rule.format||'DUEL').replaceAll('_',' '),
+      rule.drivetrain||'ANY DRIVETRAIN',
+      Number.isFinite(rule.maxPowerKW)?rule.maxPowerKW+' KW MAX':'OPEN POWER',
+      rule.noNos?'NOS OFF':Number.isFinite(rule.maxNosShots)?rule.maxNosShots+' NOS SHOTS MAX':'NOS PERMITTED',
+    ].join('  ·  ');
+    label(398,ruleText(events.driver),11,'#a9c1d3');
+    label(497,ruleText(events.crew),11,'#a9c1d3');
+    label(560,round===pro.calendar.round?'CURRENT ROUND':round<pro.calendar.round?
+      'COMPLETED ROUND':'UPCOMING ROUND',13,'#f3cb8b');
+    const button=add(this.add.rectangle(780,608,238,42,0x19445a,1)
+      .setStrokeStyle(2,0x82dafa).setDepth(depth+3).setInteractive({useHandCursor:true}));
+    label(608,'CLOSE',13);
+    backdrop.on('pointerdown',close);
+    button.on('pointerdown',close);
+  }
+
   showProSeasonCalendarPreview() {
     const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
     const overlay=[];
@@ -3387,10 +3427,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!isOpen && circuitOpen) {
       const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
       [
-        { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 515, height: 218, depth: 20 },
-        { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 515, height: 223, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 972, feetY: STAGE.y + 515, height: 242, depth: 20 },
-        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1365, feetY: STAGE.y + 515, height: 225, depth: 19 },
+        { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
+        { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
+        { characterId: 'daichiSakamoto', pose: 'normal', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
+        { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1365, feetY: STAGE.y + 728, height: 356, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
       [
@@ -3487,16 +3527,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
     showProSeasonAction(this,SIDE);
-    if(!isOpen&&circuitOpen){
-      const x=SIDE.x+SIDE.w/2,y=SIDE.y+466;
-      const preview=this.addContent(this.add.rectangle(x,y,SIDE.w-36,40,
-        0x123142,1).setStrokeStyle(2,0x66c4e8).setDepth(38)
-        .setInteractive({useHandCursor:true}));
-      this.addContent(this.add.text(x,y,'VIEW ALL 8 ROUNDS',{
-        fontFamily:PIXEL_FONT,fontSize:'8px',color:'#e8f7ff',
-      }).setOrigin(.5).setDepth(39));
-      preview.on('pointerdown',()=>this.showProSeasonCalendarPreview());
-    }
+
   }
 
   enterProfessionalTimedEvent(event) {
