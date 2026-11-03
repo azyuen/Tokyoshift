@@ -8,6 +8,9 @@ import { getProDriverDrivetrain,getProfessionalCarEligibility,
   getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
+import { selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r741';
+import { driverOpponentAdvice } from '../data/proDriverBriefing.js?v=20261030-r740';
+import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot, renderPagedStewardBriefing } from './ProBriefingChrome.js?v=20261020-r613';
 
 const PIXEL='"Silkscreen", monospace';
@@ -19,6 +22,19 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const initial=normaliseProCircuitState(s.registry.get('proCircuit'));
   const resume=Boolean(options.resume);
   const paidState=s.registry.get('competitionState');
+  const adviceKey='s'+initial.season+':r'+initial.calendar.round+':'+event.id;
+  const adviceUsed=()=>Boolean((s.registry.get('proCircuit')||{})
+    .seasonDriverAdviceUsed?.[adviceKey]);
+  const opponents=selectProDuelOpponents(initial,{
+    eventId:event.id,
+    entryOrdinal:Number(initial.calendar.round||0)+8*Math.max(0,Number(initial.season||1)-1),
+    count:event.opponentRatings?.length||3,
+  });
+  const opponent=()=>{
+    const current=s.registry.get('competitionState');
+    const heat=resume?current?.rounds?.[current.roundIndex]:null;
+    return heat?{name:heat.opponentName,carId:heat.carId}:opponents[0]||null;
+  };
   const owned=s.registry.get('ownedCarIds')||[];
   // Roster-less historical seasons remain playable. Their legacy choice
   // was any owned personal car; display the selected one first.
@@ -168,9 +184,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     const pts=[{x:77,y:643},{x:706,y:643},{x:680,y:807},{x:52,y:807}];
     panel.fillStyle(0x071728,.92);panel.fillPoints(pts,true);
     panel.lineStyle(3,0x35d6ff,1);panel.strokePoints(pts,true);
-    label(89,652,'YOUR REGISTERED CAR',24,'#35d6ff');
-    label(89,687,selected?(cars[selected]?.shortName||selected):'NONE SELECTED',21,'#ffffff');
-    label(89,721,spec,15,'#f2d4a5',{wrap:585});
+    label(89,652,'NEXT OPPONENT',24,'#35d6ff');
+    label(89,687,opponent()?.name||'PRO DRIVER',21,'#ffffff');
+    label(89,721,'YOUR CAR // '+(selected?(cars[selected]?.shortName||selected):'SELECT IN PADDOCK'),15,'#f2d4a5',{wrap:585});
     label(89,771,'SCRUTINEERING // '+(check.eligible?'PASSED':
       check.reasons.slice(0,2).join(' / ')),15,
       check.eligible?'#96eac7':'#ffb5b9',{wrap:585});
@@ -184,7 +200,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
     button(1070,779,246,54,'BACK TO SEASON',close);
     button(1368,779,246,54,canStart?
-      (resume?'RESUME NEXT HEAT':'GO TO GRID // '+money(event.entryFee)):
+      (resume?'RESUME NEXT HEAT':'GO TO GRID // SPONSORED'):
       'SELECT / SET UP CAR',proceedToGrid,canStart);
   }
   // Same two-page steward and cream advice bubble used by Open Circuit.
@@ -209,7 +225,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
           ['POWER LIMIT',limit==null?'OPEN':limit+' KW MAX'],
           ['NOS',rules.noNos?'PROHIBITED':
             Number.isFinite(rules.maxNosShots)?rules.maxNosShots+' SHOTS MAX':'ALLOWED'],
-          ['ENTRY',money(event.entryFee)],
+          ['ENTRY','SPONSORED // FREE'],
           ['PRIZE',money(event.prizeCash)],
           ['STATUS',check.eligible?'ELIGIBLE':check.reasons.join(' / '),
             check.eligible?'#81efc4':'#ffb6ba'],
