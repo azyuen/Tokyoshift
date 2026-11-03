@@ -1906,7 +1906,8 @@ export default class GarageScene extends Phaser.Scene {
       // A factory-installed nitrous system must not be overwritten by a
       // second aftermarket kit.
       !(Number(car?.nosPower || 0) > 0 &&
-        Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0));
+        Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0) &&
+      !state.nosInstalled);
   }
 
   canSelectedCollectorAccessNos() {
@@ -6782,8 +6783,8 @@ export default class GarageScene extends Phaser.Scene {
         const current=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
         const fitted=fittedNos(current);
         this.secondaryNosSwitchLabel?.setText(
-          !fitted?'NOS MASTER // NO KIT':
-          current.nosEnabled===false?'NOS MASTER // OFF':'NOS MASTER // ON');
+          !fitted?'NOS SYSTEM // NO KIT':
+          current.nosEnabled===false?'NOS SYSTEM // OFF':'NOS SYSTEM // ON');
         toggle.setFillStyle(fitted?0x162538:0x111318,1);
       };
       toggle.on('pointerdown',()=>{
