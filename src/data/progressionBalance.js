@@ -81,10 +81,13 @@ export const PROGRESSION_BALANCE = {
         wildcardBuildRatings: [5],
       },
       ELITE: {
-        bandWeights: { comparable: 0.35, weaker: 0.03, stronger: 0.47, wildcard: 0.15 },
-        standingComparableTarget: 1.11,
-        rollingComparableTarget: 1.07,
-        normalBuildRatings: [3, 4, 5],
+        // Shinjuku and the other endgame venues should not routinely offer
+        // stage-3 cars against a well-developed player build. Vehicle physics
+        // remain identical for the player and all opponents.
+        bandWeights: { comparable: 0.27, weaker: 0.01, stronger: 0.55, wildcard: 0.17 },
+        standingComparableTarget: 1.13,
+        rollingComparableTarget: 1.09,
+        normalBuildRatings: [4, 5],
         wildcardBuildRatings: [5],
       },
     },
