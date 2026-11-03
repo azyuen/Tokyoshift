@@ -85,21 +85,21 @@ export function drawSeasonHeader(s,stage) {
       .on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
     const round=Math.min(8,Math.max(1,c.calendar.round+1));
     // Qualification card: fixed to the mid-left, clear of event cards.
-    const qx=stage.x+12,qy=stage.y+320,qw=540,qh=238;
+    const qx=stage.x+12,qy=stage.y+298,qw=540,qh=238;
     s.addContent(s.add.rectangle(qx+qw/2,qy+qh/2,qw,qh,0x172436,.65)
       .setStrokeStyle(2,0x8197ac,.8).setDepth(37));
     text(s,qx+24,qy+10,'🏆  TOKYO CHAMPIONSHIP QUALIFICATION',21,
       {...race,strokeThickness:1,color:'#f4e8cf'});
     const qualification=(yy,label,points,required)=>{
       text(s,qx+23,qy+yy,label,20,{...race,strokeThickness:1});
-      const bx=qx+124,by=qy+yy+8,bw=256;
+      const bx=qx+124,by=qy+yy+8,bw=Math.round(256*required/60);
       s.addContent(s.add.rectangle(bx+bw/2,by+6,bw,17,0x132338,1)
         .setStrokeStyle(2,0x8c9cad).setDepth(38));
       if(points>0)s.addContent(s.add.rectangle(bx,by-2,
         bw*Math.min(1,Math.max(0,points/required)),17,0xf18c34,1)
         .setOrigin(0,0).setDepth(39));
-      text(s,qx+qw-17,qy+yy,points+' / '+required,20,
-        {...race,color:'#f4d69c',strokeThickness:1}).setOrigin(1,0);
+      text(s,bx+bw+13,qy+yy,points+' / '+required,20,
+        {...race,color:'#f4d69c',strokeThickness:1});
     };
     qualification(55,'DRIVER',q.driver,q.driverRequired);
     qualification(97,'CREW',q.crew,q.crewRequired);
@@ -957,7 +957,7 @@ export function showProSeasonAction(s,side){
     s.registry.get('competitionState')?.active);
   // All three Pro Circuit actions use 40px-high buttons centred at offsets
   // 574, 624 and 674. The 50px centre step gives equal 10px vertical gaps.
-  const x=side.x+side.w/2,y=side.y+(open?624:636);
+  const x=side.x+side.w/2,y=side.y+(open?624:626);
   const available=!locked;
   const label=open?(c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON'):'WITHDRAW / FORFEIT SEASON';
   const b=s.addContent(s.add.rectangle(x,y,side.w-36,40,
