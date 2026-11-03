@@ -283,8 +283,8 @@ export default class GarageScene extends Phaser.Scene {
     const localCars = this.crewMode
       ? crewCars
       : this.proGarageMode
-        ? getProGarageBayCars(normaliseProCircuitState(this.registry.get('proCircuit')))
-          .filter(id=>ownedCarIds.includes(id)&&cars[id])
+        ? getProGarageBayCars(this.registry.get('proCircuit'),ownedCarIds)
+          .map(bay=>bay.carId).filter(id=>id&&cars[id])
         : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
           .filter(id => !cars[id]?.crewLoan);
     const carStates = this.registry.get('carStates') || {};
@@ -4650,11 +4650,11 @@ export default class GarageScene extends Phaser.Scene {
   selectCar(id, { remember = true } = {}) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
     if (
-      !this.crewMode &&
+      !this.crewMode && !this.proGarageMode &&
       this.carGarageLocations?.[id] !== this.getActiveWorkshop().id
     ) return;
     if (
-      this.crewMode &&
+      (this.crewMode || this.proGarageMode) &&
       !this.getCurrentWorkshopCars().includes(id)
     ) return;
 
