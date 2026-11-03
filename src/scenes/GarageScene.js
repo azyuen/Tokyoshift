@@ -4219,7 +4219,7 @@ export default class GarageScene extends Phaser.Scene {
     button.on('pointerdown', () => {
       if(this.proGarageMode){
         this.registry.set('selectedCarId',this.selectedCarId);
-        if(this.selectedCarId)choosePersonalCar(this.registry,this.selectedCarId);
+        if(this.selectedCarId&&!this.crewProPaddockMode)choosePersonalCar(this.registry,this.selectedCarId);
         this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
         this.saveProfile();
         this.scene.start('CentralTokyoScene',{
