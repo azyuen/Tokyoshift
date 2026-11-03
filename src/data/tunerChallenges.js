@@ -169,7 +169,9 @@ const REGION_DRIVER_RATINGS = Object.freeze({
   SHIBUYA: [3, 3, 3, 4, 4, 4, 4],
   YOKOHAMA: [4, 4, 4, 4, 4, 5, 5],
   DAIKOKU: [4, 4, 4, 4, 4, 5, 5],
-  SHINJUKU: [4, 4, 4, 5, 5, 5, 5],
+  // Final-region qualifying heats should be Elite driving throughout,
+  // not three Expert warm-up wins before the demanding last four rounds.
+  SHINJUKU: [5, 5, 5, 5, 5, 5, 5],
 });
 
 const REGION_BUILD_ERAS = Object.freeze({
