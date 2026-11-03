@@ -49,7 +49,7 @@ test('Easy crew AI is substantially slower at reaction, launch and shifting than
   // Actual RaceScene executes the same shared physics, just changed driver
   // skills and existing Easy-mode AI assist.
   assert.match(race,/rivalAI = applyDifficultyToRivalAi\(/);
-  assert.match(race,/this\\.raceMode === 'CREW_RECRUIT'/);
+  assert.match(race,/this\.raceMode === 'CREW_RECRUIT'/);
 });
 
 test('Standard recruitment uses Expert 4',()=>{
@@ -84,7 +84,7 @@ test('late-region Standard and all Hard recruits drive Elite without artificial 
   for(const key of ['reactionSkill','launchSkill','shiftSkill','aggression']){
     assert.ok(newHard[key]>=expert[key],key+' Elite should retain skill advantage');
   }
-  assert.match(race,/this\\.opponentEncounterRating < 5/);
+  assert.match(race,/this\.opponentEncounterRating < 5/);
 });
 
 test('All three modes preserve stock matching and vehicle power class',()=>{
