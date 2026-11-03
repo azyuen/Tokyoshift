@@ -10,6 +10,7 @@ import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741'
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 import { selectProDuelOpponents } from '../data/proDragDuel.js?v=20261030-r741';
 import { driverOpponentAdvice } from '../data/proDriverBriefing.js?v=20261030-r740';
+import { getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot, renderPagedStewardBriefing } from './ProBriefingChrome.js?v=20261020-r613';
 
@@ -23,8 +24,8 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const resume=Boolean(options.resume);
   const paidState=s.registry.get('competitionState');
   const adviceKey='s'+initial.season+':r'+initial.calendar.round+':'+event.id;
-  const adviceUsed=()=>Boolean((s.registry.get('proCircuit')||{})
-    .seasonDriverAdviceUsed?.[adviceKey]);
+  const savedAdvice=()=>((s.registry.get('proCircuit')||{}).seasonDriverAdviceUsed||{})[adviceKey];
+  const adviceUsed=()=>Boolean(savedAdvice());
   const opponents=selectProDuelOpponents(initial,{
     eventId:event.id,
     entryOrdinal:Number(initial.calendar.round||0)+8*Math.max(0,Number(initial.season||1)-1),
@@ -33,7 +34,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const opponent=()=>{
     const current=s.registry.get('competitionState');
     const heat=resume?current?.rounds?.[current.roundIndex]:null;
-    return heat?{name:heat.opponentName,carId:heat.carId}:opponents[0]||null;
+    return heat?{...heat,name:heat.opponentName,carId:heat.carId}:opponents[0]||null;
   };
   const owned=s.registry.get('ownedCarIds')||[];
   // Roster-less historical seasons remain playable. Their legacy choice
@@ -104,6 +105,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   ];
   const playerAsset=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno','idle',{proCircuit:true});
   if(playerAsset?.key&&playerAsset.path)assets.push([playerAsset.key,playerAsset.path]);
+  const preview=opponent();
+  const portrait=preview?.characterId?getCharacterVisualAsset(preview.characterId,'idle',{proCircuit:true,rivalContext:true}):null;
+  if(portrait?.key&&portrait.path)assets.push([portrait.key,portrait.path]);
+  const helmet=preview&&!portrait?getProCircuitGenericDriverAsset(0):null;
+  if(helmet?.path)assets.push(['seasonOpponentHelmet',helmet.path]);
   let pending=0;
   for(const [key,path] of assets)if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));pending++;
@@ -111,6 +117,11 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   const selectedModels=Object.fromEntries(roster.filter(id=>cars[id]).map(id=>[getBaseCarId(id),cars[id]]));
   pending+=preloadCarAppearanceAssets(s,selectedModels,'20261019-r598');
   for(const id of roster)if(cars[id])pending+=preloadCarWheel(s,cars[id],drafts[id]||{});
+  const rivalCarId=preview?.carId||(event.opponentCars||[])[0];
+  if(rivalCarId&&cars[rivalCarId]){
+    pending+=preloadCarAppearanceAssets(s,{[getBaseCarId(rivalCarId)]:cars[rivalCarId]},'20261019-r598');
+    pending+=preloadCarWheel(s,cars[rivalCarId],preview?.opponentBuildState||{});
+  }
   function proceedToGrid(){
     const now=normaliseProCircuitState(s.registry.get('proCircuit'));
     const latest=s.getProDragEvents?.().find(e=>e.id===event.id&&
@@ -202,7 +213,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
           try{
             saveProTransaction(s.registry,{proCircuit:{
               ...circuit,seasonDriverAdviceUsed:{
-                ...(circuit.seasonDriverAdviceUsed||{}),[adviceKey]:true,
+                ...(circuit.seasonDriverAdviceUsed||{}),[adviceKey]:driverOpponentAdvice(
+                (opponent()?.carId&&cars[opponent().carId])||{},
+                {name:opponent()?.name},selected?cars[selected]||{}:{}),
               },
             }});
           }catch(error){console.warn('[Tokyo SHIFT] Advice save failed',error);return;}
@@ -258,8 +271,9 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       }).setDepth(261));
       const next=opponent();
       const rivalCar=next?.carId?cars[next.carId]:null;
-      const message=next?driverOpponentAdvice(rivalCar||{},
-        {name:next.name},selected?cars[selected]||{}:{})
+      const message=typeof savedAdvice()==='string'?savedAdvice():
+        next?driverOpponentAdvice(rivalCar||{},
+          {name:next.name},selected?cars[selected]||{}:{})
         :'Check your selected car and launch setup before racing.';
       const speech=put(s.add.text(x+18,y+38,message,{
         fontFamily:BODY,fontSize:'16px',fontStyle:'600',color:'#111111',
