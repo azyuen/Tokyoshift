@@ -43,3 +43,17 @@ Baseline: `161e375` (main, R749). Scope: download reuse and startup waits. No be
 ## Remaining opportunities
 
 Measure first-time and returning startup on a real iPhone/iPad and record network transfer, time-to-profile and time-to-garage. Profile scene import graphs before introducing asynchronous scene registration. Assess lossless image alternatives for large backgrounds/characters with visual comparison; no artwork format/geometry has changed in this patch. Consider self-hosting pinned Phaser/fonts for reliable offline coverage. These are follow-up opportunities, not claimed improvements from this patch.
+
+
+## R788 mobile follow-up — 4 November 2026
+
+Reason: owners report very slow startup and intermittent crashes on older iPhones and iPads despite R749's successful image caching tests. These are plausible memory-pressure and startup-parsing symptoms; the exact crash cause requires physical-device profiling.
+
+Changes in the R788 feature branch:
+
+- Only boot, profile, character selection and station scenes are imported up front. The large Garage, Meet, Race, Central Tokyo, Dyno, Oshiage, Drag Complex and other feature scenes are loaded **on first entry** behind the existing splash, then retained as the real Phaser scene for that app session. Canonical Phaser keys and init data remain the same. This shifts scene JS download/parse out of startup, rather than removing gameplay.
+- The existing content-addressed asset cache remains intact across game revisions, but obsolete SHA-256 image revisions are deleted on worker activation in bounded batches. This reduces accumulated Cache Storage consumption on storage-constrained devices without touching user profile saves.
+- Simultaneous requests for the same cached art path/revision share one network download, digest and cache write, avoiding duplicate transient memory and bandwidth usage.
+- Baseline image/vehicle assets and approved engine/race physics are unchanged.
+
+Validation needed before production: test cold and warm launches, repeated garage/Meet/Race navigation, background tab suspension/resume and the first entry into each deferred scene in real Mobile Safari/PWA on an older iPhone and iPad. Emulated-device CI tests are not equivalent to RAM-pressure device tests. In particular check that Phaser scene replacement and concurrent asset requests survive iOS process suspension. This update makes no claim about measured performance or eliminated crashes until confirmed on hardware.

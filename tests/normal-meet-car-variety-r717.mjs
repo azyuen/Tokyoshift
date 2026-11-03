@@ -56,7 +56,7 @@ test('rival signature cars are NOT required on regular Meets, but stay in career
   assert.doesNotMatch(regular,/requiredCarId:/);
   assert.match(regular,/isMainRival: false/);
   assert.match(regular,/MEET_ROSTER_VERSION/);
-  assert.match(meet,/const MEET_ROSTER_VERSION = 'R717'/);
+  assert.match(meet,/const MEET_ROSTER_VERSION = 'R788'/);
   assert.match(read('src/data/tunerChallenges.js'),/getRegionalRivalSignatureCarId\(key, characterId, round\.carId\)/);
   assert.match(read('src/data/crewSystem.js'),/createStockOpponentState\(baseCarId\)/);
   assert.match(read('src/data/crewSystem.js'),/buildTunerTeamChallengeRounds\(key, ''\)/);
@@ -88,14 +88,14 @@ test('physical matcher still selects a real developed rival from the bounded sho
   assert.equal(signature?.carId,'rx8');
 });
 
-test('R717 modifies only normal Meet runtime and does not change R716 Showdown',()=>{
-  assert.equal(JSON.parse(read('version.json')).build,'R717');
-  assert.match(read('index.html'),/id="build-stamp">R717/);
-  assert.match(read('index.html'),/main\.js\?v=20261029-r717/);
-  assert.match(read('src/main.js'),/MeetScene\.js\?v=20261029-r717/);
-  assert.match(read('sw.js'),/const BUILD = 'R717'/);
-  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
-  assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\.js\?v=20261029-r716b/);
+test('R788 retains normal Meet variety while keeping Showdown mechanics separate',()=>{
+  assert.equal(JSON.parse(read('version.json')).build,'R788');
+  assert.match(read('index.html'),/id="build-stamp">R788/);
+  assert.match(read('index.html'),/main\.js\?v=20261104-r788/);
+  assert.match(read('src/main.js'),/MeetScene\.js\?v=20261104-r788/);
+  assert.match(read('sw.js'),/const BUILD = 'R788'/);
+  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-content-v1-'/);
+  assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\.js\?v=20261104-r788/);
   const showdown=read('src/data/streetShowdowns.js');
   assert.match(showdown,/export function createStreetShowdownRounds\(/);
   assert.doesNotMatch(showdown,/normalMeetCarSelection/);

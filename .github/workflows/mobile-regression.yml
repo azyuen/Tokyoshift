@@ -1,12 +1,16 @@
 name: Mobile viewport regression
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
     paths:
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/ui/ProSeasonPanel.js'
       - 'src/data/tokyoChampionship.js'
       - 'src/main.js'
+      - 'src/ui/DeferredScene.js'
+      - 'tests/mobile-deferred-scenes-r788.mjs'
       - 'src/scenes/CentralTokyoScene.js'
       - 'index.html'
       - 'tests/mobile-regression.mjs'
@@ -25,6 +29,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Check relative module import integrity
         run: node --test tests/startup-import-integrity-r508.mjs
+      - name: Verify lazy Phaser scene registration and first-entry transition
+        run: node --test tests/mobile-deferred-scenes-r788.mjs
       - name: Validate Issue 01 magazine images and spreads
         run: node --test tests/magazine-issue01-r486.mjs
       - name: Start local web server

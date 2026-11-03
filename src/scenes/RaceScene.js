@@ -758,9 +758,11 @@ export default class RaceScene extends Phaser.Scene {
       : { ...baseRivalAI };
 
     if (!this.isRollingStart && !this.isTutorial &&
-        !(this.raceMode === 'CREW_RECRUIT' && this.playerDifficulty === 'STANDARD')) {
-      // Standard crew recruitment uses exactly the Skilled driver's AI; a
-      // standing-start bonus would push it beyond the displayed skill tier.
+        !(this.raceMode === 'CREW_RECRUIT' &&
+          this.playerDifficulty === 'STANDARD' && this.opponentEncounterRating < 5)) {
+      // Early Standard recruits remain within Expert skill. Elite endgame
+      // recruits receive the normal standing-start preparation, without
+      // changing the actual car or physics.
       rivalAI = boostAiForStandingStart(rivalAI, this.opponentEncounterRating);
     }
 
