@@ -1903,11 +1903,7 @@ export default class GarageScene extends Phaser.Scene {
       (car?.collector || car?.tuningLocked || state.tuningLocked ||
         state.immutable || state.collector) &&
       !car?.ginzaDemo && !car?.crewLoan &&
-      // A factory-installed nitrous system must not be overwritten by a
-      // second aftermarket kit.
-      !(Number(car?.nosPower || 0) > 0 &&
-        Number(car?.nosShots || car?.nosCapacitySeconds || 0) > 0) &&
-      !state.nosInstalled);
+      true);
   }
 
   canSelectedCollectorAccessNos() {
@@ -5556,7 +5552,7 @@ export default class GarageScene extends Phaser.Scene {
         pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending
       );
       row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
-      row.detail.setText(spec.name.toUpperCase());
+      row.detail.setText(this.isSelectedCarTuningLocked() && pending===0 && !['nosKit','nitrousShot'].includes(partId) ? 'CUSTOM '+parts[partId].name.toUpperCase() : spec.name.toUpperCase());
       row.box.setStrokeStyle(
         pending > current ? 2 : 1,
         pending > current ? 0x43dfff : 0x315470,
