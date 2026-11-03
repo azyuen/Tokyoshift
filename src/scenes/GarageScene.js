@@ -1691,10 +1691,6 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildHeader() {
-    if(this.proGarageMode){
-      addSettingsButton(this,925,35);
-      return;
-    }
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
