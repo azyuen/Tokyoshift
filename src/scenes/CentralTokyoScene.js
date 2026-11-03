@@ -2038,11 +2038,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       SIDE.x + 20,
       y0 + 84,
       (room === 'new' ? 'STOCK SPEC' : listing.buildLabel) + '\n' +
-      this.marketCarClassDrive(listing.carId) + '\n' +
       car.engineModel + '\n' +
-      ratingDisplay.powerLabel + '  //  ' +
-      ratingDisplay.torqueLabel + '\n' +
-      Math.round(displaySpec.vehicleMassKg) + ' kg',
+      ratingDisplay.powerLabel + '  //  ' + ratingDisplay.torqueLabel + '\n' +
+      this.marketCarClassDrive(listing.carId) + '  //  ' + Math.round(displaySpec.vehicleMassKg) + ' kg',
       {
         fontFamily: BODY_FONT,
         fontSize: '10px',
@@ -2861,7 +2859,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const selected = vault
         ? index === this.ginzaVaultIndex
         : index + 1 === this.ginzaRoom;
-      const label = vault ? item.name + ' // ' + this.marketCarClassDrive(item.carId)
+      const label = vault ? item.name
         : index === 2 && locked ? 'PRIVATE VAULT // INVITE ONLY' : item;
       const box = this.addContent(this.add.rectangle(
         x, CARDS.y + 90, 348, 112,
