@@ -1754,6 +1754,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
   }
 
+  marketCarClassDrive(carId) {
+    const car=cars[carId]||{};
+    const meta=getCarMagazineMeta(carId)||{};
+    const drive=String(meta.drivetrain||'UNKNOWN').toUpperCase();
+    const displayDrive=drive==='FWD'?'FF':drive==='RWD'?'FR':drive;
+    return 'CLASS '+(car.stockClass||'—')+'  //  '+displayDrive;
+  }
+
   drawMarketCarRoom(room) {
     const listings = room === 'new' ? this.getNewCarListings() : this.getUsedCarListings();
     if (!listings.length) return;
@@ -1848,7 +1856,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setDepth(34));
       const pageButton = (x, title, delta) => {
         const button = this.addContent(this.add.rectangle(
-          x, CARDS.y + 23, 94, 37, 0x102838, 1
+          x, CARDS.y + 23, 76, 31, 0x102838, 1
         ).setStrokeStyle(2, 0x58afce, 1).setDepth(34)
           .setInteractive({ useHandCursor: true }));
         this.addContent(this.add.text(x, CARDS.y + 23, title, {
@@ -1856,8 +1864,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(35));
         button.on('pointerdown', () => this.browseNewCarStock(delta));
       };
-      pageButton(CARDS.x + 945, 'PREV', -1);
-      pageButton(CARDS.x + 1060, 'NEXT', 1);
+      pageButton(CARDS.x + 921, 'PREV', -1);
+      pageButton(CARDS.x + 1010, 'NEXT', 1);
     }
 
     listings.forEach((listing, index) => {
@@ -1885,7 +1893,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x - 145,
         CARDS.y + 98,
-        room === 'new' ? 'FACTORY STOCK' : listing.conditionLabel,
+        (room === 'new' ? 'FACTORY STOCK' : listing.conditionLabel) +
+          '  //  ' + this.marketCarClassDrive(listing.carId),
         {
           fontFamily: BODY_FONT,
           fontSize: '9px',
@@ -2029,6 +2038,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       SIDE.x + 20,
       y0 + 84,
       (room === 'new' ? 'STOCK SPEC' : listing.buildLabel) + '\n' +
+      this.marketCarClassDrive(listing.carId) + '\n' +
       car.engineModel + '\n' +
       ratingDisplay.powerLabel + '  //  ' +
       ratingDisplay.torqueLabel + '\n' +
@@ -2851,7 +2861,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const selected = vault
         ? index === this.ginzaVaultIndex
         : index + 1 === this.ginzaRoom;
-      const label = vault ? item.name
+      const label = vault ? item.name + ' // ' + this.marketCarClassDrive(item.carId)
         : index === 2 && locked ? 'PRIVATE VAULT // INVITE ONLY' : item;
       const box = this.addContent(this.add.rectangle(
         x, CARDS.y + 90, 348, 112,
@@ -2906,6 +2916,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }).setDepth(34));
 
     this.addContent(this.add.text(x, y0 + 110,
+      this.marketCarClassDrive(listing.carId) + '\n' +
       car.engineModel + '\n' +
       car.powerKW + ' kW  //  ' + car.torqueNm + ' Nm\n' +
       Math.round(car.vehicleMassKg) + ' kg',

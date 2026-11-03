@@ -1,4 +1,5 @@
 import { LBWK_CONVERSIONS } from '../data/lbwkConversions.js';
+import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { LBWK_CATALOG, getLbwkConversionQuote } from '../data/lbwkFullWorks.js?v=20261027-r694';
 import {recordArkonCh7TunerVisit,claimArkonCh7FirstVisitScene} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r684';
@@ -403,8 +404,11 @@ export default class TunerShopScene extends Phaser.Scene {
           selected?0x3a2d18:0x12202b,1)
           .setStrokeStyle(1,selected?0xffd889:0x627786,1)
           .setInteractive({useHandCursor:true}).setDepth(32);
-        const text=this.add.text(SIDE.x+SIDE.w/2,y,label,{
-          fontFamily:PIXEL_FONT,fontSize:'9px',
+        const spec=cars[g.id]||{};
+        const drive=String(getCarMagazineMeta(g.id)?.drivetrain||getCarMagazineMeta(g.donor)?.drivetrain||'—').toUpperCase();
+        const classDrive='CLASS '+(spec.stockClass||'—')+' // '+(drive==='RWD'?'FR':drive==='FWD'?'FF':drive);
+        const text=this.add.text(SIDE.x+SIDE.w/2,y,label+'  ·  '+classDrive,{
+          fontFamily:PIXEL_FONT,fontSize:'7px',
           color:selected?'#ffe2a3':'#dce7eb'
         }).setOrigin(0.5).setDepth(33);
         b.on('pointerdown',()=>this.selectLbwkBuild(g));
@@ -641,7 +645,8 @@ export default class TunerShopScene extends Phaser.Scene {
           fontFamily:PIXEL_FONT,fontSize:size,color
         }));
       stat(535,'SELECTED  '+(currentBuild?.shortName||'HERO BUILD'),'#ffe2a3','8px');
-      stat(558,'POWER '+Math.round(currentBuild?.powerKW||0)+' kW    TORQUE '+Math.round(currentBuild?.torqueNm||0)+' Nm','#dce7eb','8px');
+      const drive=String(getCarMagazineMeta(this.shop.heroCarId)?.drivetrain||getCarMagazineMeta(this.shop.donorCarId)?.drivetrain||'—').toUpperCase();
+      stat(558,'CLASS '+(currentBuild?.stockClass||'—')+'  //  '+(drive==='RWD'?'FR':drive==='FWD'?'FF':drive)+'  //  '+Math.round(currentBuild?.powerKW||0)+' kW','#dce7eb','8px');
       stat(583,'BUILD  '+money(cost),'#f3c77b','9px');
       if (currentIsDonor && donorEligible && !heroOwned) {
         // Keep the CTA above the sidebar's text container so touch input
