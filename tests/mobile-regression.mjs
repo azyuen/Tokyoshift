@@ -58,6 +58,21 @@ try {
     assert.equal(before.bootError,false,name+' must not show boot error');
     assert.ok(before.canvas>0,name+' must render a game canvas');
     assert.ok(before.scrollWidth<=before.viewport+2,name+' must not overflow horizontally');
+    // Verify the REAL Phaser SceneManager first-entry transition, not just the
+    // static code path. This catches a blank screen after the async module
+    // imports while a scene is still active on mobile.
+    await page.evaluate(async probe => {
+      const {makeDeferredScene}=await import('/src/ui/DeferredScene.js?v=20261104-r788');
+      const Proxy=makeDeferredScene('DeferredFixture',
+        '../../tests/fixtures/DeferredSceneFixture.mjs','DEFERRED TEST');
+      window.TOKYO_SHIFT.scene.add('DeferredFixture',Proxy,true,{probe});
+    },name);
+    await page.waitForFunction(() => window.__TOKYO_SHIFT_TEST_DEFERRED === 'ready',
+      null,{timeout:12000});
+    assert.equal(await page.evaluate(() => window.__TOKYO_SHIFT_TEST_DEFERRED_INIT?.probe),
+      name+'',name+' must forward init payload to the real deferred scene');
+    await page.evaluate(() => window.TOKYO_SHIFT.scene.remove('DeferredFixture'));
+
     // Simulate leaving the PWA and returning. A reload must not break the game.
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForTimeout(14000);
