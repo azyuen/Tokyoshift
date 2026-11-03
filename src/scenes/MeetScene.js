@@ -83,7 +83,7 @@ import {
   STREET_SHOWDOWN_CASH_ENTRY_FEES,
   getStreetShowdownCouponEntryFee,
 } from '../data/streetShowdowns.js?v=20261029-r716';
-import { getStreetShowdownScheduledOffer, getStreetShowdownScheduleSlot } from '../data/streetShowdownCouponHunt.js?v=20261029-r716b';
+import { getStreetShowdownScheduledOffer, getStreetShowdownScheduleSlot } from '../data/streetShowdownCouponHunt.js?v=20261104-r788';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261026-r687';
 import {
@@ -166,7 +166,7 @@ const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 const TAXI_TO_WORKSHOP_COST = 1000;
 // Only regular Meet rosters are re-rolled once for the R717 car-variety
 // change; existing 3-minute refresh and race-result persistence remain intact.
-const MEET_ROSTER_VERSION = 'R717';
+const MEET_ROSTER_VERSION = 'R788';
 
 const MODE_DATA = {
   SINGLE: {
@@ -2009,7 +2009,7 @@ export default class MeetScene extends Phaser.Scene {
 
     // Recruitment always uses its explicit tier instead of the recruit's
     // personal Expert/Elite profile, which could bypass the chosen difficulty.
-    // Easy = Rookie, Standard = Expert, Hard = Expert.
+    // Easy = Rookie, Standard = Expert/late-region Elite, Hard = Elite.
     const rating = recruitRules.aiRating;
     const encounterAi = getEncounterAi(rating);
 
@@ -4088,7 +4088,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R716-clock-class-coupons',
+      balanceVersion: 'R788-fair-coupon-cycle',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -4112,7 +4112,7 @@ export default class MeetScene extends Phaser.Scene {
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
       !this.isCompetitionOfferRosterValid(current) ||
-      current?.balanceVersion !== 'R716-clock-class-coupons' ||
+      current?.balanceVersion !== 'R788-fair-coupon-cycle' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
