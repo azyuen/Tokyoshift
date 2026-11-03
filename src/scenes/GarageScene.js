@@ -220,7 +220,9 @@ export default class GarageScene extends Phaser.Scene {
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
     const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
-    this.proGarageMode = Boolean(data?.proGarageMode ||
+    this.crewProPaddockMode = Boolean(data?.crewProPaddockMode);
+    this.crewProPaddockCars = this.crewProPaddockMode ? [...new Set((data?.crewProPaddockCars||[]).filter(id=>cars[id]))].slice(0,3) : [];
+    this.proGarageMode = Boolean(this.crewProPaddockMode || data?.proGarageMode ||
       data?.workshopLocationId===PRO_GARAGE_ID ||
       this.registry.get('workshopLocationId')===PRO_GARAGE_ID);
     const fallbackTier=Math.max(0,Math.min(2,Number(this.registry.get('garageTier')||0)));
@@ -228,6 +230,7 @@ export default class GarageScene extends Phaser.Scene {
     this.proGarageReturnWorkshopId=WORKSHOP_TIERS.some(w=>w.id===data?.returnWorkshopId) ?
       data.returnWorkshopId : fallbackWorkshop;
     this.proBriefingReturn= data?.proBriefingReturn || null;
+    this.proCrewPaddockReturn=data?.proCrewPaddockReturn||null;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
     this.storyArchiveChapter = data?.storyArchiveChapter || null;
     this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
@@ -283,8 +286,9 @@ export default class GarageScene extends Phaser.Scene {
     const localCars = this.crewMode
       ? crewCars
       : this.proGarageMode
-        ? getProGarageBayCars(this.registry.get('proCircuit'),ownedCarIds)
-          .map(bay=>bay.carId).filter(id=>id&&cars[id])
+        ? (this.crewProPaddockMode ? this.crewProPaddockCars :
+          getProGarageBayCars(this.registry.get('proCircuit'),ownedCarIds).map(bay=>bay.carId))
+          .filter(id=>id&&cars[id])
         : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
           .filter(id => !cars[id]?.crewLoan);
     const carStates = this.registry.get('carStates') || {};
@@ -307,7 +311,10 @@ export default class GarageScene extends Phaser.Scene {
         'assets/Garage/whiteboard_crewrecruit.png?v=20261021-r627');
     } else {
       ['day', 'night'].forEach(phase => {
-        const background = getWorkshopPhaseBackground(activeWorkshop, phase);
+        const background = this.crewProPaddockMode ? {
+          key:'tokyoCrewProGarage'+(phase==='day'?'Day':'Night'),
+          path:'assets/CentralTokyo/dragcomplex/crewgarage_'+phase+'.png',
+        } : getWorkshopPhaseBackground(activeWorkshop, phase);
         if (background?.key && background?.path) {
           queueImage(background.key, background.path + (this.proGarageMode ? '?v=20261101-r754' : '?v=20261022-r645'));
         }
@@ -854,7 +861,9 @@ export default class GarageScene extends Phaser.Scene {
   applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop) {
     if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
 
-    image.setTexture(textureKey);
+    image.setTexture(this.crewProPaddockMode ?
+      'tokyoCrewProGarage'+(this.worldPhase==='day'?'Day':'Night') : textureKey);
+    if(this.crewProPaddockMode)textureKey=image.texture.key;
     const source = this.textures.get(textureKey).getSourceImage();
     const naturalCoverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
     const isUpgradedWorkshop = Number(activeWorkshop?.tier || 0) > 0;
@@ -891,6 +900,7 @@ export default class GarageScene extends Phaser.Scene {
     );
     const textureKey = this.crewMode
       ? (nextPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : this.crewProPaddockMode ? 'tokyoCrewProGarage'+(nextPhase==='day'?'Day':'Night')
       : getWorkshopPhaseBackground(activeWorkshop, nextPhase)?.key;
 
     if (!textureKey || !this.textures.exists(textureKey)) return;
@@ -1698,7 +1708,7 @@ export default class GarageScene extends Phaser.Scene {
     this.headerTitleText = this.add.text(
       52,
       35,
-      this.crewMode ? 'CREW SPACE' : this.proGarageMode ? 'TOKYO PRO GARAGE' : 'WORKSHOP',
+      this.crewMode ? 'CREW SPACE' : this.crewProPaddockMode ? 'CREW PRO PADDOCK' : this.proGarageMode ? 'TOKYO PRO GARAGE' : 'WORKSHOP',
       {
         fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
       }
@@ -1971,6 +1981,7 @@ export default class GarageScene extends Phaser.Scene {
   getCurrentWorkshopCars() {
     if (this.proGarageMode) {
       this.syncGarageAssignments();
+      if(this.crewProPaddockMode)return this.crewProPaddockCars.filter(id=>this.ownedCarIds.includes(id));
       return getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
         .map(bay=>bay.carId).filter(Boolean);
     }
@@ -2955,6 +2966,7 @@ export default class GarageScene extends Phaser.Scene {
         this.scene.start('CentralTokyoScene',{
           locationId:'tokyoDragComplex',
           proBriefingReturn:this.proBriefingReturn,
+          proCrewPaddockReturn:this.proCrewPaddockReturn,
         });
       });
       return;
@@ -4213,6 +4225,7 @@ export default class GarageScene extends Phaser.Scene {
         this.scene.start('CentralTokyoScene',{
           locationId:'tokyoDragComplex',
           proBriefingReturn:this.proBriefingReturn,
+          proCrewPaddockReturn:this.proCrewPaddockReturn,
         });
         return;
       }
@@ -4577,7 +4590,9 @@ export default class GarageScene extends Phaser.Scene {
     if(!this.proGarageMode)return;
     (this.proGarageBayObjects||[]).forEach(obj=>obj?.destroy?.());
     this.proGarageBayObjects=[];
-    const bays=getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds);
+    const bays=this.crewProPaddockMode ?
+      ['04','05','06'].map((number,i)=>({number,carId:this.crewProPaddockCars[i]})) :
+      getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds);
     this.proGarageReadinessLabels=[];
     for(const bay of [...bays].reverse()){
       const config=this.getProGarageBayPlacement(bay.number);
