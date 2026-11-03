@@ -220,9 +220,9 @@ export default class GarageScene extends Phaser.Scene {
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
     const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
-    this.proGarageMode = Boolean(currentPro.proGarageOrigins &&
-      (data?.proGarageMode || data?.workshopLocationId===PRO_GARAGE_ID ||
-        this.registry.get('workshopLocationId')===PRO_GARAGE_ID));
+    this.proGarageMode = Boolean(data?.proGarageMode ||
+      data?.workshopLocationId===PRO_GARAGE_ID ||
+      this.registry.get('workshopLocationId')===PRO_GARAGE_ID);
     const fallbackTier=Math.max(0,Math.min(2,Number(this.registry.get('garageTier')||0)));
     const fallbackWorkshop=WORKSHOP_TIERS[fallbackTier]?.id||'shinonomeWorkshop';
     this.proGarageReturnWorkshopId=WORKSHOP_TIERS.some(w=>w.id===data?.returnWorkshopId) ?
@@ -282,7 +282,10 @@ export default class GarageScene extends Phaser.Scene {
       .filter(id => cars[id]);
     const localCars = this.crewMode
       ? crewCars
-      : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
+      : this.proGarageMode
+        ? getProGarageBayCars(normaliseProCircuitState(this.registry.get('proCircuit')))
+          .filter(id=>ownedCarIds.includes(id)&&cars[id])
+        : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
           .filter(id => !cars[id]?.crewLoan);
     const carStates = this.registry.get('carStates') || {};
 
