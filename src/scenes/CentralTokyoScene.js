@@ -3488,7 +3488,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       [
         { characterId: playerId, pose: 'idle', x: STAGE.x + 650, feetY: STAGE.y + 728, height: 363, depth: 20 },
         { characterId: 'sayakaFujieda', pose: 'track', x: STAGE.x + 805, feetY: STAGE.y + 728, height: 356, depth: 21 },
-        { characterId: 'daichiSakamoto', pose: 'normal', assetKey: 'proSeasonDaichiMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 }
+        { characterId: 'daichiSakamoto', pose: 'normal', assetKey: 'proSeasonDaichiMechanic', x: STAGE.x + 972, feetY: STAGE.y + 728, height: 378, depth: 20 },
         { characterId: dragStaff.manager, pose: 'normal', x: STAGE.x + 1165, feetY: STAGE.y + 685, height: 320, depth: 19 },
       ].forEach(config => this.addVenueCharacter(config));
     } else {
