@@ -1,3 +1,4 @@
+import { makeDeferredScene } from './ui/DeferredScene.js?v=20261104-r788';
 // Tokyo SHIFT boot recovery: load scene modules dynamically so a broken import
 // cannot strand the splash at the initial 3% with no diagnostic.
 const GAME_WIDTH = 1560;
@@ -55,45 +56,46 @@ async function startTokyoShift() {
       }
     };
 
-    const [
-      BootScene,
-      CharacterSelectScene,
-      ProfileSelectScene,
-      TrainStationScene,
-      GarageScene,
-      CrewSpaceScene,
-      CrewScene,
-      DynoScene,
-      CentralTokyoScene,
-      OshiageScene,
-      MeetScene,
-      RaceScene,
-      DevVaultStoryScene,
-      FourLaneTestScene,
-      RunOverScene,
-      ResultScene,
-      TunerShopScene,
-      WheelCalibrationScene,
-    ] = await Promise.all([
+    // Only boot/profile/first-play screens are imported up front. Importing
+    // all 18 scene modules together used to compile the full game while an
+    // older iPhone was still trying to reach the driver selection screen.
+    const [BootScene, CharacterSelectScene, ProfileSelectScene,
+      TrainStationScene, GarageScene] = await Promise.all([
       loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261026-r687'),
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261026-r687'),
       loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261026-r687'),
       loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261026-r687'),
       loadScene('GARAGE', './scenes/GarageScene.js?v=20261103-r784'),
-      loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261026-r687'),
-      loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261026-r687'),
-      loadScene('DYNO', './scenes/DynoScene.js?v=20261026-r687'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261104-r787'),
-      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261026-r687'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261029-r717'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261101-r749'),
-      loadScene('DEV VAULT STORY', './scenes/DevVaultStoryScene.js?v=20261026-r687'),
-      loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261103-r784'),
-      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261026-r687'),
-      loadScene('RESULT', './scenes/ResultScene.js?v=20261026-r687'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261103-r785'),
-      loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261026-r687'),
     ]);
+
+    // Preserve the canonical Phaser scene keys and their init-data contract.
+    // The placeholder is replaced by the actual class on first entry.
+    const CrewSpaceScene = makeDeferredScene('CrewSpaceScene',
+      '../scenes/CrewSpaceScene.js?v=20261026-r687');
+    const CrewScene = makeDeferredScene('CrewScene',
+      '../scenes/CrewScene.js?v=20261026-r687');
+    const DynoScene = makeDeferredScene('DynoScene',
+      '../scenes/DynoScene.js?v=20261026-r687');
+    const CentralTokyoScene = makeDeferredScene('CentralTokyoScene',
+      '../scenes/CentralTokyoScene.js?v=20261104-r787');
+    const OshiageScene = makeDeferredScene('OshiageScene',
+      '../scenes/OshiageScene.js?v=20261026-r687');
+    const MeetScene = makeDeferredScene('MeetScene',
+      '../scenes/MeetScene.js?v=20261104-r788');
+    const RaceScene = makeDeferredScene('RaceScene',
+      '../scenes/RaceScene.js?v=20261104-r788');
+    const DevVaultStoryScene = makeDeferredScene('DevVaultStoryScene',
+      '../scenes/DevVaultStoryScene.js?v=20261026-r687');
+    const FourLaneTestScene = makeDeferredScene('FourLaneTestScene',
+      '../scenes/FourLaneTestScene.js?v=20261103-r784');
+    const RunOverScene = makeDeferredScene('RunOverScene',
+      '../scenes/RunOverScene.js?v=20261026-r687');
+    const ResultScene = makeDeferredScene('ResultScene',
+      '../scenes/ResultScene.js?v=20261026-r687');
+    const TunerShopScene = makeDeferredScene('TunerShopScene',
+      '../scenes/TunerShopScene.js?v=20261103-r785');
+    const WheelCalibrationScene = makeDeferredScene('WheelCalibrationScene',
+      '../scenes/WheelCalibrationScene.js?v=20261026-r687');
 
     // Debug-only opt-in screen. No profile state or production car renderer changes.
     const useCarReference = new URLSearchParams(window.location.search).get('carref') === '1';
