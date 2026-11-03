@@ -71,6 +71,7 @@ function loadAssets(s,units){
   }
   for(const [key,path] of [
     ['proCrewSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
+    ['proCrewDaichi','assets/Characters/Main/home_daichi_engine_inspect.png'],
     ['proCrewHiroshi','assets/Characters/Central/hiroshi_sato_focus.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));count++;
@@ -192,8 +193,9 @@ function draw(s,opts){
   // alignment, shadows and the foreground controls (individual room untouched).
   // Their torsos still extend below the foreground table.
   for(const p of [
-    {key:'proCrewSayaka',x:1056,feet:780,height:548,flip:false},
-    {key:'proCrewHiroshi',x:1366,feet:800,height:580,flip:true},
+    {key:'proCrewSayaka',x:946,feet:780,height:490,flip:false},
+    {key:'proCrewDaichi',x:1178,feet:780,height:465,flip:false},
+    {key:'proCrewHiroshi',x:1434,feet:800,height:505,flip:true},
   ]){
     if(!s.textures.exists(p.key))continue;
     const source=s.textures.get(p.key).getSourceImage();
@@ -302,9 +304,9 @@ function draw(s,opts){
     if(activeDialogue==='hiroshi'){clearDialogue();return;}
     clearDialogue();activeDialogue='hiroshi';
     if(e.trophyId){
-      renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366,height:218});
+      renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1434,height:218});
     }else{
-      renderPagedStewardBriefing(s,dialogueAdd,crewPages,{anchorX:1366});
+      renderPagedStewardBriefing(s,dialogueAdd,crewPages,{anchorX:1434});
     }
   };
   const crewGlow=(x,y,w,label,action,disabled=false)=>
@@ -350,10 +352,11 @@ function draw(s,opts){
     const maxHeight=h-43;
     if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
   };
-  crewGlow(1055,502,235,adviceUsed?'VIEW ADVICE':
+  crewGlow(946,502,195,adviceUsed?'VIEW ADVICE':
     canAsk?'ASK FOR ADVICE':adviceRemaining+' EVENT COOLDOWN',
     adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
-  crewGlow(1366,502,220,'RACE BRIEFING',toggleSteward);
+  crewGlow(1178,502,205,'CAR SETUPS',()=>{if(!canConfirm())return;close();opts.onSetups?.([...selected]);},!canConfirm()||!opts.onSetups);
+  crewGlow(1434,502,200,'RACE BRIEFING',toggleSteward);
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
   // character/car arrangement copied from MeetScene regional battle renderer.
@@ -464,6 +467,7 @@ function draw(s,opts){
     selected.splice(0,selected.length,...unique);
     while(selected.length<3)selected.push(null);
     renderLineup();renderFooter();
+    // Rebuild the Daichi action when the three selected drivers change.
     if(popupVisible)renderRoster();
   }
   function assignDriver(id){
