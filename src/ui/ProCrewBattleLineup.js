@@ -2,6 +2,7 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261026-r687';
+import {getProfessionalCarEligibility} from '../data/proSeason.js?v=20261030-r741';
 import {getCarMagazineMeta} from '../data/carMagazine.js?v=20261011-r479';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
@@ -71,6 +72,7 @@ function loadAssets(s,units){
   }
   for(const [key,path] of [
     ['proCrewSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
+    ['proCrewDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
     ['proCrewHiroshi','assets/Characters/Central/hiroshi_sato_focus.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));count++;
@@ -192,8 +194,9 @@ function draw(s,opts){
   // alignment, shadows and the foreground controls (individual room untouched).
   // Their torsos still extend below the foreground table.
   for(const p of [
-    {key:'proCrewSayaka',x:1056,feet:780,height:548,flip:false},
-    {key:'proCrewHiroshi',x:1366,feet:800,height:580,flip:true},
+    {key:'proCrewSayaka',x:946,feet:780,height:490,flip:false},
+    {key:'proCrewDaichi',x:1178,feet:780,height:465,flip:false},
+    {key:'proCrewHiroshi',x:1434,feet:800,height:505,flip:true},
   ]){
     if(!s.textures.exists(p.key))continue;
     const source=s.textures.get(p.key).getSourceImage();
@@ -302,9 +305,9 @@ function draw(s,opts){
     if(activeDialogue==='hiroshi'){clearDialogue();return;}
     clearDialogue();activeDialogue='hiroshi';
     if(e.trophyId){
-      renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366,height:218});
+      renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1434,height:218});
     }else{
-      renderPagedStewardBriefing(s,dialogueAdd,crewPages,{anchorX:1366});
+      renderPagedStewardBriefing(s,dialogueAdd,crewPages,{anchorX:1434});
     }
   };
   const crewGlow=(x,y,w,label,action,disabled=false)=>
@@ -350,10 +353,10 @@ function draw(s,opts){
     const maxHeight=h-43;
     if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
   };
-  crewGlow(1055,502,235,adviceUsed?'VIEW ADVICE':
+  crewGlow(946,502,195,adviceUsed?'VIEW ADVICE':
     canAsk?'ASK FOR ADVICE':adviceRemaining+' EVENT COOLDOWN',
     adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
-  crewGlow(1366,502,220,'RACE BRIEFING',toggleSteward);
+  crewGlow(1434,502,200,'RACE BRIEFING',toggleSteward);
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
   // character/car arrangement copied from MeetScene regional battle renderer.
@@ -416,8 +419,13 @@ function draw(s,opts){
       }
       const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
       const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
+      const check=u?getProfessionalCarEligibility(u.carId,state[u.carId]||{},{}):null;
       add(s.add.text(x+105,y+176,name,{
         fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      if(check)add(s.add.text(carX+105,y+213,check.eligible?'SCRUTINEERING // PASS':
+        'SCRUTINEERING // '+String(check.reasons[0]||'CHECK SETUP').slice(0,28),{
+        fontFamily:PIXEL,fontSize:'7px',color:check.eligible?'#9af5cc':'#ffb2ad',align:'center',
       }).setOrigin(.5,0).setDepth(229));
       add(s.add.text(carX+105,y+199,model,{
         fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
@@ -451,6 +459,11 @@ function draw(s,opts){
     if(!locked)footerButton(1196,205,'CLEAR LINEUP',
       ()=>setLineup([null,null,null]));
     const ready=canConfirm();
+    // Daichi's action follows the live lineup, not just the initial render.
+    if(opts.onSetups)crewGlow(1178,502,205,'CAR SETUPS',()=>{
+      if(!canConfirm())return;
+      close();opts.onSetups([...selected]);
+    },!ready);
     const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
       unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
@@ -464,6 +477,7 @@ function draw(s,opts){
     selected.splice(0,selected.length,...unique);
     while(selected.length<3)selected.push(null);
     renderLineup();renderFooter();
+    // Rebuild the Daichi action when the three selected drivers change.
     if(popupVisible)renderRoster();
   }
   function assignDriver(id){

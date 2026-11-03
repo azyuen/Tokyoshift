@@ -6,6 +6,7 @@ import { PRO_DRIVER_DRIVETRAINS, getProDriverDrivetrain, getProSeasonDriverCarEr
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent, getProAiTeamDefinition } from '../data/proCircuit.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { stageProGarage, releaseProGarage, PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
+import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261029-r713';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { characters, getCharacterVisualAsset } from '../data/characters.js?v=20261024-r680';
@@ -345,6 +346,31 @@ function overlay(s,title) {
 function previewSource(s,circuitState){
   return {get:key=>key==='proCircuit'?circuitState:s.registry.get(key)};
 }
+function openCrewPaddock(s,selected,pending=null){
+  const event=pending?.circuit?.activeCrewEvent||circuit(s).activeCrewEvent;
+  if(!event||selected.length!==3)return;
+  const units=getCrewSeriesUnits(s.registry,pending?.assignments||event.assignments);
+  const carIds=selected.map(id=>units.find(u=>u.id===id)?.carId);
+  if(carIds.some(id=>!id)||(new Set(carIds)).size!==3)return;
+  const returnWorkshopId=s.registry.get('workshopLocationId');
+  const marker={kind:pending?'unpaid':'active',selected:[...selected],
+    pending, eventId:event.id};
+  s._proOverlayClose?.();
+  s.scene.start('GarageScene',{
+    proGarageMode:true,crewProPaddockMode:true,crewProPaddockCars:carIds,
+    workshopLocationId:PRO_GARAGE_ID,returnWorkshopId,
+    proCrewPaddockReturn:marker,
+  });
+}
+export function resumeCrewPaddockBriefing(s,marker){
+  if(!marker||!Array.isArray(marker.selected)||marker.selected.length!==3)return;
+  if(marker.kind==='unpaid'&&marker.pending?.circuit?.activeCrewEvent?.id===marker.eventId){
+    s._pendingCrewRegistration=marker.pending;
+    showUnpaidCrewBriefing(s,marker.pending,marker.selected);
+  }else if(marker.kind==='active'&&circuit(s).activeCrewEvent?.id===marker.eventId){
+    showCrewFixture(s,marker.selected);
+  }
+}
 function showUnpaidCrewBriefing(s,pending,selected=[]){
   const source=previewSource(s,pending.circuit);
   const f=getCrewFixture(pending.circuit),t=pending.circuit.activeCrewEvent;
@@ -354,6 +380,7 @@ function showUnpaidCrewBriefing(s,pending,selected=[]){
     event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
     adviceStatus:getProCrewAdviceAvailability(source),
     advice:getProCrewHeatAdvice(f,units),
+    onSetups:ids=>openCrewPaddock(s,ids,pending),
     onCancel:()=>{s._pendingCrewRegistration=null;s.proError=null;redraw(s);},
     onAdvice:ids=>{
       const out=useProCrewAdvice(source,t.id);
@@ -446,6 +473,7 @@ export function showCrewFixture(s,selection=null) {
       event:t,fixture:f,units,selected:ids,locked:lock,
       adviceStatus:getProCrewAdviceAvailability(s.registry),
       advice:eventAdvice,
+      onSetups:lineupIds=>openCrewPaddock(s,lineupIds),
       onForfeit:()=>confirmCrewForfeit(s),
       onAdvice:lineupIds=>{
         const out=useProCrewAdvice(s.registry,t.id);
