@@ -10,14 +10,15 @@ import {
 
 const roster=['ef','ae86','gc8'];
 
-test('season registration requires one owned FF/FWD, RWD and AWD personal car',()=>{
+test('season registration accepts any three distinct owned personal cars',()=>{
   assert.deepEqual(PRO_DRIVER_DRIVETRAINS,['FWD','RWD','AWD']);
   assert.deepEqual(roster.map(getProDriverDrivetrain),PRO_DRIVER_DRIVETRAINS);
   assert.equal(validateProSeasonDriverCars(roster,roster),null);
   assert.match(validateProSeasonDriverCars([],roster),/EXACTLY THREE/);
   assert.match(validateProSeasonDriverCars(['ef','ae86','ef'],roster),/EXACTLY THREE/);
   assert.match(validateProSeasonDriverCars(roster,['ef','ae86']),/OWNED/);
-  assert.match(validateProSeasonDriverCars(['ef','ek9','gc8'],['ef','ek9','gc8']),/ONE FF/);
+  assert.equal(validateProSeasonDriverCars(['ef','ek9','gc8'],['ef','ek9','gc8']),null);
+  assert.equal(validateProSeasonDriverCars(['gc8','gdb','r34'],['gc8','gdb','r34']),null);
   assert.match(startProfessionalSeason(createDefaultProCircuitState()).error,/EXACTLY THREE/);
 });
 
