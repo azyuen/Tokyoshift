@@ -2289,15 +2289,17 @@ export default class GarageScene extends Phaser.Scene {
   updateMoveCarButtonState() {
     if (!this.moveCarButton?.active || !this.moveCarLabel?.active) return;
     const warehouse = this.getActiveWorkshop().tier === 2;
-    const eligible = warehouse && Boolean(this.selectedCarId) &&
-      !this.isSelectedCarTuningLocked() &&
-      !this.engineMode && !this.secondaryMode && !this.chassisMode;
+    const collectorNos=Boolean(this.selectedCarId && !this.crewMode &&
+      this.canSelectedCollectorAccessNos());
+    const eligible = Boolean(this.selectedCarId) &&
+      !this.engineMode && !this.secondaryMode && !this.chassisMode &&
+      (collectorNos || (warehouse && !this.isSelectedCarTuningLocked()));
     const validCrewCar = !this.crewMode ||
       (cars[this.selectedCarId]?.crewLoan &&
         this.getCurrentWorkshopCars().includes(this.selectedCarId));
     const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
     const currentState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
-    const enabled = eligible && validCrewCar && (stored ||
+    const enabled = eligible && validCrewCar && (collectorNos || stored ||
       hasStockTuneService(currentState) || listStorableKitParts(currentState).length > 0);
     this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
     if (enabled) {
@@ -2681,7 +2683,50 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  showCollectorNosPartsPopup() {
+    const carId=this.selectedCarId;
+    const car=cars[carId]||{};
+    const current=(this.registry.get('carStates')||{})[carId]||{};
+    const installed=Number(car.nosPower||0)>0 ||
+      Number(current.exhaustNosTuning?.nosKit||0)>0 || Boolean(current.nosInstalled);
+    const depth=165,objects=[];
+    const add=o=>{objects.push(o);return o;};
+    const close=()=>objects.forEach(o=>o?.destroy?.());
+    add(this.add.rectangle(780,420,1560,840,0x02050b,.84)
+      .setInteractive().setDepth(depth).on('pointerdown',close));
+    add(this.add.rectangle(780,420,960,510,0x08131f,1)
+      .setStrokeStyle(2,0x43dfff).setDepth(depth+1));
+    const label=(x,y,value,size=11,color='#eefaff')=>
+      add(this.add.text(x,y,value,{fontFamily:PIXEL_FONT,
+        fontSize:size+'px',color}).setDepth(depth+3));
+    label(350,200,'REMOVE PARTS // NOS',14);
+    label(350,252,car.shortName||carId,10,'#80cfe8');
+    label(350,320,installed?'NITROUS SYSTEM FITTED':'NO NITROUS SYSTEM FITTED',10);
+    label(350,358,'REMOVE FOR RESTRICTED EVENTS. REFIT WITHOUT REPURCHASING.',9,'#b5c9d7');
+    const button=(x,title,handler)=>{
+      const hit=add(this.add.rectangle(x,570,245,50,0x12352e,1)
+        .setStrokeStyle(2,0x62e8c7).setDepth(depth+3)
+        .setInteractive({useHandCursor:true}));
+      add(this.add.text(x,570,title,{fontFamily:PIXEL_FONT,
+        fontSize:'10px',color:'#effff9'}).setOrigin(.5).setDepth(depth+4));
+      hit.on('pointerdown',handler);
+    };
+    button(520,'CLOSE',close);
+    if(installed)button(970,current.nosEnabled===false?'REFIT NOS':'REMOVE NOS',()=>{
+      const states={...(this.registry.get('carStates')||{})};
+      states[carId]={...(states[carId]||{}),nosEnabled:current.nosEnabled===false};
+      this.registry.set('carStates',states);
+      saveSessionState(this.registry);
+      close();this.updateMoveCarButtonState();
+      this.showWorkshopToast(states[carId].nosEnabled?'NOS REFITTED':'NOS REMOVED FOR EVENT');
+    });
+  }
+
   showStoreRestoreKitPopup() {
+    if(this.selectedCarId && this.canSelectedCollectorAccessNos()){
+      this.showCollectorNosPartsPopup();
+      return;
+    }
     if (this.getActiveWorkshop().tier !== 2 ||
         !this.selectedCarId || this.isSelectedCarTuningLocked() ||
         (this.crewMode && (!cars[this.selectedCarId]?.crewLoan ||
@@ -6747,7 +6792,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.secondaryPreviewText = add(this.add.text(
       SIDE.x + 20,
-      SIDE.y + 510,
+      SIDE.y + 485,
       '',
       {
         fontFamily: PIXEL_FONT,
@@ -6756,50 +6801,6 @@ export default class GarageScene extends Phaser.Scene {
         lineSpacing: 4,
       }
     ).setDepth(73));
-
-    if (!isDrivetrain) {
-      // The switch stays visible even before a bottle is purchased, so
-      // installing NOS immediately enables manual event preparation.
-      const fittedNos = current => {
-        const car = cars[this.selectedCarId] || {};
-        const factory = Number(car.nosPower || 0) > 0 &&
-          Number(car.nosShots || car.nosCapacitySeconds || 0) > 0;
-        return factory || Boolean(current.nosInstalled) ||
-          Number(current.exhaustNosTuning?.nosKit || 0) > 0;
-      };
-      const toggle=add(this.add.rectangle(
-        SIDE.x+SIDE.w/2,SIDE.y+565,SIDE.w-36,38,0x162538,1
-      ).setStrokeStyle(1,0x55b8ff,1).setDepth(72)
-        .setInteractive({useHandCursor:true}));
-      this.secondaryNosSwitchLabel=add(this.add.text(
-        SIDE.x+SIDE.w/2,SIDE.y+565,'',{
-          fontFamily:PIXEL_FONT,fontSize:'8px',color:'#dff3ff'
-        }).setOrigin(0.5).setDepth(73));
-      const refreshSwitch=()=>{
-        const current=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
-        const fitted=fittedNos(current);
-        this.secondaryNosSwitchLabel?.setText(
-          !fitted?'NOS SYSTEM // NO KIT':
-          current.nosEnabled===false?'NOS SYSTEM // OFF':'NOS SYSTEM // ON');
-        toggle.setFillStyle(fitted?0x162538:0x111318,1);
-      };
-      toggle.on('pointerdown',()=>{
-        const carStates={...(this.registry.get('carStates')||{})};
-        const current=carStates[this.selectedCarId]||{};
-        if(!fittedNos(current)){
-          this.showWorkshopToast('INSTALL A NOS KIT FIRST');
-          return;
-        }
-        carStates[this.selectedCarId]={...current,nosEnabled:current.nosEnabled===false};
-        this.registry.set('carStates',carStates);
-        saveSessionState(this.registry);
-        refreshSwitch();
-        this.refreshSecondaryTuningMode();
-        this.showWorkshopToast(carStates[this.selectedCarId].nosEnabled?'NOS ENABLED':'NOS DISABLED');
-      });
-      this.refreshSecondaryNosSwitch=refreshSwitch;
-      refreshSwitch();
-    }
 
     this.secondaryApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,

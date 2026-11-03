@@ -362,10 +362,8 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
     Number(performance?.car?.nosShots || 0) > 0;
   const activeShots = Number(performance?.car?.nosShots || 0);
   if(rules.noNos && activeNos)reasons.push('NOS MUST BE DISABLED');
-  if(!rules.noNos && Number.isFinite(rules.maxNosShots) &&
-      activeNos && activeShots > rules.maxNosShots)
-    reasons.push('NOS LIMIT '+rules.maxNosShots+
-      ' SHOT'+(rules.maxNosShots===1?'':'S'));
+  // The race controller limits usable shots to the event allowance.
+  // A larger fitted bottle does not make the car ineligible.
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain,
     weightKg:Number(performance?.car?.vehicleMassKg)||null};
 }

@@ -479,6 +479,23 @@ export default class FourLaneTestScene extends RaceScene {
       return;
     }
     const playerConfig = applyDifficultyToPlayerCarConfig(playerBuild.car, difficulty);
+    const eventNosRules=this.proDuel&&!this.proCrew
+      ? this.proDuelState?.briefingRules
+      : this.proCup
+        ? getProfessionalRoundEvents(this.registry.get('proCircuit')?.calendar?.round).driver
+        : this.proTimed
+          ? getProfessionalRoundEvents(this.timedEvent?.round).driver : null;
+    if(eventNosRules){
+      const allowed=eventNosRules.noNos?0:
+        Number.isFinite(eventNosRules.maxNosShots)
+          ?Math.max(0,Math.floor(eventNosRules.maxNosShots)):null;
+      if(allowed!==null){
+        playerConfig.nosShots=Math.min(Number(playerConfig.nosShots||0),allowed);
+        playerConfig.nosCapacitySeconds=playerConfig.nosShots*
+          Number(playerConfig.nosShotDurationSeconds||1);
+        if(!playerConfig.nosShots)playerConfig.nosPower=0;
+      }
+    }
     const player = new Vehicle(playerConfig, playerBuild.engine);
     player.transmission.currentGear = 0;
     player.transmission.lastShiftQuality = 'NEUTRAL';
