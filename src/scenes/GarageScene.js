@@ -2293,7 +2293,7 @@ export default class GarageScene extends Phaser.Scene {
       this.canSelectedCollectorAccessNos());
     const eligible = Boolean(this.selectedCarId) &&
       !this.engineMode && !this.secondaryMode && !this.chassisMode &&
-      (collectorNos || (warehouse && !this.isSelectedCarTuningLocked()));
+      (collectorNos || !this.isSelectedCarTuningLocked());
     const validCrewCar = !this.crewMode ||
       (cars[this.selectedCarId]?.crewLoan &&
         this.getCurrentWorkshopCars().includes(this.selectedCarId));
@@ -2727,8 +2727,7 @@ export default class GarageScene extends Phaser.Scene {
       this.showCollectorNosPartsPopup();
       return;
     }
-    if (this.getActiveWorkshop().tier !== 2 ||
-        !this.selectedCarId || this.isSelectedCarTuningLocked() ||
+    if (!this.selectedCarId || this.isSelectedCarTuningLocked() ||
         (this.crewMode && (!cars[this.selectedCarId]?.crewLoan ||
           !this.getCurrentWorkshopCars().includes(this.selectedCarId))) ||
         this.engineMode || this.secondaryMode || this.chassisMode) return;
@@ -2854,7 +2853,7 @@ export default class GarageScene extends Phaser.Scene {
       }
     }
     const commitKit = () => {
-      if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
+      if (this.selectedCarId !== carId ||
           this.isSelectedCarTuningLocked() ||
           (this.crewMode && (!cars[carId]?.crewLoan ||
             !this.getCurrentWorkshopCars().includes(carId)))) { close(); return; }
