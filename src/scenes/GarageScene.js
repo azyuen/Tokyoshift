@@ -5144,7 +5144,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.enginePreviewText = add(this.add.text(
       SIDE.x + 20,
-      SIDE.y + 510,
+      SIDE.y + 476,
       '',
       {
         fontFamily: PIXEL_FONT,
@@ -5930,7 +5930,7 @@ export default class GarageScene extends Phaser.Scene {
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade('engine', partId, spec.level);
-      const selectable = spec.level >= installed && availableHere;
+      const selectable = spec.level >= installed && (availableHere || collectorNos);
       const pathCost = this.getWorkshopAdjustedCost(
         getUpgradePathCost(partId, installed, spec.level)
       );
@@ -5972,9 +5972,9 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
-      if (spec.level > installed && availableHere) {
+      if (spec.level > installed && (availableHere || collectorNos)) {
         price = '¥ ' + pathCost.toLocaleString('en-US');
-      } else if (spec.level > installed && !availableHere) {
+      } else if (spec.level > installed && !availableHere && !collectorNos) {
         price = 'NEEDS ' + this.getCurrentUpgradeRequirement('engine', partId, spec.level);
       }
       if (spec.level < installed) price = 'INCLUDED';
@@ -7270,10 +7270,8 @@ export default class GarageScene extends Phaser.Scene {
       );
     } else {
       this.secondaryPreviewText?.setText(
-        'POWER    ' + previewRating.powerLabel + '\n' +
         'NITROUS  ' + Number(preview.car.nosPower || 0) + ' hp\n' +
-        'CAPACITY ' + Number(preview.car.nosCapacitySeconds || 0).toFixed(1) + ' sec\n' +
-        'WEIGHT   ' + Math.round(preview.car.vehicleMassKg) + ' kg'
+        'CAPACITY ' + Number(preview.car.nosCapacitySeconds || 0).toFixed(1) + ' sec'
       );
     }
 
@@ -7310,7 +7308,7 @@ export default class GarageScene extends Phaser.Scene {
     const part = parts[partId];
     if (!part) return;
     if (this.isSelectedCarTuningLocked() &&
-        !(this.canSelectedCollectorInstallNos() &&
+        !(this.canSelectedCollectorAccessNos() &&
           ['nosKit', 'nitrousShot'].includes(partId))) {
       this.showWorkshopToast('COLLECTOR SPEC // ONLY NOS IS AVAILABLE');
       return;
@@ -7334,6 +7332,8 @@ export default class GarageScene extends Phaser.Scene {
       ? car?.visual?.drivetrainKey
       : car?.visual?.exhaustNosKey;
     const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
+    const collectorNos = !isDrivetrain && this.canSelectedCollectorInstallNos() &&
+      ['nosKit','nitrousShot'].includes(partId);
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
@@ -7466,7 +7466,9 @@ export default class GarageScene extends Phaser.Scene {
   applyPendingSecondaryUpgrades() {
     if (!this.secondaryMode) return;
     if (this.isSelectedCarTuningLocked()) {
-      if (this.secondaryMode !== 'exhaustNos' || !this.canSelectedCollectorInstallNos()) return;
+      if (this.secondaryMode !== 'exhaustNos' || !this.canSelectedCollectorInstallNos()) {
+        this.showWorkshopToast('COLLECTOR SPEC // NOS KIT NOT AVAILABLE');return;
+      }
       const current = this.currentSecondaryTuning || {};
       const pending = this.pendingSecondaryTuning || {};
       if (['headers', 'exhaust', 'muffler'].some(part =>
@@ -7483,6 +7485,8 @@ export default class GarageScene extends Phaser.Scene {
     const blockedPart = partOrder.find(partId =>
       Number(this.pendingSecondaryTuning?.[partId] || 0) >
         Number(this.currentSecondaryTuning?.[partId] || 0) &&
+      !(this.secondaryMode==='exhaustNos' && this.canSelectedCollectorInstallNos() &&
+        ['nosKit','nitrousShot'].includes(partId)) &&
       !this.canInstallCurrentUpgrade(
         category,
         partId,
