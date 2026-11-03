@@ -49,13 +49,13 @@ test('Easy crew AI is substantially slower at reaction, launch and shifting than
   // Actual RaceScene executes the same shared physics, just changed driver
   // skills and existing Easy-mode AI assist.
   assert.match(race,/rivalAI = applyDifficultyToRivalAi\(/);
-  assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
+  assert.match(race,/this\\.raceMode === 'CREW_RECRUIT'/);
 });
 
 test('Standard recruitment uses Expert 4',()=>{
   const std=rules('STANDARD');
   assert.equal(std.aiRating,4);
-  assert.equal(std.aiTier,'SKILLED');
+  assert.equal(std.aiTier,'EXPERT');
   assert.match(meet,/const rating = recruitRules\.aiRating/);
   assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
   assert.deepEqual(applyDifficultyToRivalAi(getEncounterAi(3),'STANDARD'),getEncounterAi(3));
@@ -64,22 +64,27 @@ test('Standard recruitment uses Expert 4',()=>{
   }
 });
 
-test('Hard recruitment uses Expert 4 rather than Elite 5',()=>{
+test('late-region Standard and all Hard recruits drive Elite without artificial car power',()=>{
   const hard=rules('HARD');
-  assert.equal(hard.aiRating,4);
-  assert.equal(hard.aiTier,'EXPERT');
-  assert.match(meet,/const encounterAi = getEncounterAi\(rating\)/);
-  // Hard's usual driver modifier remains, but a tier-four recruit should
-  // still be slower than the former tier-five recruit after that modifier.
+  assert.equal(hard.aiRating,5);
+  assert.equal(hard.aiTier,'ELITE');
+  for(const region of ['DAIKOKU','SHINJUKU']){
+    const source={get:key=>({playerDifficulty:'STANDARD',carStates:{},ownedCarIds:['ae86']})[key]};
+    const late=getCrewRecruitmentChallengeRules(source,
+      {regionId:region,characterId:'aoiShindou',baseCarId:'ae86'});
+    assert.equal(late.aiRating,5);
+    assert.equal(late.aiTier,'ELITE');
+  }
   const newHard=applyDifficultyToRivalAi(
-    boostAiForStandingStart(getEncounterAi(4),4),'HARD'
-  );
-  const oldHard=applyDifficultyToRivalAi(
     boostAiForStandingStart(getEncounterAi(5),5),'HARD'
   );
+  const expert=applyDifficultyToRivalAi(
+    boostAiForStandingStart(getEncounterAi(4),4),'HARD'
+  );
   for(const key of ['reactionSkill','launchSkill','shiftSkill','aggression']){
-    assert.ok(newHard[key]<oldHard[key],key+' Hard Expert should be below former Elite');
+    assert.ok(newHard[key]>=expert[key],key+' Elite should retain skill advantage');
   }
+  assert.match(race,/this\\.opponentEncounterRating < 5/);
 });
 
 test('All three modes preserve stock matching and vehicle power class',()=>{
