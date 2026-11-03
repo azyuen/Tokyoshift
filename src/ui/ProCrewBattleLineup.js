@@ -2,6 +2,7 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261026-r687';
+import {getProfessionalCarEligibility} from '../data/proSeason.js?v=20261030-r741';
 import {getCarMagazineMeta} from '../data/carMagazine.js?v=20261011-r479';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
@@ -418,8 +419,13 @@ function draw(s,opts){
       }
       const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
       const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
+      const check=u?getProfessionalCarEligibility(u.carId,state[u.carId]||{},{}):null;
       add(s.add.text(x+105,y+176,name,{
         fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      if(check)add(s.add.text(carX+105,y+213,check.eligible?'SCRUTINEERING // PASS':
+        'SCRUTINEERING // '+String(check.reasons[0]||'CHECK SETUP').slice(0,28),{
+        fontFamily:PIXEL,fontSize:'7px',color:check.eligible?'#9af5cc':'#ffb2ad',align:'center',
       }).setOrigin(.5,0).setDepth(229));
       add(s.add.text(carX+105,y+199,model,{
         fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
