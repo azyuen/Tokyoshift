@@ -10,7 +10,7 @@ import {
 } from './travelRegions.js?v=20261023-r652';
 
 export const STREET_SHOWDOWN_COUPON_CHANCE = 0.60;
-export const STREET_SHOWDOWN_SCHEDULE_VERSION = 'R716-regional-class-clock';
+export const STREET_SHOWDOWN_SCHEDULE_VERSION = 'R788-street-coupon-coverage';
 
 // Street region identities reflect meet pools and progression, not additional
 // crew-event eligibility rules (crew limits remain power/NOS/stock based).
@@ -43,13 +43,6 @@ const REGIONAL_LOCATIONS=Object.freeze(REGION_ORDER.flatMap(id=>
     .map(loc=>Object.freeze({id:loc.id,regionId:id,regionName:TRAVEL_REGIONS[id].label,
       locationName:loc.label}))));
 
-function hash(input) {
-  let value=2166136261;
-  for(const ch of String(input))value=Math.imul(value^ch.charCodeAt(0),16777619);
-  return value>>>0;
-}
-function unit(input) {return hash(input)/4294967296;}
-
 function locationRegion(id) {
   return REGIONAL_LOCATIONS.find(loc=>loc.id===id)?.regionId||'';
 }
@@ -74,27 +67,25 @@ export function rollStreetShowdownCouponPrize(random=Math.random) {
 export function getStreetShowdownScheduleSlot(now=Date.now()) {
   return getOpenCircuitRotation(now);
 }
-function weightedPrizeCar(locationId, rotationIndex) {
-  const pool=getStreetShowdownCouponPool(locationId);
-  const region=locationRegion(locationId);
-  const focus=new Set(STREET_SHOWDOWN_CLASS_FOCUS[region]||[]);
-  const local=new Set(getEncounterProfile(locationId).likelyCars||[]);
-  const focused=pool.filter(id=>focus.has(stockClassFor(cars[id])));
-  const regional=focused.filter(id=>local.has(id));
-  const visiting=focused.filter(id=>!local.has(id));
-  const wildcard=pool.filter(id=>!focus.has(stockClassFor(cars[id])));
-  // 80% region-favourite within the focused classes; 15% other models in
-  // those same classes; 5% a neighbouring-class wildcard. Every model is
-  // treated identically, by class and by existing Meet-region affinity.
-  const sample=unit(rotationIndex+':'+locationId+':car-band');
-  const candidates=sample<.80
-    ? (regional.length?regional:focused.length?focused:pool)
-    : sample<.95
-      ? (visiting.length?visiting:focused.length?focused:pool)
-      : (wildcard.length?wildcard:focused.length?focused:pool);
-  return candidates.length
-    ? candidates[hash(rotationIndex+':'+locationId+':car-choice')%candidates.length]
-    : null;
+// Each venue has three coupon slots in every five 15-minute rotations.
+// Unlike a hash lottery, each coupon slot advances a finite wheel of every
+// factory-class-eligible regular car. A car can never be permanently unlucky.
+// Offsetting the venues within a district spreads the advertised models out
+// instead of showing the same prize at all three Meets simultaneously.
+function scheduledPrizeCar(locationId, rotationIndex) {
+  const pool = getStreetShowdownCouponPool(locationId);
+  if (!pool.length || !Number.isFinite(rotationIndex)) return null;
+  const regionId = locationRegion(locationId);
+  const venues = REGIONAL_LOCATIONS.filter(loc => loc.regionId === regionId);
+  const venueIndex = venues.findIndex(loc => loc.id === locationId);
+  if (venueIndex < 0) return null;
+  const shifted = Math.floor(rotationIndex) + venueIndex * 2;
+  const phase = ((shifted % 5) + 5) % 5;
+  if (phase >= 3) return null;
+  const couponOrdinal = Math.floor(shifted / 5) * 3 + phase;
+  const offset = Math.floor(venueIndex * pool.length / venues.length);
+  const index = ((couponOrdinal + offset) % pool.length + pool.length) % pool.length;
+  return pool[index];
 }
 // No pre-rendering, no heavy vehicle simulations, no remote calls.
 // A slot is recomputable and independent of the player's selected car:
@@ -106,13 +97,12 @@ export function getStreetShowdownScheduledOffer(locationId, {
   const rotation=rotationIndex==null
     ? getStreetShowdownScheduleSlot(now).rotationIndex
     : Number(rotationIndex);
-  const coupon=rollStreetShowdownCouponPrize(
-    ()=>unit(rotation+':'+locationId+':prize-type'));
-  const carId=coupon?weightedPrizeCar(locationId,rotation):null;
+  const carId=scheduledPrizeCar(locationId,rotation);
+  const coupon=Boolean(carId);
   return Object.freeze({
     locationId, rotationIndex:rotation,
-    prizeType: coupon&&carId?'COUPON':'CASH',
-    prizeCarId:coupon?carId:null,
+    prizeType: coupon?'COUPON':'CASH',
+    prizeCarId:carId,
     scheduleVersion:STREET_SHOWDOWN_SCHEDULE_VERSION,
   });
 }
