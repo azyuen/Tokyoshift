@@ -133,11 +133,11 @@ test('Office pages all collected coupons and supports tap-to-select region sugge
 test('current client release invalidates stale coupon offers without resetting persistent art cache',()=>{
   assert.equal(JSON.parse(read('version.json')).build,'R788');
   assert.match(read('index.html'),/id="build-stamp">R788/);
-  assert.match(read('index.html'),/main\\.js\\?v=20261104-r788/);
-  assert.match(read('src/main.js'),/MeetScene\\.js\\?v=20261104-r788/);
+  assert.match(read('index.html'),/main\.js\?v=20261104-r788/);
+  assert.match(read('src/main.js'),/MeetScene\.js\?v=20261104-r788/);
   assert.match(read('sw.js'),/const BUILD = 'R788'/);
   assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-content-v1-'/);
-  assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\\.js\\?v=20261104-r788/);
+  assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\.js\?v=20261104-r788/);
   assert.match(read('src/scenes/MeetScene.js'),/R788-fair-coupon-cycle/);
 });
 
