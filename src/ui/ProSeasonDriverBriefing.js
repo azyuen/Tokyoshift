@@ -72,6 +72,8 @@ export function showProSeasonDriverBriefing(s,event,onGrid){
     s.scene.start('GarageScene',{
       proGarageMode:true,crewMode:false,workshopLocationId:PRO_GARAGE_ID,
       returnWorkshopId:previous===PRO_GARAGE_ID?'shinonomeWarehouseStrip':previous,
+      proBriefingReturn:{eventId:event.id,seasonChoice:event.seasonChoice,
+        season:initial.season,round:initial.calendar.round},
     });
   }
 

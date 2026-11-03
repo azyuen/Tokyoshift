@@ -116,7 +116,7 @@ import {
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261024-r675';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { getProGarageBayCars } from '../data/proGarage.js?v=20261101-r753';
+import { getProGarageBayCars } from '../data/proGarage.js?v=20261103-r774';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261030-r741';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
@@ -227,6 +227,7 @@ export default class GarageScene extends Phaser.Scene {
     const fallbackWorkshop=WORKSHOP_TIERS[fallbackTier]?.id||'shinonomeWorkshop';
     this.proGarageReturnWorkshopId=WORKSHOP_TIERS.some(w=>w.id===data?.returnWorkshopId) ?
       data.returnWorkshopId : fallbackWorkshop;
+    this.proBriefingReturn= data?.proBriefingReturn || null;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
     this.storyArchiveChapter = data?.storyArchiveChapter || null;
     this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
@@ -1957,10 +1958,9 @@ export default class GarageScene extends Phaser.Scene {
 
   getCurrentWorkshopCars() {
     if (this.proGarageMode) {
-      const assigned=this.syncGarageAssignments();
+      this.syncGarageAssignments();
       return getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
-        .map(bay=>bay.carId)
-        .filter(id=>id&&assigned[id]===PRO_GARAGE_ID);
+        .map(bay=>bay.carId).filter(Boolean);
     }
     if (this.crewMode) {
       return Object.values(getCrewMembers(this.registry))
@@ -2890,13 +2890,16 @@ export default class GarageScene extends Phaser.Scene {
       const button=this.add.rectangle(x,716,SIDE.w-32,40,0x122331,1)
         .setStrokeStyle(2,0x55b8ff,1).setDepth(40)
         .setInteractive({useHandCursor:true});
-      this.add.text(x,716,'<  BACK TO DRAG COMPLEX',{
+      this.add.text(x,716,this.proBriefingReturn?'RETURN TO BRIEFING  >':'<  BACK TO DRAG COMPLEX',{
         fontFamily:PIXEL_FONT,fontSize:'9px',color:'#eef8ff',
       }).setOrigin(.5).setDepth(41);
       button.on('pointerdown',()=>{
         this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
         this.saveProfile();
-        this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',
+          proBriefingReturn:this.proBriefingReturn,
+        });
       });
       return;
     }

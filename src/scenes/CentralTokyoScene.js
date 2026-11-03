@@ -16,7 +16,7 @@ import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
-import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261103-r773';
+import { showProSeasonDriverBriefing } from '../ui/ProSeasonDriverBriefing.js?v=20261103-r774';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261027-r694';
@@ -173,6 +173,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.autoShowProVictory = data?.autoShowProVictory || null;
     this.autoOpenTokyoChampionship = Boolean(data?.autoOpenTokyoChampionship);
     this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
+    this.proBriefingReturn=data?.proBriefingReturn||null;
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
       (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
@@ -455,6 +456,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
           !this.registry.get('proCircuit')?.activeCrewEvent)return;
         showCrewFixture(this);
         if(this.promptProCrewForfeit)confirmCrewForfeit(this);
+      });
+    }
+    // Return from the Pro Paddock directly to the same season event,
+    // using the current saved car build rather than a stale preview.
+    if(this.proBriefingReturn&&this.activeLocationId==='tokyoDragComplex'){
+      this.time.delayedCall(0,()=>{
+        if(!this.sys?.isActive?.())return;
+        const marker=this.proBriefingReturn;
+        const circuit=normaliseProCircuitState(this.registry.get('proCircuit'));
+        if(circuit.season!==marker.season||
+          circuit.calendar.round!==marker.round||
+          circuit.seasonStatus!=='ACTIVE')return;
+        const event=this.getProDragEvents().find(item=>
+          item.id===marker.eventId&&item.seasonChoice===marker.seasonChoice);
+        if(!event)return;
+        showProSeasonDriverBriefing(this,event,preparedBuild=>{
+          const format=event.seasonRules?.format;
+          if(format==='FOUR_WIDE')this.enterFourWideCup();
+          else if(format==='TIME_ATTACK'||format==='CONSISTENCY')
+            this.enterProfessionalTimedEvent(event);
+          else this.startProBracket(event,preparedBuild);
+        });
       });
     }
     if (this.autoOpenProDriverBriefing && isOpenDriverBriefing(this.registry.get('competitionState'))) {

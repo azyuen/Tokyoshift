@@ -1,6 +1,5 @@
-// Tokyo Drag Complex three-car secured paddock. The source of truth for
-// vehicle ownership/tuning remains the ordinary garage registry; this only
-// changes physical workshop assignment, never car or part inventory.
+// Tokyo Drag Complex Pro Paddock is a virtual view of registered personal cars.
+// Car ownership, workshop assignment and tuning have one shared registry state.
 import { normaliseProCircuitState } from './proCircuit.js?v=20261030-r741';
 import { getProQualification, getProDriverDrivetrain } from './proSeason.js?v=20261030-r741';
 import {
@@ -18,8 +17,16 @@ export function stageProGarage(raw,ownedCarIds=[],locations={},garageTier=0){
   const c=normaliseProCircuitState(raw);
   if(c.seasonStatus!=='ACTIVE'||!Array.isArray(c.registeredDriverCars)||
     c.registeredDriverCars.length!==3)return {error:'THREE REGISTERED PRO SEASON CARS REQUIRED'};
-  if(c.proGarageOrigins&&Object.keys(c.proGarageOrigins).length===3)
-    return {circuit:c,carGarageLocations:normaliseCarGarageLocations(ownedCarIds,locations,garageTier)};
+  // Migrate older saves which physically moved their cars into the paddock.
+  // Preserve each original workshop so the car is visible in both places.
+  if(c.proGarageOrigins&&Object.keys(c.proGarageOrigins).length===3){
+    const restored={...locations};
+    for(const [id,origin] of Object.entries(c.proGarageOrigins)){
+      if(restored[id]===PRO_GARAGE_ID)restored[id]=origin;
+    }
+    return {circuit:c,carGarageLocations:
+      normaliseCarGarageLocations(ownedCarIds,restored,garageTier)};
+  }
   const assignments=normaliseCarGarageLocations(ownedCarIds,locations,garageTier);
   const origins={};
   for(const id of c.registeredDriverCars){
@@ -28,9 +35,9 @@ export function stageProGarage(raw,ownedCarIds=[],locations={},garageTier=0){
       return {error:'REGISTERED CAR MUST BE IN A PERSONAL GARAGE'};
     origins[id]=assignments[id];
   }
-  const transferred={...assignments};
-  for(const id of c.registeredDriverCars)transferred[id]=PRO_GARAGE_ID;
-  return {circuit:{...c,proGarageOrigins:origins},carGarageLocations:transferred};
+  // Do not transfer the cars. Pro Paddock shows references to these same
+  // car IDs and their latest carStates, without duplicating the inventory.
+  return {circuit:{...c,proGarageOrigins:origins},carGarageLocations:assignments};
 }
 
 export function releaseProGarage(raw,ownedCarIds=[],locations={},garageTier=0){
