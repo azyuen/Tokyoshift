@@ -355,7 +355,6 @@ function draw(s,opts){
   crewGlow(946,502,195,adviceUsed?'VIEW ADVICE':
     canAsk?'ASK FOR ADVICE':adviceRemaining+' EVENT COOLDOWN',
     adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
-  crewGlow(1178,502,205,'CAR SETUPS',()=>{if(!canConfirm())return;close();opts.onSetups?.([...selected]);},!canConfirm()||!opts.onSetups);
   crewGlow(1434,502,200,'RACE BRIEFING',toggleSteward);
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
@@ -454,6 +453,11 @@ function draw(s,opts){
     if(!locked)footerButton(1196,205,'CLEAR LINEUP',
       ()=>setLineup([null,null,null]));
     const ready=canConfirm();
+    // Daichi's action follows the live lineup, not just the initial render.
+    if(opts.onSetups)crewGlow(1178,502,205,'CAR SETUPS',()=>{
+      if(!canConfirm())return;
+      close();opts.onSetups([...selected]);
+    },!ready);
     const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
       unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
