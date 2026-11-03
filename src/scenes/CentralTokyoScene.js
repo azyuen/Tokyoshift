@@ -3345,11 +3345,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];
     const fourWide = {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
-      entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
+      entryFee: 0, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
     const proNames=this.getProSeasonEventNames(round,pro);
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
-      seasonRules: rules.driver, label: proNames.driver };
+      seasonRules: rules.driver, label: proNames.driver,entryFee:0 };
     // Rotating Elite Invitational: five Driver/three Crew starting rounds,
     // adapting deterministically when one point requirement falls behind.
     const invitationalDiscipline=getProInvitationalDiscipline(pro);
@@ -3357,19 +3357,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const alternateCrew={...CREW_SERIES,id:'crewAlt',team:true,
       seasonChoice:'alternative',format:alternateFormat,
       label:'ELITE CREW '+alternateFormat.replaceAll('_','-'),
-      entryFee:PRO_ALT_CREW_ENTRY_FEE,prizeCash:PRO_ALT_CREW_PRIZES[0],
+      entryFee:0,prizeCash:PRO_ALT_CREW_PRIZES[0],
       prizes:[...PRO_ALT_CREW_PRIZES],requiredWins:0};
     const inviteRules=getProDriverInvitationRules(round,pro);
     const alternateDriver={...PRO_DRAG_EVENTS[2],id:inviteRules.id,
       label:'ELITE DRIVER INVITATIONAL',seasonChoice:'alternative',
       seasonRules:inviteRules,requiredWins:0,
-      entryFee:PRO_INVITATIONAL_DRIVER_FEE,prizeCash:PRO_INVITATIONAL_DRIVER_PRIZE,
+      entryFee:0,prizeCash:PRO_INVITATIONAL_DRIVER_PRIZE,
       maxPowerKW:inviteRules.maxPowerKW,noNos:Boolean(inviteRules.noNos)};
     const special={id:'specialSlot',
       label:proCircuitSpecialEligible(this.registry)?'TOKYO CHAMPIONSHIP':'MINOR TROPHIES',
       specialSlot:true,entryFee:0,requiredWins:0};
     const choices=[driver,{...CREW_SERIES,seasonChoice:'standard',
-      format:rules.crew.format,label:proNames.crew,requiredWins:0},
+      format:rules.crew.format,label:proNames.crew,requiredWins:0,entryFee:0},
       round<8&&pro.seasonStatus==='ACTIVE'?
         (invitationalDiscipline==='DRIVER'?alternateDriver:alternateCrew):special];
     if(legacy?.active&&legacy.proEvent&&!legacy.openCircuit){
