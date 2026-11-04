@@ -424,10 +424,6 @@ function draw(s,opts){
       add(s.add.text(x+105,y+176,name,{
         fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
       }).setOrigin(.5,0).setDepth(229));
-      if(check)add(s.add.text(carX+105,y+213,check.eligible?'SCRUTINEERING // PASS':
-        'SCRUTINEERING // '+String(check.reasons[0]||'CHECK SETUP').slice(0,28),{
-        fontFamily:PIXEL,fontSize:'7px',color:check.eligible?'#9af5cc':'#ffb2ad',align:'center',
-      }).setOrigin(.5,0).setDepth(229));
       add(s.add.text(carX+105,y+199,model,{
         fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
       }).setOrigin(.5,0).setDepth(229));
@@ -464,7 +460,7 @@ function draw(s,opts){
         disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
       if(caption.width>w-18)caption.setScale((w-18)/caption.width);
     };
-    footerButton(974,205,unpaid?'CANCEL ENTRY':'FORFEIT EVENT',
+    footerButton(974,205,unpaid?'RETURN TO SEASON':'FORFEIT EVENT',
       ()=>unpaid?(close(),opts.onCancel?.()):opts.onForfeit?.());
     if(!locked)footerButton(1196,205,'CLEAR LINEUP',
       ()=>setLineup([null,null,null]));
@@ -482,7 +478,7 @@ function draw(s,opts){
       }).setOrigin(.5).setDepth(247));
     }
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
-      unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
+      unpaid?'GO TO GRID':'NEXT HEAT',()=>{
       if(!canConfirm())return;
       close();opts.onConfirm?.([...selected]);
     },{primary:ready,disabled:!ready});
