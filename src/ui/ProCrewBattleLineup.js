@@ -124,6 +124,7 @@ export function showProCrewHeatSelection(s,options){
 function draw(s,opts){
   s._proOverlayClose?.();
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
+  const e=opts.event||{};
   const unpaid=Boolean(opts.unpaid),locked=Boolean(opts.locked),fee=Number(opts.entryFee||0);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
@@ -419,7 +420,8 @@ function draw(s,opts){
       }
       const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
       const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
-      const check=u?getProfessionalCarEligibility(u.carId,state[u.carId]||{},{}):null;
+      const check=u?getProfessionalCarEligibility(u.carId,state[u.carId]||{},
+        getProCrewFormatRules(opts.fixture?.format||e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative')):null;
       add(s.add.text(x+105,y+176,name,{
         fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
       }).setOrigin(.5,0).setDepth(229));
@@ -441,12 +443,9 @@ function draw(s,opts){
     return members.length===3&&new Set(members).size===3&&
       members.every(id=>units.find(u=>u.id===id)?.validAssignment!==false);
   }
-  function crewRules(){return getProCrewFormatRules(e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative');}
   function crewError(){
-    const source={get:key=>key==='ownedCarIds'?s.registry.get('ownedCarIds'):
-      key==='carStates'?s.registry.get('carStates'):
-      key==='crewMembers'?s.registry.get('crewMembers'):s.registry.get(key)};
-    return getProCrewLineupError(source,selected.filter(Boolean),e.assignments||{},e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative');
+    return getProCrewLineupError(s.registry,selected.filter(Boolean),e.assignments||{},
+      opts.fixture?.format||e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative');
   }
   function canConfirm(){
     const members=selected.filter(Boolean);
@@ -477,6 +476,12 @@ function draw(s,opts){
       close();opts.onSetups([...selected]);
     },!canSetup());
     const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
+    if(invalidCarSetup){
+      const reason=crewError()||'CHECK CREW LINEUP';
+      add(s.add.text(1425,743,reason.slice(0,66),{
+        fontFamily:PIXEL,fontSize:'8px',color:'#ffb2ad',align:'center',
+      }).setOrigin(.5).setDepth(247));
+    }
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
       unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
       if(!canConfirm())return;
