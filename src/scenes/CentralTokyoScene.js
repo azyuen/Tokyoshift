@@ -3922,7 +3922,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         '\nENTRY  '+money(fee)+
         '\nRULES  '+(drive?(drive==='FWD'?'FF/FWD':drive)+' ONLY // ':'')+(Number.isFinite(limit)?limit+' KW MAX // ':'UNLIMITED POWER // ')+rule+
         '\n\nProceed to enter this competition. Your entry is charged once.',
-      confirmLabel:'GO TO GRID // '+money(fee),
+      confirmLabel:'GO TO GRID',
       onConfirm:onGrid,
     });
   }
