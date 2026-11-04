@@ -295,7 +295,7 @@ export function getProfessionalRoundEvents(round,season=1){
 // End-game ladder. Skill tiers use the existing AI engine unchanged:
 // 3 Skilled, 4 Expert, 5 Elite. The short repeating fields avoid rerolls.
 const PRO_SKILL_FIELDS=Object.freeze([
-  Object.freeze([4,4,5,4,3,4,4,5,4,4]), // first two rounds: rare Skilled
+  Object.freeze([4,4,5,4,4,4,4,5,4,4]), // first two rounds: Expert minimum
   Object.freeze([4,5,4,5,4,5,4,5,4,5]),
   Object.freeze([5,4,5,5,4,5,4,5,5,4]),
   Object.freeze([5,5,5,4,5,5,5,4]),
@@ -958,7 +958,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   if(t.trophyId==='triDrive'&&new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain||'').toUpperCase()]||String(u.drivetrain||'').toUpperCase()))).size!==3)return {error:'FIELD ONE FWD, ONE RWD AND ONE AWD DRIVER'};
-  const proCrewError=getProCrewLineupError(source,lineupIds,t.assignments,f.format,!(!t.openCircuit),t.seasonChoice==='alternative');
+  const proCrewError=getProCrewLineupError(source,lineupIds,t.assignments,f.format,Boolean(t.openCircuit),t.seasonChoice==='alternative');
   if(proCrewError)return {error:proCrewError};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
     const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
