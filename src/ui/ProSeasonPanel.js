@@ -56,6 +56,10 @@ export function drawProEventSidebarStatus(s,side,label,enabled) {
 }
 export const proEventEntryLabel=fee=>'ENTER EVENT BRIEFING';
 export function drawProEventSidebarEntry(s,side,label,action,enabled=true) {
+  if(!isOpenCircuitAvailable(circuit(s))){
+    s._proSeasonEntryAction=action;
+    s._proSeasonEntryEnabled=Boolean(enabled);
+  }
   const x=side.x+side.w/2,y=side.y+574,w=side.w-36;
   const bg=s.addContent(s.add.rectangle(x,y,w,40,enabled?0x551d25:0x201d20,1)
     .setStrokeStyle(2,enabled?0xed515c:0x575154,1).setDepth(33));

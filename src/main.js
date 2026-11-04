@@ -78,7 +78,7 @@ async function startTokyoShift() {
     const DynoScene = makeDeferredScene('DynoScene',
       '../scenes/DynoScene.js?v=20261026-r687');
     const CentralTokyoScene = makeDeferredScene('CentralTokyoScene',
-      '../scenes/CentralTokyoScene.js?v=20261104-r793');
+      '../scenes/CentralTokyoScene.js?v=20261104-r794');
     const OshiageScene = makeDeferredScene('OshiageScene',
       '../scenes/OshiageScene.js?v=20261026-r687');
     const MeetScene = makeDeferredScene('MeetScene',
