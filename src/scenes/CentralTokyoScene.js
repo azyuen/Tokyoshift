@@ -1887,7 +1887,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     listings.forEach((listing, index) => {
       const car = cars[listing.carId];
-      const x = CARDS.x + 190 + index * 365;
+      const x = isOpen ? CARDS.x + 190 + index * 365 : CARDS.x + 194 + index * 364;
       const selected = this.autoMarketShowcaseActive && index === this.selectedIndex;
       const modelOwnedCount = countOwnedCarModel(
         this.registry.get('ownedCarIds') || [],
@@ -3452,6 +3452,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     drawSeasonHeader(this, STAGE);
 
+    // Pro Season needs only two 340px cards, a 24px gap and 24px padding.
+    // Restore the full-width panel when showing Open Circuit.
+    const selectionWidth = isOpen ? CARDS.w : 752;
+    this.centralCardsPanel.setSize(selectionWidth,CARDS.h)
+      .setPosition(CARDS.x+selectionWidth/2,CARDS.y+CARDS.h/2);
+
     this.proOpenRotationKey = isOpen ? getOpenCircuitRotation().rotationIndex : null;
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
@@ -3545,7 +3551,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const source=this.textures.get(seasonIcon).getSourceImage();
         const fit=Math.min(104/source.width,94/source.height);
         icon.setScale(fit);
-      }else this.addContent(this.add.text(x-145,CARDS.y+68,!isOpen?(event.team?'CREW EVENT':'DRIVER EVENT'):event.label,{
+      }else this.addContent(this.add.text(x-145,CARDS.y+(isOpen?68:48),!isOpen?(event.team?'CREW EVENT':'DRIVER EVENT'):event.label,{
         fontFamily:PIXEL_FONT,fontSize:!isOpen?'13px':'8px',color:unlocked?'#f7f3f1':'#797277',
       }).setDepth(34));
       const captionX=seasonIcon?x-34:x-145;
