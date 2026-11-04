@@ -1625,9 +1625,9 @@ export default class GarageScene extends Phaser.Scene {
       // Never draw the player's workshop avatar in the crew paddock.
       this.crewProPaddockDriverSprites=[];
       const positions=[
-        {x:STAGE.x+215,feetY:STAGE.y+425,height:300},
-        {x:STAGE.x+505,feetY:STAGE.y+416,height:270},
-        {x:STAGE.x+780,feetY:STAGE.y+405,height:240},
+        {x:STAGE.x+215,feetY:STAGE.y+447,height:300},
+        {x:STAGE.x+545,feetY:STAGE.y+416,height:256.5},
+        {x:STAGE.x+815,feetY:STAGE.y+405,height:204},
       ];
       this.crewProPaddockDrivers.forEach((id,i)=>{
         const driver=characters[id],pos=positions[i];
@@ -1672,6 +1672,7 @@ export default class GarageScene extends Phaser.Scene {
         0.84
       ).setDepth(depth - 0.08),
     ];
+    if(this.crewProPaddockMode){shadows[0].setAlpha(0.38);shadows[1].setAlpha(0.56);}
     // Companion shadows must disappear when the character leaves.
     sprite.once('destroy', () => shadows.forEach(shadow => shadow?.destroy?.()));
     sprite.stageShadows = shadows;
@@ -4531,7 +4532,7 @@ export default class GarageScene extends Phaser.Scene {
       Math.max(128, targetWidth * 0.96),
       shadowHeight,
       0x000000,
-      0.82
+      this.crewProPaddockMode ? 0.62 : 0.82
     ).setDepth(depth - 0.12);
 
     const paintColor = getCarPaintColor(carState);
@@ -4603,7 +4604,9 @@ export default class GarageScene extends Phaser.Scene {
     const rightShift=bay==='04'?30:
       bay==='05'?placement.width*0.30-60:
       placement.width*0.50-120;
-    return {...placement,width:placement.width*widthScale,
+    return {...placement,
+      contactY:placement.contactY+(this.crewProPaddockMode&&bay==='04'?22:0),
+      width:placement.width*widthScale,
       carX:placement.x+60+rightShift};
   }
 
