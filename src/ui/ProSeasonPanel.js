@@ -306,6 +306,8 @@ export function drawCrewSidebar(s,event,side) {
     crewFormat==='RELAY'?'THREE-LEG RELAY':
     crewFormat==='FOUR_WIDE'?'FOUR-WIDE TEAM RACING':'THREE HEAD-TO-HEAD HEATS',
     'SELECT THREE REGISTERED CREW DRIVERS',
+    ...(!open&&crewFormat==='RELAY'?['MAX 450 KW PER CAR // AT LEAST TWO DRIVETRAINS']:
+      !open&&crewFormat==='TECHNICAL'?['MAX 300 KW PER CAR // NOS DISABLED']:[]),
     ...(crewFormat==='TECHNICAL'?['CLOSEST COMBINED TIME SPREAD WINS']:
       crewFormat==='RELAY'?['LOWEST COMBINED TIME WINS']:
       crewFormat==='FOUR_WIDE'?['FOUR-CAR ELIMINATION HEATS']:

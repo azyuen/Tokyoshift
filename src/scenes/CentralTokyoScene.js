@@ -3373,37 +3373,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const proNames=this.getProSeasonEventNames(round,pro);
     const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
       seasonRules: rules.driver, label: proNames.driver,entryFee:0 };
-    // Rotating Elite Invitational: five Driver/three Crew starting rounds,
-    // adapting deterministically when one point requirement falls behind.
-    const invitationalDiscipline=getProInvitationalDiscipline(pro);
-    const alternateFormat=getAlternativeProCrewFormat(round,pro);
-    const alternateCrew={...CREW_SERIES,id:'crewAlt',team:true,
-      seasonChoice:'alternative',format:alternateFormat,
-      label:'ELITE CREW '+alternateFormat.replaceAll('_','-'),
-      entryFee:0,prizeCash:PRO_ALT_CREW_PRIZES[0],
-      prizes:[...PRO_ALT_CREW_PRIZES],requiredWins:0};
-    const inviteRules=getProDriverInvitationRules(round,pro);
-    const alternateDriver={...PRO_DRAG_EVENTS[2],id:inviteRules.id,
-      label:'ELITE DRIVER INVITATIONAL',seasonChoice:'alternative',
-      seasonRules:inviteRules,requiredWins:0,
-      entryFee:0,prizeCash:PRO_INVITATIONAL_DRIVER_PRIZE,
-      maxPowerKW:inviteRules.maxPowerKW,noNos:Boolean(inviteRules.noNos)};
-    const special={id:'specialSlot',
-      label:proCircuitSpecialEligible(this.registry)?'TOKYO CHAMPIONSHIP':'MINOR TROPHIES',
-      specialSlot:true,entryFee:0,requiredWins:0};
+    // Pro Season offers exactly two official disciplines. Keep legacy active
+    // invitationals playable from their matching discipline until completion.
     const choices=[driver,{...CREW_SERIES,seasonChoice:'standard',
-      format:rules.crew.format,label:proNames.crew,requiredWins:0,entryFee:0},
-      round<8&&pro.seasonStatus==='ACTIVE'?
-        (invitationalDiscipline==='DRIVER'?alternateDriver:alternateCrew):special];
+      format:rules.crew.format,label:proNames.crew,requiredWins:0,entryFee:0}];
     if(legacy?.active&&legacy.proEvent&&!legacy.openCircuit){
-      const activeIndex=legacy.eventId===inviteRules.id?2:0;
-      const base=choices[activeIndex];
-      choices[activeIndex]={...base,id:legacy.eventId,
-        label:legacy.briefingLabel||base.label,
-        entryFee:legacy.entryFee??base.entryFee,
-        prizeCash:legacy.prizeCash??base.prizeCash,
-        seasonChoice:activeIndex===2?'alternative':'standard',
-        seasonRules:activeIndex===2?inviteRules:rules.driver};
+      const savedAlternative=legacy.seasonChoice==='alternative';
+      const savedRules=savedAlternative?getProDriverInvitationRules(round,pro):rules.driver;
+      choices[0]={...choices[0],id:legacy.eventId,
+        label:legacy.briefingLabel||choices[0].label,
+        entryFee:legacy.entryFee??choices[0].entryFee,
+        prizeCash:legacy.prizeCash??choices[0].prizeCash,
+        seasonChoice:savedAlternative?'alternative':'standard',
+        seasonRules:savedRules};
+    }
+    if(pro.activeCrewEvent?.seasonChoice==='alternative'){
+      choices[1]={...choices[1],seasonChoice:'alternative',
+        format:pro.activeCrewEvent.format,label:pro.activeCrewEvent.label};
     }
     if (pro.activeTournament) choices[0] = {...fourWide,seasonRules:rules.driver,label:proNames.driver};
     // Never overwrite the player's chosen card merely because a crew series

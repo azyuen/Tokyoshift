@@ -265,6 +265,29 @@ export function getProfessionalSeasonCalendar(season=1) {
     crew:{...PRO_SEASON_CALENDAR[crews[i]].crew}
   }));
 }
+// Pro Season crew regulations; Open Circuit and historical invitationals retain their rules.
+export function getProCrewFormatRules(format,openCircuit=false,alternative=false){
+  if(openCircuit||alternative)return {};
+  if(format==='RELAY')return {maxPowerKW:450,minDrivetrains:2};
+  if(format==='TECHNICAL')return {maxPowerKW:300,noNos:true};
+  return {};
+}
+export function getProCrewLineupError(source,driverIds,assignments={},format='DUEL',openCircuit=false,alternative=false){
+  const rules=getProCrewFormatRules(format,openCircuit,alternative);
+  if(!Object.keys(rules).length)return null;
+  const units=getCrewSeriesUnits(source,assignments),states=value(source,'carStates',{});
+  const chosen=driverIds.map(id=>units.find(u=>u.id===id));
+  if(chosen.length!==3||chosen.some(u=>!u))return 'SELECT THREE CREW DRIVERS';
+  for(const u of chosen){
+    const check=getProfessionalCarEligibility(u.carId,states[u.carId]||{},rules);
+    if(!check.eligible)return u.name.toUpperCase()+': '+check.reasons.join(' / ');
+  }
+  if(rules.minDrivetrains){
+    const drives=new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain).toUpperCase()]||String(u.drivetrain).toUpperCase())));
+    if(drives.size<rules.minDrivetrains)return 'RELAY REQUIRES AT LEAST TWO DRIVETRAINS';
+  }
+  return null;
+}
 export function getProfessionalRoundEvents(round,season=1){
   return getProfessionalSeasonCalendar(season)[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];
 }
@@ -272,7 +295,7 @@ export function getProfessionalRoundEvents(round,season=1){
 // End-game ladder. Skill tiers use the existing AI engine unchanged:
 // 3 Skilled, 4 Expert, 5 Elite. The short repeating fields avoid rerolls.
 const PRO_SKILL_FIELDS=Object.freeze([
-  Object.freeze([4,4,5,4,3,4,4,5,4,4]), // first two rounds: rare Skilled
+  Object.freeze([4,4,5,4,4,4,4,5,4,4]), // first two rounds: Expert minimum
   Object.freeze([4,5,4,5,4,5,4,5,4,5]),
   Object.freeze([5,4,5,5,4,5,4,5,5,4]),
   Object.freeze([5,5,5,4,5,5,5,4]),
@@ -800,14 +823,24 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={},seasonCh
   if(new Set(chosen.map(u=>u.carId)).size!==chosen.length)return 'REGISTER A DISTINCT CAR FOR EACH DRIVER';
   return null;
 }
-function opponentBuild(id,rating,slot,skillTier=null,requiredDrivetrain=null) {
+function opponentBuild(id,rating,slot,skillTier=null,requiredDrivetrain=null,rules={}) {
   const rng=seasonRandom(id+':'+slot);
   const eligible=['ae86','ek9','fc3s','galant','r32','s2000','rx7fd','jza80']
     .filter(carId=>!requiredDrivetrain||
-      getCarMagazineMeta(carId).drivetrain===requiredDrivetrain);
-  const carId=eligible[Math.floor(rng()*eligible.length)];
+      ({FF:'FWD',FR:'RWD'}[getCarMagazineMeta(carId).drivetrain]||getCarMagazineMeta(carId).drivetrain)===requiredDrivetrain);
+  const initial=Math.floor(rng()*eligible.length);
   const level=clamp(Math.round(2+(rating-1400)/220),1,5);
-  const state=createRivalBuildState(cars[carId],level,{seed:id+':'+slot,raceType:'Standing Start'});
+  let build=null;
+  // Rivals must pass the same power/NOS inspection as the player.
+  for(let l=level;l>=0&&!build;l--){
+    for(let n=0;n<eligible.length;n++){
+      const carId=eligible[(initial+n)%eligible.length];
+      const state=l===0?{}:createRivalBuildState(cars[carId],l,{seed:id+':'+slot,raceType:'Standing Start'});
+      if(rules.noNos)state.nosEnabled=false;
+      if(getProfessionalCarEligibility(carId,state,rules).eligible){build={carId,state};break;}
+    }
+  }
+  const {carId,state}=build||{carId:eligible[initial]||'ae86',state:{nosEnabled:false}};
   const tier=skillTier||Math.max(3,Math.min(5,Math.round(3+(rating-1400)/250)));
   return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,
     skill:tier===5?.93:tier===4?.85:.79,skillTier:tier};
@@ -846,6 +879,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
     teamsPool.sort((a,b)=>Math.abs(a.rating-c.playerTeam.rating)-
       Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id))).slice(0,3);
   const teams=[{id:PLAYER,name:c.playerTeamName,rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
+  const crewRules=getProCrewFormatRules(format,openCircuit,alternative);
   const entrants=teams.map((r,i)=>{
     const definition=getProAiTeamDefinition(r.id);
     const teamRoster=definition ? [...definition.rankedDriverIds, definition.reserveName] : [];
@@ -853,7 +887,9 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,
       drivers:[0,1,2].map(n=>({
         ...opponentBuild(r.id,r.rating,n,!openCircuit&&r.id!==PLAYER?
           getProSeasonSkillTier(c.calendar.round,i*3+n,alternative):null,
-          trophy?.id==='triDrive'&&r.id!==PLAYER?['FWD','RWD','AWD'][n]:null),
+          trophy?.id==='triDrive'&&r.id!==PLAYER?['FWD','RWD','AWD'][n]:
+            crewRules.minDrivetrains&&r.id!==PLAYER?['FWD','RWD','FWD'][n]:null,
+          r.id!==PLAYER?crewRules:{}),
         driverId:definition?.rankedDriverIds[n]||null,
         name:r.id===PLAYER?c.playerTeamName:(c.drivers[teamRoster[n]]?.name ||
           (c.drivers[teamRoster[n]]?.characterId?characters[c.drivers[teamRoster[n]].characterId]?.name:null) ||
@@ -935,6 +971,8 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   if(t.trophyId==='triDrive'&&new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain||'').toUpperCase()]||String(u.drivetrain||'').toUpperCase()))).size!==3)return {error:'FIELD ONE FWD, ONE RWD AND ONE AWD DRIVER'};
+  const proCrewError=getProCrewLineupError(source,lineupIds,t.assignments,f.format,Boolean(t.openCircuit),t.seasonChoice==='alternative');
+  if(proCrewError)return {error:proCrewError};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
     const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
