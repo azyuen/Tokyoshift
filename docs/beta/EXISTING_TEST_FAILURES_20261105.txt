@@ -1,0 +1,171 @@
+R799 baseline and R800 candidate: same 168 failing assertions across 1,030 tests.
+These failures are not suppressed by the cleanup.
+
+14 distinct engines deliver rated outputs, correct tyres and usable stock/upgraded builds
+Arkon Den can leave an empty workshop using one owned personal car
+Arkon portraits move right and react correctly; Ginza manga flips toward Sayaka
+Career scenes and racing names use the in-game identity
+Central Tokyo looks up no event while resolving rank-based home imagery
+Ch10 gallery stays formal; closing invitation matches the casual final drive
+Chapter 8 is registered as a real ordered three-race script
+Crew Space button, image-sized hotspots and manga return reuse the existing scene
+Crew Space service is present and live races reject invalid AI builds
+Crew Space swaps the same hotspot and shows the tutorial board as static artwork
+Crew chapter routes to actual CrewSpaceScene sharing the same Garage implementation
+Daichi UI exposes both tabs, four levels, real build readouts and disabled entry
+Drag Complex unlocks with full recruited crew, not winning their battles
+Drag Scene triggers the same connected story after first arrival, and exposes consistent compact actions
+EJ1 is retired without changing reference geometry, other cars or collector count
+Exhibition race is first season only and uses the story 240Z with ordinary build rules
+GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car
+Galant runs its own 176 kW period-style 4G63T map, not the Evo III calibration
+Live conversion quote is applied at confirmation and at final payment; no flat fee still charged
+Manga definition stages leader first then active rival and prompts explicit choice
+Masters invitation and saved mixed crew gauntlet use DUEL, RELAY, FOUR-WIDE
+NEXT HEAT skips preparation; RACE BRIEFING opens saved paid preparation room
+Office Chapter 10 sponsor replay skips the Chapter 09 welcome and restores the full profile
+PRO SEASON replaces generic page header and Pro Paddock sits above the action stack
+Pro Garage bay vehicles sit farther right while the bay signs stay anchored
+Pro Garage has three temporary bays without adding purchased garage capacity
+Pro starts Expert-heavy, Invitationals are 80% Elite, and late regulars are mostly Elite
+R589: Sayaka can be consulted only once per paid event, even after state reload
+R589: legacy five-member entries still work and keep their saved limitation
+R589: long professional trophy can choose a new trio on its next fixture
+R589: seven-member team enters once without five-driver registration
+R592: WorldClock creates six five-minute slots per full day/night and one trophy cycle
+R592: open crew format changes with the offered slot and locks when the event is registered
+R594: Sayaka gives mixed-case spoken advice with actual driver and vehicle models
+R594: a broken optional car preview never strands the roster or hides the room
+R594: open circuit forfeit loses the paid event with zero season points, no refund and no reentry
+R594: seasonal crew forfeit uses up its official season round but gives no qualification points
+R595: all three right-side professional actions have identical height and gaps
+R595: entry-fee captions sit 10px lower on all three event cards
+R596: all four main scene buttons share the intermediate 13px Silkscreen sizing
+R600 opponent panel is wider, shorter and supports real portraits plus safe NPC placeholder
+R600 racing safety, cooldown, tuning and forfeits are retained
+R600 real owned car is in the room, with no invented painted preview or box
+R602: a forfeited paid crew event counts toward Sayaka shared cooldown
+R602: shared cooldown applies across crew and driver series, including forfeits
+R603 Sayaka cooldown is staged and committed only with the entry payment
+R604 matching workshop hotspot and top-right Hiroshi briefing renderer used by both rooms
+R605 a crew event can be fully previewed without paying, before atomic grid registration
+R605 right-side event listings have no duplicate entry fees
+R605 saved crew result returns to same locked briefing for the next heat
+R606 no trophy panel matches other events and omits duplicate extra cycle/scrutineering
+R608 Crew Hiroshi shows no fixture or repeated entry and uses a shorter six-row popup
+R610: every roster car displays unmasked, vertically centred in its row, with its ground shadow removed
+R624 PWA rollout keeps save keys and original engineering untouched
+R641 boot and build import registration remains isolated
+R643 cache keys load newest story runner, staging and loan guards
+R669 real Story flows, companion absent in last drive, replay and Hero art linked
+R669 two independent build milestones require real parts and genuine shop visits
+R671 Sayaka changes clothes between commissions, then wears home clothes throughout the RWB repair
+R683 Ch8 gala anger, fear, and vulnerability are expressed in the suit, including post-signature aftermath
+R685 Oshiage basic and advanced lessons ALWAYS use instructor portraits
+R719 production boot includes Office and career-story UI without wiping the large image cache
+Sayaka advice can be used again only after the current event and two other completed pro events
+Sayaka can be consulted after any paid heat if the shared once-per-event allowance is unused
+Sayaka farewell fades both manga portrait and garage companion before Daichi can appear
+Sayaka first tells Aruken about Daichi; nothing claims they already met
+Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures
+Sayaka leaves the player at a resumable workshop checkpoint before a separate tap
+Stock body and paint are matched PNGs and ground-normalised for two small tyres
+Tatsumi Standard develops gradually and Canal-maxed 22B can beat both Expert EVOs
+Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone
+Tri-Drive registration rejects squads without FWD, RWD and AWD
+Tri-Drive rival crews obey player drivetrain mix
+a booking charges once and allows exactly three retries
+a driver trophy consultation covers five stages and costs six completed-event ticks
+a full standalone crew session charges once, drives three heats and earns no season points
+a previously registered developer can relive the entire race without modifying the live save
+active legacy three-round cup stays resumable under the new three slot layout
+actual scene references the official ID and locked camera and gives preheat briefing
+all 20 hero/collector images use the hero folder
+all Oshiage teaching poses map to the correct physical asset files
+all eight accepted source-pixel body offsets reach game configs unchanged
+all named character-bible IDs have seven genuinely authored lines
+all new professional race entries use four-lane complex; only 2 cars for pro duels
+all seven whiteboard intel cards are based on the actual crew heat rules
+all tuner modes and donor animation use the same hero-scale display width
+an officially completed season returns to open circuit until new deliberate registration
+both established chapter 08 phone callers retain their content and use the shared phone template
+both standard and vibrating pick-up phone renderer reuse same global backdrop and icon template
+captains never drive and actual opponents have legal builds
+cash Showdown entry fees remain moderate and grow by difficulty
+changes to weight reduction modify live physics weight and engine output refreshes
+chapter 08 orchestration waits for each real or previewed call to finish
+collector NOS is usable while all non-NOS collector tuning remains sealed
+copy-car performance is built using its true model but its individual tuned state
+course starts in the SAME standard manga renderer as developer cutscenes
+crew briefing uses the lower-right street quadrant, not the skyline
+crew map allows Oshiage school/custom works without granting Ginza or Skytree
+crew prestige trophy requires three full fixtures and never scores season points
+cutscene pose change reuses the exact creation-placement helper and a lowered frame
+dev author can compare real location and interior backgrounds without writing coordinates
+developer controls are collapsible and story chapter previews are grouped first
+driver advice uses the existing crew professional-event cooldown and cannot be farmed between heats
+driver preparation manually selects one or two shots from an owned three-shot kit
+duplicate owned vehicles preserve the exact instance id
+each regional recruit speaks in the standard replayable manga, beside a 3-heat regulation panel
+event eligibility never modifies installed player hardware
+every Drag Complex visual entry point requests Pro art
+every phone scene uses blue call accents including player responses and mixed calls
+every regional tuner converts its correct existing stock model
+existing Evo III ownership remains the same object/upgrade record after loading
+existing background nudge and paint transaction remain untouched
+factory-stock check ignores saved but physically inactive Level III settings
+failed finished season reports shortfall and safely reopens the circuit
+first individual/trophy opponent car preview matches its live race paint, not factory white
+forfeit button remains accessible from the right panel throughout Tokyo Championship
+four school courses have authored costs and approved disguised dialogue
+generic authored STAGE can opt in by backgroundId; legacy positions remain intact
+iPad and iPhone refresh the R658 story/phone templates without cache mixing
+ineligible grid stays disabled until all actual regulations pass
+integration retains manga/phone, existing Ginza banter and player saves
+intro professional cups are all less lucrative than the four-wide championship
+last-place finish eliminates player but simulates remaining heats without extra playable races
+late-model FD 13B-REW makes its rated 314 Nm at 5000 rpm and ~206 kW at 6500
+legacy Evolution III becomes Galant VR-4, including all copied and crew cars
+legacy event crowd defaults remain available alongside dynamic season attendance
+manga ending uses smaller angled portrait, red/charcoal/white motif, next stage and low standings
+market, rival preferences, Odaiba championship and crew recruitment never issue EJ1
+new cars support stock and upgraded performance without missing engine configs
+non-trophy crew advice retains a three-event cooldown, and trophy cooldown is shared
+official third card alternates between Driver and Crew and remains independently resumable
+one driver advice purchase is valid from any heat and refreshes for new opponents
+open crew sponsor bonus uses CREW rank and settles only on completed paid fixtures
+opening and farewell dialogue use Sayaka normal-happy-normal beat
+ordinary Ginza drivers get no passenger shifting HUD; Aruken uses dress and suit
+out-of-class or over-limit current selected car still opens free Daichi preparation
+paint purchases revalidate crew loan ownership and never rewrite other garages
+paint showroom car remains 70% of earlier width at current booth placement
+paint studio uses tappable HSV colour square, lower car and right-side actions
+phone UI uses the compact shared, face-centred bubble and phone corner icon
+phone maintains its blue theme, border and floating icon, with compact text size
+phone theme uses pale translucent blue, blue outline and large corner icon
+professional endings use angled manga portrait, large sign and top-depth tap-anywhere
+rank commission uses a progressive capped tier with no payout at entry level
+recruits disappear from regional championships and the final crew battle
+regional rivals have legal physical builds and the agreed progressive formats
+registration and withdrawal keep distinct safe confirmation paths
+registration moves exactly three registered personal cars with original garages saved
+replacing crew drivers renders background and correctly ordered car sprites every time
+restricted Pro Season nitrous capacities apply to AI and live builds
+scene integrates three race streak, cutscene anonymity, preset and RGB pricing, and slow side entry
+scouting and captain dialogue are specific to real rounds and result
+season crew \#1 receives double the paid sprint purse but only 20 season points
+shared head stays frameless for both regular coaching and phone calls
+shot caps inspect enabled capacity without automatically reducing it
+single right panel action routes paid events and resumed heats, without other controls
+standard and animated/swipe phone calls never override the global template down to tiny 17px text
+standard manga two-person geometry and original whole-screen translucent shade
+starter and developer Magna defaults do not overwrite other saved car paints
+starter meets stay recognisable and late regions add new cars without bypassing matchmaker
+station cutscene addresses selected name without spoiling car or Sayaka
+the entire 434-line collection has no shared dialogue or placeholders
+the in-office Sayaka call uses the shared blue race dialogue with phone corner badge
+the opening and later visits use one magazine page-flip renderer
+the original paint purchase, persistence and other-room code remain
+the story scene uses source-art transforms rather than window-Y placement
+the very next workshop tap uses Daichi exactly as drivetrain tuning does
+three Drag Strip cards support open circuit, official season and independent trophy choices

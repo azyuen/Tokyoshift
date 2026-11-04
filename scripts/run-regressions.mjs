@@ -22,8 +22,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const tests = new Set();
   const commands = [];
   for (const command of unique) {
-    const clean = command.split('\n').filter(line => !line.trim().startsWith('#')).join('\n').trim();
-    if (/^node --test(?: tests\/[\w./-]+\.mjs)+$/.test(clean)) {
+    const clean = command.split('\n').filter(line => !line.trim().startsWith('#')).join('\n').replace(/\\\n\s*/g, ' ').trim();
+    if (/^node\s+--test(?:\s+tests\/[\w./-]+\.mjs)+$/.test(clean)) {
       clean.split(/\s+/).slice(2).forEach(file => tests.add(file));
     } else commands.push(command);
   }
