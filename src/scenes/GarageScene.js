@@ -222,6 +222,7 @@ export default class GarageScene extends Phaser.Scene {
     const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
     this.crewProPaddockMode = Boolean(data?.crewProPaddockMode);
     this.crewProPaddockCars = this.crewProPaddockMode ? [...new Set((data?.crewProPaddockCars||[]).filter(id=>cars[id]))].slice(0,3) : [];
+    this.crewProPaddockDrivers=this.crewProPaddockMode ? (data?.crewProPaddockDrivers||[]).slice(0,3) : [];
     this.proGarageMode = Boolean(this.crewProPaddockMode || data?.proGarageMode ||
       data?.workshopLocationId===PRO_GARAGE_ID ||
       this.registry.get('workshopLocationId')===PRO_GARAGE_ID);
@@ -421,7 +422,7 @@ export default class GarageScene extends Phaser.Scene {
           ...Object.values(members).map(member => member.characterId),
         ]
       : [
-          this.registry.get('playerCharacterId') || 'renMizuno',
+          ...(this.crewProPaddockMode ? this.crewProPaddockDrivers : [this.registry.get('playerCharacterId') || 'renMizuno']),
           'daichiSakamoto',
           ...(['home', 'magazine', 'delivery', 'tutorial', 'daichi'].includes(this.registry.get('openingChapter'))
             ? ['sayakaFujieda'] : []),
@@ -1619,6 +1620,23 @@ export default class GarageScene extends Phaser.Scene {
     const workshopActor = storyIdle && this.textures.exists(storyIdle.key)
       ? { ...playerCharacter, visual:{ ...playerCharacter.visual, spriteKey:storyIdle.key } }
       : playerCharacter;
+    if(this.crewProPaddockMode){
+      // Each selected driver stands beside their own static paddock bay.
+      // Never draw the player's workshop avatar in the crew paddock.
+      this.crewProPaddockDriverSprites=[];
+      const positions=[
+        {x:STAGE.x+185,feetY:STAGE.y+425,height:300},
+        {x:STAGE.x+470,feetY:STAGE.y+416,height:275},
+        {x:STAGE.x+760,feetY:STAGE.y+405,height:250},
+      ];
+      this.crewProPaddockDrivers.forEach((id,i)=>{
+        const driver=characters[id],pos=positions[i];
+        if(!driver?.visual?.spriteKey||!pos||!this.textures.exists(driver.visual.spriteKey))return;
+        this.crewProPaddockDriverSprites.push(this.addGarageCharacter(
+          driver,pos.x,pos.feetY,pos.height,13-i*3));
+      });
+      return;
+    }
     this.workshopPlayerSprite = this.addGarageCharacter(
       workshopActor,
       PLAYER_CFG.x,
