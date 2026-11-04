@@ -3522,7 +3522,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     );
 
     events.forEach((event, index) => {
-      const x = CARDS.x + 190 + index * 365;
+      const x = isOpen ? CARDS.x + 190 + index * 365 : CARDS.x + CARDS.w * (index + .5) / events.length;
       const selected = index === this.selectedEventIndex;
       const wins = Number(this.registry.get('wins') || 0);
       const unlocked = circuitOpen && (event.fourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
@@ -3530,14 +3530,37 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
-        340,
-        116,
+        isOpen ? 340 : Math.min(490,CARDS.w/events.length-34),
+        isOpen ? 116 : 134,
         selected ? 0x36181d : 0x141317,
-        1
-      ).setStrokeStyle(selected ? 2 : 1, selected ? 0xd74750 : 0x665f62, 1)
+        isOpen ? 1 : 0
+      ).setStrokeStyle(isOpen ? (selected ? 2 : 1) : 0, selected ? 0xd74750 : 0x665f62, isOpen ? 1 : 0)
         .setInteractive({ useHandCursor: true })
         .setDepth(32));
 
+      if(!isOpen){
+        // Large logo and attached racing banner; the invisible full hit area
+        // retains the original event selection handler.
+        const iconKey=event.team?'proCrewEventLogo':'proDriverEventLogo';
+        const logoX=x-132, logoY=CARDS.y+98;
+        const bannerX=x+75, bannerY=CARDS.y+104;
+        this.addContent(this.add.rectangle(bannerX,bannerY,246,92,
+          selected?0x29455a:0x172b3d,selected?.96:.84).setDepth(33));
+        this.addContent(this.add.rectangle(bannerX+118,bannerY,7,92,
+          selected?0xf5a451:0x4e8fb0,.95).setDepth(33));
+        if(this.textures.exists(iconKey)){
+          const logo=this.addContent(this.add.image(logoX,logoY,iconKey)
+            .setDepth(35).setOrigin(.5));
+          const source=this.textures.get(iconKey).getSourceImage();
+          logo.setScale(Math.min(208/source.width,188/source.height));
+        }
+        const name=event.team?'CREW EVENT':'DRIVER EVENT';
+        const caption=this.addContent(this.add.text(bannerX+9,bannerY,name,{
+          fontFamily:'"Exo 2", sans-serif',fontSize:'29px',fontStyle:'italic 900',
+          color:selected?'#ffffff':'#c5d8e5',stroke:'#091521',strokeThickness:2,
+        }).setOrigin(.5).setDepth(36));
+        if(caption.width>215)caption.setScale(215/caption.width);
+      }else{
       const seasonIcon=!isOpen&&(event.team?'proCrewEventLogo':'proDriverEventLogo');
       if(seasonIcon&&this.textures.exists(seasonIcon)){
         const icon=this.addContent(this.add.image(x-104,CARDS.y+102,seasonIcon)
@@ -3572,6 +3595,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           color:unlocked?'#f2dadc':'#817d84',
         }).setOrigin(1,.5).setDepth(34));
 
+      }
       box.on('pointerdown', () => {
         this.selectedEventIndex = index;
         this.renderLocation(this.activeLocationId);
