@@ -1625,15 +1625,15 @@ export default class GarageScene extends Phaser.Scene {
       // Never draw the player's workshop avatar in the crew paddock.
       this.crewProPaddockDriverSprites=[];
       const positions=[
-        {x:STAGE.x+185,feetY:STAGE.y+425,height:300},
-        {x:STAGE.x+470,feetY:STAGE.y+416,height:275},
-        {x:STAGE.x+760,feetY:STAGE.y+405,height:250},
+        {x:STAGE.x+215,feetY:STAGE.y+425,height:300},
+        {x:STAGE.x+505,feetY:STAGE.y+416,height:270},
+        {x:STAGE.x+780,feetY:STAGE.y+405,height:240},
       ];
       this.crewProPaddockDrivers.forEach((id,i)=>{
         const driver=characters[id],pos=positions[i];
         if(!driver?.visual?.spriteKey||!pos||!this.textures.exists(driver.visual.spriteKey))return;
         this.crewProPaddockDriverSprites.push(this.addGarageCharacter(
-          driver,pos.x,pos.feetY,pos.height,13-i*3));
+          driver,pos.x,pos.feetY,pos.height,i===0?20:13-i*3));
       });
       return;
     }
