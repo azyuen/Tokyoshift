@@ -54,7 +54,7 @@ test('main boot registers heavy scenes lazily, preserving their canonical names'
   const eager=main.slice(main.indexOf('const [BootScene'),main.indexOf('// Preserve the canonical'));
   assert.doesNotMatch(eager,/loadScene\('GARAGE'|loadScene\('MEET'|loadScene\('RACE'/);
   for(const key of ['GarageScene','MeetScene','RaceScene','CentralTokyoScene',
-    'FourLaneTestScene','OshiageScene','CrewSpaceScene']){
+    'FourLaneTestScene','OshiageScene','CrewSpaceScene','CharacterSelectScene','TrainStationScene']){
     assert.match(main,new RegExp("makeDeferredScene\\('"+key+"'"));
   }
 });

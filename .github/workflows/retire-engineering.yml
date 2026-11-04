@@ -1,0 +1,42 @@
+name: Retire deployed engineering branches (one-time)
+on:
+  push:
+    branches: [maintenance/beta-cleanup-20261105]
+    paths: [.github/workflows/retire-engineering.yml]
+permissions:
+  contents: write
+jobs:
+  archive-and-retire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archive exact experimental tips, then retire unchanged engineering branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r branch expected; do
+            ref="refs/heads/$branch"
+            actual=$(git ls-remote origin "$ref" | cut -f1)
+            if [ -z "$actual" ]; then
+              echo "$branch already retired"
+              continue
+            fi
+            [ "$actual" = "$expected" ] || { echo "Branch moved: $branch; leaving intact"; exit 1; }
+            tag="refs/tags/archive/$branch"
+            existing=$(git ls-remote origin "$tag" | cut -f1)
+            if [ -n "$existing" ]; then
+              [ "$existing" = "$expected" ] || { echo "Archive mismatch: $tag"; exit 1; }
+            else
+              git push origin "$expected:$tag"
+            fi
+            [ "$(git ls-remote origin "$tag" | cut -f1)" = "$expected" ]
+            git push --force-with-lease="$ref:$expected" origin ":$ref"
+          done <<'BRANCHES'
+          engineering/hero-endgame-20261026 5b113b1b7e25a92bbb3d52b30cf5bd0c1e0c31cb
+          engineering/human-drivers-e005-20261026 31a323c0cbb79aa2c571a7b9f8649a96d976b844
+          engineering/integrated-playable-20261024 311160d9dd6ce5c718244a87ad5ed3104411fc6a
+          engineering/regional-stacking-20261025 311160d9dd6ce5c718244a87ad5ed3104411fc6a
+          engineering/vehicle-balance-20261015 ff9aeef6187045529dfc19daf9978081e73da7b2
+          BRANCHES

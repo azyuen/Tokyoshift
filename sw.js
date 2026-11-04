@@ -1,10 +1,10 @@
-const BUILD = 'R788';
+const BUILD = 'R800';
 // Stable across releases: keys include the SHA-256 of each asset's contents.
 // Generate the manifest after asset edits; never key these files by game build.
 importScripts('./asset-manifest.js');
 const SCOPE = new URL('./', self.location.href);
 const ASSET_CACHE = 'tokyoshift-content-v1-' + encodeURIComponent(SCOPE.pathname);
-const RUNTIME_CACHE = 'tokyoshift-runtime-r788';
+const RUNTIME_CACHE = 'tokyoshift-runtime-r800';
 const pendingAssets = new Map();
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -50,38 +50,45 @@ async function store(cache, key, response) {
   try { if (cache && response.ok && response.status === 200) await cache.put(key, response.clone()); } catch {}
 }
 
+async function verifyAndStore(cache, key, response, revision) {
+  // Work on a clone while the original response streams to Phaser. Keep the
+  // integrity check: old CDN bytes must never acquire a new content hash.
+  try {
+    const bytes = await response.clone().arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    const actual = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    if (actual === revision) await store(cache, key, response);
+  } catch (_) { /* Cache/hash failure cannot block a successful download. */ }
+}
+
 async function fetchAsset(request, key, revision) {
   const cache = await openCache(ASSET_CACHE);
   const cached = await match(cache, key);
-  if (cached) return cached;
-  // Revalidate the HTTP cache when contents change, including same-path art edits.
+  if (cached) return { response: cached, cacheDone: Promise.resolve() };
   const response = await fetch(new Request(request, { cache: 'no-cache' }));
-  // Do not label stale deployment bytes with the new content hash.
-  if (response.ok && response.status === 200 && cache) {
-    try {
-      const bytes = await response.clone().arrayBuffer();
-      const digest = await crypto.subtle.digest('SHA-256', bytes);
-      const actual = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-      if (actual === revision) await store(cache, key, response);
-    } catch (_) { /* Hash/cache failures must not block a downloaded image. */ }
-  }
-  return response;
+  const cacheDone = response.ok && response.status === 200 && cache
+    ? verifyAndStore(cache, key, response, revision) : Promise.resolve();
+  return { response, cacheDone };
 }
 
-async function assetResponse(request, path, revision) {
+function assetResponse(event, path, revision) {
   const key = new URL(path, SCOPE);
   key.searchParams.set('content', revision);
   const cacheKey = key.href;
-  // Multiple sprites/UI elements often request the same image at once. Share
-  // one network request, hash and cache write; every caller gets its own body.
+  // Keep the shared response until its background write finishes, so another
+  // request during hashing does not download the same image again.
   if (!pendingAssets.has(cacheKey)) {
-    const pending = fetchAsset(request, cacheKey, revision);
+    const pending = fetchAsset(event.request, cacheKey, revision);
     pendingAssets.set(cacheKey, pending);
-    pending.finally(() => {
+    pending.then(result => result.cacheDone).finally(() => {
       if (pendingAssets.get(cacheKey) === pending) pendingAssets.delete(cacheKey);
     }).catch(() => {});
   }
-  return (await pendingAssets.get(cacheKey)).clone();
+  const pending = pendingAssets.get(cacheKey);
+  // Register during the fetch event; iOS may otherwise stop the worker before
+  // the persistent write finishes after the response has been delivered.
+  event.waitUntil(pending.then(result => result.cacheDone).catch(() => {}));
+  return pending.then(result => result.response.clone());
 }
 
 async function networkFirst(request) {
@@ -110,7 +117,7 @@ self.addEventListener('fetch', event => {
   }
   const revision = self.TOKYO_SHIFT_ASSET_REVISIONS[path];
   if (typeof revision === 'string') {
-    event.respondWith(assetResponse(request, path, revision));
+    event.respondWith(assetResponse(event, path, revision));
     return;
   }
   if (/\.(?:js|css|json|png|jpe?g|webp|svg|gif|mp3|ogg|wav|m4a|woff2?)$/i.test(url.pathname) ||

@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
+    branches: [main]
     paths:
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/ui/ProSeasonPanel.js'
@@ -43,3 +44,9 @@ jobs:
           name: mobile-viewport-screenshots
           path: artifacts/mobile/
           if-no-files-found: ignore
+
+permissions:
+  contents: read
+concurrency:
+  group: mobile-regression-${{ github.ref }}
+  cancel-in-progress: true
