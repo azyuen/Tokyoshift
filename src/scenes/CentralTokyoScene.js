@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261104-r789';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261104-r794';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -3539,27 +3539,41 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .setDepth(32));
 
       if(!isOpen){
-        // Large logo and attached racing banner; the invisible full hit area
-        // retains the original event selection handler.
-        const iconKey=event.team?'proCrewEventLogo':'proDriverEventLogo';
-        const logoX=x-132, logoY=CARDS.y+98;
-        const bannerX=x+75, bannerY=CARDS.y+104;
-        this.addContent(this.add.rectangle(bannerX,bannerY,246,92,
-          selected?0x29455a:0x172b3d,selected?.96:.84).setDepth(33));
-        this.addContent(this.add.rectangle(bannerX+118,bannerY,7,92,
-          selected?0xf5a451:0x4e8fb0,.95).setDepth(33));
-        if(this.textures.exists(iconKey)){
-          const logo=this.addContent(this.add.image(logoX,logoY,iconKey)
-            .setDepth(35).setOrigin(.5));
-          const source=this.textures.get(iconKey).getSourceImage();
-          logo.setScale(Math.min(208/source.width,188/source.height));
+        // The replacement artwork includes the complete red-framed black band.
+        // Keep the logo intact: no Phaser-drawn rectangle or duplicate title.
+        const key=event.team?'proCrewEventLogo':'proDriverEventLogo';
+        if(this.textures.exists(key)){
+          const logo=this.addContent(this.add.image(x,CARDS.y+102,key)
+            .setOrigin(.5).setDepth(34));
+          const source=this.textures.get(key).getSourceImage();
+          const scale=Math.min(530/source.width,170/source.height);
+          logo.setScale(scale);
         }
-        const name=event.team?'CREW EVENT':'DRIVER EVENT';
-        const caption=this.addContent(this.add.text(bannerX+9,bannerY,name,{
-          fontFamily:'"Exo 2", sans-serif',fontSize:'29px',fontStyle:'italic 900',
-          color:selected?'#ffffff':'#c5d8e5',stroke:'#091521',strokeThickness:2,
-        }).setOrigin(.5).setDepth(36));
-        if(caption.width>215)caption.setScale(215/caption.width);
+        const rules=event.seasonRules||{};
+        const format=String(rules.format||event.format||'DUEL').replaceAll('_',' ');
+        const drive=rules.drivetrain ?
+          (rules.drivetrain==='FWD'?'FF':rules.drivetrain)+' ONLY' : 'ANY DRIVE';
+        const limit=Number.isFinite(rules.maxPowerKW)?rules.maxPowerKW+' KW MAX':
+          rules.stock?'STOCK ONLY':'OPEN POWER';
+        const nos=rules.noNos?'NOS OFF':Number.isFinite(rules.maxNosShots)?
+          'NOS '+rules.maxNosShots+' SHOTS':'NOS ALLOWED';
+        const lines=[format,drive+'  /  '+limit,nos,'UP TO 20 PTS'];
+        const textX=x+108;
+        const details=this.addContent(this.add.text(textX,CARDS.y+104,lines.join('\\n'),{
+          fontFamily:'"Exo 2", sans-serif',fontSize:'21px',fontStyle:'900 italic',
+          color:selected?'#ffffff':'#e1e8f0',stroke:'#060b12',strokeThickness:2,
+          align:'center',lineSpacing:2,
+        }).setOrigin(.5).setDepth(35));
+        if(details.width>258)details.setScale(258/details.width);
+        // Whole image (including its black band) acts as the event button.
+        const hit=this.addContent(this.add.zone(x,CARDS.y+102,530,170)
+          .setDepth(36).setInteractive({useHandCursor:true}));
+        hit.on('pointerdown',()=>{
+          this.selectedEventIndex=index;
+          this.renderLocation(this.activeLocationId);
+          // The newly rendered sidebar owns all eligibility and resume checks.
+          if(this._proSeasonEntryEnabled)this._proSeasonEntryAction?.();
+        });
       }else{
       const seasonIcon=!isOpen&&(event.team?'proCrewEventLogo':'proDriverEventLogo');
       if(seasonIcon&&this.textures.exists(seasonIcon)){
@@ -3596,12 +3610,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }).setOrigin(1,.5).setDepth(34));
 
       }
-      box.on('pointerdown', () => {
+      if(isOpen)box.on('pointerdown', () => {
         this.selectedEventIndex = index;
         this.renderLocation(this.activeLocationId);
       });
     });
 
+    this._proSeasonEntryAction=null;
+    this._proSeasonEntryEnabled=false;
     const sidebarStart = this.contentObjects.length;
     this.drawDragSide(events[this.selectedEventIndex], build);
     if (!isOpen) {
