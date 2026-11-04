@@ -124,7 +124,6 @@ export function showProCrewHeatSelection(s,options){
 function draw(s,opts){
   s._proOverlayClose?.();
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
-  const e=opts.event||{};
   const unpaid=Boolean(opts.unpaid),locked=Boolean(opts.locked),fee=Number(opts.entryFee||0);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
