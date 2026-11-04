@@ -2,7 +2,7 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261026-r687';
-import {getProfessionalCarEligibility} from '../data/proSeason.js?v=20261030-r741';
+import {getProfessionalCarEligibility,getProCrewFormatRules,getProCrewLineupError} from '../data/proSeason.js?v=20261104-r791';
 import {getCarMagazineMeta} from '../data/carMagazine.js?v=20261011-r479';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
@@ -436,12 +436,24 @@ function draw(s,opts){
     });
     unscope();
   }
+  function canSetup(){
+    const members=selected.filter(Boolean);
+    return members.length===3&&new Set(members).size===3&&
+      members.every(id=>units.find(u=>u.id===id)?.validAssignment!==false);
+  }
+  function crewRules(){return getProCrewFormatRules(e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative');}
+  function crewError(){
+    const source={get:key=>key==='ownedCarIds'?s.registry.get('ownedCarIds'):
+      key==='carStates'?s.registry.get('carStates'):
+      key==='crewMembers'?s.registry.get('crewMembers'):s.registry.get(key)};
+    return getProCrewLineupError(source,selected.filter(Boolean),e.assignments||{},e.format,Boolean(e.openCircuit),e.seasonChoice==='alternative');
+  }
   function canConfirm(){
     const members=selected.filter(Boolean);
     const drives=members.map(id=>normaliseDrive(units.find(u=>u.id===id)?.drivetrain));
     return members.length===3&&new Set(members).size===3&&
       members.every(id=>units.find(u=>u.id===id)?.validAssignment!==false)&&
-      (e.trophyId!=='triDrive'||new Set(drives).size===3);
+      (e.trophyId!=='triDrive'||new Set(drives).size===3)&&!crewError();
   }
   function renderFooter(){
     clearGroup(footerNodes);footerNodes=[];scope(footerNodes);
@@ -461,9 +473,9 @@ function draw(s,opts){
     const ready=canConfirm();
     // Daichi's action follows the live lineup, not just the initial render.
     if(opts.onSetups)crewGlow(1178,502,205,'CAR SETUPS',()=>{
-      if(!canConfirm())return;
+      if(!canSetup())return;
       close();opts.onSetups([...selected]);
-    },!ready);
+    },!canSetup());
     const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
     footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
       unpaid?(fee===0?'GO TO GRID // SPONSORED':'GO TO GRID // ¥'+fee.toLocaleString('en-US')):'NEXT HEAT',()=>{
