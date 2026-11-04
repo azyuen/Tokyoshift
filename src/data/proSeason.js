@@ -265,6 +265,29 @@ export function getProfessionalSeasonCalendar(season=1) {
     crew:{...PRO_SEASON_CALENDAR[crews[i]].crew}
   }));
 }
+// Pro Season crew regulations; Open Circuit and historical invitationals retain their rules.
+export function getProCrewFormatRules(format,openCircuit=false,alternative=false){
+  if(openCircuit||alternative)return {};
+  if(format==='RELAY')return {maxPowerKW:450,minDrivetrains:2};
+  if(format==='TECHNICAL')return {maxPowerKW:300,noNos:true};
+  return {};
+}
+export function getProCrewLineupError(source,driverIds,assignments={},format='DUEL',openCircuit=false,alternative=false){
+  const rules=getProCrewFormatRules(format,openCircuit,alternative);
+  if(!Object.keys(rules).length)return null;
+  const units=getCrewSeriesUnits(source,assignments),states=value(source,'carStates',{});
+  const chosen=driverIds.map(id=>units.find(u=>u.id===id));
+  if(chosen.length!==3||chosen.some(u=>!u))return 'SELECT THREE CREW DRIVERS';
+  for(const u of chosen){
+    const check=getProfessionalCarEligibility(u.carId,states[u.carId]||{},rules);
+    if(!check.eligible)return u.name.toUpperCase()+': '+check.reasons.join(' / ');
+  }
+  if(rules.minDrivetrains){
+    const drives=new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain).toUpperCase()]||String(u.drivetrain).toUpperCase())));
+    if(drives.size<rules.minDrivetrains)return 'RELAY REQUIRES AT LEAST TWO DRIVETRAINS';
+  }
+  return null;
+}
 export function getProfessionalRoundEvents(round,season=1){
   return getProfessionalSeasonCalendar(season)[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];
 }
@@ -935,6 +958,8 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   if(t.trophyId==='triDrive'&&new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain||'').toUpperCase()]||String(u.drivetrain||'').toUpperCase()))).size!==3)return {error:'FIELD ONE FWD, ONE RWD AND ONE AWD DRIVER'};
+  const proCrewError=getProCrewLineupError(source,lineupIds,t.assignments,f.format,!(!t.openCircuit),t.seasonChoice==='alternative');
+  if(proCrewError)return {error:proCrewError};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
     const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
