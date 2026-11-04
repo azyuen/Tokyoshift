@@ -118,20 +118,18 @@ export function drawSeasonHeader(s,stage) {
         color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
       hit.on('pointerdown',()=>s.showProSeasonRoundPreview(i));
     }
-    // Compact rankings card aligned directly above championship qualification.
-    const rx=qx,ry=qy-174,rw=qw,rh=164;
+    // Narrow, left-aligned ranking summary above Tokyo qualification.
+    const rx=qx,ry=qy-174,rw=190,rh=164;
     const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
       0x172436,.75).setStrokeStyle(2,0x28465a).setDepth(37)
       .setInteractive({useHandCursor:true}));
-    text(s,rx+24,ry+10,'PRO RANKING',21,
+    text(s,rx+12,ry+10,'🏁  PRO RANKING',21,
       {...race,color:'#f4e8cf',strokeThickness:1});
-    text(s,rx+24,ry+49,'¥ '+Number(s.registry.get('cash')||0)
-      .toLocaleString('en-US'),20,{...race,strokeThickness:1});
-    text(s,rx+24,ry+85,'DRIVER   #'+(driver?.seed||'—'),20,
+    text(s,rx+12,ry+52,'DRIVER   #'+(driver?.seed||'—'),19,
       {...race,strokeThickness:1});
-    text(s,rx+274,ry+85,'CREW   #'+(team?.seed||'—'),20,
+    text(s,rx+12,ry+84,'CREW     #'+(team?.seed||'—'),19,
       {...race,strokeThickness:1});
-    text(s,rx+24,ry+127,'FULL RANKINGS  ▼',17,
+    text(s,rx+12,ry+128,'FULL RANKINGS  ▼',15,
       {...race,color:'#9de8f4',strokeThickness:1});
     card.on('pointerdown',()=>showProRankings(s));
     if(s.proError)text(s,x,qy-45,s.proError,17,
