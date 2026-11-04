@@ -358,6 +358,7 @@ function openCrewPaddock(s,selected,pending=null){
   s._proOverlayClose?.();
   s.scene.start('GarageScene',{
     proGarageMode:true,crewProPaddockMode:true,crewProPaddockCars:carIds,
+    crewProPaddockDrivers:[...selected],
     workshopLocationId:PRO_GARAGE_ID,returnWorkshopId,
     proCrewPaddockReturn:marker,
   });
