@@ -97,6 +97,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
     return bg;
   };
   const rules=event.seasonRules||{};
+  const isFourLane=rules.format==='FOUR_WIDE'||Boolean(event.fourWide);
   const limit=Number.isFinite(rules.maxPowerKW)?rules.maxPowerKW:null;
   const spec=(rules.stock?'FACTORY STOCK  /  ':'')+
     (rules.drivetrain?shortDrive(rules.drivetrain)+' ONLY  /  ':'ANY DRIVETRAIN  /  ')+
@@ -228,6 +229,32 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
           getCarPaintColor(draft),null,false,draft)||[])if(part)add(part);
       }catch(error){console.warn('[Tokyo SHIFT] Season briefing car preview',error);}
     }
+    if(isFourLane){
+      // Four-lane-only briefing: no fictitious single next opponent.
+      // The tournament determines the actual entrants when the heat is drawn.
+      poly(52,643,654,164,0x071728,CYAN,219);
+      display(89,652,'FOUR-LANE STARTING GRID',23,'#35d6ff');
+      const labels=['YOU','RIVAL 1','RIVAL 2','RIVAL 3'];
+      for(let lane=0;lane<4;lane++){
+        const yy=690+lane*27;
+        const highlight=lane===0;
+        add(s.add.rectangle(90,yy+8,42,24,highlight?0xa94e1f:0x173b51,1)
+          .setStrokeStyle(1,highlight?0xffae65:0x52758a).setDepth(222));
+        text(77,yy,'L'+(lane+1),12,'#ffffff',true,225);
+        text(126,yy,labels[lane],16,highlight?'#ffbd79':'#f3f7fa');
+        if(lane===0)fit(text(292,yy,
+          selected?(cars[selected]?.shortName||selected):'SELECT IN PADDOCK',14,'#8fe7ff'),340);
+        else text(292,yy,'ASSIGNED AT HEAT DRAW',13,'#9ab6c7');
+      }
+      // Place the key format, eligibility and prize information directly in
+      // the existing briefing rather than opening a second steward popup.
+      poly(724,643,760,164,0x071728,CYAN,219);
+      display(759,652,'RACE CONTROL',23,'#35d6ff');
+      text(760,692,'16 DRIVERS  /  4 PER HEAT  /  TOP 2 ADVANCE',16,'#ffffff');
+      text(760,721,'QUALIFYING 4 HEATS  >  SEMIS 2  >  FINAL 1',15,'#9de8f4');
+      fit(text(760,748,spec,14,'#f4d69c'),690);
+      fit(text(760,774,'ENTRY '+money(event.entryFee||0)+'  /  WIN '+money(event.prizeCash||0),14,'#ffffff'),690);
+    }else{
     // Exact Open Circuit geometry and type hierarchy for the opponent card.
     poly(52,643,654,164,0x071728,CYAN,219);
     display(89,652,'NEXT OPPONENT',24,'#35d6ff');
@@ -302,6 +329,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
         }
       }catch(err){console.warn('[Tokyo SHIFT] Opponent preview',err);}
     }
+    }
     // Same Open Circuit mechanic hotspot; the Pro Season action always
     // opens the real paddock, never the legacy free-tuning shortcut.
     addProGlowingHotspot(s,add,{x:190,y:576,w:229,h:44,
@@ -323,7 +351,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
         }
         toggleDialogue('sayaka',check);
       }});
-    addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
+    if(!isFourLane)addProGlowingHotspot(s,add,{x:1390,y:576,w:220,h:44,
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
     button(1070,779,246,54,'BACK TO SEASON',close,true,{grey:true});
     button(1368,779,246,54,canStart?
@@ -334,6 +362,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
   function toggleDialogue(which,check){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
+    if(which==='hiroshi'&&isFourLane)return;
     if(which==='hiroshi'){
       const title=String(event.label||'DRIVER EVENT').toUpperCase();
       const format=String(rules.format||'KNOCKOUT').replaceAll('_',' ');
