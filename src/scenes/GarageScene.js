@@ -4728,7 +4728,9 @@ export default class GarageScene extends Phaser.Scene {
     this.heroCarLayout = this.buildWorkshopHeroLayout(cars[id]);
     if (!this.heroCarLayout) return;
     const selectedBay=this.proGarageMode ?
-      getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
+      (this.crewProPaddockMode ?
+        ['04','05','06'].map((number,i)=>({number,carId:this.crewProPaddockCars[i]})) :
+        getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds))
         .find(bay=>bay.carId===id):null;
     const placement=selectedBay?this.getProGarageBayPlacement(selectedBay.number):null;
     this.selectedDisplay = this.createCarDisplay(
@@ -6336,7 +6338,9 @@ export default class GarageScene extends Phaser.Scene {
     if (!layout) return;
     this.heroCarLayout = layout;
     const bay=this.proGarageMode?
-      getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds)
+      (this.crewProPaddockMode ?
+        ['04','05','06'].map((number,i)=>({number,carId:this.crewProPaddockCars[i]})) :
+        getProGarageBayCars(this.registry.get('proCircuit'),this.ownedCarIds))
         .find(item=>item.carId===this.selectedCarId):null;
     const placement=bay?this.getProGarageBayPlacement(bay.number):null;
     this.selectedDisplay = this.createCarDisplay(
