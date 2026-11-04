@@ -2632,7 +2632,7 @@ export default class GarageScene extends Phaser.Scene {
   buildStoreRestoreKitButton() {
     // Crew Space has its own three stacked navigation actions at 664/718/770.
     // Put the service above them; Warehouse HQ retains its original slot.
-    const y = this.crewMode ? 608 : 662;
+    const y = this.crewMode ? 608 : this.proGarageMode ? 716 : 662;
     this.moveCarButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2, y, SIDE.w - 32, 42, 0x102138, 1
     ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
@@ -2973,26 +2973,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildWorkshopJumpButton() {
-    if(this.proGarageMode){
-      const x=SIDE.x+SIDE.w/2;
-      const button=this.add.rectangle(x,716,SIDE.w-32,40,0x122331,1)
-        .setStrokeStyle(2,0x55b8ff,1).setDepth(40)
-        .setInteractive({useHandCursor:true});
-      const nosLabel=this.proCrewPaddockReturn||this.proBriefingReturn?'RETURN TO BRIEFING  >':'<  BACK TO DRAG COMPLEX';
-      this.add.text(x,716,nosLabel,{
-        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#eef8ff',
-      }).setOrigin(.5).setDepth(41);
-      button.on('pointerdown',()=>{
-        this.registry.set('workshopLocationId',this.proGarageReturnWorkshopId);
-        this.saveProfile();
-        this.scene.start('CentralTokyoScene',{
-          locationId:'tokyoDragComplex',
-          proBriefingReturn:this.proBriefingReturn,
-          proCrewPaddockReturn:this.proCrewPaddockReturn,
-        });
-      });
-      return;
-    }
+    if(this.proGarageMode)return; // Single return-to-briefing action lives in the bottom slot.
     const button = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       716,
