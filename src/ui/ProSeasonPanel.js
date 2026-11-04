@@ -118,44 +118,21 @@ export function drawSeasonHeader(s,stage) {
         color:completed?'#ffffff':'#d5e1e9'}).setOrigin(.5);
       hit.on('pointerdown',()=>s.showProSeasonRoundPreview(i));
     }
-    // Top-right personal Pro dashboard, with a cropped face portrait.
-    const rx=stage.x+1126,ry=stage.y-67,rw=364,rh=212;
+    // Compact rankings card aligned directly above championship qualification.
+    const rx=qx,ry=qy-174,rw=qw,rh=164;
     const card=s.addContent(s.add.rectangle(rx+rw/2,ry+rh/2,rw,rh,
       0x172436,.75).setStrokeStyle(2,0x28465a).setDepth(37)
       .setInteractive({useHandCursor:true}));
-    const faceX=rx+82,faceY=ry+107,faceW=142,faceH=146;
-    // No separate portrait frame: face cutout sits directly on the dashboard.
-    const playerId=s.registry.get('playerCharacterId')||'renMizuno';
-    const asset=getCharacterVisualAsset(playerId,'idle',{
-      playerCharacterId:playerId,proCircuit:true});
-    if(asset?.key&&s.textures.exists(asset.key)){
-      const source=s.textures.get(asset.key).getSourceImage();
-      const sw=Math.max(1,source.width),sh=Math.max(1,source.height);
-      // Keep original source aspect ratio. Phaser's crop does not resize the
-      // image bounds, so size the source image BEFORE applying a face crop.
-      const cropW=Math.max(1,Math.floor(sw*.65));
-      const cropH=Math.max(1,Math.floor(Math.min(sh*.32,cropW*1.10)));
-      const cx=Math.floor((sw-cropW)/2),cy=Math.floor(sh*.025);
-      const portrait=s.addContent(s.add.image(faceX,faceY,asset.key)
-        .setDepth(39).setOrigin(.5,.5));
-      const scale=Math.min(faceW/cropW,faceH/cropH);
-      portrait.setScale(scale);
-      portrait.setCrop(cx,cy,cropW,cropH);
-      // Cropped sprites retain the source image origin; offset by the crop
-      // centre so the face is actually centred in the allotted region.
-      portrait.setPosition(faceX+(sw/2-cx-cropW/2)*scale,
-        faceY+(sh/2-cy-cropH/2)*scale);
-    }
-    text(s,rx+rw/2,ry+14,'PRO RANKING',27,
-      {...race,color:'#f4dcac',strokeThickness:1}).setOrigin(.5,0);
-    text(s,rx+164,ry+58,'¥ '+Number(s.registry.get('cash')||0)
+    text(s,rx+24,ry+10,'PRO RANKING',21,
+      {...race,color:'#f4e8cf',strokeThickness:1});
+    text(s,rx+24,ry+49,'¥ '+Number(s.registry.get('cash')||0)
       .toLocaleString('en-US'),20,{...race,strokeThickness:1});
-    text(s,rx+164,ry+99,'DRIVER   #'+(driver?.seed||'—'),20,
+    text(s,rx+24,ry+85,'DRIVER   #'+(driver?.seed||'—'),20,
       {...race,strokeThickness:1});
-    text(s,rx+164,ry+137,'CREW     #'+(team?.seed||'—'),20,
+    text(s,rx+274,ry+85,'CREW   #'+(team?.seed||'—'),20,
       {...race,strokeThickness:1});
-    text(s,rx+rw/2,ry+179,'FULL RANKINGS  ▼',17,
-      {...race,color:'#9de8f4',strokeThickness:1}).setOrigin(.5,0);
+    text(s,rx+24,ry+127,'FULL RANKINGS  ▼',17,
+      {...race,color:'#9de8f4',strokeThickness:1});
     card.on('pointerdown',()=>showProRankings(s));
     if(s.proError)text(s,x,qy-45,s.proError,17,
       {color:'#ef939b',wordWrap:{width:520}});
