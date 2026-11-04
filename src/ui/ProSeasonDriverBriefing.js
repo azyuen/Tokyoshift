@@ -327,7 +327,7 @@ export function showProSeasonDriverBriefing(s,event,onGrid,options={}){
       label:'RACE BRIEFING',onClick:()=>toggleDialogue('hiroshi',check)});
     button(1070,779,246,54,'BACK TO SEASON',close,true,{grey:true});
     button(1368,779,246,54,canStart?
-      (resume?'RESUME NEXT HEAT':'GO TO GRID // SPONSORED'):
+      (resume?'RESUME NEXT HEAT':'GO TO GRID'):
       'SELECT / SET UP CAR',proceedToGrid,canStart);
   }
   // Same two-page steward and cream advice bubble used by Open Circuit.
