@@ -327,7 +327,7 @@ export function drawCrewSidebar(s,event,side) {
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
-    t?'RESUME EVENT BRIEFING':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
+    t?'EVENT BRIEFING':canEnter?(open?proEventEntryLabel(fee):'EVENT BRIEFING'):'NOT ELIGIBLE',
     ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null,event.seasonChoice||'standard'),
     t?!!f:canEnter);
   return true;

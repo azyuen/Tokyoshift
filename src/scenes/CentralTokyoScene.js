@@ -370,6 +370,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += this.queueCharacterPose(id, 'normal');
       });
       if (!isOpenCircuitAvailable(this.registry.get('proCircuit'))) {
+        for(const [key,path] of [
+          ['proDriverEventLogo','assets/CentralTokyo/dragcomplex/driverevent_logo.png'],
+          ['proCrewEventLogo','assets/CentralTokyo/dragcomplex/crewevent_logo.png'],
+        ])if(!this.textures.exists(key)){this.load.image(key,path);queued++;}
         queued += this.queueCharacterPose(playerId || 'renMizuno', 'idle', { proCircuit: true });
         queued += this.queueCharacterPose('sayakaFujieda', 'track');
         queued += this.queueCharacterPose('daichiSakamoto', 'normal');
@@ -3534,12 +3538,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .setDepth(32));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 68, event.label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: unlocked ? '#f7f3f1' : '#797277',
+      const seasonIcon=!isOpen&&(event.team?'proCrewEventLogo':'proDriverEventLogo');
+      if(seasonIcon&&this.textures.exists(seasonIcon)){
+        const icon=this.addContent(this.add.image(x-104,CARDS.y+102,seasonIcon)
+          .setDepth(34).setOrigin(.5));
+        const source=this.textures.get(seasonIcon).getSourceImage();
+        const fit=Math.min(104/source.width,94/source.height);
+        icon.setScale(fit);
+      }else this.addContent(this.add.text(x-145,CARDS.y+68,event.label,{
+        fontFamily:PIXEL_FONT,fontSize:'8px',color:unlocked?'#f7f3f1':'#797277',
       }).setDepth(34));
-
+      const captionX=seasonIcon?x-34:x-145;
       const cardFormat=event.seasonRules?.format||event.format||
         (event.fourWide?'FOUR_WIDE':'KNOCKOUT');
       const formatCaption=event.seasonEnd?'FINAL STANDINGS':
@@ -3547,11 +3556,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
         event.trophyId?'PRESTIGE // '+event.trophyFixtures+' STAGES':
         event.openCircuit?(event.team?'THREE-DRIVER TEAM EVENT':'OPEN PROFESSIONAL RACING'):
         event.specialSlot?'CHAMPIONSHIP & TROPHIES':
-        event.team?'CREW // '+cardFormat.replaceAll('_',' '):
+        event.team?cardFormat.replaceAll('_',' '):
         cardFormat==='TIME_ATTACK'?'THREE RUNS // FASTEST TIME':
         cardFormat==='CONSISTENCY'?'THREE RUNS // CLOSEST TIMES':
-        cardFormat==='FOUR_WIDE'?'FOUR-WIDE ELIMINATION':'DRIVER // HEAD-TO-HEAD';
-      this.addContent(this.add.text(x - 145,CARDS.y + 98,formatCaption,{
+        cardFormat==='FOUR_WIDE'?'FOUR-WIDE ELIMINATION':'HEAD-TO-HEAD';
+      this.addContent(this.add.text(captionX,CARDS.y + 98,formatCaption,{
         fontFamily:BODY_FONT,fontSize:'10px',
         color:unlocked?'#d9cacb':'#7f7377',fontStyle:'600',
       }).setDepth(34));
@@ -3922,7 +3931,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         '\nENTRY  '+money(fee)+
         '\nRULES  '+(drive?(drive==='FWD'?'FF/FWD':drive)+' ONLY // ':'')+(Number.isFinite(limit)?limit+' KW MAX // ':'UNLIMITED POWER // ')+rule+
         '\n\nProceed to enter this competition. Your entry is charged once.',
-      confirmLabel:'GO TO GRID // '+money(fee),
+      confirmLabel:'GO TO GRID',
       onConfirm:onGrid,
     });
   }
