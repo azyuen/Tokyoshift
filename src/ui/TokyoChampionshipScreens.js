@@ -74,7 +74,8 @@ function loadAssets(s,view,done){
   }).setOrigin(.5).setDepth(291);
   let gone=false;
   const clear=()=>{if(gone)return;gone=true;backdrop.destroy();loading.destroy();s._tokyoChampLoading=false;
-    s.events.off('shutdown',clear);};
+    s.events.off('shutdown',clear);
+    s.load.off('complete',finish);};
   const finish=()=>{clear();if(s.sys?.isActive?.())done();};
   s.events.once('shutdown',clear);
   s.load.once('complete',finish);
