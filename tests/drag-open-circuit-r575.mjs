@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDefaultProCircuitState, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES } from '../src/data/proCircuit.js';

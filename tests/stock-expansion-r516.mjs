@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cars, carOrder } from '../src/data/cars.js';

@@ -48,7 +48,12 @@ for(const chapter of ['chapter06','chapter07','chapter08']) {
       }
       game.scene.start('GarageScene',{crewMode:false,workshopLocationId:'shinonomeWarehouseStrip'});
     });
-    await page.waitForFunction(()=>window.TOKYO_SHIFT?.scene?.isActive('GarageScene'),{timeout:20000});
+    // Wait for the real Garage, not its active lazy-loading placeholder.
+    await page.waitForFunction(()=>{
+      const scene=window.TOKYO_SHIFT?.scene?.getScene('GarageScene');
+      return typeof scene?.playSevenRegionsStory==='function' &&
+        scene.sys.settings.status===Phaser.Scenes.RUNNING;
+    },null,{timeout:30000});
     const result=await page.evaluate(async chapterId=>{
       const game=window.TOKYO_SHIFT;
       const scene=game.scene.getScene('GarageScene');
