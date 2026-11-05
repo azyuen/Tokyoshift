@@ -527,4 +527,5 @@ export function showTokyoChampionshipScreens(s,{view='HUB',driverId=null,actions
   if(target==='RESULT')return showResult(s,actions);
   if(EVENTS[target])return showEvent(s,target,actions);
   showHub(s,actions);
+  actions?.onHubRendered?.();
 }
