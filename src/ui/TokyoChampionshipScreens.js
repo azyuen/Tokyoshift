@@ -195,166 +195,258 @@ function getEventAdvice(state,stage){
   if(stage==='CREW')return 'Three separate crew cars, three different heats. Choose strong launch setups and keep each run controlled. Every heat won adds to our points.';
   return 'Four lanes magnify every launch error. Keep the championship car predictable under pressure: a strong qualifying place can take you into the final.';
 }
+
 function advicePanel(s,o,state,stage,x,y,w){
-  o.panel(x+w/2,y+57,w,115,.93,0xb68a55);
-  o.label(x+13,y+10,'SAYAKA  //  EVENT STRATEGY',19,GOLD);
+  // One shallow pit-wall card replaces two competing dialogue boxes.
+  const active=stage===state.stage&&!state.completed;
   const saved=state.adviceByEvent?.[stage];
+  o.panel(x+w/2,y+48,w,96,.84,0x85745a);
+  o.label(x+15,y+8,'SAYAKA  //  RACE STRATEGY',17,GOLD,{font:DISPLAY});
   if(saved){
-    o.label(x+13,y+38,saved,17,PALE,{width:w-27});
-  }else if(stage===state.stage&&!state.completed){
-    o.label(x+13,y+39,'One strategy consultation is available for this major event.',17,MUTED,{width:w-25});
-    o.button(x+w-125,y+86,230,36,'ASK SAYAKA  /  1 USE',()=>{
-      const c=circuit(s),active=c.activeChampionship;
-      if(!active||active.id!==state.id||active.stage!==stage||
-        active.adviceByEvent?.[stage])return;
-      const note=getEventAdvice(active,stage);
-      const updated={...active,adviceByEvent:{...(active.adviceByEvent||{}),[stage]:note}};
-      try{saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
-        showTokyoChampionshipScreens(s,{view:stage,actions:o.actions});
-      }catch(error){s.proError=error.message;showTokyoChampionshipScreens(s,{view:stage,actions:o.actions});}
-    });
-  }else o.label(x+13,y+44,'Event consultation unavailable after completion.',17,MUTED);
+    o.label(x+15,y+34,saved,17,PALE,{width:w-35});
+  }else if(active){
+    o.label(x+15,y+36,'Ask Sayaka for a one-time briefing before this event.',17,MUTED,
+      {width:w-260});
+    o.button(x+w-118,y+68,215,39,'ASK SAYAKA',()=>{
+      const c=circuit(s),current=c.activeChampionship;
+      if(!current||current.id!==state.id||current.stage!==stage||
+        current.adviceByEvent?.[stage])return;
+      const note=getEventAdvice(current,stage);
+      const updated={...current,adviceByEvent:{...(current.adviceByEvent||{}),[stage]:note}};
+      try{
+        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
+        s.proError=null;
+      }catch(error){s.proError=error.message;}
+      showTokyoChampionshipScreens(s,{view:stage,actions:o.actions});
+    },{red:true});
+  }else o.label(x+15,y+37,'Race strategy consultation closed for this event.',17,MUTED);
 }
+
 function showHub(s,actions){
   const c=circuit(s),state=c.activeChampionship,rows=championshipStandings(state);
-  const me=rows.find(r=>r.id==='player:driver'),place=rows.indexOf(me)+1;
-  const current=state.stage==='COMPLETE'?'COMPLETE':state.stage;
+  const me=rows.find(r=>r.id==='player:driver');
+  const place=rows.indexOf(me)+1;
+  const current=state.stage;
   const o=canvas(s,'HUB');o.actions=actions;
   mainSprites(s,o,'HUB');
-  o.headline(44,88,'TOKYO CHAMPIONSHIP',43,GOLD);
-  o.label(45,145,'SINGLE TITLE  //  16 DRIVERS  //  THREE MAJOR EVENTS',19,PALE);
-  o.panel(237,325,416,310);
-  panelTitle(o,50,182,'LIVE CHAMPIONSHIP STANDINGS');
+
+  // A championship broadcast: two small information wings, the cast in the centre,
+  // and one three-stage competition ribbon. Never stack boxes across the artwork.
+  o.headline(45,87,'TOKYO CHAMPIONSHIP',45,GOLD);
+  o.label(47,146,'16 DRIVERS   /   THREE EVENTS   /   ONE TOKYO CHAMPION',18,PALE);
+
+  o.panel(245,326,405,306,.84,0x61758b);
+  panelTitle(o,61,188,'LIVE STANDINGS');
   const shortlist=rows.slice(0,5);
-  if(place>5)shortlist.push(me);
-  shortlist.forEach((row,i)=>{
-    const y=220+i*38;
-    const own=row.id==='player:driver';
-    o.label(56,y,'#'+(rows.indexOf(row)+1),19,own?GOLD:PALE);
-    o.label(112,y,standingName(c,row).slice(0,19),19,own?GOLD:PALE);
-    o.label(402,y,row.total+' PTS',19,own?GOLD:MUTED).setOrigin(1,0);
-    const hit=o.add(s.add.rectangle(237,y+12,386,34,0,0)
-      .setDepth(243).setInteractive({useHandCursor:true}));
-    hit.on('pointerdown',()=>showTokyoChampionshipScreens(s,{view:'PROFILE',driverId:row.id,actions}));
+  if(place>5)shortlist[4]=me;
+  shortlist.forEach((r,i)=>{
+    const y=231+i*36,own=r.id==='player:driver';
+    o.label(65,y,'#'+(rows.indexOf(r)+1),20,own?GOLD:PALE);
+    o.label(117,y,standingName(c,r).slice(0,17),20,own?GOLD:PALE);
+    o.label(428,y,r.total+' PTS',18,own?GOLD:MUTED).setOrigin(1,0);
+    const hit=o.add(s.add.rectangle(241,y+12,374,34,0,0)
+      .setDepth(244).setInteractive({useHandCursor:true}));
+    hit.on('pointerdown',()=>showTokyoChampionshipScreens(s,
+      {view:'PROFILE',driverId:r.id,actions}));
   });
-  o.button(237,450,363,37,'ALL 16 DRIVERS / FULL STANDINGS',()=>showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}));
-  o.panel(1334,317,382,292);
-  panelTitle(o,1165,183,'YOUR CHAMPIONSHIP');
-  o.headline(1165,220,'STANDING  #'+place,31,GOLD,330);
-  o.label(1165,277,'CHAMPIONSHIP POINTS  '+me.total+' / 80',19,PALE);
-  scoreBar(s,o,1165,315,323,me.total,80);
-  o.label(1165,346,'KO '+me.knockout+'  /  CREW '+me.crew+'  /  FOUR-WIDE '+me.fourWide,18,MUTED);
-  o.label(1165,383,state.completed?'CHAMPION: '+standingName(c,rows[0]):
-    'LEADER: '+standingName(c,rows[0])+'  /  '+rows[0].total+' PTS',17,GOLD,{width:320});
-  o.label(1165,423,'POTENTIAL POINTS REMAINING: '+(
-    state.stage==='KNOCKOUT'?80:state.stage==='CREW'?60:
-      state.stage==='FOUR_WIDE'?40:0),16,MUTED,{width:330});
-  o.panel(783,652,1510,213,.91,0x58677a);
-  panelTitle(o,55,555,'CHAMPIONSHIP EVENTS');
+  o.button(245,444,362,43,'FULL 16-DRIVER STANDINGS',
+    ()=>showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}));
+
+  o.panel(1320,323,386,300,.84,0x61758b);
+  panelTitle(o,1151,187,'YOUR CHAMPIONSHIP');
+  o.headline(1151,220,'RANK  #'+place,34,GOLD,330);
+  o.label(1153,269,'TOTAL POINTS   '+me.total+' / 80',20,PALE);
+  scoreBar(s,o,1153,310,324,me.total,80);
+  o.label(1153,338,'KO '+me.knockout+'   CREW '+me.crew+
+    '   FOUR-WIDE '+me.fourWide,17,MUTED,{width:330});
+  o.label(1153,379,(state.completed?'CHAMPION  ':'LEADER  ')+
+    standingName(c,rows[0])+'  /  '+rows[0].total+' PTS',
+    18,GOLD,{width:329});
+  o.label(1153,422,state.completed?'CHAMPIONSHIP FINISHED':
+    'NEXT  '+(EVENTS[current]?.title||'FINAL RESULTS'),
+    16,MUTED,{width:330});
+
+  o.headline(48,574,'THE ROAD TO THE TITLE',26,GOLD);
+  o.add(s.add.rectangle(780,683,1510,164,0x071322,.78).setDepth(218));
   STAGES.forEach((stage,i)=>{
-    const item=EVENTS[stage],x=46+i*511,st=statusFor(state,stage);
-    const color=st==='ACTIVE'?0xb68a55:st==='COMPLETE'?0x477b6a:0x566777;
-    o.panel(x+239,673,480,116,.96,color);
-    o.headline(x+18,622,item.number+'  '+item.short,25,st==='LOCKED'?MUTED:PALE,440);
-    o.label(x+19,665,st==='ACTIVE'?'CURRENT EVENT':st,17,st==='ACTIVE'?GOLD:MUTED);
-    const earned=me[stage==='KNOCKOUT'?'knockout':stage==='CREW'?'crew':'fourWide'];
-    o.label(x+19,701,earned+' / '+item.points+' POINTS',18,GOLD);
-    o.button(x+375,712,167,37,st==='ACTIVE'?'ENTER EVENT':st==='COMPLETE'?'VIEW RESULTS':'PREVIEW',
-      ()=>showTokyoChampionshipScreens(s,{view:stage,actions}),{red:st==='ACTIVE'});
+    const item=EVENTS[stage],status=statusFor(state,stage);
+    const x=43+i*503,w=490,active=status==='ACTIVE';
+    const line=active?0xc69a58:status==='COMPLETE'?0x588f7a:0x52667b;
+    o.panel(x+w/2,681,w,125,active ? .91 : .8,line);
+    o.add(s.add.rectangle(x+w/2,620,w-3,4,line,1).setDepth(225));
+    o.headline(x+17,631,item.number+'  '+item.short,25,
+      status==='LOCKED'?MUTED:PALE,455);
+    o.label(x+18,674,active?'CURRENT EVENT  /  NEXT TO RACE':status,
+      17,active?GOLD:MUTED);
+    const key=stage==='KNOCKOUT'?'knockout':stage==='CREW'?'crew':'fourWide';
+    o.label(x+18,707,me[key]+' / '+item.points+' PTS',20,GOLD);
+    o.label(x+472,708,active?'ENTER  >':'VIEW  >',16,
+      active?'#f0d4a2':MUTED).setOrigin(1,0);
+    const hit=o.add(s.add.rectangle(x+w/2,681,w,125,0,0)
+      .setDepth(244).setInteractive({useHandCursor:true}));
+    hit.on('pointerdown',()=>showTokyoChampionshipScreens(s,{view:stage,actions}));
   });
-  o.button(210,793,336,49,'RIVAL PROFILES',()=>showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}));
-  o.button(548,793,310,49,'CHAMPIONSHIP RULES',()=>showTokyoChampionshipScreens(s,{view:'RULES',actions}));
+  o.button(197,794,303,47,'RIVAL PROFILES',
+    ()=>showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}));
+  o.button(515,794,303,47,'CHAMPIONSHIP RULES',
+    ()=>showTokyoChampionshipScreens(s,{view:'RULES',actions}));
   if(state.completed){
-    const rank=place-1;
-    o.button(1233,793,568,49,'FINAL RESULTS  /  ¥'+fmt(TOKYO_CHAMPIONSHIP_PURSES[rank]),
+    o.button(1255,794,550,47,'FINAL RESULTS  /  ¥'+fmt(
+      TOKYO_CHAMPIONSHIP_PURSES[place-1]),
       ()=>showTokyoChampionshipScreens(s,{view:'RESULT',actions}),{red:true});
-  }else o.button(1255,793,510,49,'ENTER EVENT '+EVENTS[current].number,
-    ()=>showTokyoChampionshipScreens(s,{view:current,actions}),{red:true});
-}
-function eventInfo(s,o,state,stage){
-  const x=1015,w=500;
-  if(stage==='KNOCKOUT'){
-    panelTitle(o,x,164,'16-DRIVER KNOCKOUT BRACKET');
-    const bySeed=[...state.entrants].sort((a,b)=>a.seed-b.seed);
-    const first=state.knockout?.bracket?.[0]||[];
-    const pairs=first.length===8?first:seedKnockoutBracket(state.entrants)[0];
-    const history=state.knockout?.results||[];
-    pairs.forEach((pair,i)=>{
-      const y=209+i*37;
-      const names=pair.map(id=>{
-        const row=bySeed.find(e=>e.id===id);
-        return row?.id==='player:driver'?'YOU':row?.name||'RIVAL';
-      });
-      o.label(x+8,y,(i+1)+'.  '+names.map(n=>n.slice(0,13)).join('   VS   '),
-        17,pair.includes('player:driver')?GOLD:PALE,{width:470});
-    });
-    o.label(x+12,537,'KNOCKOUT ROUNDS COMPLETE  '+history.length+' / 4',18,GOLD);
-  }else if(stage==='CREW'){
-    panelTitle(o,x,164,'CREW BATTLE BOARD');
-    const next=stage===state.stage?getChampionshipCrewHeat(state):null;
-    o.label(x+6,211,'OPPOSITION  '+(next?.opponent?.name||'FINAL RESULTS'),
-      24,PALE,{width:480});
-    const attempts=state.crew?.results||[];
-    for(let i=0;i<3;i++){
-      const result=attempts[i],y=276+i*62;
-      o.panel(x+245,y+16,486,52,.95,result?(result.won?0x49765c:0x94505a):BLUE);
-      o.label(x+17,y-1,'HEAT '+(i+1),20,GOLD);
-      o.label(x+142,y-1,result?(result.won?'WIN  /  '+(cars[result.carId]?.shortName||result.carId):
-        'LOSS  /  '+(cars[result.carId]?.shortName||result.carId)):'AWAITING RACE',
-        18,PALE,{width:338});
-    }
-    o.label(x+12,507,'THREE DISTINCT CREW CARS  /  YOU DRIVE EACH HEAT',17,MUTED,{width:w});
-    o.label(x+12,534,'CREW POINTS: 0 WINS = 3  /  1 = 8  /  2 = 14  /  3 = 20',17,GOLD,{width:w});
-  }else{
-    panelTitle(o,x,164,'FOUR-WIDE FINALS PROGRESSION');
-    const current=state.fourWide?.results?.length||0;
-    const labels=[['QUALIFYING','4 HEATS  /  TOP TWO ADVANCE'],
-      ['SEMIFINALS','2 HEATS  /  TOP TWO ADVANCE'],['GRAND FINAL','4 DRIVERS  /  40 POINTS MAX']];
-    labels.forEach(([name,detail],i)=>{
-      const y=222+i*104;
-      o.panel(x+245,y+25,486,89,.95,current===i&&state.stage===stage?0xb58a4e:BLUE);
-      o.headline(x+17,y-3,'0'+(i+1)+'  '+name,23,i<=current?GOLD:PALE,461);
-      o.label(x+22,y+37,detail,18,MUTED);
-      o.label(x+22,y+60,i<current?'COMPLETE':i===current?'NEXT HEAT':'PENDING',16,i===current?GOLD:MUTED);
-    });
+  }else if(EVENTS[current]){
+    o.button(1255,794,550,47,'ENTER EVENT 0'+(STAGES.indexOf(current)+1)+
+      '  /  '+EVENTS[current].short,
+      ()=>showTokyoChampionshipScreens(s,{view:current,actions}),{red:true});
   }
 }
+
+function eventInfo(s,o,state,stage){
+  const x=977,w=535;
+  if(stage==='KNOCKOUT'){
+    // Real four-round bracket, driven entirely by saved pairings and results.
+    // Unknown future opponents remain TBD until their bracket is settled.
+    panelTitle(o,x,185,'16-DRIVER KNOCKOUT BRACKET');
+    const entrants=new Map((state.entrants||[]).map(e=>[e.id,e]));
+    const rounds=state.knockout?.bracket||seedKnockoutBracket(state.entrants);
+    const history=state.knockout?.results||[];
+    const starts=[980,1114,1248,1382],width=126;
+    const centre=(r,i)=>245+(Math.pow(2,r)-1)*21.5+
+      i*43*Math.pow(2,r);
+    const lines=o.add(s.add.graphics().setDepth(222));
+    lines.lineStyle(1,0x89a1b5,.6);
+    for(let r=0;r<3;r++)for(let i=0;i<8/(2**r);i++){
+      const yy=centre(r,i),parent=centre(r+1,Math.floor(i/2));
+      lines.lineBetween(starts[r]+width,yy,starts[r]+130,yy);
+      lines.lineBetween(starts[r]+130,yy,starts[r]+130,parent);
+      lines.lineBetween(starts[r]+130,parent,starts[r+1],parent);
+    }
+    const roundNames=['TOP 16','QUARTERS','SEMIS','FINAL'];
+    const short=id=>{
+      if(!id)return 'TBD';
+      if(id==='player:driver')return 'YOU';
+      const name=entrants.get(id)?.name||'RIVAL';
+      return name.split(' ').slice(-1)[0].slice(0,13);
+    };
+    for(let r=0;r<4;r++){
+      o.label(starts[r]+4,211,roundNames[r],16,r===(
+        state.knockout?.round||0)&&state.stage===stage?GOLD:MUTED);
+      for(let i=0;i<8/(2**r);i++){
+        const pair=rounds[r]?.[i]||[null,null],yy=centre(r,i);
+        const winner=history[r]?.matches?.[i]?.winner;
+        const mine=pair.includes('player:driver');
+        o.panel(starts[r]+width/2,yy,width,37,.85,mine?0xb68a55:0x52667b);
+        pair.forEach((id,n)=>{
+          const eliminated=!!winner&&winner!==id;
+          const color=id==='player:driver'?GOLD:eliminated?'#748699':id?PALE:MUTED;
+          o.label(starts[r]+7,yy-17+n*18,short(id),14,color,
+            {width:width-12});
+        });
+      }
+    }
+    const finished=history.length;
+    o.label(x+5,562,'BRACKET ROUNDS COMPLETE  '+finished+' / 4',17,GOLD);
+  }else if(stage==='CREW'){
+    panelTitle(o,x,186,'CREW BATTLE SCOREBOARD');
+    const results=state.crew?.results||[];
+    const next=state.stage===stage?getChampionshipCrewHeat(state):null;
+    const wins=results.filter(r=>r.won).length;
+    o.headline(x+8,226,wins+' / 3 HEATS WON',29,GOLD,w-18);
+    for(let i=0;i<3;i++){
+      const result=results[i],y=280+i*91;
+      const current=!result&&i===results.length&&next;
+      o.panel(x+265,y+32,518,78,current ? .95 : .82,
+        result?(result.won?0x588f76:0xa45b62):current?0xc09656:0x52667b);
+      o.headline(x+13,y+6,'HEAT 0'+(i+1),24,current?GOLD:PALE,135);
+      o.label(x+167,y+6,result?(result.won?'WIN':'LOSS'):
+        current?'NEXT TO RACE':'AWAITING',22,result?(result.won?GOLD:'#e6a0a9'):
+        current?GOLD:MUTED);
+      o.label(x+168,y+39,result?(cars[result.carId]?.shortName||result.carId):
+        current?(next?.opponent?.name||'SELECT CREW CAR'):'—',17,MUTED,
+        {width:333});
+    }
+    o.label(x+8,560,'THREE DISTINCT CREW CARS  /  YOU DRIVE EVERY HEAT',
+      16,GOLD,{width:520});
+  }else{
+    panelTitle(o,x,185,'FOUR-WIDE FINALS LADDER');
+    const history=state.fourWide?.results||[];
+    const live=state.stage===stage?getChampionshipFourWideHeat(state):null;
+    const entrants=new Map((state.entrants||[]).map(e=>[e.id,e]));
+    const names=['QUALIFYING','SEMIFINALS','GRAND FINAL'];
+    for(let i=0;i<3;i++){
+      const left=979+i*179,finished=!!history[i];
+      const current=!finished&&live?.round===i;
+      const heat=history[i]?.heats?.find(h=>
+        h.entrants.includes('player:driver'))||
+        (current?live:null);
+      o.panel(left+83,378,166,304,finished ? .82 : current ? .96 : .75,
+        current?0xc49657:finished?0x548675:0x52667b);
+      o.label(left+10,242,'0'+(i+1),20,GOLD);
+      o.headline(left+10,271,names[i],20,current?GOLD:PALE,156);
+      o.label(left+11,312,finished?'COMPLETE':current?'UP NEXT':'PENDING',
+        16,finished?'#8ed1ae':current?GOLD:MUTED);
+      // A visible four-lane grid gives this round a motorsport identity.
+      for(let lane=0;lane<4;lane++){
+        const id=heat?.entrants?.[lane],mine=id==='player:driver';
+        const laneY=355+lane*35;
+        o.add(s.add.rectangle(left+82,laneY,143,28,
+          mine?0x69502d:0x14283d,.97).setStrokeStyle(
+          1,mine?0xf5c572:0x4d637c).setDepth(225));
+        const name=id?(mine?'YOU':(entrants.get(id)?.name||'RIVAL')
+          .split(' ').slice(-1)[0].slice(0,12)):'—';
+        o.label(left+17,laneY-10,'L'+(lane+1)+'  '+name,15,
+          mine?GOLD:id?PALE:MUTED,{width:139});
+      }
+      o.label(left+10,511,i===2?'TITLE DECIDER':
+        i===0?'TOP 2 ADVANCE':'TOP 2 ADVANCE',16,MUTED);
+    }
+    o.label(x+6,560,'QUALIFY   >   SEMIFINALS   >   TOKYO TITLE',
+      17,GOLD,{width:530});
+  }
+}
+
 function showEvent(s,stage,actions){
   const c=circuit(s),state=c.activeChampionship;
-  const active=state.stage===stage&&!state.completed,st=statusFor(state,stage),event=EVENTS[stage];
+  const active=state.stage===stage&&!state.completed;
+  const st=statusFor(state,stage),event=EVENTS[stage];
   const o=canvas(s,stage);o.actions=actions;
   mainSprites(s,o,stage);
-  o.label(43,85,'TOKYO CHAMPIONSHIP  /  EVENT '+event.number,21,MUTED,{font:DISPLAY});
-  o.headline(43,120,event.title,42,GOLD,907);
-  o.label(44,171,(stage==='KNOCKOUT'?'ONE-ON-ONE ELIMINATION':
-    stage==='CREW'?'THREE PLAYER-DRIVEN CREW HEATS':'QUALIFYING  /  SEMIFINAL  /  GRAND FINAL')+
-    '   /   MAX '+event.points+' POINTS',19,PALE);
-  o.panel(1255,363,552,450,.93,0x65798b);
+  const standings=championshipStandings(state);
+  const position=standings.findIndex(r=>r.id==='player:driver')+1;
+  const points=standings.find(r=>r.id==='player:driver')?.total||0;
+  o.label(44,82,'TOKYO CHAMPIONSHIP  /  EVENT '+event.number,19,MUTED,
+    {font:DISPLAY});
+  o.headline(44,119,event.title,41,GOLD,870);
+  o.label(46,169,(stage==='KNOCKOUT'?'16-DRIVER ELIMINATION':
+    stage==='CREW'?'THREE PLAYER-DRIVEN CREW HEATS':
+    'QUALIFYING  /  SEMIFINALS  /  GRAND FINAL')+
+    '   /   '+event.points+' POINTS AVAILABLE',18,PALE);
+  o.label(1246,88,'RANK #'+position+'  /  '+points+' PTS',
+    22,GOLD,{font:DISPLAY,stroke:true}).setOrigin(.5,0);
+
+  // The stage-specific competition visual is the single main information panel.
+  o.panel(1245,381,558,424,.85,0x61778e);
   eventInfo(s,o,state,stage);
-  // The event is a real area: full-body sprites occupy the foreground,
-  // while the operational panels sit over the environmental background.
-  advicePanel(s,o,state,stage,35,568,490);
-  o.panel(777,637,433,136,.92,0x6f8091);
-  panelTitle(o,577,582,'DAICHI  /  RACE PREPARATION');
-  o.label(575,615,'Set up purchased parts at the appropriate paddock. '+
-    'Existing car locks and event scrutineering still apply.',17,PALE,{width:401});
   const heat=active?heatFor(state):null;
-  const position=championshipStandings(state).findIndex(r=>r.id==='player:driver')+1;
-  o.label(43,721,'CHAMPIONSHIP STANDING #'+position+
-    '   /   '+championshipStandings(state).find(r=>r.id==='player:driver')?.total+' PTS',
-    21,GOLD,{width:522});
-  const next=stage==='KNOCKOUT'?'ROUND '+((heat?.round||0)+1)+' / 4  VS  '+(heat?.opponent?.name||'—'):
-    stage==='CREW'?'HEAT '+((heat?.index||0)+1)+' / 3  VS  '+(heat?.opponent?.name||'—'):
+  const next=stage==='KNOCKOUT'?'ROUND '+((heat?.round||0)+1)+
+    ' / 4  VS  '+(heat?.opponent?.name||'—'):
+    stage==='CREW'?'HEAT '+((heat?.index||0)+1)+
+    ' / 3  VS  '+(heat?.opponent?.name||'—'):
     ['QUALIFYING','SEMIFINAL','GRAND FINAL'][heat?.round||0];
-  o.label(1015,566,active?'UP NEXT: '+next:st+' / EVENT STANDINGS SAVED',
-    19,active?GOLD:MUTED,{width:500});
-  if(s.proError)o.label(1015,600,String(s.proError).slice(0,84),18,'#ff9fa5',{width:490});
-  o.button(163,794,278,49,'CHAMPIONSHIP HUB',
+  o.label(993,615,active?'NEXT RACE  /  '+next:st+'  /  EVENT RECORDED',
+    20,active?GOLD:PALE,{width:525,stroke:true});
+  if(s.proError)o.label(995,646,String(s.proError).slice(0,100),17,
+    '#ffacb2',{width:515,stroke:true});
+
+  // One dialogue area; the two paddocks are accessible from navigation.
+  advicePanel(s,o,state,stage,42,650,906);
+  o.button(186,794,280,48,'CHAMPIONSHIP HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
-  o.button(468,794,280,49,'PRO PADDOCK',()=>openPaddock(s,state,'DRIVER'),{disabled:!active});
-  o.button(750,794,271,49,'CREW PADDOCK',
+  o.button(474,794,260,48,'PRO PADDOCK',
+    ()=>openPaddock(s,state,'DRIVER'),{disabled:!active});
+  o.button(743,794,260,48,'CREW PADDOCK',
     ()=>showPaddockCrewPicker(s,actions,[]),{disabled:!active});
-  o.button(1254,794,492,49,active?'GO TO GRID  /  '+next:'RETURN TO HUB',()=>{
+  o.button(1255,794,525,48,active?'GO TO GRID  /  '+next:'RETURN TO HUB',()=>{
     if(!active)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
     if(stage==='CREW')return showCarPicker(s,stage,actions);
     const carId=state.driverCarId||s._champSelectedDriverCar||
@@ -363,9 +455,8 @@ function showEvent(s,stage,actions){
     if(!state.driverCarId&&Array.isArray(roster)&&roster.length>1)
       return showCarPicker(s,stage,actions);
     if(!carId)return showCarPicker(s,stage,actions);
-    if(!actions.startRace(stage==='KNOCKOUT'?'CHAMP_KO':'CHAMP_FOUR',carId)){
+    if(!actions.startRace(stage==='KNOCKOUT'?'CHAMP_KO':'CHAMP_FOUR',carId))
       showTokyoChampionshipScreens(s,{view:stage,actions});
-    }
   },{red:active});
 }
 function showCarPicker(s,stage,actions){
