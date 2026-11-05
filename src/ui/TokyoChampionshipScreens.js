@@ -28,9 +28,21 @@ const circuit=s=>normaliseProCircuitState(s.registry.get('proCircuit'));
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const closeSceneOverlay=s=>s._proOverlayClose?.();
 
+function hubRivals(s){
+  const state=circuit(s).activeChampionship;
+  return (state?.entrants||[]).filter(e=>e.id!=='player:driver'&&e.characterId)
+    .sort((a,b)=>a.seed-b.seed).slice(0,2).map(entry=>({
+      ...entry,asset:getCharacterVisualAsset(entry.characterId,'idle',{
+        playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',
+        proCircuit:true,rivalContext:true,
+      }),
+    }));
+}
 function portraitAssets(s,stage){
-  const out=[['champSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
-    ['champDaichi','assets/Characters/Main/pro_daichi_sakamoto.png']];
+  const out=[['champSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png']];
+  if(stage)out.push(['champDaichi','assets/Characters/Main/pro_daichi_sakamoto.png']);
+  else for(const rival of hubRivals(s))if(rival.asset?.key&&rival.asset?.path)
+    out.push([rival.asset.key,rival.asset.path]);
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
     'idle',{proCircuit:true});
   if(player?.key&&player.path)out.push([player.key,player.path]);
@@ -134,9 +146,12 @@ function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
     'idle',{proCircuit:true});
   if(view==='HUB'){
-    sprite(s,o,player?.key,568,581,380,220);
-    sprite(s,o,'champSayaka',788,582,390,220);
-    sprite(s,o,'champDaichi',1012,584,385,225);
+    const rivals=hubRivals(s);
+    sprite(s,o,rivals[0]?.asset?.key,557,582,340,175);
+    sprite(s,o,player?.key,738,581,386,215);
+    sprite(s,o,rivals[1]?.asset?.key,920,582,344,180);
+    sprite(s,o,'champSayaka',1080,583,355,177);
+    // These are real seeded Championship rivals, not arbitrary decorative sprites.
   }else if(view==='CREW'){
     sprite(s,o,'champSayaka',175,622,420,240);
     sprite(s,o,'champDaichi',396,623,417,242);
