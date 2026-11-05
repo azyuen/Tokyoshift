@@ -129,7 +129,7 @@ test('regional rivals have legal physical builds and the agreed progressive form
 test('Crew Space service is present and live races reject invalid AI builds', () => {
   const garage=read('src/scenes/GarageScene.js');
   const race=read('src/scenes/RaceScene.js');
-  assert.match(garage,/this\.crewMode \? 608 : 662/);
+  assert.match(garage,/this\.crewMode \? 608 : this\.proGarageMode \? 716 : 662/);
   assert.match(garage,/this\.buildCrewSpaceNavigation\(\);\s*this\.buildStoreRestoreKitButton\(\);/);
   assert.match(garage,/this\.getCurrentWorkshopCars\(\)\.includes\(carId\)/);
   assert.match(race,/validateCrewBattleBuiltCar\(\s*opponentConfig, this\.opponentBuildState, rule/);

@@ -12,9 +12,9 @@ test('first individual/trophy opponent car preview matches its live race paint, 
   assert.deepEqual(PRO_RACE_RIVAL_PAINTS,[0xd04a59,0x63b3d4,0xefca66]);
   assert.equal(getProRaceRivalPaint(0),0xd04a59);
   assert.equal(getCarPaintColor({paintColor:getProRaceRivalPaint(0)}),getProRaceRivalPaint(0));
-  assert.match(race,/paint: getProRaceRivalPaint\(index\)/);
+  assert.match(race,/paint: rivalRound\?\.paintColor\?\?getProRaceRivalPaint\(index\)/);
   assert.match(briefing,/safeCarPreview\(round\.carId,545,743,211,225,\{/);
-  assert.match(briefing,/paintColor:getProRaceRivalPaint\(0\)/);
+  assert.match(briefing,/paintColor:round\.paintColor\?\?getProRaceRivalPaint\(0\)/);
   assert.doesNotMatch(race,/paint: \[0xd04a59, 0x63b3d4, 0xefca66\]\[index\]/);
   for(let i=0;i<3;i++)assert.ok(Number.isInteger(getProRaceRivalPaint(i)));
 });

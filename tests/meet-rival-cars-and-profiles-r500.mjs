@@ -41,12 +41,12 @@ test('starter meets stay recognisable and late regions add new cars without bypa
   assert.ok(daikoku.likelyCars.includes('jzx100'));
   assert.deepEqual(getMeetPreferredCars('shibuyaScramble',['ek9','ek9']).filter(x=>x==='ek9'),['ek9']);
   const matchmaking=sceneSource('src/data/meetMatchmaking.js');
-  assert.match(matchmaking,/for \(const carId of carOrder\)/);
+  assert.match(matchmaking,/for \(const carId of eligibleCarOrder\)/);
   assert.match(matchmaking,/getVehiclePerformance\(carId, buildState/);
   assert.match(matchmaking,/allowedBuildRatings/);
   const meet=sceneSource('src/scenes/MeetScene.js');
   assert.match(meet,/preferredCars: profile\.likelyCars/);
-  assert.match(meet,/MEET_ROSTER_VERSION = 'R500'/);
+  assert.match(meet,/MEET_ROSTER_VERSION = 'R788'/);
   assert.match(meet,/offer\?\.matchmakingVersion === MEET_ROSTER_VERSION/);
 });
 
@@ -80,7 +80,5 @@ test('cutscene pose change reuses the exact creation-placement helper and a lowe
   const characterSource=sceneSource('src/characters/CharacterProfileRenderer.js');
   assert.match(characterSource,/const placement = getCharacterProfilePlacement\(\{/);
   assert.match(characterSource,/\.setScale\(placement\.scale\)/);
-  // The driver seat anchor belongs to separate rendering and must remain unchanged.
-  const driver=sceneSource('src/vehicles/DriverSilhouette.js');
-  assert.doesNotMatch(driver,/PROFILE_EYE_TARGET_RATIO/);
+  assert.doesNotMatch(manga,/DriverSilhouette/,'portraits use the canonical character renderer');
 });

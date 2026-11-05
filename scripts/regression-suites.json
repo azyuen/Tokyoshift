@@ -1136,7 +1136,7 @@
       "tests/galant-vr4-r502.mjs"
     ],
     "commands": [
-      "node --check src/data/cars.js\nnode --check src/data/engines.js\nnode --check src/data/carReferenceGeometry.js\nnode --check src/data/carMagazine.js\nnode --check src/data/carDriverFaceAnchors.js\nnode --check tests/galant-vr4-r502.mjs\n",
+      "node --check src/data/cars.js\nnode --check src/data/engines.js\nnode --check src/data/carReferenceGeometry.js\nnode --check src/data/carMagazine.js\nnode --check src/data/canonicalCarMigration.js\nnode --check tests/galant-vr4-r502.mjs\n",
       "node --test tests/galant-vr4-r502.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs\n"
     ],
     "artifacts": []
@@ -2238,7 +2238,7 @@
       "tests/retired-ej1-r503.mjs"
     ],
     "commands": [
-      "for file in src/data/cars.js src/data/centralTokyo.js src/data/crewRoster.js src/data/tunerChallenges.js src/data/encounterProfiles.js src/data/carMagazine.js src/data/carDriverFaceAnchors.js src/data/carRetirement.js src/state/GameState.js src/scenes/MeetScene.js src/data/visualMods.js tests/retired-ej1-r503.mjs; do node --check \"$file\"; done\n",
+      "for file in src/data/cars.js src/data/centralTokyo.js src/data/crewRoster.js src/data/tunerChallenges.js src/data/encounterProfiles.js src/data/carMagazine.js src/data/canonicalCarMigration.js src/data/carRetirement.js src/state/GameState.js src/scenes/MeetScene.js src/data/visualMods.js tests/retired-ej1-r503.mjs; do node --check \"$file\"; done\n",
       "node --test tests/retired-ej1-r503.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/galant-vr4-r502.mjs tests/meet-rival-cars-and-profiles-r500.mjs tests/meet-refresh-r469.mjs tests/sayaka-reika-continuity.mjs tests/pinkSlipProgression.test.mjs\n"
     ],
     "artifacts": []

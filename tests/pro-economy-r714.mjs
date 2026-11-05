@@ -1,3 +1,4 @@
+import {assertBuildCacheContract,assertVersionedImport} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -87,9 +88,9 @@ test('rank prizes are once-only, persisted and must be claimed before season res
 
 test('client presentation and stamp agree with sponsor economy',()=>{
   const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-  assert.equal(JSON.parse(source('version.json')).build,'R714');
+  assertBuildCacheContract();
   assert.match(source('src/ui/ProSeasonPanel.js'),/COLLECT /);
-  assert.match(source('src/ui/ProSeasonPanel.js'),/ARUKEN SPONSORSHIP/);
+  assert.match(source('src/ui/ProSeasonPanel.js'),/SPONSOR BONUS ON OPEN CIRCUIT & PRO SEASON CASH PRIZES/);
   assert.match(source('src/scenes/FourLaneTestScene.js'),/final\.cashPrize/);
-  assert.match(source('src/main.js'),/FourLaneTestScene\.js\?v=20261029-r714/);
+  assertVersionedImport('src/main.js','FourLaneTestScene');
 });

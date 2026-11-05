@@ -104,7 +104,7 @@ test('Live conversion quote is applied at confirmation and at final payment; no 
   assert.match(scene,/INSTALLED CREDIT/);
   assert.match(scene,/lbwkPartsCredit/);
   assert.match(scene,/nosInstalled: Boolean\(this.shop.cosmeticOnly\)/);
-  assert.match(source('src/vehicles/VehiclePerformance.js'),/config\.lbwkFullWorks \|\| config\.arkonOneOff/);
+  assert.match(source('src/vehicles/VehiclePerformance.js'),/config\.tuningLocked \|\| state\.tuningLocked \|\| state\.immutable \|\| state\.collector/);
 });
 
 test('402m estimates: full works beats donor Lv3; regional-stack comparison is reported',()=>{

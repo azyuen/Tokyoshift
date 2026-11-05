@@ -7,10 +7,12 @@ import {
 } from '../src/data/characterRaceDialogue.js';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const ids = Object.keys(characters);
+const storyOnlyIds = new Set(['mikaHayaseChampion','storyDockForeman','storyDaigoKirishima','storyVipShibuya','storyVipPromoter']);
+const ids = Object.keys(characters).filter(id=>!storyOnlyIds.has(id));
+for(const id of storyOnlyIds) assert.equal(characters[id].rivalEligible,false,id+' must not enter the Career race roster');
 const text = value => typeof value === 'string' && value.trim().length >= 12;
 
-test('all named character-bible IDs have seven genuinely authored lines', () => {
+test('all named Career roster IDs have seven genuinely authored lines', () => {
   assert.equal(ids.length, 62);
   assert.deepEqual(Object.keys(CHARACTER_RACE_DIALOGUE).sort(), ids.sort());
   for (const id of ids) {
