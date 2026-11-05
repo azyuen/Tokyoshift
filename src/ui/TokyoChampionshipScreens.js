@@ -311,8 +311,8 @@ function eventInfo(s,o,state,stage){
     const rounds=state.knockout?.bracket||seedKnockoutBracket(state.entrants);
     const history=state.knockout?.results||[];
     const starts=[980,1114,1248,1382],width=126;
-    const centre=(r,i)=>245+(Math.pow(2,r)-1)*21.5+
-      i*43*Math.pow(2,r);
+    const centre=(r,i)=>250+(Math.pow(2,r)-1)*20.5+
+      i*41*Math.pow(2,r);
     const lines=o.add(s.add.graphics().setDepth(222));
     lines.lineStyle(1,0x89a1b5,.6);
     for(let r=0;r<3;r++)for(let i=0;i<8/(2**r);i++){
@@ -397,8 +397,7 @@ function eventInfo(s,o,state,stage){
         o.label(left+17,laneY-10,'L'+(lane+1)+'  '+name,15,
           mine?GOLD:id?PALE:MUTED,{width:139});
       }
-      o.label(left+10,511,i===2?'TITLE DECIDER':
-        i===0?'TOP 2 ADVANCE':'TOP 2 ADVANCE',16,MUTED);
+      o.label(left+10,511,i===2?'TITLE DECIDER':'TOP 2 ADVANCE',16,MUTED);
     }
     o.label(x+6,560,'QUALIFY   >   SEMIFINALS   >   TOKYO TITLE',
       17,GOLD,{width:530});
