@@ -1,3 +1,4 @@
+import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261105-champ-ui';
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
@@ -749,107 +750,35 @@ export function showSeasonRecords(s,complete=false) {
 
 /** One unified sixteen-entrant championship: live stage results, durable
  *  payout and true podium. Never award or score from presentation alone. */
-export function showTokyoChampionship(s) {
+export function showTokyoChampionship(s,view='HUB') {
   let c=circuit(s),state=c.activeChampionship;
   if(!state){showSeasonRecords(s,c.calendar.round>=8);return;}
 
-  // Recover a completed legacy save that reached the result page before
-  // once-only awards existed; the transition is safe to call repeatedly.
+  // Preserve the authoritative, once-only title and purse settlement for
+  // completed/legacy saves; UI rendering can never award championships.
   if(state.completed){
     const award=settleTokyoChampionship(c);
     if(award.error){s.proError=award.error;redraw(s);return;}
-    if(!award.alreadySettled) {
+    if(!award.alreadySettled){
       if(!commit(s,{proCircuit:award.circuit,
         cash:Number(s.registry.get('cash')||0)+award.cashPrize}))return;
       c=award.circuit;state=c.activeChampionship;
     }
   }
 
-  const rows=championshipStandings(state);
-  const mine=rows.find(r=>r.id==='player:driver');
-  const myPlace=rows.indexOf(mine)+1;
-  const complete=Boolean(state.completed);
-  const winner=complete&&state.championId==='player:driver';
-  const o=overlay(s,complete?
-    (winner?'TOKYO CHAMPION // OFFICIAL RESULTS':'TOKYO CHAMPIONSHIP // FINAL STANDINGS'):
-    'TOKYO CHAMPIONSHIP // FINAL SIXTEEN');
-  const stageName={KNOCKOUT:'STAGE 1 / 3 — INDIVIDUAL KNOCKOUTS',
-    CREW:'STAGE 2 / 3 — CREW BATTLES',
-    FOUR_WIDE:'STAGE 3 / 3 — FOUR-WIDE FINALS',
-    COMPLETE:'CHAMPIONSHIP COMPLETE'};
-  o.label(90,105,stageName[state.stage]||'CHAMPIONSHIP IN PROGRESS',22)
-    .setColor(complete?'#f6d18a':'#d7e8ef');
-  o.label(90,142,complete?
-    ('YOUR FINISH  #'+myPlace+'/16   ·   TOTAL '+mine.total+' PTS'+
-      (winner?'   ·   TOKYO CHAMPION':'   ·   CHAMPION '+rows[0].name)):
-    'THREE STAGES · KO 20 PTS + CREW 20 PTS + FOUR-WIDE 40 PTS MAX',19)
-    .setColor(complete?'#f6d18a':'#b8c7cf');
-
-  for(const [i,entry] of rows.entries()){
-    const x=i<8?90:810,y=197+(i%8)*51;
-    const own=entry.id==='player:driver';
-    const name=own?'YOU':String(entry.name||entry.id).slice(0,19);
-    o.label(x,y,(i+1)+'. '+name,18)
-      .setColor(own?'#f5d18b':i<3?'#f0e6e4':'#d4dce2');
-    o.label(x+328,y,'KO '+entry.knockout+
-      ' · CR '+entry.crew+' · 4W '+entry.fourWide+'  =  '+entry.total,17)
-      .setColor(own?'#f5d18b':'#9db6c5');
-  }
-
-  const heat=state.stage==='KNOCKOUT'?getChampionshipKnockoutHeat(state):
-    state.stage==='CREW'?getChampionshipCrewHeat(state):
-    state.stage==='FOUR_WIDE'?getChampionshipFourWideHeat(state):null;
-  const next=heat?(state.stage==='KNOCKOUT'?
-      'KNOCKOUT ROUND '+(heat.round+1)+'/4 · VS '+heat.opponent?.name:
-      state.stage==='CREW'?'CREW HEAT '+(heat.index+1)+'/3 · VS '+heat.opponent?.name:
-      'FOUR-WIDE '+['QUALIFIER','SEMIFINAL','FINAL'][heat.round]):null;
-  const paid=c.championshipHistory.find(h=>h.id===state.id);
-  o.label(90,633,complete?
-    'OFFICIAL PODIUM · 1ST '+rows[0].name+'  ·  2ND '+rows[1].name+
-      '  ·  3RD '+rows[2].name:
-    (next?'UP NEXT · '+next:'STAGE COMPLETED · RESULTS ARE SAVED'),19)
-    .setColor(complete?'#f5d18b':'#b8c7cf');
-  if(complete){
-    o.label(90,678,'YOUR CHAMPIONSHIP PRIZE  ¥'+
-      Number(paid?.cashPrize??TOKYO_CHAMPIONSHIP_PURSES[myPlace-1]??0).toLocaleString('en-US')+
-      (winner?'  ·  PERMANENT TOKYO CHAMPION TITLE EARNED':
-        '  ·  RETURN FOR ANOTHER SEASON'),19).setColor('#f6d18a');
-  }else{
-    o.label(90,681,'EACH HEAT IS SAVED · A LOSS IN ONE STAGE DOES NOT END THE CHAMPIONSHIP',18)
-      .setColor('#b8c7cf');
-  }
-
-  o.btn(310,768,390,'SAVE / RETURN',o.close);
-  if(heat&&!complete){
-    const mode=state.stage==='KNOCKOUT'?'CHAMP_KO':
-      state.stage==='CREW'?'CHAMP_CREW':'CHAMP_FOUR';
-    if(mode==='CHAMP_CREW'){
-      const eligible=getCrewSeriesUnits(s.registry).filter(u=>
-        u.validAssignment&&!heat.usedCarIds.includes(u.carId));
-      o.btn(1090,768,600,'SELECT CREW CAR / DRIVE HEAT',()=>{
-        o.close();showChampionshipCrewSelection(s);
-      });
-      if(!eligible.length)o.label(810,709,'NO ELIGIBLE UNIQUE CREW CAR — CHECK GARAGE',18)
-        .setColor('#e89d9f');
-    }else{
-      const carId=state.driverCarId||s.registry.get('selectedCarId');
-      o.btn(1090,768,600,'DRIVE CHAMPIONSHIP HEAT',()=>{
-        startChampionshipRace(s,mode,carId);
-      });
-      if(state.driverCarId)o.label(810,709,'REGISTERED DRIVER CAR · '+
-        (cars[state.driverCarId]?.shortName||state.driverCarId),17);
-    }
-  }else if(complete){
-    o.btn(1090,768,600,'CONTINUE PROFESSIONAL CAREER',()=>{
-      o.close();showSeasonRecords(s,true);
-    });
-  }
-  // These simple story beats run only on genuine saved outcomes; there are
-  // no rewards or state changes inside the cutscene.
-  if(complete)playMangaCutscene(s,winner?
-    'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
-  else if(state.stage==='KNOCKOUT'&&!(state.knockout?.results?.length))
-    playMangaCutscene(s,'tokyoChampionshipOpening');
+  if(state.stage==='COMPLETE'&&['EVENT','CREW_PICK'].includes(view))view='HUB';
+  showTokyoChampionshipScreens(s,{view,actions:{
+    startRace:(mode,carId)=>startChampionshipRace(s,mode,carId),
+    returnToSeason:()=>showSeasonRecords(s,true),
+    // Run saved narrative only after any lazy background/sprite loading has
+    // finished. The original cutscene history still enforces once-only use.
+    onHubRendered:()=>{
+      if(state.completed)playMangaCutscene(s,
+        state.championId==='player:driver'?'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
+      else if(state.stage==='KNOCKOUT'&&!(state.knockout?.results?.length))
+        playMangaCutscene(s,'tokyoChampionshipOpening');
+    },
+  }});
 }
 
 function showChampionshipCrewSelection(s) {
