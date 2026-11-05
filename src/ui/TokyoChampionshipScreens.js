@@ -1,7 +1,7 @@
 // Tokyo SHIFT — unified Championship Hub and three dedicated event briefings.
 // Only presentation, navigation and one-use strategy notes live here.
 // Authoritative scoring, car locks and race settlement remain in the existing modules.
-import { championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
+import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
   getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
@@ -277,8 +277,7 @@ function eventInfo(s,o,state,stage){
     panelTitle(o,x,164,'16-DRIVER KNOCKOUT BRACKET');
     const bySeed=[...state.entrants].sort((a,b)=>a.seed-b.seed);
     const first=state.knockout?.bracket?.[0]||[];
-    const pairs=first.length===8?first:
-      Array.from({length:8},(_,i)=>[bySeed[i*2]?.id,bySeed[i*2+1]?.id]);
+    const pairs=first.length===8?first:seedKnockoutBracket(state.entrants)[0];
     const history=state.knockout?.results||[];
     pairs.forEach((pair,i)=>{
       const y=209+i*37;
