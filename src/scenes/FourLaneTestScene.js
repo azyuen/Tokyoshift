@@ -2150,25 +2150,51 @@ export default class FourLaneTestScene extends RaceScene {
     const ok=outcome?.status==='CHAMP_SAVED';
     const own=standings.find(r=>r.id==='player:driver');
     const final=ok&&outcome.completed;
+    const sameEvent=ok&&!final&&outcome.nextStage===this.champState?.stage;
     const title=!ok?'RESULT NOT SAVED // RETRY':
       final?(outcome.playerChampion?'TOKYO CHAMPION':'TOKYO CHAMPIONSHIP // COMPLETE'):
-      'TOKYO CHAMPIONSHIP // HEAT RECORDED';
+      sameEvent?'TOKYO CHAMPIONSHIP // HEAT RECORDED':'CHAMPIONSHIP EVENT COMPLETE';
     const detail=final?
       'OVERALL #'+outcome.playerPlace+' / 16  //  CHAMPION '+outcome.championName:
       'HEAT #'+(own?.placing||'?')+' / '+standings.length+'  //  NEXT '+(outcome?.nextStage||'RETRY');
-    this.add.rectangle(780,360,1560,720,0x0b0a0d,.93).setDepth(300).setScrollFactor(0);
+    this.add.rectangle(780,360,1560,720,0x0b0a0d,.94).setDepth(300).setScrollFactor(0);
     this.add.text(780,175,title,{fontFamily:'Rajdhani',fontSize:'45px',
       color:outcome?.playerChampion?'#f6d18a':'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
-    this.add.text(780,310,detail,{fontFamily:'Rajdhani',fontSize:'28px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,310,detail,{fontFamily:'Rajdhani',fontSize:'28px',
+      color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
     if(final)this.add.text(780,392,'OFFICIAL PRIZE  ¥'+Number(outcome.cashPrize||0).toLocaleString('en-US'),{
       fontFamily:'Rajdhani',fontSize:'24px',color:'#f6d18a'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
-    this.add.text(780,482,ok?'CONTINUE TO CHAMPIONSHIP RESULTS':'RETURN TO RETRY THE UNSAVED HEAT',{
-      fontFamily:'Rajdhani',fontSize:'25px',color:'#ffffff'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    if(ok&&!sameEvent&&!final)this.add.text(780,408,
+      'CHAMPIONSHIP POINTS SAVED  //  RETURN TO THE HUB FOR THE NEXT EVENT',{
+      fontFamily:'Rajdhani',fontSize:'23px',color:'#f6d18a',
+    }).setOrigin(.5).setDepth(301).setScrollFactor(0);
+
     let armed=false;
     this.time.delayedCall(350,()=>{armed=true;});
-    this.add.rectangle(780,360,1560,720,0xffffff,.001).setDepth(302).setScrollFactor(0).setInteractive().on('pointerdown',()=>{
-      if(armed)this.returnToDrag(true);
-    });
+    const action=(x,label,primary,callback)=>{
+      const surface=this.add.rectangle(x,532,sameEvent?540:720,64,
+        primary?0x8d2636:0x1d3043,.98).setStrokeStyle(2,
+        primary?0xe7737f:0x91aabf).setDepth(302).setScrollFactor(0)
+        .setInteractive({useHandCursor:true});
+      this.add.text(x,532,label,{fontFamily:'Rajdhani',fontSize:'25px',
+        color:'#ffffff',fontStyle:'700'}).setOrigin(.5).setDepth(303).setScrollFactor(0);
+      surface.on('pointerdown',()=>{if(armed)callback();});
+    };
+    if(sameEvent){
+      action(485,'RETURN TO EVENT BRIEFING',false,
+        ()=>this.returnToDrag(true,'EVENT'));
+      action(1075,this.champMode==='CHAMP_CREW'?'NEXT HEAT / SELECT CAR':'NEXT HEAT',true,()=>{
+        if(this.champMode==='CHAMP_CREW'){
+          this.returnToDrag(true,'CREW_PICK');
+          return;
+        }
+        // Next knockout/four-wide heat is already saved by the previous race
+        // and reloaded on restart; it never reuses a completed heat.
+        this.scene.restart({mode:this.champMode,carId:this.champCarId||this.playerCarId});
+      });
+    }else action(780,final?'CONTINUE TO CHAMPIONSHIP RESULTS':
+      ok?'RETURN TO CHAMPIONSHIP HUB':'RETURN TO EVENT BRIEFING',true,
+      ()=>this.returnToDrag(true,ok?'HUB':'EVENT'));
   }
 
   promptCrewForfeit() {
@@ -2180,10 +2206,11 @@ export default class FourLaneTestScene extends RaceScene {
     });
   }
 
-  returnToDrag(openChampionship=false) {
+  returnToDrag(openChampionship=false,championshipDestination='HUB') {
     this.scene.start('CentralTokyoScene',{
       locationId:'tokyoDragComplex',
       autoOpenTokyoChampionship:Boolean(openChampionship&&this.champMode),
+      championshipDestination,
       autoOpenProCrewFixture:Boolean(this.proCrew&&
         this.registry.get('proCircuit')?.activeCrewEvent),
     });
