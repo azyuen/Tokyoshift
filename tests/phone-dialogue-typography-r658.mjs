@@ -1,3 +1,4 @@
+import {assertVersionedImport,assertBuildCacheContract} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -76,16 +77,8 @@ test('both established chapter 08 phone callers retain their content and use the
   }
 });
 
-test('iPad and iPhone refresh the R658 story/phone templates without cache mixing',()=>{
-  const html=src('index.html');
-  const sw=src('sw.js');
-  const game=src('src/main.js');
-  const version=JSON.parse(src('version.json'));
-  assert.equal(version.build,'R658');
-  assert.match(html,/main\.js\?v=20261023-r658/);
-  assert.match(sw,/const BUILD = 'R658'/);
-  assert.match(sw,/tokyoshift-assets-r658/);
-  assert.match(game,/StoryDirector\.js\?v=20261023-r658/);
-  assert.match(game,/MeetScene\.js\?v=20261023-r658/);
-  assert.match(game,/GarageScene\.js\?v=20261023-r658/);
+test('phone rollout retains coherent entry build and persistent artwork cache',()=>{
+ assertBuildCacheContract();
+ for(const name of ['MeetScene','GarageScene']) assertVersionedImport('src/main.js',name);
+ assertVersionedImport('src/ui/MangaCutscene.js','PhoneConversation');
 });
