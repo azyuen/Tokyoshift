@@ -770,15 +770,15 @@ export function showTokyoChampionship(s,view='HUB') {
   showTokyoChampionshipScreens(s,{view,actions:{
     startRace:(mode,carId)=>startChampionshipRace(s,mode,carId),
     returnToSeason:()=>showSeasonRecords(s,true),
+    // Run saved narrative only after any lazy background/sprite loading has
+    // finished. The original cutscene history still enforces once-only use.
+    onHubRendered:()=>{
+      if(state.completed)playMangaCutscene(s,
+        state.championId==='player:driver'?'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
+      else if(state.stage==='KNOCKOUT'&&!(state.knockout?.results?.length))
+        playMangaCutscene(s,'tokyoChampionshipOpening');
+    },
   }});
-
-  // Narrative beats retain their saved, once-only triggers. Character and
-  // race art/UI do not affect the championship or original story scripts.
-  if(view==='HUB'&&state.completed)playMangaCutscene(s,
-    state.championId==='player:driver'?'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
-  else if(view==='HUB'&&state.stage==='KNOCKOUT'&&
-    !(state.knockout?.results?.length))
-    playMangaCutscene(s,'tokyoChampionshipOpening');
 }
 
 function showChampionshipCrewSelection(s) {
