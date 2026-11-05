@@ -232,6 +232,7 @@ export default class GarageScene extends Phaser.Scene {
       data.returnWorkshopId : fallbackWorkshop;
     this.proBriefingReturn= data?.proBriefingReturn || null;
     this.proCrewPaddockReturn=data?.proCrewPaddockReturn||null;
+    this.proChampionshipReturn=data?.proChampionshipReturn||null;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
     this.storyArchiveChapter = data?.storyArchiveChapter || null;
     this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
@@ -4229,6 +4230,7 @@ export default class GarageScene extends Phaser.Scene {
           locationId:'tokyoDragComplex',
           proBriefingReturn:this.proBriefingReturn,
           proCrewPaddockReturn:this.proCrewPaddockReturn,
+          proChampionshipReturn:this.proChampionshipReturn,
         });
         return;
       }

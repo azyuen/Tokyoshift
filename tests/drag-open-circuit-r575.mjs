@@ -7,7 +7,7 @@ import { recruitRandomDevCrew } from '../src/data/crewSystem.js';
 import {
   PRO_SEASON_LENGTH, getProQualification, getOpenCircuitTrophy, isOpenCircuitAvailable,
   finishOpenCircuitEvent, startProfessionalSeason, forfeitProfessionalSeason,
-  completeSeasonRound, nextProfessionalSeason, settleLegacySeasonEvent,
+  completeSeasonRound, nextProfessionalSeason, settleLegacySeasonEvent, claimProfessionalSeasonBonus,
   getCrewSeriesUnits,registerCrewSeries,preparePlayerCrewFixture,getCrewFixture,getPlayerCrewHeat,
   settlePlayerCrewHeat,settleCrewSeriesFixture,
 } from '../src/data/proSeason.js';
@@ -90,7 +90,11 @@ test('an officially completed season returns to open circuit until new deliberat
   assert.equal(complete.seasonStatus,'COMPLETE');
   assert.equal(isOpenCircuitAvailable(complete),true);
   const roster=['ef','ae86','gc8'];
-  const next=startProfessionalSeason(complete,roster,roster);
+  assert.ok(startProfessionalSeason(complete,roster,roster).error,'collect final awards before registering again');
+  const paid=claimProfessionalSeasonBonus(complete);
+  assert.ok(paid.circuit,paid.error);
+  assert.equal(claimProfessionalSeasonBonus(paid.circuit).cashPrize,0);
+  const next=startProfessionalSeason(paid.circuit,roster,roster);
   assert.ok(next.circuit);
   assert.equal(next.circuit.season,2);
   assert.equal(next.circuit.calendar.round,0);
@@ -108,7 +112,7 @@ test('legacy three-heat driver cup settles as open circuit without adding points
   assert.equal(c.lastTournament.cashPrize,50000);
 });
 
-test('a full standalone crew session charges once, drives three heats and earns no season points',()=>{
+test('a full standalone crew session has sponsored entry, drives three heats and earns no season points',()=>{
   const data={...createDefaultGameState(),devMode:true,cash:500000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
   const state=new Map(Object.entries(data));
   const registry={get:key=>state.get(key),set:(key,value)=>state.set(key,value)};
@@ -116,7 +120,7 @@ test('a full standalone crew session charges once, drives three heats and earns 
   const ids=getCrewSeriesUnits(registry).slice(0,3).map(x=>x.id);
   const registration=registerCrewSeries(registry,ids);
   assert.ok(registration.circuit,registration.error);
-  assert.equal(registration.cash,465000);
+  assert.equal(registration.cash,500000);
   assert.equal(registration.circuit.activeCrewEvent.openCircuit,true);
   registry.set('cash',registration.cash);
   registry.set('proCircuit',registration.circuit);
@@ -140,7 +144,7 @@ test('a full standalone crew session charges once, drives three heats and earns 
   assert.equal(complete.circuit.playerTeam.seasonPoints,0);
   assert.equal(complete.circuit.openCircuitTick,1);
   assert.equal(complete.circuit.activeCrewEvent,null);
-  assert.equal(complete.cashPrize,70000);
+  assert.equal(complete.cashPrize,350000);
   assert.equal(complete.summary.openCircuit,true);
   assert.equal(settleCrewSeriesFixture(complete.circuit,fixture.id).cashPrize,0);
 });
@@ -156,7 +160,7 @@ test('crew prestige trophy requires three full fixtures and never scores season 
   const ids=getCrewSeriesUnits(registry).slice(0,3).map(x=>x.id);
   const out=registerCrewSeries(registry,ids,{},'teamGrandPrix');
   assert.ok(out.circuit,out.error);
-  assert.equal(out.cash,500000);
+  assert.equal(out.cash,600000);
   assert.equal(out.circuit.activeCrewEvent.short,false);
   registry.set('proCircuit',out.circuit);
   for(let round=0;round<3;round++){
@@ -179,7 +183,7 @@ test('crew prestige trophy requires three full fixtures and never scores season 
     registry.set('proCircuit',ended.circuit);
     if(round===2){
       assert.equal(ended.summary.placing,1);
-      assert.equal(ended.cashPrize,300000);
+      assert.equal(ended.cashPrize,1500000);
       assert.equal(ended.circuit.trophyWins.teamGrandPrix,1);
       assert.equal(ended.circuit.trophyHistory.at(-1).trophyId,'teamGrandPrix');
       assert.equal(ended.circuit.openCircuitTick,1);

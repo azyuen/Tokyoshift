@@ -70,7 +70,7 @@ async function startTokyoShift() {
     // Preserve the canonical Phaser scene keys and their init-data contract.
     // The placeholder is replaced by the actual class on first entry.
     const GarageScene = makeDeferredScene('GarageScene',
-      '../scenes/GarageScene.js?v=20261103-r784');
+      '../scenes/GarageScene.js?v=20261105-r800-championship');
     const CrewSpaceScene = makeDeferredScene('CrewSpaceScene',
       '../scenes/CrewSpaceScene.js?v=20261026-r687');
     const CrewScene = makeDeferredScene('CrewScene',
@@ -78,7 +78,7 @@ async function startTokyoShift() {
     const DynoScene = makeDeferredScene('DynoScene',
       '../scenes/DynoScene.js?v=20261026-r687');
     const CentralTokyoScene = makeDeferredScene('CentralTokyoScene',
-      '../scenes/CentralTokyoScene.js?v=20261104-r799');
+      '../scenes/CentralTokyoScene.js?v=20261105-r800-championship');
     const OshiageScene = makeDeferredScene('OshiageScene',
       '../scenes/OshiageScene.js?v=20261026-r687');
     const MeetScene = makeDeferredScene('MeetScene',
@@ -88,7 +88,7 @@ async function startTokyoShift() {
     const DevVaultStoryScene = makeDeferredScene('DevVaultStoryScene',
       '../scenes/DevVaultStoryScene.js?v=20261026-r687');
     const FourLaneTestScene = makeDeferredScene('FourLaneTestScene',
-      '../scenes/FourLaneTestScene.js?v=20261103-r784');
+      '../scenes/FourLaneTestScene.js?v=20261105-r800-championship');
     const RunOverScene = makeDeferredScene('RunOverScene',
       '../scenes/RunOverScene.js?v=20261026-r687');
     const ResultScene = makeDeferredScene('ResultScene',

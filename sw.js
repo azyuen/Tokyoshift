@@ -1,4 +1,4 @@
-const BUILD = 'R800';
+const BUILD = 'R802';
 // Stable across releases: keys include the SHA-256 of each asset's contents.
 // Generate the manifest after asset edits; never key these files by game build.
 importScripts('./asset-manifest.js');
