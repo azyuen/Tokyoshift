@@ -29,6 +29,34 @@ Design: premium, industrial Japanese motorsport in midnight navy/gunmetal with r
 - Original race physics, skill tiers, event simulation, points tables, economy and saved profile migration remain untouched.
 - The source of truth for settlement stays `src/data/tokyoChampionship.js` and `src/scenes/FourLaneTestScene.js`. UI must never settle prizes by itself.
 
+## R801 — Competition-first UI cleanup (5 November 2026)
+
+The four existing full-screen backgrounds and all character art remain unchanged.
+Gameplay and authoritative race progression are unaffected.
+
+- **Hub:** remove competing boxes in the centre of the scene. Show just the
+  five-driver live standings wing, the player's score/rank wing and one clickable
+  three-event ribbon across the lower edge. Retain full 16-driver profiles, rules
+  and one primary continue action.
+- **Individual:** show the actual persisted 16→8→4→2→1 knockout bracket rather
+  than eight rows of text. Use saved winners to fade eliminated drivers, with
+  unknown later-round opponents marked TBD and the player's branch in gold.
+- **Crew:** three full-width scored heat rows with their results and selected
+  cars, plus a wins tally. All three player-driven heats and existing eligibility
+  remain unchanged.
+- **Four-wide:** qualifying, semifinal and final cards display lane grids,
+  current advancement and saved player-heat fields. No speculative standings
+  or simulated results are awarded by the interface.
+- **All event pages:** one translucent right-hand competition board; one short
+  Sayaka advice card along the lower left; shared bottom actions for Hub, Pro
+  Paddock, Crew Paddock and Go To Grid. The redundant Daichi text panel is
+  removed, not his paddock function or character sprite.
+
+The one-use Sayaka note still saves under the existing event key. The
+Championship UI does not change car locks, physics, points, standings,
+economy or season progression. Validate readability and touch targets on
+iPhone XR and iPad Pro 9.7 before considering this visually signed off.
+
 ## Test checklist before merge/deploy
 
 - Fresh qualified save: Season Results → Enter Championship → Hub → Knockout briefing.
