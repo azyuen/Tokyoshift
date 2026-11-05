@@ -172,6 +172,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.autoOpenProCrewFixture = Boolean(data?.autoOpenProCrewFixture);
     this.autoShowProVictory = data?.autoShowProVictory || null;
     this.autoOpenTokyoChampionship = Boolean(data?.autoOpenTokyoChampionship);
+    this.championshipDestination=data?.championshipDestination||'HUB';
+    this.proChampionshipReturn=data?.proChampionshipReturn||null;
     this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
     this.autoOpenProSeasonHeatBriefing=Boolean(data?.autoOpenProSeasonHeatBriefing);
     this.proBriefingReturn=data?.proBriefingReturn||null;
@@ -456,7 +458,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // leaderboard and, after the final heat, the once-only celebration.
     if(this.autoOpenTokyoChampionship&&this.registry.get('proCircuit')?.activeChampionship){
       this.time.delayedCall(0,()=>{
-        if(this.sys?.isActive?.())showTokyoChampionship(this);
+        if(this.sys?.isActive?.())showTokyoChampionship(this,this.championshipDestination);
       });
     }
     // After each professional crew heat, return straight to its SAVED heat
@@ -480,6 +482,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(event)showProSeasonDriverBriefing(this,event,()=>{
           this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});
         },{resume:true});
+      });
+    }
+    // Resume the exact Championship event after a trip to Daichi's Pro/Crew Paddock.
+    if(this.proChampionshipReturn&&this.activeLocationId==='tokyoDragComplex'){
+      this.time.delayedCall(0,()=>{
+        if(!this.sys?.isActive?.())return;
+        const current=this.registry.get('proCircuit')?.activeChampionship;
+        const marker=this.proChampionshipReturn;
+        if(current?.id===marker.id&&current.stage===marker.stage)
+          showTokyoChampionship(this,'EVENT');
+        else if(current)showTokyoChampionship(this,'HUB');
       });
     }
     // Restore the exact three-driver crew selection after Daichi's setup visit.
