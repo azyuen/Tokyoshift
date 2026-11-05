@@ -1816,7 +1816,8 @@
       "src/data/proSeason.js",
       "src/scenes/CentralTokyoScene.js",
       "src/scenes/FourLaneTestScene.js",
-      "tests/pro-opponent-scrutineering-r729.mjs"
+      "tests/pro-opponent-scrutineering-r729.mjs",
+      "src/data/proRaceNos.js"
     ],
     "commands": [
       "node --check src/data/proOpponentScrutineering.js\nnode --check src/data/proSeason.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\n",
@@ -1892,7 +1893,8 @@
       "src/scenes/GarageScene.js",
       "src/ui/ProSeasonDriverBriefing.js",
       "src/vehicles/VehiclePerformance.js",
-      "tests/pro-season-*.mjs"
+      "tests/pro-season-*.mjs",
+      "src/data/proRaceNos.js"
     ],
     "commands": [
       "node --check src/data/proSeason.js\nnode --check src/data/proDriverBriefing.js\nnode --check src/ui/ProSeasonDriverBriefing.js\nnode --check src/data/proCircuit.js\nnode --check src/vehicles/VehiclePerformance.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",

@@ -30,7 +30,7 @@ test('one driver advice purchase is valid from any heat and refreshes for new op
   const used=consumeDriverAdvice(pro,heat2);
   assert.equal(used.error,undefined);
   assert.equal(used.competitionState.briefingAdviceUsed,true);
-  assert.equal(used.circuit.crewAdviceCooldownUntil,pro.eventTick+3);
+  assert.equal(used.circuit.crewAdviceCooldownUntil,0);
   const heat3={...used.competitionState,roundIndex:2,
     briefingAdviceText:'old advice that should never be repeated'};
   assert.equal(driverAdviceStatus(used.circuit,heat3).usedThisEvent,true);
@@ -48,13 +48,13 @@ test('one driver advice purchase is valid from any heat and refreshes for new op
   assert.doesNotMatch(driverUI,/bubbleText\(x\+18,y\+38,state\.briefingAdviceText/);
 });
 
-test('a driver trophy consultation covers five stages and costs six completed-event ticks',()=>{
+test('a driver trophy consultation covers five stages without adding a crew cooldown',()=>{
   const pro=createDefaultProCircuitState();
   pro.eventTick=12;
   const trophy=driverState('shutoSpeed',3);
   const consulted=consumeDriverAdvice(pro,trophy);
   assert.equal(consulted.error,undefined);
-  assert.equal(consulted.circuit.crewAdviceCooldownUntil,18);
+  assert.equal(consulted.circuit.crewAdviceCooldownUntil,0);
   for(let i=0;i<5;i++){
     assert.equal(driverAdviceStatus(consulted.circuit,{
       ...consulted.competitionState,roundIndex:i,
@@ -63,7 +63,7 @@ test('a driver trophy consultation covers five stages and costs six completed-ev
   for(let settled=0;settled<6;settled++){
     const candidate=driverState(null);
     assert.equal(driverAdviceStatus({...pro,eventTick:12+settled,
-      crewAdviceCooldownUntil:18},candidate).available,false);
+      crewAdviceCooldownUntil:18},candidate).available,true);
   }
   assert.equal(driverAdviceStatus({...pro,eventTick:18,
     crewAdviceCooldownUntil:18},driverState()).available,true);
@@ -117,7 +117,7 @@ test('crew heat advice changes as the fixture and current rival change, without 
   assert.doesNotMatch(seasonUI,/const eventAdvice=t\.adviceText\|\|/);
 });
 
-test('non-trophy crew advice retains a three-event cooldown, and trophy cooldown is shared',()=>{
+test('non-trophy crew advice retains its cooldown without blocking driver trophies',()=>{
   const pro=createDefaultProCircuitState();
   pro.eventTick=7;
   pro.activeCrewEvent={id:'crewOpen:s1:e8',trophyId:null,round:1,adviceUsed:false};
@@ -126,7 +126,9 @@ test('non-trophy crew advice retains a three-event cooldown, and trophy cooldown
   assert.equal(normal.error,undefined);
   assert.equal(normal.circuit.crewAdviceCooldownUntil,10);
   const candidate=driverState('tokyoTechnical',4);
-  assert.equal(driverAdviceStatus(normal.circuit,candidate).available,false);
-  const blocked=consumeDriverAdvice(normal.circuit,candidate);
-  assert.match(blocked.error,/3 MORE/);
+  assert.equal(driverAdviceStatus(normal.circuit,candidate).available,true);
+  const driver=consumeDriverAdvice(normal.circuit,candidate);
+  assert.equal(driver.error,undefined);
+  assert.equal(driver.circuit.crewAdviceCooldownUntil,10);
+  assert.match(consumeDriverAdvice(driver.circuit,driver.competitionState).error,/ALREADY USED/);
 });

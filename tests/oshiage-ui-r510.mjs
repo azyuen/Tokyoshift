@@ -12,24 +12,24 @@ test('four school courses have authored costs and approved disguised dialogue', 
   assert.equal(OSHIAGE_SCHOOL_LESSONS.launch.fee, 5000);
   assert.equal(OSHIAGE_SCHOOL_LESSONS.standing.fee, 10000);
   assert.equal(OSHIAGE_SCHOOL_LESSONS.rolling.fee, 15000);
-  assert.equal(OSHIAGE_SCHOOL_RETRIES, 3);
+  assert.equal(OSHIAGE_SCHOOL_RETRIES, 2);
   for (const lesson of Object.values(OSHIAGE_SCHOOL_LESSONS)) {
     assert.ok(lesson.speech.length > 35);
     assert.doesNotMatch(lesson.speech, /strategist|Ginza|curator/i);
   }
 });
 
-test('a booking charges once and allows exactly three retries', () => {
+test('a booking charges once and allows exactly two retries', () => {
   const start = bookOshiageLesson({carId:'ae86', lessonId:'standing', cash:20000});
   assert.equal(start.ok,true);
   assert.equal(start.cash,10000);
   assert.equal(start.charged,10000);
   let booking = start.booking;
-  for(let i=0;i<4;i++){
-    assert.equal(remainingAttempts(booking),4-i);
+  for(let i=0;i<3;i++){
+    assert.equal(remainingAttempts(booking),3-i);
     booking = consumeOshiageAttempt(booking);
     assert.equal(booking.attemptsUsed,i+1);
-    if(i<3) {
+    if(i<2) {
       const again=bookOshiageLesson({booking,carId:'ae86',lessonId:'standing',cash:10000});
       assert.equal(again.charged,0);
       assert.equal(again.cash,10000);

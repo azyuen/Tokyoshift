@@ -73,8 +73,8 @@ test('Crew Space button, image-sized hotspots and manga return reuse the existin
   assert.match(garage,/infoPanel: plan\.infoPanel/);
   assert.match(garage,/this\.crewBattleWhiteboardOverlay = null/);
   assert.match(bridge,/super\('CrewSpaceScene'\)/);
-  assert.match(main,/GarageScene\.js\?v=20261021-r627/);
-  assert.match(main,/CrewSpaceScene\.js\?v=20261021-r627/);
+  assert.match(main,/GarageScene\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(main,/CrewSpaceScene\.js\?v=\d{8}-r[\w-]+/);
 });
 
 test('meet battle briefing no longer has redundant heat-three overflow', () => {

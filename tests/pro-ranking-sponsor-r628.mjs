@@ -26,7 +26,7 @@ test('rank commission uses a progressive capped tier with no payout at entry lev
   assert.equal(getProPrizeWithBonus(-30000,1).totalPrize,0);
   const c=createDefaultProCircuitState();
   assert.equal(getProPrizeBonusPercent(getProCircuitDriverSeeds(c).find(x=>x.id==='player:driver').seed),0);
-  assert.equal(getProPrizeBonusPercent(getProCircuitTeamSeeds(c).find(x=>x.id==='player:team').seed),0);
+  assert.equal(getProPrizeBonusPercent(getProCircuitTeamSeeds(c).find(x=>x.id==='player:team').seed,'TEAM'),0);
 });
 
 test('open driver payout adds exact sponsor cash but never awards qualification points',()=>{

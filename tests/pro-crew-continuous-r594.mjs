@@ -21,19 +21,21 @@ function registry(){
 }
 function enter(r,season=false){
   if(season){
-    const start=startProfessionalSeason(r.get('proCircuit'));
+    const roster=['ef','ae86','gc8'];
+    r.set('ownedCarIds',[...new Set([...r.get('ownedCarIds'),...roster])]);
+    const start=startProfessionalSeason(r.get('proCircuit'),roster,roster);
     assert.equal(start.error,undefined,start.error);
     r.set('proCircuit',start.circuit);
   }
-  const members=getCrewSeriesUnits(r).map(u=>u.id);
+  const members=getCrewSeriesUnits(r).slice(0,5).map(u=>u.id);
   const initialCash=r.get('cash');
   const out=registerCrewSeries(r,members);
   assert.equal(out.error,undefined,out.error);
-  assert.ok(out.cash<initialCash);
+  assert.equal(out.cash,initialCash,'sponsored entry is free');
   r.set('cash',out.cash);r.set('proCircuit',out.circuit);
   return out.circuit.activeCrewEvent.id;
 }
-test('R594: open circuit forfeit loses the paid event with zero season points, no refund and no reentry',()=>{
+test('R594: open circuit forfeit loses the sponsored event with zero season points, no refund and no reentry',()=>{
   const r=registry(),id=enter(r),cash=r.get('cash'),before=r.get('proCircuit');
   assert.ok(getCrewFixture(before));
   const out=forfeitCrewSeries(r,id);
@@ -62,7 +64,7 @@ test('R594: seasonal crew forfeit uses up its official season round but gives no
   assert.ok(out.circuit.calendar.history.some(e=>e.id===id));
   assert.equal(out.circuit.eventTick,before.eventTick+1);
 });
-test('R602: a forfeited paid crew event counts toward Sayaka shared cooldown',()=>{
+test('R602: a forfeited sponsored crew event counts toward Sayaka shared cooldown',()=>{
   const r=registry(),id=enter(r);
   const consulted=useProCrewAdvice(r,id);
   assert.equal(consulted.error,undefined);

@@ -11,6 +11,7 @@ import {
 
 // These are intentional stock model -> hero build contracts, not display names.
 const EXPECTED = {
+  CENTRAL_TOKYO: ['240z', 'libertyWalk240z'],
   ODAIBA: ['nsx', 'espritNsx'],
   SHINAGAWA: ['gc8', 'zeroSportsGc8'],
   TATSUMI: ['evo5', 'junHyperLemonEvo5'],
@@ -21,7 +22,7 @@ const EXPECTED = {
 };
 
 test('every regional tuner converts its correct existing stock model', () => {
-  assert.equal(Object.keys(TUNER_SHOPS).length, 7);
+  assert.equal(Object.keys(TUNER_SHOPS).length, 8);
   const donors = new Set();
   const heroes = new Set();
   for (const [region, [donorId, heroId]] of Object.entries(EXPECTED)) {

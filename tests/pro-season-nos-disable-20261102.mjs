@@ -1,3 +1,5 @@
+import {applyProRaceNosLimit} from '../src/data/proRaceNos.js';
+import {getBuiltCar} from '../src/vehicles/VehiclePerformance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 globalThis.Phaser={Math:{Clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),Linear:(a,b,t)=>a+(b-a)*t}};
@@ -16,10 +18,15 @@ test('manual NOS off allows fitted NOS at no-NOS scrutineering',()=>{
   assert.equal(fitted.nosEnabled,false,'scrutineering must not change the car');
 });
 
-test('shot caps inspect enabled capacity without automatically reducing it',()=>{
+test('shot caps allow owned hardware and limit only usable shots in the live race',()=>{
   const fitted={nosInstalled:true,nosShots:3,nosEnabled:true,exhaustNosTuning:{nosKit:3,nitrousShot:2}};
   const over=getProfessionalCarEligibility('ef',fitted,{maxNosShots:1});
-  assert.ok(over.reasons.some(reason=>reason.includes('NOS LIMIT')));
+  assert.equal(over.eligible,true);
+  const config=getBuiltCar('ef',fitted).car;
+  const limited=applyProRaceNosLimit(config,{maxNosShots:1});
+  assert.equal(limited.nosShots,1);
+  assert.equal(limited.nosCapacitySeconds,limited.nosShotDurationSeconds);
+  assert.equal(config.nosShots,3,'build and purchased hardware stay intact');
   const disabled=getProfessionalCarEligibility('ef',{...fitted,nosEnabled:false},{maxNosShots:1});
   assert.ok(!disabled.reasons.some(reason=>reason.includes('NOS LIMIT')));
   assert.equal(fitted.nosShots,3);
@@ -45,7 +52,7 @@ test('driver preparation manually selects one or two shots from an owned three-s
   assert.equal(getProfessionalCarEligibility('ef',one,{maxNosShots:1}).eligible,true);
   const two=setDriverPowerPartLevels(one,{nosKit:2});
   assert.equal(getDriverPowerPartLevelInfo(two,'nosKit').current,2);
-  assert.equal(getProfessionalCarEligibility('ef',two,{maxNosShots:1}).eligible,false);
+  assert.equal(getProfessionalCarEligibility('ef',two,{maxNosShots:1}).eligible,true);
   assert.equal(getProfessionalCarEligibility('ef',two,{maxNosShots:2}).eligible,true);
   const off=setDriverPowerPartLevels(two,{nosKit:0});
   assert.equal(getDriverPowerPartLevelInfo(off,'nosKit').current,0);
@@ -55,4 +62,23 @@ test('driver preparation manually selects one or two shots from an owned three-s
   assert.equal(restored.proBriefingNosStash,undefined);
   assert.equal(restored.exhaustNosTuning.nitrousShot,2);
   assert.equal(owned.exhaustNosTuning.nosKit,3,'saved purchased hardware remains untouched');
+});
+
+import NitrousSystem from '../src/vehicles/NitrousSystem.js';
+import {readFileSync} from 'node:fs';
+test('player and AI receive identical usable shot limits without mutating saved builds',()=>{
+  const original=Object.freeze({nosPower:50,nosShots:3,nosShotDurationSeconds:1.2,nosCapacitySeconds:3.6});
+  for(const [rules,shots] of [[null,3],[{},3],[{maxNosShots:1},1],[{maxNosShots:2},2],[{maxNosShots:0},0],[{noNos:true,maxNosShots:3},0]]){
+    for(const role of ['player','rival']){
+      const race=applyProRaceNosLimit(original,rules);
+      const system=new NitrousSystem(race);
+      assert.equal(system.totalShots,shots,role);
+      if(shots===0)assert.equal(system.powerHp,0,role);
+      assert.equal(original.nosShots,3);
+    }
+  }
+  const scene=readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');
+  assert.match(scene,/applyProRaceNosLimit\(playerConfig, eventNosRules\)/);
+  assert.match(scene,/applyProRaceNosLimit\(built.car, activeRules\)/);
+  assert.match(scene,/new Vehicle\(rivalConfig, built.engine\)/);
 });

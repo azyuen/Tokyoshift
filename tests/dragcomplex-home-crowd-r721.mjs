@@ -1,3 +1,4 @@
+import {isOpenCircuitAvailable} from '../src/data/proSeason.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -136,11 +137,11 @@ test('Central Tokyo looks up no event while resolving rank-based home imagery', 
   assert.doesNotMatch(code, /this\.getProDragEvents\(\)/);
   assert.doesNotMatch(code, /this\.selectedEventIndex/);
   assert.doesNotMatch(code, /event: selected|accessGranted:/);
-  const make = new Function('resolveDragComplexHomeBackground','getWorldPhase',
+  const make = new Function('resolveDragComplexHomeBackground','getWorldPhase','isOpenCircuitAvailable',
     'return new (class TestScene {' + code + '})();');
   for (const rank of [1, 6, 20]) {
     const pro = careerAtRank(rank);
-    const scene = make(resolveDragComplexHomeBackground, () => 'night');
+    const scene = make(resolveDragComplexHomeBackground, () => 'night',isOpenCircuitAvailable);
     scene.registry = { get: key => key === 'proCircuit' ? pro : null };
     scene.worldPhase = 'night';
     const location = { kind: 'proDrag', id: 'tokyoDragComplex' };
