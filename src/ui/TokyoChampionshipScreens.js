@@ -503,7 +503,7 @@ export function showTokyoChampionshipScreens(s,{view='HUB',driverId=null,actions
   const state=circuit(s).activeChampionship;
   if(!state)return;
   const target=view==='EVENT'?state.stage:EVENTS[view]?view:view;
-  const assetView=EVENTS[target]?target:'HUB';
+  const assetView=target==='CREW_PICK'?'CREW':EVENTS[target]?target:'HUB';
   if(loadAssets(s,assetView,()=>showTokyoChampionshipScreens(s,{view,driverId,actions})))return;
   if(target==='CREW_PICK')return showCarPicker(s,'CREW',actions);
   if(target==='STANDINGS')return showStandings(s,actions);
