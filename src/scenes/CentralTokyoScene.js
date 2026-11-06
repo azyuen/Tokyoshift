@@ -874,6 +874,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.drawDragComplex();
+    // A deliberate map arrival at Tokyo Drag Complex opens the active
+    // Championship as its home page. Do not hijack unrelated redraws or
+    // the saved race/paddock resume flows.
+    if(location.id==='tokyoDragComplex'&&this._championshipMapArrival){
+      this._championshipMapArrival=false;
+      this.time.delayedCall(0,()=>{
+        if(this.sys?.isActive?.()&&this.activeLocationId==='tokyoDragComplex'&&
+          this.registry.get('proCircuit')?.activeChampionship)
+          showTokyoChampionship(this,'HUB');
+      });
+    }
     // Recount replay first shows the existing four-part Drag Complex welcome,
     // then hands off to Aruken's first-season signing and actual race.
     if(isProSponsorPlayableReplay(this.registry) &&
@@ -1218,6 +1229,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.cashText?.setText(money(cash - Number(cost || 0)));
 
     if (LOCATION_BY_ID[locationId]) {
+      this._championshipMapArrival=locationId==='tokyoDragComplex'&&
+        Boolean(this.registry.get('proCircuit')?.activeChampionship);
       this.renderLocation(locationId);
       return;
     }
