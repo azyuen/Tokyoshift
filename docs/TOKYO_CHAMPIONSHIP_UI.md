@@ -130,4 +130,4 @@ test shortcut, not a multiplayer server authorization system. The normal
 - Finish with a win and a defeat; confirm prize, career title and Office persistence, hub final standings and repeat season.
 - Device testing on iPhone XR / iPad Pro 9.7; inspect safe area, text and tappable areas; measure initial background load.
 
-**Current branch:** `feature/tokyo-championship-ui`. Do not merge or deploy without approval and device/browser validation.
+**Status:** Current production UI is maintained on `main`. The original pre-release branch/approval note is historical; each change is validated through its own pull request and browser checks.
