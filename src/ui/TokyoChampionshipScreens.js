@@ -31,7 +31,7 @@ const EVENTS={
     image:'tokyoChampFourBg',path:'championship_fourwide.png'},
 };
 const HUB={image:'tokyoChampHubBg',path:'championship_hub.png'};
-const bgPath=name=>'assets/CentralTokyo/dragcomplex/'+name+'?v=20261105-champ-ui';
+const bgPath=name=>'assets/CentralTokyo/dragcomplex/'+name+'?v=20261106-r802-wall-art';
 const circuit=s=>normaliseProCircuitState(s.registry.get('proCircuit'));
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const closeSceneOverlay=s=>s._proOverlayClose?.();
