@@ -69,7 +69,7 @@ test('the fourth matching red button follows the actual next Championship stage'
 test('hub no longer draws Sayaka and loads only actual ranked portraits',()=>{
   const hubBlock=sprite.slice(sprite.indexOf("if(view==='HUB')"),sprite.indexOf("}else if(view==='CREW')"));
   assert.match(hubBlock,/const lineup=hubLineup\(s\)/);
-  assert.match(hubBlock,/xs=lineup\.length===4\?\[790,1000,1210,1420\]:\[870,1100,1330\]/);
+  assert.match(hubBlock,/xs=lineup\.length===4\?\[850,1055,1260,1465\]:\[870,1100,1330\]/);
   assert.match(hubBlock,/sprite\(s,o,row\.asset\?\.key,xs\[i\],1040,978,480\)/);
   assert.match(hubBlock,/const ranked=championshipStandings/);
   assert.doesNotMatch(hubBlock,/champSayaka/);
