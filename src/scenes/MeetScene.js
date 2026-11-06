@@ -1474,6 +1474,9 @@ export default class MeetScene extends Phaser.Scene {
 
     if (!this.configureCrewBattleRound(state, 0)) return;
     saveSessionState(this.registry);
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
@@ -2046,6 +2049,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', 'CREW RECRUITMENT');
     this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
@@ -2380,6 +2386,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
     saveSessionState(this.registry);
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
@@ -3885,6 +3894,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', location.label);
     saveSessionState(this.registry);
 
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
@@ -4272,6 +4284,9 @@ export default class MeetScene extends Phaser.Scene {
 
     if (!this.configureCompetitionRound(state, 0)) return;
     saveSessionState(this.registry);
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
@@ -5941,6 +5956,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', location.label);
     this.persistMeetRound();
 
+    // Capture the exact car being entered before the scene transition.
+    // RaceScene uses this snapshot instead of a stale/default registry car.
+    this.registry.set('raceEntryCarId', this.registry.get('selectedCarId') || null);
     this.scene.start('RaceScene');
   }
 
