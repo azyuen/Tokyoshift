@@ -1,24 +1,25 @@
-# Beta triage continuation
+# Beta triage continuation — 6 November 2026
 
-The initial R800 browser runs passed mobile boot/reload and persistent caching.
-Replay Chapters 7 and 8 passed; Chapter 6 timed out. Its test could start a replay
-against the active deferred Garage placeholder. It now waits for the actual
-Garage implementation to finish create before starting the replay.
+Candidate R802 includes current main R801 and remains on PR 270, not merged or deployed.
 
-Twenty-one historical Node test files omitted Phaser math helpers needed by the
-production performance estimator. Add the same Clamp/Linear operations to the
-test environment; preserve all original assertions. The crew-renderer mock also
-preserves these math helpers when supplying texture constants.
+## Runtime repairs
 
-A genuine NOS integration defect treated legacy duration fields in a sealed
-stock-car save as factory NOS. Factory detection now requires explicit positive
-shot capacity. Purchased collector NOS and disabling NOS pass the existing
-focused tests; no engine calibration or race balance changes.
+- Return cached/downloaded assets before asynchronous integrity hashing and cache writes complete; keep content revisions and worker lifetime protection.
+- Defer character selection and station modules until needed.
+- Require explicit factory NOS shots for sealed stock cars; legacy duration fields no longer enable purchased NOS.
+- Apply professional event NOS limits to both player and AI runtime configurations without changing saved equipment or engine calibration.
+- Sponsor replay uses a temporary active circuit rather than three-car season registration. Preserve exact snapshot restoration and save guards.
 
-Before interruption, the comparative local rerun reported 136 remaining failures
-after these fixes versus the original 168. This is not a clean beta test baseline.
-The replay-test adjustment still requires browser CI confirmation. No tests have
-been skipped or removed to hide failures. Remaining source snapshots, outdated
-fixtures and possible runtime defects still require individual review.
+## Regression repairs
 
-This continuation is saved on PR 270, not merged or deployed.
+Historical fixtures predated deployed changes to the canonical vehicle roster, sponsored entries/prizes, three-car registration, season completion, virtual paddock, story continuity, portraits, phone typography and championship presentation. Update those expectations to the current implementations, retaining progression, eligibility, payout, replay, asset and layout checks. No tests are disabled or skipped to obtain a pass.
+
+Faithful Phaser Clamp/Linear helpers support Node performance tests. Version checks validate resolved module paths and synchronized build/cache contracts instead of obsolete hard-coded releases. The manifest contains 767 revisions, including current championship art. The replay browser test waits for the real lazy-loaded Garage implementation.
+
+The original R799 baseline had 168 failing assertions among 1,030 assertions in 177 historical mjs files. A broader audit includes 186 mjs/js test files. All individually identified failures have now passed their focused reruns; the complete migrated workflow runner is being verified.
+
+## Browser evidence
+
+At commit 59c46431462a4e2d94bb82bf0607ee7834ec2112, loading/cache, mobile boot/reload and real-Phaser replay workflows passed. The complete regression workflow still failed before this final historical-test batch. Final candidate verification remains pending.
+
+Physical iPhone XR and iPad Pro 9.7 loading latency, memory pressure and gameplay have not been measured. The dependency-size reduction is not a device timing claim.

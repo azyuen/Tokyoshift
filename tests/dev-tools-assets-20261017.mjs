@@ -42,16 +42,16 @@ test('fulfilled Ethan Yuen reward cannot be awarded again', () => {
   assert.doesNotMatch(garage, /showEthanYuenRewardIfNeeded|coupons\.ef\s*=.*\+\s*2/);
 });
 
-test('developer controls are collapsible and story chapter previews are grouped first', () => {
+test('developer controls are collapsible and live micro-scenes retain the playable sponsor shortcut', () => {
   const meet = code('src/scenes/MeetScene.js');
   const tester = code('src/ui/CutsceneTester.js');
   assert.match(meet, /D\) DEPLOY  \+/);
   assert.match(meet, /const column = index % 3/);
   assert.match(meet, /box\.disableInteractive\(\)/);
-  assert.match(tester, /CHAPTER 01 — THE FIRST NIGHT/);
-  assert.match(tester, /CHAPTER 07 — ONE CREW, SEVEN ROADS/);
-  assert.match(tester, /const smallerScenes = CUTSCENE_ORDER/);
-  assert.match(tester, /height - 135/);
+  assert.match(tester, /CHAPTER 10 \/\/ ARUKEN SPONSORSHIP/);
+  assert.match(tester, /ACTIVE_DEV_MICRO_SCENES/);
+  assert.match(tester, /ACTIVE_DEV_MICRO_SCENES\.filter\(id=>CUTSCENES\[id\]\)/);
+  assert.match(tester, /const PAGE_SIZE=5/);
 });
 
 test('calibration and live wheel renderer use reference axle geometry and three sizes', () => {

@@ -65,10 +65,10 @@ test('phone theme uses pale translucent blue, blue outline and large corner icon
   assert.equal(RACE_DIALOGUE_THEMES.phone.fill,0xe4f5ff);
   assert.ok(RACE_DIALOGUE_THEMES.phone.fillAlpha < 1);
   assert.equal(RACE_DIALOGUE_THEMES.phone.border,PHONE_ACCENTS.incoming);
-  assert.match(shared,/badgeX = bubble\.right - 1/);
-  assert.match(shared,/badgeY = bubble\.top/);
+  assert.match(shared,/iconX = bubble\.right \+ PHONE_CALL_PRESENTATION\.iconOffsetX/);
+  assert.match(shared,/iconY = bubble\.top \+ PHONE_CALL_PRESENTATION\.iconOffsetY/);
   assert.match(shared,/phoneIconKey/);
-  assert.match(shared,/setStrokeStyle\(4, style\.border\)/);
+  assert.match(shared,/scene\.add\.image\(iconX, iconY, phoneIconKey\)/);
   assert.match(phone,/theme: 'phone'/);
   assert.match(phone,/createRaceDialogueHud\(scene, \{/);
   assert.match(manga,/playPhoneConversation\(scene, \{/);
@@ -83,7 +83,7 @@ test('shared head stays frameless for both regular coaching and phone calls',()=
   assert.equal(hud.heading.text,'INCOMING CALL: SAYAKA');
   assert.equal(hud.portrait.kind,'image');
   assert.equal(items.filter(x=>x.kind==='rectangle').length,0);
-  assert.ok(items.some(x=>x.kind==='circle'));
+  assert.equal(items.filter(x=>x.kind==='circle').length,0);
   assert.ok(items.some(x=>x.kind==='image'&&x.args[2]==='openingIncomingPhone'));
   assert.ok(hud.portrait.calls.some(x=>x[0]==='setMask'));
   hud.setAccent(0x165b9a);

@@ -74,35 +74,25 @@ test('invalid or corrupt legacy pro cup cannot secretly pay cash', () => {
   }
 });
 
-test('intro professional cups are all less lucrative than the four-wide championship', () => {
+test('sponsored professional entry preserves larger four-wide purses',()=>{
   assert.equal(PRO_DRAG_EVENTS.length,3);
-  const meetSource = load('../src/scenes/MeetScene.js');
-  assert.match(meetSource, /ELITE: \{ entryFee: 50000, cashPrize: 70000 \}/);
-  assert.equal(FOUR_WIDE_CUP.entryFee, 90000);
-  assert.ok(FOUR_WIDE_CUP.prizeCash[0] > PRO_DRAG_EVENTS[2].prizeCash);
-  assert.ok(FOUR_WIDE_CUP.entryFee > PRO_DRAG_EVENTS[2].entryFee);
-  assert.ok(PRO_DRAG_EVENTS[0].entryFee > 50000);
-  assert.ok(PRO_DRAG_EVENTS[0].prizeCash > 70000);
-  const expected=[
-    {id:'streetShootout',entryFee:55000,prizeCash:95000},
-    {id:'midnightCup',entryFee:65000,prizeCash:135000},
-    {id:'tokyoInvitational',entryFee:80000,prizeCash:190000},
-  ];
+  assert.equal(FOUR_WIDE_CUP.entryFee,0);
+  const expected=[['streetShootout',475000],['midnightCup',675000],['tokyoInvitational',950000]];
   for(let i=0;i<3;i++){
-    const event=PRO_DRAG_EVENTS[i];
-    assert.deepEqual({id:event.id,entryFee:event.entryFee,prizeCash:event.prizeCash},expected[i]);
-    assert.ok(event.prizeCash<FOUR_WIDE_CUP.prizeCash[0]);
-    assert.ok(event.prizeCash>event.entryFee);
+    assert.equal(PRO_DRAG_EVENTS[i].id,expected[i][0]);
+    assert.equal(PRO_DRAG_EVENTS[i].entryFee,0);
+    assert.equal(PRO_DRAG_EVENTS[i].prizeCash,expected[i][1]);
+    assert.ok(PRO_DRAG_EVENTS[i].prizeCash<FOUR_WIDE_CUP.prizeCash[0]);
   }
 });
 
 test('all new professional race entries use four-lane complex; only 2 cars for pro duels', () => {
   assert.match(central,/this\.scene\.start\('FourLaneTestScene', \{ mode: 'PRO_DUEL' \}\)/);
-  assert.match(central,/RESUME PRO CUP/);
+  assert.match(central,/RESUME EVENT BRIEFING/);
   assert.match(central,/PRO_DUEL/);
   assert.match(scene,/this\.proDuel = data\.mode === 'PRO_DUEL'/);
   assert.match(scene,/this\.proDuelInfo\.round\.carId/);
-  assert.match(scene,/if \(!this\.proDuel\) while \(this\.aiCarIds\.length < 3\)/);
+  assert.match(scene,/if \(!this\.proDuel && !this\.champMode\) while \(this\.aiCarIds\.length < 3\)/);
   assert.match(scene,/rivalRound\?\.opponentBuildState/);
   assert.match(scene,/settleProfessionalDuel\(state, playerWon\)/);
   assert.match(scene,/this\.scene\.restart\(\{ mode: duel \? 'PRO_DUEL' : 'PRO_CUP' \}\)/);
@@ -111,11 +101,11 @@ test('all new professional race entries use four-lane complex; only 2 cars for p
 
 test('professional endings use angled manga portrait, large sign and top-depth tap-anywhere', () => {
   assert.match(scene,/showProfessionalMangaResult\(standings, outcome\)/);
-  assert.match(scene,/new Phaser\.Geom\.Point\(88, 114\)/);
+  assert.match(scene,/new Phaser\.Geom\.Point\(individualHeatPreview \? 112 : 88, individualHeatPreview \? 58 : 114\)/);
   assert.match(scene,/createCharacterProfile\(this, \{/);
   assert.match(scene,/createGeometryMask\(\)/);
   assert.match(scene,/fontSize: titleText\.length > 9 \? '66px' : '87px'/);
-  assert.match(scene,/TAP ANYWHERE/);
+  assert.match(scene,/NEXT HEAT/);
   assert.match(scene,/setDepth\(depth \+ 95\)\.setScrollFactor\(0\)/);
   assert.match(scene,/tap\.on\('pointerdown', advance\)/);
   assert.match(scene,/enter\.on\('down', advance\)/);

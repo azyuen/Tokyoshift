@@ -12,18 +12,18 @@ test('three Drag Strip cards support open circuit, official season and independe
   const block=central.match(/getProDragEvents\(\) \{([\s\S]*?)\n  \}/)?.[1]||'';
   assert.match(block,/isOpenCircuitAvailable\(pro\)/);
   assert.match(block,/openCircuitTick/);
-  assert.match(block,/getOpenCircuitTrophy\(pro\)/);
+  assert.match(block,/getOpenCircuitTrophy\(pro,rotation\)/);
   assert.match(block,/PRO_CIRCUIT_TROPHIES/);
-  assert.match(block,/const choices=\[driver,crew,special\]/);
-  assert.match(block,/const choices = \[driver, \{ \.\.\.CREW_SERIES/);
-  assert.match(block,/seasonEnd: true/);
+  assert.match(block,/const choices=\[driver,crew,trophy.scheduled\?special:/);
+  assert.match(block,/const choices=\[driver,\{\.\.\.CREW_SERIES/);
+  assert.match(block,/seasonEnd:true/);
   assert.match(block,/id: FOUR_WIDE_CUP\.id/);
   assert.match(block,/fourWide: true/);
-  assert.match(central,/TROPHY COMP \/\/ FOUR-WIDE/);
-  assert.match(central,/NO SEASON POINTS/);
+  assert.match(central,/trophy.scheduled\?special:/);
+  assert.match(central,/openCircuit:true/);
   assert.match(central,/event\.entryFee/);
   assert.equal(PRO_DRAG_EVENTS.length,3);
-  assert.equal(FOUR_WIDE_CUP.entryFee,90000);
+  assert.equal(FOUR_WIDE_CUP.entryFee,0);
 });
 
 test('no duplicate four-wide entry, standalone dev test or right sidebar dev refresh',()=>{
@@ -41,7 +41,7 @@ test('single right panel action routes paid events and resumed heats, without ot
   assert.match(central,/this\.enterFourWideCup\(\)/);
   assert.match(central,/this\.startProBracket\(event, build\)/);
   assert.match(central,/RESUME FOUR-WIDE OPEN/);
-  assert.match(central,/RESUME PRO CUP/);
+  assert.match(central,/RESUME EVENT BRIEFING/);
   assert.match(central,/SIDE\.y \+ 574/);
   assert.match(central,/SIDE\.y \+ 674/); // existing map button remains
   assert.match(central,/FINISH YOUR ACTIVE EVENT FIRST/);
@@ -56,23 +56,23 @@ test('active legacy three-round cup stays resumable under the new three slot lay
   assert.equal(round.roundNumber,2);
   assert.equal(legacy.prizeCash,1200000);
   assert.match(central,/REGISTERED PRIZE/);
-  assert.match(central,/ACTIVE PRO CUP/);
+  assert.match(central,/ACTIVE DRIVER EVENT/);
 });
 
 test('manga ending uses smaller angled portrait, red/charcoal/white motif, next stage and low standings',()=>{
   const start=pro.indexOf('showProfessionalMangaResult(standings, outcome) {');
   assert.ok(start>=0);
   const section=pro.slice(start,pro.indexOf('  showFourLaneResults() {',start));
-  assert.match(section,/new Phaser\.Geom\.Point\(88, 114\)/);
-  assert.match(section,/frameWidth: 455, frameHeight: 460/);
+  assert.match(section,/new Phaser\.Geom\.Point\(individualHeatPreview \? 112 : 88, individualHeatPreview \? 58 : 114\)/);
+  assert.match(section,/frameWidth: individualHeatPreview \? 421 : 455,\s*frameHeight: individualHeatPreview \? 392 : 460/);
   assert.match(section,/const accent = 0xd44953/);
   assert.match(section,/STAGE ' \+ stageNumber \+ '\/' \+ stageCount \+ ' COMPLETE/);
   assert.match(section,/NEXT: ' \+ nextStage/);
   assert.match(section,/const y = 384 \+ 40 \* index/);
   assert.doesNotMatch(section,/PRO RANKING/);
-  assert.match(section,/this\.add\.ellipse\(470, 557/);
+  assert.match(section,/this\.add\.circle\(individualHeatPreview \? 492 : 470/);
   assert.match(section,/fontFamily: '"Exo 2", sans-serif'/);
-  assert.match(section,/TAP ANYWHERE/);
+  assert.match(section,/NEXT HEAT/);
   assert.match(section,/setDepth\(depth \+ 95\)/);
   assert.match(section,/this\.scene\.restart\(\{ mode: duel \? 'PRO_DUEL' : 'PRO_CUP' \}\)/);
 });

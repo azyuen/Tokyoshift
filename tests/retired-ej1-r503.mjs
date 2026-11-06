@@ -50,7 +50,7 @@ test('market, rival preferences, Odaiba championship and crew recruitment never 
   assert.doesNotMatch(meet,/\bej1\b/);
   const challenge=readFileSync(new URL('../src/data/tunerChallenges.js',import.meta.url),'utf8');
   assert.doesNotMatch(challenge,/\bej1\b/);
-  assert.match(challenge,/ODAIBA: \['crx', 'ae86', 'ef'/);
+  assert.ok(buildTunerTeamChallengeRounds('ODAIBA').every(round=>carOrder.includes(round.carId)),'all current challenge cars remain available');
 });
 
 test('old cached EJ1 rivals, reward and crew records migrate to CR-X without touching the input',()=>{

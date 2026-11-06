@@ -23,8 +23,8 @@ test('legacy event crowd defaults remain available alongside dynamic season atte
   assert.equal(getDragstripCrowdTier('streetShootout'), 'low');
   assert.equal(getDragstripCrowdTier('midnightCup'), 'half');
   assert.equal(getDragstripCrowdTier('fourWideOpen'), 'full');
-  assert.match(central, /PRO_DRAG_EVENTS\[rotation\.rotationIndex%PRO_DRAG_EVENTS\.length\]/);
-  assert.match(central, /getProfessionalRoundEvents\(round\)/);
+  assert.match(central, /getOpenCircuitTrophy\(pro,rotation\)/);
+  assert.match(central, /getProfessionalRoundEvents\(round,pro\)/);
   assert.match(scene, /getProfessionalAttendance/);
   assert.match(central, /id: FOUR_WIDE_CUP\.id/);
 });

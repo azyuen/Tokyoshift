@@ -141,7 +141,7 @@ test('perspective expression can converge x towards the vanishing point',()=>{
 test('generic authored STAGE can opt in by backgroundId; legacy positions remain intact',()=>{
   const codeStage=code('src/ui/StoryStage.js');
   assert.match(codeStage,/backgroundId = null/);
-  assert.match(codeStage,/getStoryBackground\(backgroundId\)/);
+  assert.match(codeStage,/getStoryBackground\(actualBackgroundId\)/);
   assert.match(codeStage,/projectEntityOnBackground\(profile/);
   assert.match(codeStage,/layered\)/);
   assert.match(codeStage,/stageMode==='native'/);
@@ -163,8 +163,8 @@ test('dev author can compare real location and interior backgrounds without writ
     assert.equal(step.cars[0].ground>=.5,true);
   }
   const tester=code('src/ui/CutsceneTester.js');
-  assert.match(tester,/__directorPerspective/);
-  assert.match(tester,/directorPerspectivePreview/);
+  assert.doesNotMatch(tester,/__directorPerspective/);
+  assert.match(tester,/ACTIVE_DEV_MICRO_SCENES/);
   const imports=code('src/story/StoryDirector.js');
-  assert.match(imports,/StoryStage\.js\?v=20261022-r645/);
+  assert.match(imports,/StoryStage\.js\?v=\d{8}-r\d+/);
 });

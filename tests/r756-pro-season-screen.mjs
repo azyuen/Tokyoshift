@@ -10,10 +10,10 @@ const scene=readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.met
 const panel=readFileSync(new URL('../src/ui/ProSeasonPanel.js',import.meta.url),'utf8');
 const briefing=readFileSync(new URL('../src/ui/ProSeasonDriverBriefing.js',import.meta.url),'utf8');
 
-test('PRO SEASON replaces generic page header and Pro Paddock sits above the action stack',()=>{
+test('PRO SEASON replaces generic page header and keeps the action stack below the hidden overview',()=>{
   assert.match(scene,/isOpen \? 'Open Circuit' : 'PRO SEASON'/);
-  assert.match(scene,/const x=SIDE\.x\+SIDE\.w\/2,y=SIDE\.y\+524/);
-  assert.match(scene,/'PRO PADDOCK'/);
+  assert.match(scene,/if \(obj\.y < SIDE\.y \+ 550\) obj\.setVisible\(false\)\.disableInteractive\(\)/);
+  assert.match(scene,/showProSeasonAction\(this,SIDE\)/);
   assert.doesNotMatch(scene,/PRO GARAGE  \/\/  04 AWD/);
   // Main drawNavigation owns the footer GO TO MAP action at y+674.
   assert.match(scene,/this\.drawNavigation\(/);
@@ -50,20 +50,19 @@ test('season sidebar no longer lists entry, registered car, attempt or redundant
   assert.doesNotMatch(section,/REGISTERED CAR|ATTEMPT|ENTRY  |PRO COMP \/\//);
 });
 
-test('out-of-class or over-limit current selected car still opens free Daichi preparation',()=>{
+test('selected car opens briefing and must pass eligibility before grid; setup belongs to the Pro Paddock',()=>{
   assert.match(scene,/const hasRegisteredSeasonCar/);
   assert.match(scene,/openCircuit\?openEntryCarOk:hasRegisteredSeasonCar/);
   assert.match(scene,/showProSeasonDriverBriefing\(this,event,preparedBuild/);
-  assert.match(briefing,/CHOOSE ONE OF YOUR THREE REGISTERED CARS/);
-  assert.match(briefing,/DAICHI \/\/ FREE EVENT PREPARATION/);
-  assert.match(briefing,/setDriverPowerPartLevels\(draft/);
-  assert.match(briefing,/getProfessionalCarEligibility\(selected,drafts\[selected\],rules\)/);
-  assert.match(briefing,/saveProTransaction\(s\.registry/);
-  assert.match(briefing,/selectedCarId:selected/);
+  assert.match(briefing,/SELECT A REGISTERED CAR IN PRO PADDOCK/);
+  assert.match(briefing,/label:'CAR SETUP',onClick:openProPaddock/);
+  assert.doesNotMatch(briefing,/setDriverPowerPartLevels\(/);
+  assert.match(briefing,/getProfessionalCarEligibility\(currentSelection,actual\[currentSelection\]\|\|\{\},rules\)/);
+  assert.match(briefing,/proGarageMode:true,crewMode:false,workshopLocationId:PRO_GARAGE_ID/);
+  assert.match(briefing,/onGrid\?\.\(s\.getSelectedBuild\?\.\(\)\)/);
   assert.match(briefing,/GO TO GRID/);
-  // The three selected-car snapshots are committed before existing paid race
-  // registration; the season calendar, not a reused Open Circuit ID, owns
-  // knockout opponent limits.
+  // The season calendar owns knockout opponent limits, and opening a
+  // briefing does not charge an event fee or change installed parts.
   assert.match(scene,/const effectiveRules=openCircuit\?event:event\.seasonRules\|\|\{\};/);
   assert.match(scene,/if\(openCircuit&&!prepareBeforePay/);
 });

@@ -32,13 +32,13 @@ test('R671 Chapter 06 preserves all scripted financial and story indices',()=>{
  assert.equal(steps.at(-1).type,'END');
  assert.ok(!steps.some(s=>s.type==='STORY_CAR_EXIT')); // No Chapter 05 regressions.
 });
-test('R671 Sayaka changes clothes between commissions, then wears home clothes throughout the RWB repair',()=>{
+test('R671 Sayaka wears casual home clothes for commissions and the RWB repair',()=>{
  const first=stageFor('FIRST NEW CLIENT');
  const second=stageFor('SECOND NEW CLIENT');
  const third=stageFor('THIRD COMMISSION');
- assert.match(first.characters[1].pose,/oshiage/);
+ assert.match(first.characters[1].pose,/^home/);
  assert.match(second.characters[1].pose,/home/);
- assert.match(third.characters[1].pose,/oshiage/);
+ assert.match(third.characters[1].pose,/^home/);
  for(const part of ['RWB // STRUCTURAL REBUILD','RWB // ENGINE AND DRIVELINE',
    'RWB // FINAL INSPECTION','JUST BEFORE MIDNIGHT']){
    const stage=stageFor(part);
@@ -53,8 +53,8 @@ test('R671 Sayaka changes clothes between commissions, then wears home clothes t
    assert.ok(pages?.length, title);
    assert.ok(pages.every(page=>page.rightPose.startsWith('home')),title);
  }
- assert.match(manga('FROM SHINAGAWA').pages[0].rightPose,/^oshiage/);
- assert.match(manga('A CALL FROM YOKOHAMA').pages[0].rightPose,/^oshiage/);
+ assert.match(manga('FROM SHINAGAWA').pages[0].rightPose,/^home/);
+ assert.match(manga('A CALL FROM YOKOHAMA').pages[0].rightPose,/^home/);
 });
 test('R671 workshop restoration uses native Warehouse hero layout not garage-panel perspective',()=>{
  const source=file('../src/ui/ArkonRwbRestoration.js');

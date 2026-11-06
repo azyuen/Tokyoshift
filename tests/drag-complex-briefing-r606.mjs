@@ -16,7 +16,7 @@ test('R606 no trophy panel matches other events and omits duplicate extra cycle/
  assert.match(complex,/CHECK BACK AFTER THE NEXT FULL DAY \/ NIGHT/);
  assert.match(complex,/fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700'/);
  assert.doesNotMatch(complex,/NO TROPHY INVITATION THIS CYCLE\.\\n\\nCHECK BACK/);
- assert.match(complex,/event\.trophySlotClosed\?'':'ENTRY '/);
+ assert.match(complex,/event\.trophySlotClosed\?'':event\.openCircuit/);
  assert.doesNotMatch(complex,/SCRUTINEERING PASSED/);
 });
 

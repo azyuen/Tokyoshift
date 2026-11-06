@@ -52,9 +52,10 @@ test('chapter 08 orchestration waits for each real or previewed call to finish',
   assert.match(story,/onPreviewComplete: \(\) => scene\.time\.delayedCall\(140, next\)/);
   assert.match(story,/onComplete: \(\) => \{/);
   assert.match(story,/const result = playMangaCutscene\(scene, sceneId/);
-  const tester=code('src/ui/CutsceneTester.js');
-  assert.match(tester,/startChapter08Warehouse\(scene,\{preview:true/);
+  const archive=code('src/ui/StoryArchivePanel.js');
+  assert.match(archive,/id==='chapter08'/);
+  assert.match(archive,/startInteractiveChapter08Replay/);
   const cinema=code('src/data/cutscenes.js');
-  assert.match(cinema,/chapter08\.js\?v=20261017-r\d+/);
-  assert.match(story,/MangaCutscene\.js\?v=20261023-r658/);
+  assert.match(cinema,/chapter08\.js\?v=\d{8}-r\d+/);
+  assert.match(story,/MangaCutscene\.js\?v=\d{8}-r\d+/);
 });
