@@ -1,4 +1,4 @@
-import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261107-r804-hub-polish';
+import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261107-r805-hub-map';
 import { createDevTokyoChampionship, createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
@@ -800,6 +800,7 @@ export function showTokyoChampionship(s,view='HUB') {
     startRace:(mode,carId)=>startChampionshipRace(s,mode,carId),
     returnToSeason:()=>state.devBypass?
       (s._proOverlayClose?.(),redraw(s)):showSeasonRecords(s,true),
+    goToMap:()=>s.openMap?.(),
     // Run saved narrative only after any lazy background/sprite loading has
     // finished. The original cutscene history still enforces once-only use.
     onHubRendered:()=>{

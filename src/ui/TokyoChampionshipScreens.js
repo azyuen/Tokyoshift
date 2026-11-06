@@ -207,17 +207,14 @@ function mainSprites(s,o,view){
     'idle',{proCircuit:true});
   if(view==='HUB'){
     const lineup=hubLineup(s);
-    const xs=lineup.length===4?[865,1055,1245,1435]:[890,1120,1350];
+    const xs=lineup.length===4?[850,1055,1260,1465]:[870,1100,1330];
     const ranked=championshipStandings(circuit(s).activeChampionship);
-    // Exactly 150% of the R803 sprite bounds. Keep the crowd grouped on the
-    // right, with the wall monitor (ending at x=610) completely unobstructed.
-    // Lower feet to preserve heads as the extra height fills the upper stage.
+    // All podium sprites (including a fourth-place player) use identical
+    // bounding boxes and baseline, so character proportions are consistent.
+    // Move the first driver left when four are present and raise the group.
     lineup.forEach((row,i)=>{
       const isPlayer=row.id==='player:driver';
-      const stature=isPlayer?1110:978;
-      const width=isPlayer?540:480;
-      const feet=isPlayer?1190:1080;
-      sprite(s,o,row.asset?.key,xs[i],feet,stature,width);
+      sprite(s,o,row.asset?.key,xs[i],1040,978,480);
       const rank=ranked.findIndex(r=>r.id===row.id)+1;
       o.add(s.add.rectangle(xs[i],625,182,29,0x081625,.86)
         .setStrokeStyle(1,i===0?0xd9b36e:0x59738d,.85).setDepth(233));
@@ -454,6 +451,12 @@ function showHub(s,actions,{displayStage=null,displayProfileId=null,standingsPag
       view:finalAction?'RESULT':current,actions,
     }),{red:true,subtitle:finalAction?'VIEW FINAL PODIUM':
       'OPEN '+(nextEvent?.short||'NEXT EVENT')+' BRIEFING'});
+  // Separate, full-width-of-event blue map shortcut below the red action.
+  // Close the Hub overlay before presenting the existing region map.
+  o.button(left+width/2+3*(width+gap),810,width,38,'GO TO MAP',()=>{
+    o.close();
+    actions?.goToMap?.();
+  });
 
 }
 

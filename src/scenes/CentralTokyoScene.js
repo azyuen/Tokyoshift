@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, enterDevTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261107-r804-hub';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, enterDevTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261107-r805-map';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -874,6 +874,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.drawDragComplex();
+    // A deliberate map arrival at Tokyo Drag Complex opens the active
+    // Championship as its home page. Do not hijack unrelated redraws or
+    // the saved race/paddock resume flows.
+    if(location.id==='tokyoDragComplex'&&this._championshipMapArrival){
+      this._championshipMapArrival=false;
+      this.time.delayedCall(0,()=>{
+        if(this.sys?.isActive?.()&&this.activeLocationId==='tokyoDragComplex'&&
+          this.registry.get('proCircuit')?.activeChampionship)
+          showTokyoChampionship(this,'HUB');
+      });
+    }
     // Recount replay first shows the existing four-part Drag Complex welcome,
     // then hands off to Aruken's first-season signing and actual race.
     if(isProSponsorPlayableReplay(this.registry) &&
@@ -1218,6 +1229,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.cashText?.setText(money(cash - Number(cost || 0)));
 
     if (LOCATION_BY_ID[locationId]) {
+      this._championshipMapArrival=locationId==='tokyoDragComplex'&&
+        Boolean(this.registry.get('proCircuit')?.activeChampionship);
       this.renderLocation(locationId);
       return;
     }
