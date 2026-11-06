@@ -115,6 +115,26 @@ test shortcut, not a multiplayer server authorization system. The normal
   event buttons, plus smaller Rival Profiles / Championship Rules /
   Back to Pro Season actions. No scores, races or prize mechanisms change.
 
+## R804 — Focused Hub polish (7 November 2026)
+
+- Remove the three small Hub footer buttons entirely: Rival Profiles,
+  Championship Rules, and Back to Pro Season. The three event previews and the
+  red current-event entry button are unchanged.
+- Enlarge each of the live podium sprites exactly **50% beyond R803**
+  (height and width bounds both multiplied by 1.5), and lower their feet so
+  heads remain visible; shift the group to the right to keep the built-in
+  wall standings screen unobstructed.
+- Pressing a driver on the live standings now displays a compact **driver
+  dossier inside the same wall monitor** rather than opening the old
+  full-screen popup. It shows saved rank, seed, points in each event,
+  total points, Pro driver rating and actual wins/losses when available.
+  A plain back arrow and text restore the same standings page.
+- Page arrows for ranks 1–8 and 9–16 are now **unboxed glyphs** with
+  invisible 56×48 touch targets; disabled arrows are muted, not interactive.
+- No changes to scoring, registration, Championship stage transitions,
+  persistent profiles or race physics. The original full-screen
+  profile renderer is retired.
+
 ## Test checklist before merge/deploy
 
 - Fresh qualified save: Season Results → Enter Championship → Hub → Knockout briefing.
