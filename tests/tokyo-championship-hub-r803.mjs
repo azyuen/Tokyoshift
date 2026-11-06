@@ -38,7 +38,7 @@ test('monitor page uses precisely ranked groups of eight and navigates to saved 
   assert.match(hub,/profileHubPage:page/);
   assert.match(hub,/standingsPage:0/);
   assert.match(hub,/standingsPage:1/);
-  assert.match(code,/showHub\(s,actions,\{standingsPage:hubPage\}\)/);
+  assert.match(code,/displayProfileId:driverId,standingsPage:page/);
   assert.doesNotMatch(hub,/VIEW ALL 16 DRIVERS/);
   assert.doesNotMatch(hub,/visible\[maxRows-1\]=me/);
 });
@@ -61,17 +61,17 @@ test('the fourth matching red button follows the actual next Championship stage'
   assert.match(hub,/finalAction\?'CHAMPIONSHIP RESULTS':'ENTER EVENT '\+\(nextEvent\?\.number\|\|'01'\)/);
   assert.match(hub,/view:finalAction\?'RESULT':current,actions/);
   assert.match(hub,/red:true/);
-  assert.match(hub,/RIVAL PROFILES/);
-  assert.match(hub,/CHAMPIONSHIP RULES/);
-  assert.match(hub,/BACK TO PRO SEASON/);
+  assert.doesNotMatch(hub,/RIVAL PROFILES/);
+  assert.doesNotMatch(hub,/CHAMPIONSHIP RULES/);
+  assert.doesNotMatch(hub,/BACK TO PRO SEASON/);
 });
 
 test('hub no longer draws Sayaka and loads only actual ranked portraits',()=>{
   const hubBlock=sprite.slice(sprite.indexOf("if(view==='HUB')"),sprite.indexOf("}else if(view==='CREW')"));
   assert.match(hubBlock,/const lineup=hubLineup\(s\)/);
-  assert.match(hubBlock,/xs=\[760,954,1146,1360\]/);
-  assert.match(hubBlock,/stature=isPlayer\?740:652/);
-  assert.match(hubBlock,/feet=isPlayer\?954:911/);
+  assert.match(hubBlock,/xs=lineup\.length===4\?\[865,1055,1245,1435\]:\[890,1120,1350\]/);
+  assert.match(hubBlock,/stature=isPlayer\?1110:978/);
+  assert.match(hubBlock,/feet=isPlayer\?1190:1080/);
   assert.doesNotMatch(hubBlock,/champSayaka/);
   assert.match(code,/getProCircuitGenericDriverAsset/);
   assert.match(code,/getChampionshipHubPodium\(rows\)/);
