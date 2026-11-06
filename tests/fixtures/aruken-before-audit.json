@@ -32,15 +32,15 @@
     "hash": "05929585fbc18dc0db7c30c5633422fab493517024cde8ff741a2294bf676428"
   },
   "arkonChapter08": {
-    "steps": 92,
-    "hash": "71893c2dda2dd2a9b9536ebf418dce2a9177a01f245fcb4588b0d2780be96c65"
+    "steps": 98,
+    "hash": "3c98692c38431799601d31b726c8cd3c7a98ad5761b871075ba51d69e72a7137"
   },
   "arkonChapter09": {
     "steps": 67,
     "hash": "8f53ea81e7ba07aea5d1653d7f817ad51e7e6f48989b6716aee27a7528ef77b3"
   },
   "arkonChapter10": {
-    "steps": 80,
-    "hash": "8d07ec8cb884bb200acab67247212bd40b39d60f3f773df2506f939f2c105684"
+    "steps": 78,
+    "hash": "df788defb4e4d1104dcbf802c866c71d399e233a70f45e018ef6a0f26075f26e"
   }
 }

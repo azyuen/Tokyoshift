@@ -5,6 +5,9 @@ import {getCharacterVisualAsset} from '../src/data/characters.js';
 import {getArukenGuests,getArukenCarBay,getArukenActorPlacement} from '../src/story/ArukenStageLayout.js';
 import {getNativeStoryStageTemplate} from '../src/story/StoryNativeStageTemplates.js';
 import {getStoryBackground} from '../src/data/storyBackgroundCatalog.js';
+// Chapters 8/10 fingerprints refreshed against deployed main f652a92 after
+// its continuity revisions; beta cleanup changes neither script. Other
+// chapter fingerprints remain the original presentation-audit baseline.
 const before=JSON.parse(readFileSync(new URL('./fixtures/aruken-before-audit.json',import.meta.url)));
 const omit=new Set(['leftPose','rightPose','holdAfter','awaitArrival','population','meetDuel','backgroundId','pose']);
 const clean=x=>Array.isArray(x)?x.map(clean):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().filter(k=>!omit.has(k)).map(k=>[k,clean(x[k])])):x;

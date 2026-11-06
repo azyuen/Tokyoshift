@@ -1,5 +1,5 @@
 // One path-aware entry point for the historical regression suites.
-import {readFileSync} from 'node:fs';
+import {readFileSync, readdirSync} from 'node:fs';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {matchesGlob} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -9,6 +9,20 @@ export function selectSuites(suites, files) {
     ['scripts/run-regressions.mjs', 'scripts/regression-suites.json'].includes(p));
   return suites.filter(s => all || !s.paths.length || files.some(p =>
     s.paths.some(pattern => matchesGlob(p, pattern))));
+}
+
+// These entry points run in the six dedicated browser workflows, with an
+// HTTP server, Playwright and browser installation. Never launch them as
+// Node unit tests when expanding a historical wildcard command.
+export const BROWSER_TEST_FILES = new Set([
+  'tests/loading-cache-browser.mjs', 'tests/mobile-regression.mjs',
+  'tests/replay-browser-r574.mjs', 'tests/oshiage-browser-r522.mjs',
+  'tests/oshiage-custom-works-r531.mjs', 'tests/street-showdown-browser-r546.mjs',
+]);
+export function expandNodeTestFiles(patterns, files = readdirSync(new URL('../tests/', import.meta.url)).map(f => 'tests/' + f)) {
+  return [...new Set(patterns.flatMap(pattern => pattern.includes('*')
+    ? files.filter(file => matchesGlob(file, pattern) && !BROWSER_TEST_FILES.has(file))
+    : [pattern]))].sort();
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -23,8 +37,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const commands = [];
   for (const command of unique) {
     const clean = command.split('\n').filter(line => !line.trim().startsWith('#')).join('\n').replace(/\\\n\s*/g, ' ').trim();
-    if (/^node\s+--test(?:\s+tests\/[\w./-]+\.mjs)+$/.test(clean)) {
-      clean.split(/\s+/).slice(2).forEach(file => tests.add(file));
+    if (/^node\s+--test(?:\s+tests\/[\w.*\/-]+\.m?js)+$/.test(clean)) {
+      expandNodeTestFiles(clean.split(/\s+/).slice(2)).forEach(file => tests.add(file));
     } else commands.push(command);
   }
   // Run overlapping Node test files only once, with bounded CPU/memory usage.

@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import { preparePlayerCrewFixture, getPlayerCrewHeat, settlePlayerCrewHeat } from '../src/data/proSeason.js';
 import assert from 'node:assert/strict';
@@ -6,13 +7,13 @@ import { createDefaultGameState, normaliseState, applyStateToRegistry, saveProTr
 import { recruitRandomDevCrew } from '../src/data/crewSystem.js';
 import { createFourWideTournament, getPlayerProHeat, settleFourWideHeat } from '../src/data/proTournament.js';
 import { getVehiclePerformance } from '../src/vehicles/VehiclePerformance.js';
-import { CREW_SERIES, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, prepareCrewSeriesFixture, revealCrewSeriesHeat, settleCrewSeriesFixture, getCrewSeriesTable, getSeasonStandings, completeSeasonRound, nextProfessionalSeason, getProfessionalAttendance, estimateCrewHeat, seasonRandom, settleLegacySeasonEvent, assignCrewSeriesCar } from '../src/data/proSeason.js';
+import { CREW_SERIES, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, prepareCrewSeriesFixture, revealCrewSeriesHeat, settleCrewSeriesFixture, getCrewSeriesTable, getSeasonStandings, completeSeasonRound, nextProfessionalSeason, getProfessionalAttendance, claimProfessionalSeasonBonus, estimateCrewHeat, seasonRandom, settleLegacySeasonEvent, assignCrewSeriesCar } from '../src/data/proSeason.js';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const physicalResult=(win=true)=>[{id:'player',finishSeconds:win?10:12,disqualified:false},{id:'ai-1',finishSeconds:11,disqualified:false}];
 
 test('real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup',async()=>{
  const storage=new Map();globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)};
- globalThis.window={addEventListener(){}};globalThis.Phaser={Scene:class{}};
+ globalThis.window={addEventListener(){}};globalThis.Phaser={...globalThis.Phaser,Scene:class{}};
  const {default:Scene}=await import('../src/scenes/FourLaneTestScene.js');
  const s=source(),ids=enter(s),f=getCrewFixture(s.get('proCircuit'));
  s.set('proCircuit',preparePlayerCrewFixture(s,ids.slice(0,3),f.id).circuit);
@@ -26,7 +27,7 @@ test('real pro scene initializes exactly two crew cars and settles telemetry wit
  assert.equal(readSessionState().proCircuit.activeCrewEvent.fixture.revealed,1);
  assert.equal(s.get('selectedCarId'),'ae86');assert.equal(s.get('competitionState'),null);
  scene.showFourLaneResults();assert.equal(s.get('proCircuit').activeCrewEvent.fixture.revealed,1);
- delete globalThis.localStorage;delete globalThis.Phaser;delete globalThis.window;
+ delete globalThis.localStorage;delete globalThis.Phaser.Scene;delete globalThis.window;
 });
 
 test('player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection',()=>{
@@ -72,8 +73,11 @@ test('R470 already revealed results survive conversion; remaining heats must be 
  assert.equal(converted.circuit.activeCrewEvent.entryFee,old.circuit.activeCrewEvent.entryFee);
 });
 const registry=data=>{const m=new Map(Object.entries(data));return {get:k=>m.get(k),set:(k,v)=>m.set(k,v)};};
-function source(){const s=registry({...createDefaultGameState(),devMode:true,cash:2e7,ownedCarIds:['ae86','ek9','evo3'],selectedCarId:'ae86'});recruitRandomDevCrew(s,()=>.2);s.get('proCircuit').calendar.round=1;return s;}
-function enter(s){const ids=getCrewSeriesUnits(s).slice(0,5).map(u=>u.id);const out=registerCrewSeries(s,ids);assert.ok(!out.error,out.error);s.set('proCircuit',out.circuit);s.set('cash',out.cash);return ids;}
+function source(){const s=registry({...createDefaultGameState(),devMode:true,cash:2e7,ownedCarIds:['ae86','ek9','evo3'],selectedCarId:'ae86'});recruitRandomDevCrew(s,()=>.2);s.get('proCircuit').calendar.round=1;s.get('proCircuit').seasonStatus='ACTIVE';return s;}
+function enter(s){const ids=getCrewSeriesUnits(s).slice(0,5).map(u=>u.id);const out=registerCrewSeries(s,ids);assert.ok(!out.error,out.error);
+ // Exercise historical three-fixture saves; new crew entries use short events.
+ out.circuit.activeCrewEvent.short=false;
+ s.set('proCircuit',out.circuit);s.set('cash',out.cash);return ids;}
 function raceFixture(s,ids,skip=true){const f=getCrewFixture(s.get('proCircuit'));let out=prepareCrewSeriesFixture(s,ids.slice(0,3),f.id);assert.ok(!out.error,out.error);s.set('proCircuit',out.circuit);out=revealCrewSeriesHeat(out.circuit,f.id,skip);if(!skip){out=revealCrewSeriesHeat(out.circuit,f.id);out=revealCrewSeriesHeat(out.circuit,f.id);}out=settleCrewSeriesFixture(out.circuit,f.id);s.set('proCircuit',out.circuit);s.set('cash',s.get('cash')+out.cashPrize);return out;}
 
 test('old saves acquire empty calendar without changing cash, cars, brackets, achievements or ratings',()=>{
@@ -83,13 +87,13 @@ test('old saves acquire empty calendar without changing cash, cars, brackets, ac
 });
 test('crew gate, calendar, money and genuine registered squad checked at transaction time',()=>{
  const s=source(),ids=getCrewSeriesUnits(s).map(u=>u.id);
- s.set('devMode',false);s.get('proCircuit').calendar.round=0;assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/ONE PROFESSIONAL/);
- s.get('proCircuit').calendar.round=1;s.set('cash',100);assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/CASH/);
+ s.set('devMode',false);s.get('proCircuit').calendar.round=0;assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/SEVEN/);
+ s.set('devMode',true);s.get('proCircuit').calendar.round=1;s.set('cash',-1);assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/CASH/);
  s.set('cash',1e6);assert.match(crewSeriesEligibility(s,[ids[0],ids[0],ids[1]]),/THREE TO FIVE/);
  assert.match(crewSeriesEligibility(s,ids.slice(0,6)),/THREE TO FIVE/);
  assert.match(crewSeriesEligibility(s,ids.slice(0,3),Object.fromEntries(ids.slice(0,3).map(id=>[id,'ae86']))),/DISTINCT/);
  assert.match(crewSeriesEligibility(s,ids.slice(0,3),{[ids[0]]:'missing'}),/ELIGIBLE/);
- s.set('crewMembers',{});assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/SEVEN/);
+ s.set('devMode',false);s.set('crewMembers',{});assert.match(crewSeriesEligibility(s,ids.slice(0,3)),/SEVEN/);
 });
 test('entry charges once, prohibits overlapping fourwide/duel events, and stores persistent team identities',()=>{
  const s=source(),cash=s.get('cash'),ids=enter(s),c=s.get('proCircuit');assert.equal(s.get('cash'),cash-CREW_SERIES.entryFee);
@@ -120,7 +124,7 @@ test('all three fixtures are genuinely settled; official table, rating and payou
  let out;for(let i=0;i<3;i++){out=raceFixture(s,ids);assert.equal(out.status,i<2?'ADVANCED':'COMPLETE');if(i<2)assert.equal(out.cashPrize,0);}
  const final=out.circuit;assert.equal(final.eventTick,startTick+1);assert.equal(final.activeCrewEvent,null);assert.equal(final.lastCrewEvent.history.length,3);assert.equal(final.playerTeam.entered,c.playerTeam.entered+1);
  assert.equal(final.calendar.round,2);assert.equal(final.lastTournament.table.length,4);assert.equal(final.lastCrewEvent.history.flatMap(r=>r.playerHeats).length,9);
- assert.equal(final.playerTeam.seasonPoints,[32,24,14,6][out.summary.placing-1]);
+ assert.equal(final.playerTeam.seasonPoints,[20,14,9,5][out.summary.placing-1]);
  assert.deepEqual(final.trophyWins,c.trophyWins);assert.deepEqual(final.championshipWins,c.championshipWins);
  const duplicate=settleCrewSeriesFixture(final,firstId);assert.equal(duplicate.cashPrize,0);assert.deepEqual(duplicate.circuit,final);
 });
@@ -158,12 +162,13 @@ test('eight completions archive results and next season retains ratings, records
  let c=createDefaultProCircuitState();c.trophyWins.shutoSpeed=1;c.crewSeriesWins=2;
  for(let i=0;i<8;i++)c=completeSeasonRound(c,{id:'event'+i,label:'EVENT',placing:1});
  assert.equal(c.calendar.result.season,1);assert.equal(c.calendar.round,8);const rating=c.teams[Object.keys(c.teams)[0]].rating;
- const next=nextProfessionalSeason(c).circuit;assert.equal(next.season,2);assert.equal(next.calendar.round,0);assert.equal(next.calendar.archives.length,1);assert.equal(next.trophyWins.shutoSpeed,1);assert.equal(next.crewSeriesWins,2);assert.equal(next.teams[Object.keys(next.teams)[0]].rating,rating);assert.ok(Object.values(next.teams).every(r=>r.seasonPoints===0));assert.ok(nextProfessionalSeason(next).error);
+ const paid=claimProfessionalSeasonBonus(c);assert.ok(paid.circuit);
+ const next=nextProfessionalSeason(paid.circuit).circuit;assert.equal(next.season,2);assert.equal(next.calendar.round,0);assert.equal(next.calendar.archives.length,1);assert.equal(next.trophyWins.shutoSpeed,1);assert.equal(next.crewSeriesWins,2);assert.equal(next.teams[Object.keys(next.teams)[0]].rating,rating);assert.ok(Object.values(next.teams).every(r=>r.seasonPoints===0));assert.ok(nextProfessionalSeason(next).error);
  c.activeTournament={id:'old'};assert.ok(nextProfessionalSeason(c).error);
 });
 test('legacy professional cup result updates ranking/season once, preserving original prize and street state',()=>{
  const c=createDefaultProCircuitState(),state={eventId:'streetShootout',proSeasonId:'legacy:123',prizeCash:95000,rounds:[1,2,3].map(()=>({carId:'ae86',encounterRating:3}))};
- const next=settleLegacySeasonEvent(c,state,3);assert.equal(next.playerDriver.seasonPoints,32);assert.equal(next.calendar.round,1);assert.equal(next.lastTournament.cashPrize,95000);assert.deepEqual(settleLegacySeasonEvent(next,state,3),next);assert.equal(state.prizeCash,95000);
+ const next=settleLegacySeasonEvent(c,state,3);assert.equal(next.playerDriver.seasonPoints,20);assert.equal(next.calendar.round,1);assert.equal(next.lastTournament.cashPrize,95000);assert.deepEqual(settleLegacySeasonEvent(next,state,3),next);assert.equal(state.prizeCash,95000);
 });
 test('existing Four-Wide Open completion advances the season with no extra player simulation',()=>{
  let c=createDefaultProCircuitState();c.activeTournament=createFourWideTournament(c,'ae86');const h=getPlayerProHeat(c.activeTournament);
