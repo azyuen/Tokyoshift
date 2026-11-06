@@ -18,11 +18,11 @@ test('sprite size bounds increased 50%, and wall monitor is still kept clear',()
   assert.match(hubSprites,/sprite\(s,o,row\.asset\?\.key,xs\[i\],1040,978,480\)/);
   assert.match(hubSprites,/const ranked=championshipStandings/);
   assert.match(hubSprites,/const isPlayer=row\.id==='player:driver'/);
-  assert.match(hubSprites,/xs=lineup\.length===4\?\[790,1000,1210,1420\]:\[870,1100,1330\]/);
+  assert.match(hubSprites,/xs=lineup\.length===4\?\[850,1055,1260,1465\]:\[870,1100,1330\]/);
   // The leftmost AI slot begins at x=865 - 480/2 = 625px.
   // If the player is top-three, their slot begins at 890 - 540/2 = 620px.
   // Both remain right of the physical wall display's x=610px edge.
-  assert.ok(790-480/2<610);
+  assert.ok(850-480/2>=610);
   assert.ok(870-480/2>=610);
   assert.doesNotMatch(hubSprites,/champSayaka/);
 });
