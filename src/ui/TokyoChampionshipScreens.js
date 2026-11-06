@@ -207,7 +207,7 @@ function mainSprites(s,o,view){
     'idle',{proCircuit:true});
   if(view==='HUB'){
     const lineup=hubLineup(s);
-    const xs=lineup.length===4?[790,1000,1210,1420]:[870,1100,1330];
+    const xs=lineup.length===4?[850,1055,1260,1465]:[870,1100,1330];
     const ranked=championshipStandings(circuit(s).activeChampionship);
     // All podium sprites (including a fourth-place player) use identical
     // bounding boxes and baseline, so character proportions are consistent.
