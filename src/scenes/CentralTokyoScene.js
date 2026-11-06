@@ -11,7 +11,7 @@ import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261030-r740';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { getProSeasonDriverCarError, CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getOpenCircuitSlotStatus, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalSeasonOrder, getAlternativeProCrewFormat, PRO_ALT_CREW_ENTRY_FEE, PRO_ALT_CREW_PRIZES, getProInvitationalDiscipline, getProDriverInvitationRules, PRO_INVITATIONAL_DRIVER_FEE, PRO_INVITATIONAL_DRIVER_PRIZE, getProSeasonSkillTier, getProfessionalOpponentBuild, getProfessionalSeasonReport, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261030-r741';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261105-r800-championship';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, enterDevTokyoChampionship, showProSeasonAction, showCrewFixture, resumeCrewPaddockBriefing, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261106-r802-championship';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261030-r742';
 import { maybePlayProSponsorStory } from '../ui/ProSponsorStory.js?v=20261030-r742';
 import { startProSponsorReplayWelcome, isProSponsorPlayableReplay, addProSponsorReplayExit } from '../ui/ProSponsorReplay.js?v=20261029-r719';
@@ -92,7 +92,7 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r354';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261106-r802-dev-entry';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261030-r742';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261030-r742';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
@@ -3452,6 +3452,26 @@ export default class CentralTokyoScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#f1e6e7',
       }).setOrigin(0.5).setDepth(30));
       dev.on('pointerdown', () => this.devRefreshCentralLocation());
+    }
+
+
+    // Deliberate development shortcut in the venue, not the normal entry
+    // sidebar: never modifies Pro Season qualification or public save gates.
+    if(this.registry.get('devMode')){
+      const x=STAGE.x+STAGE.w-135,y=STAGE.y+63;
+      const devTokyo=this.addContent(this.add.rectangle(
+        x,y,250,38,0x271b32,.97
+      ).setStrokeStyle(2,0xd1a2ee,.95)
+        .setDepth(42).setInteractive({useHandCursor:true}));
+      this.addContent(this.add.text(x,y,
+        currentPro.activeChampionship&&!currentPro.activeChampionship.completed?
+          'D) RESUME TOKYO':'D) TEST TOKYO CHAMPIONSHIP',{
+        fontFamily:PIXEL_FONT,fontSize:'7px',color:'#f5d6ff',
+      }).setOrigin(.5).setDepth(43));
+      devTokyo.on('pointerdown',()=>{
+        if(!this.registry.get('devMode'))return;
+        enterDevTokyoChampionship(this);
+      });
     }
 
     if (!circuitOpen) {

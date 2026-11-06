@@ -1,5 +1,5 @@
-import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261105-r801-ui-cleanup';
-import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
+import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261106-r802-wall-display';
+import { createDevTokyoChampionship, createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261030-r742';
@@ -748,6 +748,35 @@ export function showSeasonRecords(s,complete=false) {
   }
 }
 
+/** Test fixture entry, never shown to regular profiles. Does not grant season points. */
+export function prepareDevTokyoChampionship(s) {
+  if(!s?.registry?.get('devMode'))return false;
+  if(s.registry.get('competitionState')?.active){
+    s.proError='FINISH THE CURRENT RACE FIRST';
+    return false;
+  }
+  const current=circuit(s);
+  const created=createDevTokyoChampionship(current);
+  if(created.error){s.proError=created.error;return false;}
+  if(!created.resumed){
+    try{
+      saveProTransaction(s.registry,{proCircuit:{
+        ...current,activeChampionship:created.championship,
+      }});
+    }catch(error){s.proError=error.message;return false;}
+  }
+  s.proError=null;
+  return true;
+}
+export function enterDevTokyoChampionship(s) {
+  if(!prepareDevTokyoChampionship(s)){
+    if(typeof s.renderLocation==='function')redraw(s);
+    return false;
+  }
+  showTokyoChampionship(s,'HUB');
+  return true;
+}
+
 /** One unified sixteen-entrant championship: live stage results, durable
  *  payout and true podium. Never award or score from presentation alone. */
 export function showTokyoChampionship(s,view='HUB') {
@@ -769,10 +798,12 @@ export function showTokyoChampionship(s,view='HUB') {
   if(state.stage==='COMPLETE'&&['EVENT','CREW_PICK'].includes(view))view='HUB';
   showTokyoChampionshipScreens(s,{view,actions:{
     startRace:(mode,carId)=>startChampionshipRace(s,mode,carId),
-    returnToSeason:()=>showSeasonRecords(s,true),
+    returnToSeason:()=>state.devBypass?
+      (s._proOverlayClose?.(),redraw(s)):showSeasonRecords(s,true),
     // Run saved narrative only after any lazy background/sprite loading has
     // finished. The original cutscene history still enforces once-only use.
     onHubRendered:()=>{
+      if(state.devBypass)return; // Test entry skips the once-only Career cinematics.
       if(state.completed)playMangaCutscene(s,
         state.championId==='player:driver'?'tokyoChampionshipVictory':'tokyoChampionshipDefeat');
       else if(state.stage==='KNOCKOUT'&&!(state.knockout?.results?.length))
@@ -820,7 +851,7 @@ function startChampionshipRace(s,mode,carId) {
     const heat=mode==='CHAMP_KO'?getChampionshipKnockoutHeat(state):
       getChampionshipFourWideHeat(state);
     if(!heat){s.proError='NO ACTIVE CHAMPIONSHIP HEAT';return false;}
-    if(!state.driverCarId&&getProSeasonDriverCarError(c,carId)){
+    if(!state.driverCarId&&!state.devBypass&&getProSeasonDriverCarError(c,carId)){
       s.proError='CHOOSE A CAR FROM YOUR THREE REGISTERED SEASON CARS';return false;
     }
     if(state.driverCarId&&state.driverCarId!==carId){
