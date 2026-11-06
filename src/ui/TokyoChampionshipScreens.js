@@ -752,31 +752,6 @@ function showStandings(s,actions){
   o.button(781,783,480,51,'BACK TO CHAMPIONSHIP HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
 }
-function showProfile(s,id,actions,hubPage=null){
-  const c=circuit(s),state=c.activeChampionship,rows=championshipStandings(state);
-  const r=rows.find(item=>item.id===id)||rows[0];
-  const long=c.drivers?.[r.id]||null;
-  const o=canvas(s,'HUB');o.actions=actions;
-  o.headline(65,106,'DRIVER PROFILE  /  '+standingName(c,r),40,GOLD);
-  o.panel(780,418,1320,540,.95);
-  const fields=[
-    ['CHAMPIONSHIP POSITION','#'+(rows.indexOf(r)+1)+' / 16'],
-    ['CHAMPIONSHIP SEED','#'+r.seed],
-    ['KNOCKOUT POINTS',r.knockout+' / 20'],
-    ['CREW POINTS',r.crew+' / 20'],
-    ['FOUR-WIDE POINTS',r.fourWide+' / 40'],
-    ['TOTAL CHAMPIONSHIP POINTS',r.total+' / 80'],
-    ['PROFESSIONAL DRIVER RATING',String(long?.rating||r.rating||'—')],
-  ];
-  fields.forEach(([k,v],i)=>{
-    o.label(134,194+i*66,k,20,MUTED);
-    o.headline(930,186+i*66,v,25,GOLD,490);
-  });
-  o.button(780,767,530,52,hubPage===null?'BACK TO FULL STANDINGS':'BACK TO LIVE STANDINGS',
-    ()=>hubPage===null?
-      showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}):
-      showHub(s,actions,{standingsPage:hubPage}));
-}
 function showRules(s,actions){
   const o=canvas(s,'HUB');o.actions=actions;
   o.headline(62,100,'CHAMPIONSHIP REGULATIONS',39,GOLD);
