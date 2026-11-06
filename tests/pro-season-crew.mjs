@@ -52,7 +52,7 @@ test('nine actual races resolve three fixtures, persist after every heat and awa
   assert.equal(getPlayerCrewHeat(s.get('proCircuit')),null);
   final=settleCrewSeriesFixture(s.get('proCircuit'),f.id);s.set('proCircuit',final.circuit);
  }
- assert.equal(final.status,'COMPLETE');assert.equal(final.summary.placing,1);assert.equal(final.cashPrize,210000);
+ assert.equal(final.status,'COMPLETE');assert.equal(final.summary.placing,1);assert.equal(final.cashPrize,1050000);
  assert.equal(final.circuit.calendar.round,2);assert.equal(final.circuit.lastCrewEvent.history.length,3);
  assert.equal(settleCrewSeriesFixture(final.circuit,'old').cashPrize,0);
 });

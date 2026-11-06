@@ -1084,6 +1084,45 @@ export function showSettingsPanel(scene) {
     });
   }
 
+
+  if(scene.registry.get('devMode')){
+    // Universal developer fixture shortcut, even before opening the Drag Complex.
+    // No qualification, calendar, money, registered cars or crew are fabricated.
+    const tokyoButton=add(scene.add.rectangle(1000,72,183,40,0x292033,.99)
+      .setStrokeStyle(2,0xca8bef).setDepth(183)
+      .setInteractive({useHandCursor:true}));
+    add(scene.add.text(1000,72,'D) TEST TOKYO',{
+      fontFamily:PIXEL_FONT,fontSize:'7px',color:'#f1d9ff',
+    }).setOrigin(.5).setDepth(184));
+    const devError=add(scene.add.text(780,112,'',{
+      fontFamily:BODY,fontSize:'16px',fontStyle:'700',
+      color:'#ffb7cb',wordWrap:{width:820},
+    }).setOrigin(.5,0).setDepth(184));
+    tokyoButton.on('pointerdown',async()=>{
+      if(!scene.registry.get('devMode')||transitioning)return;
+      try{
+        // Import only on use: avoid loading the full Pro Season engine on boot.
+        const {prepareDevTokyoChampionship}=await import(
+          './ProSeasonPanel.js?v=20261106-r802-championship'
+        );
+        if(!scene.sys?.isActive?.()||
+          !prepareDevTokyoChampionship(scene)){
+          devError.setText(scene.proError||'CANNOT OPEN TOKYO CHAMPIONSHIP');
+          return;
+        }
+        transitioning=true;
+        close();
+        scene.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',
+          autoOpenTokyoChampionship:true,
+          championshipDestination:'HUB',
+        });
+      }catch(error){
+        devError.setText(String(error?.message||error));
+      }
+    });
+  }
+
   const controlsButton = add(scene.add.rectangle(810, 72, 170, 40, 0x102138, 1)
     .setStrokeStyle(1, 0x45a8cc, 1)
     .setInteractive({ useHandCursor: true })

@@ -5,19 +5,19 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const file=readFileSync(new URL('../src/ui/TokyoChampionshipScreens.js',import.meta.url),'utf8');
 
-test('the hub has one two-wing scoreboard and one three-event ribbon',()=>{
-  assert.match(file,/LIVE STANDINGS/);
-  assert.match(file,/YOUR CHAMPIONSHIP/);
+test('the hub has an embedded display and three-event ribbon',()=>{
+  assert.match(file,/LIVE CHAMPIONSHIP STANDINGS/);
+  assert.match(file,/TOKYO_CHAMP_MONITORS\.HUB/);
   assert.match(file,/THE ROAD TO THE TITLE/);
   assert.match(file,/STAGES\.forEach\(\(stage,i\)=>/);
-  assert.match(file,/FULL 16-DRIVER STANDINGS/);
+  assert.match(file,/VIEW ALL 16 DRIVERS/);
   assert.match(file,/CHAMPIONSHIP RULES/);
 });
 test('the knockout bracket uses persisted round pairings and winners',()=>{
   assert.match(file,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);
-  assert.match(file,/history\[r\]\?\.matches\?\.\[i\]\?\.winner/);
+  assert.match(file,/history\[round\]\?\.matches\?\.\[i\]\?\.winner/);
   assert.match(file,/TBD/);
-  assert.match(file,/roundNames=\['TOP 16','QUARTERS','SEMIS','FINAL'\]/);
+  assert.match(file,/headers=\['TOP 16','TOP 8','TOP 4','FINAL'\]/);
   assert.match(file,/pair\.includes\('player:driver'\)/);
 });
 test('crew progress and four-wide lanes use real saved event data',()=>{

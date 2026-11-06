@@ -57,6 +57,34 @@ Championship UI does not change car locks, physics, points, standings,
 economy or season progression. Validate readability and touch targets on
 iPhone XR and iPad Pro 9.7 before considering this visually signed off.
 
+## R802 — Wall monitor projection and developer testing shortcut (6 November 2026)
+
+The newly uploaded background assets contain real painted virtual displays:
+- **Hub:** left-wall display. The active bracket's 16-driver standings
+  (up to 12 legible rows plus a full standings drill-down) render directly
+  inside scene rectangle `x100 y164 w510 h337`.
+- **Knockouts:** right-wall display. A four-column, saved-winner knockout
+  diagram renders directly inside `x897 y160 w550 h285`; a dedicated
+  **Expand Tournament Bracket** action provides a readable full-screen view.
+- These coordinates use the game's **1560×840** reference canvas, derived
+  from the uploaded **1671×941** backgrounds and their cover-scale crop.
+- Dark opaque UI overlays on these physical displays have been removed.
+  Characters avoid the monitor bounds and all gameplay result data stays live.
+
+A **D) TEST TOKYO** shortcut is available in developer Settings from any
+scene and inside Tokyo Drag Complex. This loads the authentic 16-driver
+Championship without requiring the eight-round season or 60/40 points.
+If a Championship is in progress it resumes it rather than re-seeding.
+A completed developer run can be started again. The shortcut persists the
+fixture atomically, but does not grant season progress, cars, crew or
+eligibility: the real race, crew, vehicle and settlement rules remain.
+Developer-only presentation skips the once-only Career opening scene.
+
+Safety boundary: both buttons are gated behind `registry.devMode`, never
+shown for regular Career or Aruken Story profiles. This is a local game
+test shortcut, not a multiplayer server authorization system. The normal
+`createProvisionalChampionship` gate is unchanged.
+
 ## Test checklist before merge/deploy
 
 - Fresh qualified save: Season Results → Enter Championship → Hub → Knockout briefing.

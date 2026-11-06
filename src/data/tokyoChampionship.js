@@ -58,6 +58,33 @@ export function createProvisionalChampionship(raw) {
     points:Object.fromEntries(entrants.map(r=>[r.id,{knockout:0,crew:0,fourWide:0}])),
     completed:false,championId:null}};
 }
+/**
+ * Developer-only preview fixture. Normal qualification remains authoritative.
+ * Simulate the minimum qualifying season in memory ONLY while seeding, so the
+ * profile's real calendar, points, awards, car inventory and season registration
+ * never get overwritten by this shortcut.
+ *
+ * The caller must gate this behind registry.devMode. This pure constructor does
+ * not (and cannot) authenticate a user in a client-only Phaser game.
+ */
+export function createDevTokyoChampionship(raw,now=Date.now()) {
+  const c=normaliseProCircuitState(raw);
+  if(c.activeChampionship&&!c.activeChampionship.completed)
+    return {championship:c.activeChampionship,resumed:true};
+  if(c.activeCrewEvent||c.activeTournament||c.activeTimedEvent)
+    return {error:'FINISH THE CURRENT PROFESSIONAL EVENT FIRST'};
+  const preview={
+    ...c,activeChampionship:null,
+    calendar:{...c.calendar,round:8},
+    playerDriver:{...c.playerDriver,seasonPoints:Math.max(60,c.playerDriver.seasonPoints)},
+    playerTeam:{...c.playerTeam,seasonPoints:Math.max(40,c.playerTeam.seasonPoints)},
+  };
+  const created=createProvisionalChampionship(preview);
+  if(created.error)return created;
+  const id='tokyo:s'+c.season+':dev:'+String(Math.max(0,Number(now)||0));
+  return {championship:{...created.championship,id,devBypass:true}};
+}
+
 // Decisive semifinal/final opposition is always Elite, with no hidden
 // physics changes. Existing PROVISIONAL saves retain their original tiers.
 export function getChampionshipOpponentSkill(state,entrantId,stage='KNOCKOUT',round=0) {
