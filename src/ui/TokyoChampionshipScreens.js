@@ -180,7 +180,19 @@ function canvas(s,view,{hideTopChrome=false}={}){
       {font:DISPLAY,depth:235});
     button(1510,31,64,43,'X',close);
   }
-  return {add,close,label,headline,panel,button};
+  // Glyph-only controls: preserve the 56×48 touch target, with no box/stroke
+  // drawn around the arrows (important for small phones).
+  const iconButton=(cx,cy,glyph,action,{disabled=false}={})=>{
+    const hit=add(s.add.rectangle(cx,cy,56,48,0x000000,0)
+      .setDepth(244));
+    const icon=label(cx,cy,glyph,30,disabled?'#607286':GOLD,
+      {font:DISPLAY,depth:245}).setOrigin(.5);
+    icon.setFontStyle('900');
+    if(!disabled)hit.setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>{if(!closed)action();});
+    return hit;
+  };
+  return {add,close,label,headline,panel,button,iconButton};
 }
 function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false){
   if(!key||!s.textures.exists(key))return;
@@ -194,24 +206,25 @@ function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
     'idle',{proCircuit:true});
   if(view==='HUB'){
-    const lineup=hubLineup(s),xs=[760,954,1146,1360];
-    // Twice the original ~330-370px character height, then lowered by
-    // approximately one former body length. The footer naturally crops the
-    // lower legs while the wall monitor remains fully visible.
+    const lineup=hubLineup(s);
+    const xs=lineup.length===4?[865,1055,1245,1435]:[890,1120,1350];
+    const ranked=championshipStandings(circuit(s).activeChampionship);
+    // Exactly 150% of the R803 sprite bounds. Keep the crowd grouped on the
+    // right, with the wall monitor (ending at x=610) completely unobstructed.
+    // Lower feet to preserve heads as the extra height fills the upper stage.
     lineup.forEach((row,i)=>{
       const isPlayer=row.id==='player:driver';
-      const stature=isPlayer?740:652;
-      const width=isPlayer?360:320;
-      const feet=isPlayer?954:911;
+      const stature=isPlayer?1110:978;
+      const width=isPlayer?540:480;
+      const feet=isPlayer?1190:1080;
       sprite(s,o,row.asset?.key,xs[i],feet,stature,width);
-      o.add(s.add.rectangle(xs[i],625,i===3?176:184,29,0x081625,.86)
+      const rank=ranked.findIndex(r=>r.id===row.id)+1;
+      o.add(s.add.rectangle(xs[i],625,182,29,0x081625,.86)
         .setStrokeStyle(1,i===0?0xd9b36e:0x59738d,.85).setDepth(233));
-      const tag='#'+(i<3?i+1:championshipStandings(
-        circuit(s).activeChampionship).findIndex(r=>r.id===row.id)+1)+
-        '  '+standingName(circuit(s),row).toUpperCase();
+      const tag='#'+rank+'  '+standingName(circuit(s),row).toUpperCase();
       const title=o.label(xs[i],625,tag,15,isPlayer?GOLD:PALE,
         {font:DISPLAY,depth:235}).setOrigin(.5);
-      if(title.width>174)title.setScale(174/title.width);
+      if(title.width>170)title.setScale(170/title.width);
     });
   }else if(view==='CREW'){
     sprite(s,o,'champSayaka',175,622,420,240);
@@ -316,7 +329,7 @@ const HUB_EVENT_EXPLANATIONS=Object.freeze({
   }),
 });
 
-function showHub(s,actions,{displayStage=null,standingsPage=0}={}){
+function showHub(s,actions,{displayStage=null,displayProfileId=null,standingsPage=0}={}){
   const c=circuit(s),state=c.activeChampionship,rows=championshipStandings(state);
   const me=rows.find(r=>r.id==='player:driver');
   const current=state.stage,screen=TOKYO_CHAMP_MONITORS.HUB;
@@ -328,7 +341,51 @@ function showHub(s,actions,{displayStage=null,standingsPage=0}={}){
   o.headline(41,21,'TOKYO CHAMPIONSHIP',62,GOLD,1020);
   o.headline(44,103,'SEASON '+state.season,27,GOLD,370);
 
-  if(displayStage && HUB_EVENT_EXPLANATIONS[displayStage]){
+  if(displayProfileId){
+    // Driver details take over the same wall display in-place. All values
+    // come from the live Championship snapshot and actual Pro Circuit record.
+    const r=rows.find(item=>item.id===displayProfileId);
+    if(r){
+      const career=r.id==='player:driver'?c.playerDriver:c.drivers?.[r.id];
+      const position=rows.indexOf(r)+1;
+      const left=screen.x+18,right=screen.x+260;
+      o.headline(left,screen.y+10,'DRIVER PROFILE  /  #'+position,
+        21,GOLD,screen.w-36);
+      o.headline(left,screen.y+41,standingName(c,r).toUpperCase(),
+        28,PALE,screen.w-36);
+      o.add(s.add.rectangle(screen.x+screen.w/2,screen.y+80,
+        screen.w-36,1,0x7391ab,.65).setDepth(225));
+      const record=career&&Number.isFinite(career.wins)&&
+        Number.isFinite(career.losses)?
+        career.wins+'W / '+career.losses+'L':'—';
+      const fields=[
+        [['CHAMPIONSHIP RANK','#'+position+' / 16'],
+          ['CHAMPIONSHIP SEED','#'+r.seed]],
+        [['KNOCKOUT',r.knockout+' / 20'],
+          ['CREW BATTLES',r.crew+' / 20']],
+        [['FOUR-WIDE',r.fourWide+' / 40'],
+          ['TOTAL POINTS',r.total+' / 80']],
+        [['DRIVER RATING',String(career?.rating||r.rating||'—')],
+          ['PRO WINS / LOSSES',record]],
+      ];
+      fields.forEach((pair,i)=>pair.forEach(([heading,value],j)=>{
+        const x=j===0?left:right,y=screen.y+90+i*48;
+        o.label(x,y,heading,14,MUTED,{font:DISPLAY,width:223});
+        o.label(x,y+18,value,24,
+          heading==='TOTAL POINTS'?GOLD:PALE,{font:BODY,width:220});
+      }));
+      // One unobtrusive back affordance inside the monitor, not a modal
+      // navigation bar; return to precisely the page the user was browsing.
+      o.iconButton(left+13,screen.y+screen.h-24,'◀',
+        ()=>showHub(s,actions,{standingsPage:page}));
+      o.label(left+38,screen.y+screen.h-36,'BACK TO LIVE STANDINGS',17,GOLD,
+        {font:DISPLAY});
+      const back=o.add(s.add.rectangle(screen.x+screen.w/2,
+        screen.y+screen.h-23,screen.w-36,37,0,0).setDepth(244)
+        .setInteractive({useHandCursor:true}));
+      back.on('pointerdown',()=>showHub(s,actions,{standingsPage:page}));
+    }
+  }else if(displayStage && HUB_EVENT_EXPLANATIONS[displayStage]){
     const info=HUB_EVENT_EXPLANATIONS[displayStage];
     o.headline(screen.x+16,screen.y+11,info.title,22,GOLD,screen.w-34);
     o.label(screen.x+16,screen.y+53,info.strap,17,PALE,
@@ -363,12 +420,12 @@ function showHub(s,actions,{displayStage=null,standingsPage=0}={}){
       }));
     });
     const footerY=screen.y+screen.h-22;
-    o.button(screen.x+41,footerY,57,40,'◀',
+    o.iconButton(screen.x+41,footerY,'◀',
       ()=>showHub(s,actions,{standingsPage:0}),{disabled:page===0});
     o.label(screen.x+screen.w/2,footerY-11,
       (page? '09–16' : '01–08')+' / 16  DRIVERS',17,MUTED,
       {font:DISPLAY}).setOrigin(.5,0);
-    o.button(screen.x+screen.w-41,footerY,57,40,'▶',
+    o.iconButton(screen.x+screen.w-41,footerY,'▶',
       ()=>showHub(s,actions,{standingsPage:1}),{disabled:page===1});
   }
 
@@ -398,15 +455,6 @@ function showHub(s,actions,{displayStage=null,standingsPage=0}={}){
     }),{red:true,subtitle:finalAction?'VIEW FINAL PODIUM':
       'OPEN '+(nextEvent?.short||'NEXT EVENT')+' BRIEFING'});
 
-  // Secondary actions stay small and low; removing the old X does not strand
-  // a player in the Championship, including developer test profiles.
-  o.button(181,805,264,39,'RIVAL PROFILES',
-    ()=>showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}));
-  o.button(465,805,264,39,'CHAMPIONSHIP RULES',
-    ()=>showTokyoChampionshipScreens(s,{view:'RULES',actions}));
-  o.button(1362,805,304,39,'BACK TO PRO SEASON',()=>{
-    o.close();actions?.returnToSeason?.();
-  });
 }
 
 function eventInfo(s,o,state,stage){
@@ -704,31 +752,6 @@ function showStandings(s,actions){
   o.button(781,783,480,51,'BACK TO CHAMPIONSHIP HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
 }
-function showProfile(s,id,actions,hubPage=null){
-  const c=circuit(s),state=c.activeChampionship,rows=championshipStandings(state);
-  const r=rows.find(item=>item.id===id)||rows[0];
-  const long=c.drivers?.[r.id]||null;
-  const o=canvas(s,'HUB');o.actions=actions;
-  o.headline(65,106,'DRIVER PROFILE  /  '+standingName(c,r),40,GOLD);
-  o.panel(780,418,1320,540,.95);
-  const fields=[
-    ['CHAMPIONSHIP POSITION','#'+(rows.indexOf(r)+1)+' / 16'],
-    ['CHAMPIONSHIP SEED','#'+r.seed],
-    ['KNOCKOUT POINTS',r.knockout+' / 20'],
-    ['CREW POINTS',r.crew+' / 20'],
-    ['FOUR-WIDE POINTS',r.fourWide+' / 40'],
-    ['TOTAL CHAMPIONSHIP POINTS',r.total+' / 80'],
-    ['PROFESSIONAL DRIVER RATING',String(long?.rating||r.rating||'—')],
-  ];
-  fields.forEach(([k,v],i)=>{
-    o.label(134,194+i*66,k,20,MUTED);
-    o.headline(930,186+i*66,v,25,GOLD,490);
-  });
-  o.button(780,767,530,52,hubPage===null?'BACK TO FULL STANDINGS':'BACK TO LIVE STANDINGS',
-    ()=>hubPage===null?
-      showTokyoChampionshipScreens(s,{view:'STANDINGS',actions}):
-      showHub(s,actions,{standingsPage:hubPage}));
-}
 function showRules(s,actions){
   const o=canvas(s,'HUB');o.actions=actions;
   o.headline(62,100,'CHAMPIONSHIP REGULATIONS',39,GOLD);
@@ -773,7 +796,13 @@ export function showTokyoChampionshipScreens(s,{view='HUB',driverId=null,profile
   if(target==='CREW_PICK')return showCarPicker(s,'CREW',actions);
   if(target==='BRACKET')return showFullKnockout(s,actions);
   if(target==='STANDINGS')return showStandings(s,actions);
-  if(target==='PROFILE')return showProfile(s,driverId,actions,profileHubPage);
+  if(target==='PROFILE'){
+    const rows=championshipStandings(state);
+    const position=rows.findIndex(row=>row.id===driverId);
+    const page=profileHubPage===null?
+      (position>=8?1:0):profileHubPage;
+    return showHub(s,actions,{displayProfileId:driverId,standingsPage:page});
+  }
   if(target==='RULES')return showRules(s,actions);
   if(target==='RESULT')return showResult(s,actions);
   if(EVENTS[target])return showEvent(s,target,actions);

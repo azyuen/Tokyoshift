@@ -11,8 +11,8 @@ test('the hub has a paged monitor and four-button competition ribbon',()=>{
   assert.match(file,/THE ROAD TO THE TITLE/);
   assert.match(file,/STAGES\.forEach\(\(stage,i\)=>/);
   assert.doesNotMatch(file,/VIEW ALL 16 DRIVERS/);
-  assert.match(file,/BACK TO PRO SEASON/);
-  assert.match(file,/CHAMPIONSHIP RULES/);
+  assert.doesNotMatch(file,/BACK TO PRO SEASON/);
+  assert.doesNotMatch(file,/RIVAL PROFILES/);
 });
 test('the knockout bracket uses persisted round pairings and winners',()=>{
   assert.match(file,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);
