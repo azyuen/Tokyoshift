@@ -437,6 +437,8 @@ function showEvent(s,stage,actions){
   // The Knockouts artwork already has a physical screen; never panel over it.
   if(stage!=='KNOCKOUT')o.panel(1245,381,558,424,.85,0x61778e);
   eventInfo(s,o,state,stage);
+  if(stage==='KNOCKOUT')o.button(1254,492,330,45,'EXPAND TOURNAMENT BRACKET',
+    ()=>showTokyoChampionshipScreens(s,{view:'BRACKET',actions}));
   const heat=active?heatFor(state):null;
   const next=stage==='KNOCKOUT'?'ROUND '+((heat?.round||0)+1)+
     ' / 4  VS  '+(heat?.opponent?.name||'—'):
@@ -469,6 +471,49 @@ function showEvent(s,stage,actions){
       showTokyoChampionshipScreens(s,{view:stage,actions});
   },{red:active});
 }
+
+function showFullKnockout(s,actions){
+  const state=circuit(s).activeChampionship;
+  const o=canvas(s,'KNOCKOUT');o.actions=actions;
+  o.panel(780,422,1450,675,.97,0x7297b5);
+  o.headline(91,95,'THE ROAD TO THE FINAL  /  16 DRIVERS',33,GOLD);
+  const entrants=new Map(state.entrants.map(row=>[row.id,row]));
+  const rounds=state.knockout?.bracket||seedKnockoutBracket(state.entrants);
+  const history=state.knockout?.results||[];
+  const left=[95,450,805,1160],cellW=294,top=176,pitch=57;
+  const center=(r,i)=>top+pitch*(2**r)*(i+.5);
+  const g=o.add(s.add.graphics().setDepth(224));
+  g.lineStyle(2,0x88a5c2,.85);
+  for(let round=0;round<3;round++)
+    for(let i=0;i<8/(2**round);i++){
+      const y=center(round,i),parent=center(round+1,Math.floor(i/2));
+      const mid=left[round]+cellW+23;
+      g.lineBetween(left[round]+cellW,y,mid,y);
+      g.lineBetween(mid,y,mid,parent);
+      g.lineBetween(mid,parent,left[round+1],parent);
+    }
+  ['ROUND OF 16','QUARTERFINALS','SEMIFINALS','GRAND FINAL'].forEach((title,i)=>
+    o.headline(left[i],150,title,20,GOLD,cellW));
+  const name=id=>id==='player:driver'?'YOU':
+    id?(entrants.get(id)?.name||'RIVAL'):'TO BE DECIDED';
+  for(let round=0;round<4;round++){
+    for(let i=0;i<8/(2**round);i++){
+      const pair=rounds[round]?.[i]||[null,null],y=center(round,i);
+      const winner=history[round]?.matches?.[i]?.winner,
+        player=pair.includes('player:driver');
+      o.panel(left[round]+cellW/2,y,cellW,51,.93,player?0xcba15b:0x4a687f);
+      pair.forEach((id,j)=>{
+        const color=id==='player:driver'?GOLD:
+          winner&&winner!==id?'#7c91a3':id?PALE:MUTED;
+        o.label(left[round]+13,y-22+j*24,name(id).slice(0,28),18,color,
+          {width:cellW-26});
+      });
+    }
+  }
+  o.button(780,782,460,48,'BACK TO KNOCKOUT BRIEFING',
+    ()=>showTokyoChampionshipScreens(s,{view:'KNOCKOUT',actions}));
+}
+
 function showCarPicker(s,stage,actions){
   const c=circuit(s),state=c.activeChampionship;
   if(state.stage!==stage||state.completed)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
@@ -621,9 +666,10 @@ export function showTokyoChampionshipScreens(s,{view='HUB',driverId=null,actions
   const state=circuit(s).activeChampionship;
   if(!state)return;
   const target=view==='EVENT'?state.stage:EVENTS[view]?view:view;
-  const assetView=target==='CREW_PICK'?'CREW':EVENTS[target]?target:'HUB';
+  const assetView=target==='BRACKET'?'KNOCKOUT':target==='CREW_PICK'?'CREW':EVENTS[target]?target:'HUB';
   if(loadAssets(s,assetView,()=>showTokyoChampionshipScreens(s,{view,driverId,actions})))return;
   if(target==='CREW_PICK')return showCarPicker(s,'CREW',actions);
+  if(target==='BRACKET')return showFullKnockout(s,actions);
   if(target==='STANDINGS')return showStandings(s,actions);
   if(target==='PROFILE')return showProfile(s,driverId,actions);
   if(target==='RULES')return showRules(s,actions);
