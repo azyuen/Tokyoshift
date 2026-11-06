@@ -749,16 +749,30 @@ export function showSeasonRecords(s,complete=false) {
 }
 
 /** Test fixture entry, never shown to regular profiles. Does not grant season points. */
-export function enterDevTokyoChampionship(s) {
+export function prepareDevTokyoChampionship(s) {
   if(!s?.registry?.get('devMode'))return false;
+  if(s.registry.get('competitionState')?.active){
+    s.proError='FINISH THE CURRENT RACE FIRST';
+    return false;
+  }
   const current=circuit(s);
   const created=createDevTokyoChampionship(current);
-  if(created.error){s.proError=created.error;redraw(s);return false;}
+  if(created.error){s.proError=created.error;return false;}
   if(!created.resumed){
-    if(!commit(s,{proCircuit:{...current,activeChampionship:created.championship}}))
-      return false;
+    try{
+      saveProTransaction(s.registry,{proCircuit:{
+        ...current,activeChampionship:created.championship,
+      }});
+    }catch(error){s.proError=error.message;return false;}
   }
   s.proError=null;
+  return true;
+}
+export function enterDevTokyoChampionship(s) {
+  if(!prepareDevTokyoChampionship(s)){
+    if(typeof s.renderLocation==='function')redraw(s);
+    return false;
+  }
   showTokyoChampionship(s,'HUB');
   return true;
 }
