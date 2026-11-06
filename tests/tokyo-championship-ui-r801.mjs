@@ -5,13 +5,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const file=readFileSync(new URL('../src/ui/TokyoChampionshipScreens.js',import.meta.url),'utf8');
 
-test('the hub has an embedded display and three-event ribbon',()=>{
+test('the hub has a paged monitor and four-button competition ribbon',()=>{
   assert.match(file,/LIVE CHAMPIONSHIP STANDINGS/);
   assert.match(file,/TOKYO_CHAMP_MONITORS\.HUB/);
   assert.match(file,/THE ROAD TO THE TITLE/);
   assert.match(file,/STAGES\.forEach\(\(stage,i\)=>/);
-  assert.match(file,/VIEW ALL 16 DRIVERS/);
-  assert.match(file,/CHAMPIONSHIP RULES/);
+  assert.doesNotMatch(file,/VIEW ALL 16 DRIVERS/);
+  assert.doesNotMatch(file,/BACK TO PRO SEASON/);
+  assert.doesNotMatch(file,/RIVAL PROFILES/);
 });
 test('the knockout bracket uses persisted round pairings and winners',()=>{
   assert.match(file,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);

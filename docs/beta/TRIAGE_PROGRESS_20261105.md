@@ -1,3 +1,11 @@
+# Current candidate: R805
+
+R803 commit c15db2c passed all four triggered workflows: Game regressions (185 commands; combined suite 1,186/1,186 tests, no failures or skips), loading/persistent cache, mobile boot/reload and real Phaser replay. Replay passed after retrying an Ubuntu font-mirror download timeout; the game test had not run in the timed-out attempt.
+
+Main then advanced to b0152dad (R804 championship hub polish). R805 incorporates those changes, preserves the deferred startup/cache fixes, and resolves the entry/worker build versions. The two new championship tests remain in both the unified Node discovery and mobile workflow. PR 270's checks are the authoritative final validation for this candidate. No merge or production deployment has been performed. Physical XR/iPad Pro 9.7 timing remains unmeasured.
+
+---
+
 # Beta triage continuation — 6 November 2026
 
 Candidate R803 includes current main R802 (88446a9d) and remains on PR 270, not merged or deployed.

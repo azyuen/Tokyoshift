@@ -85,6 +85,56 @@ shown for regular Career or Aruken Story profiles. This is a local game
 test shortcut, not a multiplayer server authorization system. The normal
 `createProvisionalChampionship` gate is unchanged.
 
+## R803 — Hub declutter, paged rankings and podium (7 November 2026)
+
+- Remove the Hub's thin full-width top bar, breadcrumb and close X. The
+  Championship title now sits high in the racing display font; below it is
+  the smaller Season number, without the former descriptive subtitle.
+  Event briefings, driver profiles and secondary screens keep their original
+  navigation chrome. A discreet **Back to Pro Season** action at the bottom
+  keeps the Hub escapable after removing X.
+- Project **exactly eight** standings rows on the embedded left-wall monitor,
+  with 1–8 / 9–16 paging arrows and touch targets to open each driver's actual
+  Championship breakdown. Return from a monitor-selected driver profile
+  restores the same standings page.
+- Three event buttons are on/off monitor previews, **not** navigation into
+  locked or active event briefings. A second tap restores the live rankings;
+  they show authentic rules for individual knockout, crew and four-wide.
+- The **fourth equal-sized red button** is the only Hub entry route. It
+  follows the live authoritative `activeChampionship.stage` and changes
+  from Enter Event 01 to 02 to 03 automatically; after completion it opens
+  the Championship results view.
+- Remove the redundant right-side player-rank box and Sayaka Hub sprite.
+  Place the actual **top three by live championship standings** at enlarged
+  double scale and lowered by approximately one original body length. If
+  the player is not top three, show them as a fourth sprite on the right,
+  aligned with the leaders. If an AI-only professional driver lacks an
+  authored named sprite, use the project's existing generic Pro-driver art
+  rather than falsely displaying a named regional character.
+- The lower strip carries a Road to the Title heading, four same-size
+  event buttons, plus smaller Rival Profiles / Championship Rules /
+  Back to Pro Season actions. No scores, races or prize mechanisms change.
+
+## R804 — Focused Hub polish (7 November 2026)
+
+- Remove the three small Hub footer buttons entirely: Rival Profiles,
+  Championship Rules, and Back to Pro Season. The three event previews and the
+  red current-event entry button are unchanged.
+- Enlarge each of the live podium sprites exactly **50% beyond R803**
+  (height and width bounds both multiplied by 1.5), and lower their feet so
+  heads remain visible; shift the group to the right to keep the built-in
+  wall standings screen unobstructed.
+- Pressing a driver on the live standings now displays a compact **driver
+  dossier inside the same wall monitor** rather than opening the old
+  full-screen popup. It shows saved rank, seed, points in each event,
+  total points, Pro driver rating and actual wins/losses when available.
+  A plain back arrow and text restore the same standings page.
+- Page arrows for ranks 1–8 and 9–16 are now **unboxed glyphs** with
+  invisible 56×48 touch targets; disabled arrows are muted, not interactive.
+- No changes to scoring, registration, Championship stage transitions,
+  persistent profiles or race physics. The original full-screen
+  profile renderer is retired.
+
 ## Test checklist before merge/deploy
 
 - Fresh qualified save: Season Results → Enter Championship → Hub → Knockout briefing.
@@ -100,4 +150,4 @@ test shortcut, not a multiplayer server authorization system. The normal
 - Finish with a win and a defeat; confirm prize, career title and Office persistence, hub final standings and repeat season.
 - Device testing on iPhone XR / iPad Pro 9.7; inspect safe area, text and tappable areas; measure initial background load.
 
-**Current branch:** `feature/tokyo-championship-ui`. Do not merge or deploy without approval and device/browser validation.
+**Status:** Current production UI is maintained on `main`. The original pre-release branch/approval note is historical; each change is validated through its own pull request and browser checks.
