@@ -5,6 +5,38 @@ import { normaliseProCircuitState, getProCircuitDriverSeeds } from './proCircuit
 import { getProQualification } from './proSeason.js?v=20261030-r724';
 import { characters } from './characters.js?v=20261010-r459';
 
+import { cars } from './cars.js?v=20261026-r687';
+import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
+
+// Championship-only road-car pool; Le Mans prototypes are deliberately absent.
+// The car/build snapshots persist in the Championship save and never reroll.
+export const CHAMPIONSHIP_AI_CAR_POOL=Object.freeze([
+  'r34','evo6','rx7fd','s2000','r32','jza80','gc8','gdb','s15',
+]);
+export function createChampionshipAiGarage(championshipId,entrantId) {
+  const pool=CHAMPIONSHIP_AI_CAR_POOL.filter(id=>Boolean(cars[id]));
+  if(pool.length<3)throw Error('CHAMPIONSHIP AI CAR POOL INCOMPLETE');
+  const offset=hash(championshipId+':'+entrantId)%pool.length;
+  return Array.from({length:3},(_,slot)=>{
+    const carId=pool[(offset+slot*3)%pool.length];
+    const paintColor=[0xd43135,0x397dc1,0xe8c34a,0x52a57c,0xb0a3d9,0xf2f2ed][hash(entrantId+':paint:'+slot)%6];
+    const state=createRivalBuildState(cars[carId],5,{
+      seed:championshipId+':'+entrantId+':garage:'+slot,
+      paintColor,raceType:'Standing Start',
+      archetype:slot===0?'launchDrag':slot===1?'balancedStreet':'turboRoll',
+    });
+    return {carId,state};
+  });
+}
+export function getChampionshipAiCar(raw,entrantId,stage='KNOCKOUT',round=0) {
+  const entrant=raw?.entrants?.find(e=>e.id===entrantId);
+  if(!entrant)return null;
+  const garage=entrant.garage;
+  if(!Array.isArray(garage)||garage.length!==3)return null; // legacy: original selection
+  const slot=stage==='FOUR_WIDE'?2:stage==='CREW'?1:0;
+  return garage[slot];
+}
+
 export const TOKYO_CHAMPIONSHIP_SCORING = Object.freeze({
   knockout: Object.freeze([20,17,13,9,5]),
   crew: Object.freeze([3,8,14,20]),
@@ -72,6 +104,7 @@ export function createProvisionalChampionship(raw) {
   // Snapshot skill tiers so old saves and completed brackets never reroll.
   const opposition=entrants.filter(r=>r.id!==PLAYER);
   opposition.forEach((r,i)=>r.skillTier=i<Math.round(opposition.length*.75)?5:4);
+  opposition.forEach(r=>{r.garage=createChampionshipAiGarage('tokyo:s'+c.season,r.id);});
   return {championship:{schema:1,id:'tokyo:s'+c.season,season:c.season,
     rosterType:'TOKYO_CHAMPIONSHIP',stage:'KNOCKOUT',entrants,
     knockout:{round:0,results:[]},crew:{results:[]},fourWide:{results:[]},
