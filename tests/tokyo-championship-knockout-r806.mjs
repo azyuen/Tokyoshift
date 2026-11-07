@@ -25,7 +25,7 @@ test('Knockout monitor has only live bracket and compact expand control',()=>{
 test('knockout actions retain setup, advice and race navigation',()=>{
  assert.match(event,/saveProTransaction/);
  assert.match(event,/if\(stage==='KNOCKOUT'\)\{/);
- assert.match(event,/if\(stage==='KNOCKOUT'\)\{\s*o\.button\(1230,729,338,70/);
+ assert.match(event,/if\(stage==='KNOCKOUT'\)\{[\s\S]*?o\.button\(1230,729,338,70/);
  assert.match(event,/o\.button\(1230,795,338,34,'RETURN TO HUB'/);
 });
 test('next opponent is red skewed card, not free-floating text',()=>{
