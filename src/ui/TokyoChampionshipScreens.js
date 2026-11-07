@@ -334,7 +334,7 @@ const HUB_EVENT_EXPLANATIONS=Object.freeze({
       'QUALIFYING: FOUR HEATS; TOP TWO IN EACH ADVANCE.',
       'SEMIFINALS: TWO HEATS; TOP TWO IN EACH ADVANCE.',
       'GRAND FINAL: FOUR DRIVERS RACE FOR THE TITLE.',
-      'A SINGLE REGISTERED DRIVER CAR IS LOCKED FOR SOLO STAGES.',
+      'CHOOSE ONE REGISTERED CAR PER SOLO EVENT. CHANGE CARS BETWEEN EVENTS.',
     ],
   }),
 });
@@ -846,8 +846,8 @@ function showCarPicker(s,stage,actions){
           !cars[id].crewLoan&&(state.devBypass||!getProSeasonDriverCarError(c,id)));
   o.panel(780,438,1330,540,.94);
   o.label(103,179,crew?'SELECT A DIFFERENT RECRUITED CREW CAR FOR THIS HEAT':
-    (state.devBypass?'TEST MODE / CHOOSE ONE OWNED CAR / LOCKED FOR SOLO STAGES':
-      'CHOOSE ONE REGISTERED DRIVER CAR / LOCKED FOR KNOCKOUTS AND FOUR-WIDE'),
+    (state.devBypass?'TEST MODE / CHOOSE ONE OWNED CAR / LOCKED FOR THIS EVENT':
+      'CHOOSE ONE REGISTERED DRIVER CAR / LOCKED FOR THIS EVENT'),
     21,MUTED);
   if(!roster.length)o.label(110,320,'NO ELIGIBLE CAR AVAILABLE. RETURN TO DAICHI OR YOUR GARAGE.',23,'#ffacb2');
   roster.slice(0,7).forEach((id,i)=>{
@@ -928,7 +928,7 @@ function showRules(s,actions){
     ['02  CREW BATTLES','Three player-driven crew heats using three different crew cars. Maximum 20 points.'],
     ['03  FOUR-WIDE FINALE','Four-wide qualifier, semifinals and final. Maximum 40 points.'],
     ['OVERALL TITLE','All 16 drivers remain in the Championship; stage elimination only affects stage points.'],
-    ['CAR REGISTRATION','One of your three season cars locks across solo stages. Crew heats require distinct cars.'],
+    ['CAR REGISTRATION','Choose one registered car for knockouts and one for four-wide. You may reuse a car. Crew heats require distinct cars.'],
     ['TIEBREAK','Four-wide score, then knockout score, then Championship seed.'],
   ];
   rules.forEach(([h,b],i)=>{o.headline(140,187+i*79,h,22,GOLD);o.label(140,219+i*79,b,19,PALE,{width:1220});});
