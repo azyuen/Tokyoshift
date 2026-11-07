@@ -2,7 +2,7 @@
 // Only presentation, navigation and one-use strategy notes live here.
 // Authoritative scoring, car locks and race settlement remain in the existing modules.
 import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
-  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
+  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -778,10 +778,18 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     if(stage==='CREW')return showCarPicker(s,stage,actions);
     const selected=s.registry.get('selectedCarId');
     const roster=c.registeredDriverCars||[];
-    const carId=(state.devBypass||roster.includes(selected))&&selected||
-      state.driverCarId||roster[0];
+    const locked=getChampionshipEventCar(state,stage);
+    const carId=locked||((state.devBypass||roster.includes(selected))&&selected)||
+      (state.devBypass?state.driverCarId:null)||roster[0];
     if(!carId){s.proError='SELECT A REGISTERED CAR IN PRO PADDOCK';
       return showEvent(s,stage,actions);}
+    const check=lockChampionshipEventCar(state,stage,carId,roster,
+      s.registry.get('ownedCarIds')||[],Boolean(state.devBypass));
+    if(check.error){s.proError=check.error;return showEvent(s,stage,actions);}
+    try{
+      if(check.championship!==state)
+        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:check.championship}});
+    }catch(error){s.proError=error.message;return showEvent(s,stage,actions);}
     if(!actions.startRace(stage==='KNOCKOUT'?'CHAMP_KO':'CHAMP_FOUR',carId))
       showTokyoChampionshipScreens(s,{view:stage,actions});
   }
