@@ -90,6 +90,6 @@ test('Arkon portraits move right and react correctly; Ginza manga flips toward S
   assert.ok(existsSync('assets/Characters/Dev/sayaka_fujieda_laughing.png'));
   const manga = source('src/ui/MangaCutscene.js');
   assert.match(manga, /ginzaArkonFaceSayaka = side === 'right' && characterId === 'arkonDen'/);
-  assert.match(manga, /flipInward: !ginzaArkonFaceSayaka/);
-  assert.match(manga, /flipInward: !actor\?\.ginzaArkonFaceSayaka/);
+  assert.match(manga, /flipInward: !\(ginzaArkonFaceSayaka \|\| chapter08ArukenFlip\)/);
+  assert.match(manga, /flipInward: !\(actor\?\.ginzaArkonFaceSayaka \|\| actor\?\.chapter08ArukenFlip\)/);
 });

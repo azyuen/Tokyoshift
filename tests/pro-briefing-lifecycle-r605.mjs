@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -57,7 +58,7 @@ test('R605 saved crew result returns to same locked briefing for the next heat',
   assert.match(crewPanel,/lockedLineup:\[\.\.\.ids\]/);
   assert.match(crewPanel,/const lineup=t\.lockedLineup\|\|f\.prepared\?\.lineup\|\|null/);
   assert.match(crewUI,/if\(!locked\)footerButton\(1196/);
-  assert.match(crewUI,/unpaid\?'GO TO GRID \/\/ ¥'/);
+  assert.match(crewUI,/unpaid\?'GO TO GRID'/);
   assert.match(crewUI,/'NEXT HEAT'/);
   assert.match(track,/autoOpenProCrewFixture:true/);
 });
@@ -92,7 +93,7 @@ test('R605 first briefing is free; paid driver heats and trophy heats go straigh
 test('R605 right-side event listings have no duplicate entry fees',()=>{
   assert.match(crewPanel,/const concise=lines\.filter/);
   assert.match(crewPanel,/ENTER EVENT BRIEFING/);
-  assert.match(complex,/canEnter \? proEventEntryLabel\(event\.entryFee\)/);
+  assert.match(complex,/canEnter \? \(!openCircuit\?'EVENT BRIEFING':proEventEntryLabel\(event\.entryFee\)\)/);
   assert.match(crewPanel,/showUnpaidCrewBriefing\(s,pending,\[\]\)/);
   assert.match(crewPanel,/commit\(s,\{proCircuit:prepared\.circuit,cash:verified\.cash\}\)/);
 });

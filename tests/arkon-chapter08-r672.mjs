@@ -23,12 +23,12 @@ test('Chapter 8 is registered as a real ordered three-race script',()=>{
   assert.deepEqual(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_RACE').map(s=>s.index),[0,1,2]);
   assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_RETURN').length,3);
   assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='ARKON_CH8_CONTRACT').length,1);
-  assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='FADE_STORY_ACTOR'&&s.actorId==='sayakaFujieda').length,1);
+  assert.equal(ARKON_CHAPTER_08.steps.filter(s=>s.type==='RETREAT_STORY_ACTOR'&&s.actorId==='sayakaFujieda').length,1);
   assert.equal(ARKON_CHAPTER_08.steps.at(-1).type,'END');
   assert.equal(ARKON_CH8_RACES.length,3);
   assert.ok(ARKON_CHAPTER_08.steps.some(s=>s.vipParty===true));
   assert.ok(ARKON_CHAPTER_08.steps.some(s=>s.type==='MANGA'&&s.pages.some(p=>p.text.includes('like a d'))));
-  assert.ok(ARKON_CHAPTER_08.steps.some(s=>s.type==='MANGA'&&s.pages.some(p=>p.text.includes('Where is the man who refused'))));
+  assert.ok(ARKON_CHAPTER_08.steps.some(s=>s.type==='MANGA'&&s.title==='EVERYTHING HAS CHANGED'&&s.pages.length>=2));
 });
 test('Chapter 8 races are career-isolated and escrow actual cash once',()=>{
   const s=fixture();

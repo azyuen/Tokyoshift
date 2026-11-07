@@ -1,3 +1,4 @@
+import {assertVersionedImport} from './helpers/module-contracts.mjs';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -22,8 +23,8 @@ test('Crew chapter routes to actual CrewSpaceScene sharing the same Garage imple
  const crew=source('src/scenes/CrewSpaceScene.js');
  const main=source('src/main.js');
  assert.match(replay,/queueSafeSceneStart\(scene,crew\?'CrewSpaceScene':'GarageScene'/);
- assert.match(crew,/GarageScene\.js\?v=20261017-r574/);
- assert.match(main,/CrewSpaceScene\.js\?v=20261017-r574/);
+ assertVersionedImport('src/scenes/CrewSpaceScene.js','GarageScene');
+ assertVersionedImport('src/main.js','CrewSpaceScene');
 });
 test('both normal player and developer replay entry points are wired consistently',()=>{
  const paths=['src/ui/StoryArchivePanel.js','src/ui/CutsceneTester.js',

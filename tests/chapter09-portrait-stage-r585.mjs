@@ -108,9 +108,9 @@ test('unchanged 150% rego-room geometry retains natural placement under manga',(
 test('standard manga two-person geometry and original whole-screen translucent shade',()=>{
   const manga=source('src/ui/MangaCutscene.js');
   const stage=source('src/ui/Chapter09EstablishingShot.js');
-  assert.match(manga,/function frameFor\(scene, side\) \{/);
-  assert.match(manga,/x: width \* 0\.28/);
-  assert.match(manga,/x: width \* 0\.72/);
+  assert.match(manga,/function frameFor\(scene, side, threePerson = false\) \{/);
+  assert.match(manga,/x: width \* \(threePerson \? 0\.17 : 0\.28\)/);
+  assert.match(manga,/x: width \* \(threePerson \? 0\.83 : 0\.72\)/);
   assert.doesNotMatch(manga,/chapter09PlayerSpeaking|roomPortraits/);
   assert.match(manga,/paperBackground \? 1 : whiteWash \? 0\.83 : 0\.54/);
   assert.match(manga,/ignoreChapter09Stage: Boolean\(options\.chapter09RoomBackdrop\)/);
@@ -118,6 +118,6 @@ test('standard manga two-person geometry and original whole-screen translucent s
   assert.match(stage,/setAlpha\(initialAlpha\)/);
   assert.doesNotMatch(stage,/tween\(\[person\.sprite,person\.shadow\],\.86,680\)/);
   assert.match(stage,/if\(visitor\)tween\(\[visitor\.sprite,visitor\.shadow\],1,950\)/);
-  assert.match(source('src/ui/CutsceneTester.js'),/startChapter09\(scene,\{preview:true\}\)/);
+  assert.match(source('src/ui/CutsceneTester.js'),/beginProSponsorPlayableReplay\(scene,/);
   assert.match(source('src/ui/StoryArchivePanel.js'),/startChapter09\(scene,\{preview:true\}\)/);
 });

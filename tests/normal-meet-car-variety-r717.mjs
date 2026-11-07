@@ -1,3 +1,5 @@
+import './helpers/phaser-math.mjs';
+import {assertBuildCacheContract,assertVersionedImport} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -89,12 +91,8 @@ test('physical matcher still selects a real developed rival from the bounded sho
 });
 
 test('R788 retains normal Meet variety while keeping Showdown mechanics separate',()=>{
-  assert.equal(JSON.parse(read('version.json')).build,'R788');
-  assert.match(read('index.html'),/id="build-stamp">R788/);
-  assert.match(read('index.html'),/main\.js\?v=20261104-r788/);
-  assert.match(read('src/main.js'),/MeetScene\.js\?v=20261104-r788/);
-  assert.match(read('sw.js'),/const BUILD = 'R788'/);
-  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-content-v1-'/);
+  assertBuildCacheContract();
+  assertVersionedImport('src/main.js','MeetScene');
   assert.match(read('src/scenes/MeetScene.js'),/streetShowdownCouponHunt\.js\?v=20261104-r788/);
   const showdown=read('src/data/streetShowdowns.js');
   assert.match(showdown,/export function createStreetShowdownRounds\(/);

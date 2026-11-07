@@ -1,3 +1,4 @@
+import {assertBuildCacheContract} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -67,6 +68,5 @@ test('starter and developer Magna defaults do not overwrite other saved car pain
   assert.match(state,/paintColor: getDefaultFactoryPaintColor\(carId\)/);
   const serviceWorker=file('sw.js');
   const index=file('index.html');
-  assert.match(serviceWorker,/R62[34]/);
-  assert.match(index,/R62[34]/);
+  assertBuildCacheContract();
 });

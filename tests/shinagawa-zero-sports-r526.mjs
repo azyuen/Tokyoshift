@@ -70,8 +70,8 @@ test('Zero/Sports tunes and decal use the installed transparent logo', () => {
 test('all tuner modes and donor animation use the same hero-scale display width', () => {
   const code = readFileSync(new URL('../src/scenes/TunerShopScene.js', import.meta.url), 'utf8');
   assert.match(code, /const TUNER_STAGE_CAR_WIDTH = Math\.round\(770 \* HERO_CAR_DISPLAY_SCALE\)/);
-  // Declaration plus hero, specialist tuning, decal placement, donor roll-in and finished hero.
-  assert.equal((code.match(/TUNER_STAGE_CAR_WIDTH/g) || []).length, 6);
+  // Declaration plus hero, specialist tuning, decal placement, donor roll-in and finished hero plus Full Works preview and delivery.
+  assert.equal((code.match(/TUNER_STAGE_CAR_WIDTH/g) || []).length, 8);
   assert.doesNotMatch(code, /drawCarOnStage\(carId, 720, 650, 730/);
   assert.doesNotMatch(code, /\n\s+730,\n\s+10,/);
 });

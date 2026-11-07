@@ -121,7 +121,7 @@ test('the story scene uses source-art transforms rather than window-Y placement'
   assert.doesNotMatch(scene,/projectGroundEntity\(profile/);
   assert.match(scene,/viewport\.centreX,viewport\.centreY/);
   assert.match(scene,/stageMode==='native'/);
-  assert.match(scene,/const x=Number\(estimate\?\.x/);
+  assert.match(scene,/const x=Number\([^;\n]*estimate\?\.x/);
 });
 
 test('R645 reviewer presents real image pairs and editable guide line geometry',()=>{

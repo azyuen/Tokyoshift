@@ -238,7 +238,7 @@ test('final UI, replay-safe car registration and existing cutscenes are wired',(
   assert.match(race,/cash:Number\(this.registry.get\('cash'\)\|\|0\)\+award.cashPrize/);
   assert.match(panel,/showChampionshipCrewSelection\(s\)/);
   assert.match(panel,/driverCarId:carId/);
-  assert.match(panel,/TOKYO CHAMPION \/\/ OFFICIAL RESULTS/);
+  assert.match(panel,/showTokyoChampionshipScreens\(s/);
   assert.match(panel,/tokyoChampionshipVictory/);
   assert.match(panel,/tokyoChampionshipDefeat/);
   assert.match(panel,/tokyoChampionshipOpening/);

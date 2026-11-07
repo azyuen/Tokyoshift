@@ -11,8 +11,8 @@ test('crew briefing uses the lower-right street quadrant, not the skyline', () =
   const ui = meet.slice(start, end);
   assert(start > 0 && end > start);
   assert.match(ui, /headerShape\(806, 446, 724, 294, 0x06121f/);
-  assert.match(ui, /text\(830, 459, 'BATTLE BRIEFING/);
-  assert.match(ui, /const y = 504 \+ i \* 70;/);
+  assert.match(ui, /text\(830, 454, 'BATTLE BRIEFING/);
+  assert.match(ui, /const y = 519 \+ i \* 70;/);
   assert.match(ui, /SCOUT:/);
   assert.doesNotMatch(ui, /headerShape\(54, 202, 698, 188/);
   const panelBottom = 446 + 294;

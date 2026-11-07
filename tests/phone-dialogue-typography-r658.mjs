@@ -1,3 +1,4 @@
+import {assertVersionedImport,assertBuildCacheContract} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -35,8 +36,8 @@ test('phone-only HUD styling inherits shared story font without modifying racing
   assert.ok(hud.indexOf(helper,pos)>pos);
   assert.ok(hud.indexOf(helper,pos)<hud.indexOf("  const setPortrait =",pos));
   assert.equal(hud.slice(0,pos).includes(helper),false);
-  assert.match(hud,/StoryDialogueTypography\.js\?v=20261023-r658/);
-  assert.match(manga,/StoryDialogueTypography\.js\?v=20261023-r658/);
+  assert.match(hud,/StoryDialogueTypography\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(manga,/StoryDialogueTypography\.js\?v=\d{8}-r[\w-]+/);
   assert.match(manga,/applyStoryDialogueTypography\(\{ dialogue: body, heading: labelText/);
 });
 
@@ -46,14 +47,14 @@ test('standard and animated/swipe phone calls never override the global template
   const manga=src('src/ui/MangaCutscene.js');
   for(const [label,s] of [['standard',normal],['swipe',swipe]]){
     assert.match(s,/createRaceDialogueHud\(scene/);
-    assert.match(s,/RaceCoachHud\.js\?v=20261023-r658/);
+    assert.match(s,/RaceCoachHud\.js\?v=\d{8}-r[\w-]+/);
     assert.doesNotMatch(s,/\.setFontSize\(['"]17px['"]\)/,
       label+' must never override the shared font size after construction');
     assert.doesNotMatch(s,/\.setFontSize\(['"]10px['"]\)/,
       label+' must never shrink the phone speaker heading');
   }
-  assert.match(normal,/OpeningPhonePrototype\.js\?v=20261023-r658/);
-  assert.match(manga,/PhoneConversation\.js\?v=20261023-r658/);
+  assert.match(normal,/OpeningPhonePrototype\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(manga,/PhoneConversation\.js\?v=\d{8}-r[\w-]+/);
   assert.match(normal,/panel\.dialogue\.setText\(formatPhoneMessage/);
   assert.match(swipe,/hud\.dialogue\.setText\(text\)/);
 });
@@ -71,21 +72,12 @@ test('both established chapter 08 phone callers retain their content and use the
     'src/scenes/CentralTokyoScene.js','src/scenes/OshiageScene.js',
     'src/scenes/RaceScene.js','src/scenes/TrainStationScene.js',
     'src/story/StoryDirector.js']){
-    assert.match(src(file),/MangaCutscene\.js\?v=20261023-r658/,
-      file+' must load latest unified phone dialogue renderer');
+    assertVersionedImport(file,'MangaCutscene');
   }
 });
 
-test('iPad and iPhone refresh the R658 story/phone templates without cache mixing',()=>{
-  const html=src('index.html');
-  const sw=src('sw.js');
-  const game=src('src/main.js');
-  const version=JSON.parse(src('version.json'));
-  assert.equal(version.build,'R658');
-  assert.match(html,/main\.js\?v=20261023-r658/);
-  assert.match(sw,/const BUILD = 'R658'/);
-  assert.match(sw,/tokyoshift-assets-r658/);
-  assert.match(game,/StoryDirector\.js\?v=20261023-r658/);
-  assert.match(game,/MeetScene\.js\?v=20261023-r658/);
-  assert.match(game,/GarageScene\.js\?v=20261023-r658/);
+test('phone rollout retains coherent entry build and persistent artwork cache',()=>{
+ assertBuildCacheContract();
+ for(const name of ['MeetScene','GarageScene']) assertVersionedImport('src/main.js',name);
+ assertVersionedImport('src/ui/MangaCutscene.js','PhoneConversation');
 });

@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -39,7 +40,7 @@ function driverState(c,index) {
   };
 }
 
-test('R602: shared cooldown applies across crew and driver series, including forfeits',()=>{
+test('R602: crew cooldown advances on forfeits without blocking driver consultations',()=>{
   const r=registry();
   const id=crewEnter(r);
   const used=useProCrewAdvice(r,id);
@@ -54,12 +55,12 @@ test('R602: shared cooldown applies across crew and driver series, including for
   assert.equal(getProCrewAdviceAvailability(r).remaining,2);
 
   const driver=driverState(first.circuit,1);
-  assert.equal(driverAdviceStatus(first.circuit,driver).available,false);
+  assert.equal(driverAdviceStatus(first.circuit,driver).available,true);
   const second=forfeitOpenDriverTransaction(first.circuit,driver,{});
   assert.equal(second.error,undefined,second.error);
   r.set('proCircuit',second.changes.proCircuit);
   assert.equal(second.changes.proCircuit.eventTick,first.circuit.eventTick+1);
-  assert.equal(driverAdviceStatus(second.changes.proCircuit,driver).remaining,1);
+  assert.equal(driverAdviceStatus(second.changes.proCircuit,driver).remaining,0);
   assert.equal(second.changes.proCircuit.crewAdviceCooldownUntil,used.circuit.crewAdviceCooldownUntil);
 
   const thirdId=crewEnter(r);
@@ -74,7 +75,7 @@ test('R602: shared cooldown applies across crew and driver series, including for
   assert.equal(driverAdviceStatus(third.circuit,following).available,true);
   const consult=consumeDriverAdvice(third.circuit,following);
   assert.equal(consult.error,undefined,consult.error);
-  assert.equal(consult.circuit.crewAdviceCooldownUntil,third.circuit.eventTick+3);
+  assert.equal(consult.circuit.crewAdviceCooldownUntil,third.circuit.crewAdviceCooldownUntil);
   assert.equal(consult.competitionState.briefingAdviceUsed,true);
   assert.match(consumeDriverAdvice(consult.circuit,consult.competitionState).error,/ALREADY USED/);
 });

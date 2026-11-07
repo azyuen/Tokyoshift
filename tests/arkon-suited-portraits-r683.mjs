@@ -64,12 +64,12 @@ test('R683 Ch8 gala anger, fear, and vulnerability are expressed in the suit, in
   const dinner=scene(ARKON_CHAPTER_08,'A DIFFERENT SIDE OF TOKYO');
   assert.equal(dinner.pages.find(p=>p.text==='You look incredible.')?.leftPose,'devBlushing');
   const confrontation=scene(ARKON_CHAPTER_08,'EVERYTHING HAS CHANGED');
-  assert.ok(confrontation.pages.some(p=>p.leftPose==='devAngry'));
-  assert.ok(confrontation.pages.some(p=>p.leftPose==='devNervous'));
+  assert.ok(confrontation.pages.some(p=>p.leftPose==='devDisappointed'));
+  assert.ok(confrontation.pages.some(p=>p.leftPose==='devUnsure'));
   assert.ok(confrontation.pages.every(p=>p.leftPose==='ginzaSuit'||
     p.leftPose.startsWith('dev')));
   const aftermath=scene(ARKON_CHAPTER_08,'THE PRICE OF AMBITION');
-  assert.deepEqual(aftermath.pages.map(p=>p.leftPose),['devNervous','devSad']);
+  assert.deepEqual(aftermath.pages.map(p=>p.leftPose),['devNervous','devSerious','devNervous','devSad']);
   assert.ok(ARKON_CHAPTER_08.steps.some(s=>s.type==='STAGE'&&
     s.characters?.some(c=>c.id==='arkonDen'&&c.pose==='ginzaSuit')));
   assert.equal(scene(ARKON_CHAPTER_08,'THE AFTERNOON COFFEE').pages[0].leftPose,'storyIdle');
@@ -85,19 +85,19 @@ test('R683 Ch9 final confrontation preserves suit when VIP speaks and serious ex
   assert.equal(scene(ARKON_CHAPTER_09,'THE ROAD HOME').pages[0].leftPose,'devSerious');
 });
 
-test('Ch10 gallery stays formal; closing invitation matches the casual final drive',()=>{
-  const gallery=scene(ARKON_CHAPTER_10,'GINZA GALLERY');
-  assert.equal(gallery.pages[0].leftPose,'devLaughing');
-  const reassurance=scene(ARKON_CHAPTER_10,'A RARE MOMENT OF DOUBT');
-  assert.ok(reassurance.pages.some(p=>p.leftPose==='devSerious'));
-  const invitation=scene(ARKON_CHAPTER_10,'ONE MORE EVENING');
-  assert.ok(invitation.pages.some(p=>p.leftPose==='storyBlushing'));
-  assert.ok(invitation.pages.some(p=>p.leftPose==='storySheepish'));
-  for(const title of ['GINZA GALLERY','SOMETHING WE BUILT TOGETHER','A RARE MOMENT OF DOUBT']){
-    assert.ok(scene(ARKON_CHAPTER_10,title).pages.every(p=>p.leftPose==='ginzaSuit'||
-      p.leftPose.startsWith('dev')),title);
+test('Ch10 empty gallery and evening invitation retain casual expressions',()=>{
+  for(const title of ['A HOME FOR THE CARS','A RARE MOMENT OF DOUBT','AN EVENING TOGETHER','A LITTLE OPPORTUNITY']){
+    const conversation=scene(ARKON_CHAPTER_10,title);
+    assert.ok(conversation,title);
+    for(const page of conversation.pages){
+      assert.ok(page.leftPose.startsWith('story'),title);
+      const asset=getCharacterVisualAsset('arkonDen',page.leftPose);
+      assert.ok(asset&&!asset.fallback,page.leftPose);
+      assert.ok(existsSync(new URL('../'+asset.path,import.meta.url)),asset.path);
+    }
   }
-  assert.equal(scene(ARKON_CHAPTER_10,'A LITTLE OPPORTUNITY').pages[0].leftPose,'storyIdle');
+  assert.ok(scene(ARKON_CHAPTER_10,'A RARE MOMENT OF DOUBT').pages.some(p=>p.leftPose==='storySerious'));
+  assert.ok(scene(ARKON_CHAPTER_10,'AN EVENING TOGETHER').pages.some(p=>p.leftPose==='storyCoolShy'));
 });
 
 test('R683 new art/pose selection does not change scripted events or chapter indices',()=>{

@@ -1,6 +1,7 @@
 name: Oshiage Meet Browser R522
 on:
   push:
+    branches: [main]
     paths:
       - 'src/scenes/OshiageScene.js'
       - 'src/data/oshiageShowdown.js'
@@ -30,3 +31,9 @@ jobs:
           name: oshiage-r522-meet-screenshots
           path: artifacts/oshiage
           if-no-files-found: ignore
+
+permissions:
+  contents: read
+concurrency:
+  group: oshiage-browser-r522-${{ github.ref }}
+  cancel-in-progress: true

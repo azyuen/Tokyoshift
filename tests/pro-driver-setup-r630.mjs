@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -144,11 +145,11 @@ test('Daichi UI exposes both tabs, four levels, real build readouts and disabled
   assert.ok(ui.includes('INELIGIBLE CAR SETUP'));
   assert.ok(ui.includes('{disabled:!eligibility.eligible}'));
   assert.ok(crew.includes("INELIGIBLE CAR SETUP"));
-  assert.ok(complex.includes('feetY: STAGE.y + 372 + feetJitter'));
+  assert.ok(complex.includes('feetY: STAGE.y + 728'));
   assert.ok(!complex.includes('REGIONAL RIVALS // MOVED UP TO THE COMPLEX'));
-  assert.ok(complex.includes('xJitter'));
+  assert.ok(complex.includes("{ characterId: playerId, pose: 'idle'"));
   assert.ok(complex.includes('stock:Boolean(event.stock)'));
-  assert.ok(complex.includes("drivetrain:String(event.drivetrain||'').toUpperCase()"));
+  assert.ok(complex.includes("drivetrain:event.drivetrain||''"));
 });
 
 test('factory-stock check ignores saved but physically inactive Level III settings', async () => {

@@ -1,3 +1,4 @@
+import {assertVersionedImport,assertBuildCacheContract} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -87,15 +88,9 @@ test('story arrival and initial choice both wait for active user Continue',()=>{
   assert.match(src('src/data/storyDirectorScripts.js'),/MAKE YOUR CHOICE/);
 });
 
-test('R643 cache keys load newest story runner, staging and loan guards',()=>{
-  const boot=src('src/main.js');
-  for(const value of ['RaceScene','CentralTokyoScene',
-    'DevVaultStoryScene']) assert.ok(boot.includes(value+'.js?v=20261022-r643'),value);
-  assert.match(boot,/MeetScene\.js\?v=20261022-r645/);
-  assert.match(boot,/StoryDirector\.js\?v=20261022-r645/);
-  assert.match(src('src/story/StoryDirector.js'),/StoryScript\.js\?v=20261022-r643/);
-  assert.match(src('src/story/StoryDirector.js'),/storyDirectorScripts\.js\?v=20261022-r644/);
-  assert.match(src('src/scenes/DevVaultStoryScene.js'),/StoryComposition\.js\?v=20261022-r643/);
-  assert.match(src('version.json'),/R645/);
-  assert.match(src('sw.js'),/R645/);
+test('story runner and staging use resolvable versioned imports',()=>{
+ for(const name of ['RaceScene','CentralTokyoScene','DevVaultStoryScene','MeetScene']) assertVersionedImport('src/main.js',name);
+ for(const name of ['StoryScript','storyDirectorScripts']) assertVersionedImport('src/story/StoryDirector.js',name);
+ assertVersionedImport('src/scenes/DevVaultStoryScene.js','StoryComposition');
+ assertBuildCacheContract();
 });

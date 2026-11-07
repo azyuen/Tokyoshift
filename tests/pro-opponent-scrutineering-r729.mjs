@@ -1,3 +1,4 @@
+import {applyProRaceNosLimit} from '../src/data/proRaceNos.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -152,8 +153,8 @@ test('both registration and live race enforce the same scrutineering, no phantom
 
 test('Tri-Drive rival crews obey player drivetrain mix',()=>{
   const source=file('src/data/proSeason.js');
-  assert.match(source,/trophy\?\.id==='triDrive'&&r\.id!==PLAYER\?\['FWD','RWD','AWD'\]\[n\]:null/);
-  assert.match(source,/getCarMagazineMeta\(carId\)\.drivetrain===requiredDrivetrain/);
+  assert.match(source,/trophy\?\.id==='triDrive'&&r\.id!==PLAYER\?\['FWD','RWD','AWD'\]\[n\]:/);
+  assert.match(source,/getCarMagazineMeta\(carId\)\.drivetrain\)===requiredDrivetrain/);
 });
 
 test('restricted Pro Season nitrous capacities apply to AI and live builds',()=>{
@@ -161,7 +162,7 @@ test('restricted Pro Season nitrous capacities apply to AI and live builds',()=>
   const high=makeRound('r32',{nosInstalled:true,
     exhaustNosTuning:{nosKit:3,nitrousShot:2}});
   const before=inspectProOpponent(high.carId,high.opponentBuildState,rules);
-  assert.ok(before.reasons.some(reason=>reason.includes('NOS LIMIT')));
+  assert.equal(before.eligible,true,'larger purchased bottle is legal');
   const fixed=scrutineerProOpponentRound(high,rules,{
     targetPowerKW:340,seed:'pro-season:nos-1'
   });
@@ -169,5 +170,10 @@ test('restricted Pro Season nitrous capacities apply to AI and live builds',()=>
   const accepted=inspectProOpponent(fixed.round.carId,fixed.round.opponentBuildState,rules);
   assert.equal(accepted.eligible,true,accepted.reasons.join('/'));
   const built=getBuiltCar(fixed.round.carId,fixed.round.opponentBuildState);
-  assert.ok(Number(built.car.nosShots||0)<=1);
+  const raceConfig=applyProRaceNosLimit(built.car,rules);
+  assert.equal(raceConfig.nosShots,1);
+  assert.equal(built.car.nosShots,3,'scrutineering preserves purchased capacity');
+  assert.match(runtime,/applyProRaceNosLimit\(playerConfig, eventNosRules\)/);
+  assert.match(runtime,/applyProRaceNosLimit\(built.car, activeRules\)/);
+  assert.match(runtime,/new Vehicle\(rivalConfig, built.engine\)/);
 });

@@ -121,7 +121,7 @@ test('scene integrates three race streak, cutscene anonymity, preset and RGB pri
   assert.match(scene, /schoolSayakaKey\(lesson\.pose\)/);
   assert.doesNotMatch(scene.slice(scene.indexOf('  drawSchool() {'), scene.indexOf('  drawMeet() {')), /Sayaka Fujieda/);
   assert.match(scene, /this\.registry\.set\('raceReturnScene', 'OshiageScene'\)/);
-  assert.match(scene, /mode === 'custom' \? 16000 : 8000/);
+  assert.match(scene, /mode === 'custom' \? 16000 : mode === 'street' \? 12000 : 8000/);
   assert.match(scene, /this\.animateShopCarEntry\(this\.paintObjects, \{ duration: 4100, distance: 1100 \}\)/);
   assert.match(scene, /wheel\.sprite\.setAngle\(degrees\)/);
   const showdown = readFileSync(new URL('../src/data/oshiageShowdown.js', import.meta.url), 'utf8');

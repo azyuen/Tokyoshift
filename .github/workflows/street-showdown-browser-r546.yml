@@ -31,3 +31,9 @@ jobs:
           name: street-showdown-r546-screenshots
           path: artifacts/street-showdown
           if-no-files-found: ignore
+
+permissions:
+  contents: read
+concurrency:
+  group: street-showdown-browser-r546-${{ github.ref }}
+  cancel-in-progress: true

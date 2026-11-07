@@ -15,7 +15,7 @@ test('R488 garage thumbnail lowering applies only to the nine opt-in reference c
 test('R32 and RX8 already exist in the new dealership pool, with their correct game IDs', () => {
   assert.equal(AUTO_MARKET_LISTINGS.filter(l => l.carId === 'rx8').length, 1);
   assert.equal(AUTO_MARKET_LISTINGS.filter(l => l.carId === 'r32').length, 1);
-  assert.equal(AUTO_MARKET_LISTINGS.length, 29);
+  assert.equal(AUTO_MARKET_LISTINGS.length, 42);
 });
 
 test('stock pages provide access to EVERY new-car model, three at a time', () => {
@@ -35,7 +35,7 @@ test('stock pages provide access to EVERY new-car model, three at a time', () =>
   }
   assert.deepEqual(seen, fixture.map(l => l.carId));
   assert.ok(seen.includes('r32') && seen.includes('rx8'));
-  assert.match(market, /pageButton\(CARDS\.x \+ 945, 'PREV', -1\)/);
-  assert.match(market, /pageButton\(CARDS\.x \+ 1060, 'NEXT', 1\)/);
+  assert.match(market, /pageButton\(CARDS\.x \+ 921, 'PREV', -1\)/);
+  assert.match(market, /pageButton\(CARDS\.x \+ 1010, 'NEXT', 1\)/);
   assert.match(market, /this\.load\.once\('complete', finish\)/);
 });

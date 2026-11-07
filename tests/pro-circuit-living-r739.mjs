@@ -21,7 +21,7 @@ const rotation=n=>({rotationIndex:n,dayIndex:Math.floor(n/6),slotIndex:n%6,
   nextEventAt:1000+n*300000});
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('professional driver's generic helmet art is stable across event types and reloaded heats',()=>{
+test("professional driver's generic helmet art is stable across event types and reloaded heats",()=>{
   const rival={opponentDriverId:'pro:driver:02',opponentName:'Kenji Sato'};
   const a=getProDriverHelmetIndex({proSeasonId:'open:street:s1',roundIndex:0},rival);
   const b=getProDriverHelmetIndex({proSeasonId:'duel:night:s3',roundIndex:2},rival);

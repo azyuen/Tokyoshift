@@ -38,7 +38,7 @@ test('R608 Crew Hiroshi shows no fixture or repeated entry and uses a shorter si
   for(const label of ['EVENT','FORMAT','NEXT DRIVER','NEXT CAR','CAR RULE','POWER / NOS']){
     assert.ok(rows.includes("['"+label+"'"),'expected detail: '+label);
   }
-  assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1366,height:218\}\)/);
+  assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1434,height:218\}\)/);
   assert.match(chrome,/const h=height\?\?STEWARD_BUBBLE\.h,edge=x\+w/);
   assert.match(chrome,/x:850,y:24,w:674,h:258,triangleSide:36/);
   assert.match(driver,/renderStewardBriefing\(s,dialogueAdd,details,\{anchorX:1402\}\)/);

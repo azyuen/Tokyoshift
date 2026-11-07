@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDefaultGameState} from '../src/state/GameState.js';
@@ -65,7 +66,7 @@ test('Sayaka advice can be used again only after the current event and two other
 });
 
 function phaserMock(){
-  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}}};
+  globalThis.Phaser={...globalThis.Phaser,Textures:{FilterMode:{NEAREST:1}}};
   const nodes=[], add=(kind,attrs={})=>{
     const o={kind,attrs,active:true,width:Math.max(20,String(attrs.text||'').length*8),
       destroy(){this.active=false;return this;},

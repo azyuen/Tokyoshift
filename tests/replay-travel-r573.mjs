@@ -55,6 +55,6 @@ test('Arkon Den can leave an empty workshop using one owned personal car',()=>{
   const garage=source('src/scenes/GarageScene.js');
   assert.match(garage,/const devTravelCarId = !this\.crewMode && isArkonDen\(this\.registry\)/);
   assert.match(garage,/this\.ownedCarIds\.find\(id => cars\[id\] && !cars\[id\]\.crewLoan\)/);
-  assert.match(garage,/selectedCarId', this\.selectedCarId \|\| devTravelCarId \|\| null/);
+  assert.match(garage,/selectedCarId', this\.selectedCarId \|\| devTravelCarId \|\| proTravelCarId \|\| null/);
   assert.match(garage,/if \(!this\.selectedCarId && !devTravelCarId &&/);
 });

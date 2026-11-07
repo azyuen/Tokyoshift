@@ -81,7 +81,8 @@ test('failed finished season reports shortfall and safely reopens the circuit',(
   assert.equal(reset.circuit.seasonStatus,'OPEN');
   assert.equal(reset.circuit.calendar.archives.length,1);
   assert.equal(reset.circuit.calendar.archives[0].season,1);
-  assert.ok(startProfessionalSeason(reset.circuit).circuit,'player can enter next season');
+  const roster=['ef','ae86','gc8'];
+  assert.ok(startProfessionalSeason(reset.circuit,roster,roster).circuit,'player can enter next season with a nominated trio');
 });
 
 test('when qualification becomes impossible, the player may still finish the calendar',()=>{

@@ -74,7 +74,7 @@ test('last-place finish eliminates player but simulates remaining heats without 
   const {heat,results} = officialHeat(circuit.activeTournament,'LOSE');
   const done = settleFourWideHeat(circuit,results,heat.id);
   assert.equal(done.status,'COMPLETE');
-  assert.equal(done.cashPrize,0);
+  assert.equal(done.cashPrize,35000);
   assert.equal(done.circuit.activeTournament,null);
   assert.equal(done.circuit.eventTick,1);
   assert.equal(done.circuit.playerDriver.entered,1);

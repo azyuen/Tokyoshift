@@ -56,16 +56,16 @@ async function startTokyoShift() {
       }
     };
 
-    // Only boot/profile/character/station screens are imported up front. Importing
-    // all 18 scene modules together used to compile the full game while an
-    // older iPhone was still trying to reach the driver selection screen.
-    const [BootScene, CharacterSelectScene, ProfileSelectScene,
-      TrainStationScene] = await Promise.all([
+    // Existing profiles only need boot and the driver board. New-driver art,
+    // car rendering and opening-story dependencies wait until those screens open.
+    const [BootScene, ProfileSelectScene] = await Promise.all([
       loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261026-r687'),
-      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261026-r687'),
       loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261026-r687'),
-      loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261026-r687'),
     ]);
+    const CharacterSelectScene = makeDeferredScene('CharacterSelectScene',
+      '../scenes/CharacterSelectScene.js?v=20261026-r687');
+    const TrainStationScene = makeDeferredScene('TrainStationScene',
+      '../scenes/TrainStationScene.js?v=20261026-r687');
 
     // Preserve the canonical Phaser scene keys and their init-data contract.
     // The placeholder is replaced by the actual class on first entry.

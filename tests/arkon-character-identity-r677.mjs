@@ -70,12 +70,12 @@ test('story chapter titles and spoken dialogue consistently use Aruken', () => {
   assert.match(source('src/ui/ArkonRwbContract.js'), /ARUKEN DENZAKI/);
 });
 test('Career scenes and racing names use the in-game identity', () => {
-  assert.match(source('src/data/chapter08.js'),
-    /Aruken and I spent/);
+  assert.doesNotMatch(source('src/data/chapter08.js'),
+    /Aruken and I spent/,'Chapter 8 must preserve the later Aruken reveal');
   assert.match(source('src/data/ginzaScenes.js'),
-    /Aruken Denzaki!/);
-  assert.match(source('src/data/cutscenes.js'),
-    /Aruken will tell/);
+    /Aruken/);
+  assert.doesNotMatch(source('src/data/cutscenes.js'),
+    /Arkon will tell/);
   assert.match(source('src/scenes/MeetScene.js'),
     /const playerName = getInGamePlayerDisplayName\(this.registry\)/);
   assert.match(source('src/scenes/RaceScene.js'),

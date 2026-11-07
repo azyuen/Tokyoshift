@@ -55,7 +55,7 @@ test('rank badge, next rival card and action buttons have non-overlapping layout
 });
 test('NEXT HEAT skips preparation; RACE BRIEFING opens saved paid preparation room',()=>{
   assert.match(race,/const paidNextDriver = individualHeatPreview;/);
-  assert.match(race,/if\(briefing && paidNextDriver\)\{\s*this\.scene\.start\('CentralTokyoScene',\{\s*locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,/);
+  assert.match(race,/if\(briefing && paidNextDriver\)\{\s*this\.scene\.start\('CentralTokyoScene',\{\s*locationId:'tokyoDragComplex',[\s\S]*autoOpenProSeasonHeatBriefing:true[\s\S]*autoOpenProDriverBriefing:true/);
   assert.match(race,/else if \(paidNextDriver\) \{\s*this\.scene\.restart\(\{mode:'PRO_DUEL'\}\)/);
   assert.match(race,/const advance = \(\) => navigate\(false\)/);
   assert.match(race,/\.on\('pointerdown',\(_pointer,_x,_y,event\)=>\{\s*event\?\.stopPropagation\?\.\(\);navigate\(true\)/);
@@ -72,9 +72,9 @@ test('Sayaka can be consulted after any paid heat if the shared once-per-event a
   const first=consumeDriverAdvice(circuit,state);
   assert.equal(first.error,undefined);
   assert.equal(first.competitionState.briefingAdviceUsed,true);
-  assert.equal(first.circuit.crewAdviceCooldownUntil,6);
+  assert.equal(first.circuit.crewAdviceCooldownUntil,0);
   assert.match(consumeDriverAdvice(first.circuit,first.competitionState).error,/ALREADY USED/);
-  assert.equal(driverAdviceStatus({eventTick:3,crewAdviceCooldownUntil:5},state).available,false);
+  assert.equal(driverAdviceStatus({eventTick:3,crewAdviceCooldownUntil:5},state).available,true);
   assert.doesNotMatch(briefing,/!advice\.available\|\|!firstHeat/);
   assert.match(briefing,/disabled:!advice\.available&&!advice\.usedThisEvent/);
   assert.match(briefing,/if\(advice\.usedThisEvent\)\{toggleDialogue\('sayaka'\);return;\}/);

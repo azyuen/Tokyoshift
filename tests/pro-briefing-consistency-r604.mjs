@@ -11,14 +11,14 @@ test('R604 matching workshop hotspot and top-right Hiroshi briefing renderer use
  assert.match(driver,/addProGlowingHotspot\(s,add/);
  assert.match(crew,/addProGlowingHotspot\(s,add/);
  assert.match(driver,/renderStewardBriefing\(s,dialogueAdd,details,\{anchorX:1402\}\)/);
- assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1366,height:218\}\)/);
+ assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1434,height:218\}\)/);
  assert.match(chrome,/x:850,y:24,w:674,h:258,triangleSide:36/);
  assert.match(chrome,/duration:1300,yoyo:true,repeat:-1/);
  assert.match(driver,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
  assert.match(driver,/workshopHotspot\(1111,576,225,44,adviceLabel/);
  assert.match(driver,/workshopHotspot\(1390,576,220,44,'RACE BRIEFING'/);
- assert.match(crew,/crewGlow\(1055,502,235/);
- assert.match(crew,/crewGlow\(1366,502,220,'RACE BRIEFING'/);
+ assert.match(crew,/crewGlow\(946,502,195/);
+ assert.match(crew,/crewGlow\(1434,502,200,'RACE BRIEFING'/);
  assert.match(crew,/function renderLineup\(\)/);
  assert.doesNotMatch(crew,/meetHeader\(54,194,632,35/);
  assert.doesNotMatch(crew,/pixelText\(74,163/);

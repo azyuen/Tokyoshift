@@ -99,7 +99,7 @@ test('R669 two independent build milestones require real parts and genuine shop 
  assert.equal(ch7Progress(s).shops.length,7);
  assert.equal(ch7Progress(s).ready,false); // A visit isn't a purchased treatment.
  const carStates=s.get('carStates');
- const installed=Object.values(TUNER_SHOPS).map(shop=>shop.tuningOptions[0].id);
+ const installed=Object.values(TUNER_SHOPS).filter(shop=>shop.tuningOptions?.length).map(shop=>shop.tuningOptions[0].id);
  s.set('carStates',{...carStates,'240z':{
    ...carStates['240z'],specialistTuning:installed,
  }});
@@ -149,5 +149,5 @@ test('R669 real Story flows, companion absent in last drive, replay and Hero art
  assert.match(text('../src/scenes/RaceScene.js'),/SAYAKA FUJIEDA/);
  assert.match(text('../src/ui/ArkonPlayableReplay.js'),/chapter===7\?'arkonChapter07'/);
  assert.match(text('../src/ui/ArkonStoryArchivePanel.js'),/ARKON_CHAPTER_07/);
- assert.match(text('../src/data/cars.js'),/liberty_walk_240z_hero_body\.png/);
+ assert.match(text('../src/data/cars.js'),/liberty_walk_aruken240z_hero_body\.png/);
 });

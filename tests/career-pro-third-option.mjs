@@ -35,7 +35,7 @@ function crewSource(round=1){
   return source;
 }
 
-test('each of eight rounds has three genuine offers with guaranteed Driver and Crew choices',()=>{
+test('legacy eight-round calendar retains Driver, Crew and invitational definitions',()=>{
   assert.equal(PRO_SEASON_LENGTH,8);
   assert.equal(PRO_SEASON_CALENDAR.length,8);
   for(let round=0;round<8;round++){
@@ -68,7 +68,7 @@ test('rotation starts 5 Driver/3 Crew and responds to unmet qualification',()=>{
 
 test('Pro starts Expert-heavy, Invitationals are 80% Elite, and late regulars are mostly Elite',()=>{
   assert.ok([3,4,5].includes(getProSeasonSkillTier(0,0,false)));
-  assert.equal(Array.from({length:10},(_,i)=>getProSeasonSkillTier(0,i)).filter(x=>x===3).length,1);
+  assert.equal(Array.from({length:10},(_,i)=>getProSeasonSkillTier(0,i)).filter(x=>x===3).length,0);
   assert.equal(Array.from({length:10},(_,i)=>getProSeasonSkillTier(0,i)).filter(x=>x===5).length,2);
   assert.equal(Array.from({length:5},(_,i)=>getProSeasonSkillTier(0,i,true)).filter(x=>x===5).length,4);
   for(const round of [4,5,6,7]){
@@ -78,14 +78,16 @@ test('Pro starts Expert-heavy, Invitationals are 80% Elite, and late regulars ar
   }
 });
 
-test('official third card alternates between Driver and Crew and remains independently resumable',()=>{
+test('two official discipline cards preserve saved legacy invitationals for resume',()=>{
   const section=venue.slice(venue.indexOf('getProDragEvents() {'),venue.indexOf('drawDragComplex() {'));
-  assert.match(section,/getProInvitationalDiscipline\(pro\)/);
-  assert.match(section,/invitationalDiscipline==='DRIVER'\?alternateDriver:alternateCrew/);
-  assert.match(section,/seasonChoice:'alternative'/);
-  assert.match(section,/entryFee:PRO_INVITATIONAL_DRIVER_FEE/);
-  assert.match(section,/entryFee:PRO_ALT_CREW_ENTRY_FEE/);
-  assert.match(section,/legacy.eventId===inviteRules.id\?2:0/);
+  assert.match(section,/const choices=\[driver,\{\.\.\.CREW_SERIES,seasonChoice:'standard'/);
+  assert.match(section,/legacy\.seasonChoice==='alternative'/);
+  assert.match(section,/savedAlternative\?getProDriverInvitationRules\(round,pro\):rules\.driver/);
+  assert.match(section,/choices\[0\]=\{\.\.\.choices\[0\],id:legacy\.eventId/);
+  assert.match(section,/entryFee:legacy\.entryFee\?\?choices\[0\]\.entryFee/);
+  assert.match(section,/prizeCash:legacy\.prizeCash\?\?choices\[0\]\.prizeCash/);
+  assert.match(section,/pro\.activeCrewEvent\?\.seasonChoice==='alternative'/);
+  assert.match(section,/choices\[1\]=\{\.\.\.choices\[1\],seasonChoice:'alternative'/);
   assert.match(panel,/pending.seasonChoice/);
   assert.match(panel,/active\.seasonChoice\|\|'standard'/);
 });

@@ -120,7 +120,7 @@ test('station starts with grounded, larger characters and only a next button', (
   assert.doesNotMatch(station, /onComplete: \(\) => \{[\s\S]{0,220}this\.showTrainMap\(\)/);
 });
 
-test('station cutscene addresses selected name without spoiling car or Sayaka', () => {
+test('station cutscene addresses selected name without spoiling the car or hidden relationships', () => {
   const scene = CUTSCENES.openingStationEncounter;
   assert.deepEqual(scene.characters, { left: 'daichiSakamoto', right: '$PLAYER' });
   assert.equal(scene.finalActionLabel, 'GO TO MAP');
@@ -129,9 +129,9 @@ test('station cutscene addresses selected name without spoiling car or Sayaka', 
   assert.ok(scene.pages.some(p => p.speaker === 'right'));
   assert.ok(scene.pages.some(p => /last year's Tokyo Champion/.test(p.text)));
   const lines = scene.pages.map(p => p.text).join('\n');
-  assert.doesNotMatch(lines, /Sayaka|two cars|choose a car|AE86|Civic EF/i);
-  assert.match(lines, /family friend/i);
-  assert.match(lines, /from my dad/i);
+  assert.doesNotMatch(lines, /two cars|choose a car|AE86|Civic EF|Aruken|Ginza/i);
+  assert.match(lines, /known my family for years/i);
+  assert.match(lines, /Sayaka.s bringing it over/i);
 });
 
 test('train map reveals only Shinonome home without modifying the ordinary map', () => {
@@ -172,7 +172,7 @@ test('the opening and later visits use one magazine page-flip renderer', () => {
   const wrapper = source('src/ui/OpeningMagazine.js');
   assert.match(magazine, /openingChoice = scene\.registry\.get\('openingChapter'\) === 'magazine'/);
   assert.match(magazine, /totalViews = 2 \+ editorialSpreads/);
-  assert.match(magazine, /Math\.max\(1, Math\.ceil\(features\.length \/ 2\)\)/);
+  assert.match(magazine, /editorialSpreads = ISSUE01_EDITORIAL_PAGE_COUNT \/ 2/);
   assert.match(magazine, /issue\.adKey/);
   assert.match(magazine, /issue\.insetKey/);
   assert.match(office, /showMagazinePanel\(scene, openingMagazine/);
@@ -237,11 +237,11 @@ test('Sayaka matches player height, faces player and fades in left of the car', 
   assert.match(garage, /sprite\.once\('destroy'/);
 });
 
-test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => {
+test('opening and farewell use authored expressions and include the driving-school vouchers', () => {
   const intro = CUTSCENES.openingSayakaKeys.pages;
   const goodbye = CUTSCENES.openingSayakaFarewell.pages;
   assert.equal(intro.length, 5);
-  assert.equal(goodbye.length, 4);
+  assert.equal(goodbye.length, 8);
   assert.match(intro[0].text, /Your parents say you never stop talking about cars/);
   assert.match(intro[2].text, /even know how to drive/);
   assert.match(intro[3].text, /press accelerate/);
@@ -251,26 +251,28 @@ test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => 
   assert.match(goodbye[0].text, /listen to the engine/);
   assert.equal(goodbye[2].pose, 'homeBlushing');
   assert.match(goodbye[2].text, /Teehehe/);
-  assert.equal(goodbye[3].pose, 'homeSerious');
-  assert.match(goodbye[3].text, /drive safely/i);
+  assert.equal(goodbye[3].pose, 'homeExplaining');
+  assert.match(goodbye[6].text,/three free lesson vouchers/);
+  assert.equal(goodbye[7].pose,'homeConfident');
+  assert.match(goodbye[7].text, /drive safely/i);
 });
 
-test('Sayaka leaves the player at a resumable workshop checkpoint before a separate tap', () => {
+test('Sayaka leaves a resumable checkpoint and automatically starts Daichi arrival', () => {
   const state = normaliseState({ ...pending('awaitDaichi'), ownedCarIds: ['ae86'], selectedCarId: 'ae86' });
   assert.equal(state.openingChapter, 'awaitDaichi');
   const garage = source('src/scenes/GarageScene.js');
   assert.match(garage, /this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
   assert.match(garage, /this\.fadeOpeningSayakaFromGarage\(\(\) =>/);
   assert.match(garage, /if \(chapter === 'awaitDaichi'\) return true/);
-  assert.match(garage, /if \(chapter === 'awaitDaichi'\) \{\s*this\.armDaichiWorkshopTap\(\);/);
-  assert.match(garage, /delayedCall\(120, \(\) => this\.armDaichiWorkshopTap\(\)\)/);
+  assert.match(garage, /if \(chapter === 'awaitDaichi'\) \{\s*this\.startDaichiWorkshopArrival\(\);/);
+  assert.doesNotMatch(garage, /armDaichiWorkshopTap/);
 });
 
-test('the very next workshop tap uses Daichi exactly as drivetrain tuning does', () => {
+test('automatic workshop arrival uses Daichi exactly as drivetrain tuning does', () => {
   const garage = source('src/scenes/GarageScene.js');
-  assert.match(garage, /armDaichiWorkshopTap\(\) \{/);
-  assert.match(garage, /rectangle\(780, 420, 1560, 840, 0x000000, 0\.001\)/);
-  assert.match(garage, /shield\.once\('pointerdown', \(\) =>/);
+  assert.match(garage, /startDaichiWorkshopArrival\(resume = false\) \{/);
+
+
   assert.match(garage, /this\.startDaichiWorkshopArrival\(\)/);
   assert.match(garage, /this\.registry\.set\('openingChapter', 'daichi'\)/);
   assert.match(garage, /this\.startDaichiWorkshopArrival\(true\)/);
@@ -361,7 +363,7 @@ test('the in-office Sayaka call uses the shared blue race dialogue with phone co
   assert.match(shared, /drawMangaSpeechBubble\(/);
   assert.match(shared, /bubble\.lineTo\(layout\.left - layout\.notchDepth, mid\)/);
   assert.match(shared, /RACE_DIALOGUE_THEMES/);
-  assert.match(shared, /iconBadge = own\(scene\.add\.circle/);
+  assert.match(shared, /const icon = own\(scene\.add\.image\(iconX, iconY, phoneIconKey\)/);
   assert.match(shared, /0xe4f5ff/);
   assert.match(phone, /setInteractive\(\{ useHandCursor: true \}\)/);
   assert.match(phone, /PHONE_ICON_KEY = 'openingIncomingPhone'/);
@@ -424,7 +426,7 @@ test('Sayaka first-keys and driving-safe panels resolve to the actual authored s
     [openingSayakaKeys.pages[4], 'assets/Characters/Main/home_sayaka_fujieda_explaining.png'],
     [openingSayakaFarewell.pages[0], 'assets/Characters/Main/home_sayaka_fujieda_happy.png'],
     [openingSayakaFarewell.pages[2], 'assets/Characters/Main/home_sayaka_fujieda_blushing.png'],
-    [openingSayakaFarewell.pages[3], 'assets/Characters/Main/home_sayaka_fujieda_serious.png'],
+    [openingSayakaFarewell.pages[7], 'assets/Characters/Main/home_sayaka_fujieda_confident.png'],
   ];
   for (const [page, path] of checks) {
     const asset = getCharacterVisualAsset('sayakaFujieda', page.pose);
@@ -441,7 +443,7 @@ test('Sayaka first-keys and driving-safe panels resolve to the actual authored s
 test('Sayaka farewell fades both manga portrait and garage companion before Daichi can appear', () => {
   const cutscene = source('src/ui/MangaCutscene.js');
   const garage = source('src/scenes/GarageScene.js');
-  assert.match(garage, /playMangaCutscene\(this, 'openingSayakaFarewell', \{\s*exitFadeMs: 850/);
+  assert.match(garage, /playMangaCutscene\(this, 'openingSayakaFarewell', \{\s*preloadPagePosesOnly: true,\s*exitFadeMs: 850/);
   assert.match(cutscene, /duration: Math\.max\(190, Number\(context\.options\.exitFadeMs\) \|\| 190\)/);
   assert.match(garage, /fadeOpeningSayakaFromGarage\(onComplete\) \{/);
   assert.match(garage, /targets,\s*alpha: 0,\s*duration: 950/);
@@ -459,7 +461,7 @@ test('phone UI uses the compact shared, face-centred bubble and phone corner ico
   assert.match(shared, /face\.targetX - anchor\.x \* zoom/);
   assert.match(shared, /maskShape\.createGeometryMask\(\)/);
   assert.match(shared, /bubble\.lineTo\(layout\.left - layout\.notchDepth, mid\)/);
-  assert.match(shared, /iconBadge = own\(scene\.add\.circle/);
+  assert.match(shared, /const icon = own\(scene\.add\.image\(iconX, iconY, phoneIconKey\)/);
   assert.match(shared, /fillAlpha: 0\.92/);
   assert.match(phone, /nextButton = add\(scene\.add\.rectangle/);
 });
@@ -478,5 +480,5 @@ test('every phone scene uses blue call accents including player responses and mi
   assert.match(phone, /page\.speakerStyle \|\|/);
   assert.match(phone, /page\.speaker === 'player' \? 'player' : speakerStyle/);
   assert.match(phone, /panel\.setAccent\(color\)/);
-  assert.match(phone, /nextButton\.setFillStyle\(color, 1\)/);
+  assert.match(phone, /nextButton = add\(scene\.add\.rectangle\(buttonX, buttonY, 252, 48,\s*0x111111, 1\)\.setStrokeStyle\(2, 0xffffff, 1\)/);
 });

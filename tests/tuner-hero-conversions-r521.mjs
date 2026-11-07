@@ -21,7 +21,10 @@ const EXPECTED = {
 };
 
 test('every regional tuner converts its correct existing stock model', () => {
-  assert.equal(Object.keys(TUNER_SHOPS).length, 7);
+  assert.equal(Object.keys(TUNER_SHOPS).length, 8);
+  // Full Works uses its separately tested live quote transaction (R694).
+  assert.equal(TUNER_SHOPS.CENTRAL_TOKYO.heroCarId,'libertyWalk240z');
+  assert.equal(TUNER_SHOPS.CENTRAL_TOKYO.donorCarId,'240z');
   const donors = new Set();
   const heroes = new Set();
   for (const [region, [donorId, heroId]] of Object.entries(EXPECTED)) {

@@ -60,9 +60,10 @@ test('Exhibition race is first season only and uses the story 240Z with ordinary
   assert.match(race, /proSponsorExhibition: true/);
   assert.match(race, /No official win, loss or fee is recorded/);
   assert.match(race, /this.registry.set\('selectedRaceCategory', 'SINGLE'\)/);
-  assert.match(panel, /next.circuit.season === 1/);
-  assert.match(panel, /startProfessionalSeason\(circuit\(s\)\)/);
-  const next = startProfessionalSeason(createDefaultProCircuitState());
+  assert.match(panel, /next\.circuit\.season===1/);
+  assert.match(panel, /startProfessionalSeason\(current,ids,ownedNow\)/);
+  const ids = ['ae86','dc2','gc8'];
+  const next = startProfessionalSeason(createDefaultProCircuitState(), ids, ids);
   assert.equal(next.error, undefined);
   assert.equal(next.circuit.seasonStatus, 'ACTIVE');
   assert.equal(next.circuit.calendar.round, 0);
