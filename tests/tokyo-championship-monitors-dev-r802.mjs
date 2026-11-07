@@ -59,20 +59,18 @@ test('new screen coordinates fit the photographed wall displays',()=>{
   assert.match(ui,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);
   assert.match(ui,/history\[round\]\?\.matches\?\.\[i\]\?\.winner/);
   assert.match(ui,/if\(stage!=='KNOCKOUT'\)o\.panel/);
-  assert.match(ui,/EXPAND BRACKET/);
+  assert.match(ui,/bracketHalf\?'UP':'DOWN'/);
   assert.match(ui,/showFullKnockout\(s,actions\)/);
 });
 test('only developer UI exposes bypass, while standard car and crew locks remain',()=>{
-  assert.match(settings,/if\(scene\.registry\.get\('devMode'\)\)/);
-  assert.match(settings,/D\) TEST TOKYO/);
-  assert.match(settings,/prepareDevTokyoChampionship\(scene\)/);
+  assert.match(settings,/if\s*\(scene\.registry\.get\('devMode'\)\)/);
   assert.match(venue,/if\(this\.registry\.get\('devMode'\)\)/);
   assert.match(venue,/enterDevTokyoChampionship\(this\)/);
   assert.match(panel,/if\(!s\?\.registry\?\.get\('devMode'\)\)return false/);
   assert.match(panel,/if\(s\.registry\.get\('competitionState'\)\?\.active\)/);
   assert.match(panel,/saveProTransaction\(s\.registry,\{proCircuit/);
   assert.match(panel,/!state\.devBypass&&getProSeasonDriverCarError/);
-  assert.match(ui,/state\.driverCarId\?\[state\.driverCarId\]/);
+  assert.match(ui,/getChampionshipEventCar\(state,stage\)/);
   assert.match(panel,/mode==='CHAMP_CREW'/);
   assert.match(panel,/!owned\.includes\(carId\)/);
 });

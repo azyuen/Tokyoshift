@@ -22,6 +22,10 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/regression-selection.mjs
+      - name: Championship AI garages and performance benchmark
+        run: |
+          node --test tests/tokyo-championship-ai-garages-20261107.mjs
+          node --test tests/tokyo-championship-performance-20261107.mjs
       - name: Run affected regression suites (all on manual dispatch)
         env:
           EVENT: ${{ github.event_name }}

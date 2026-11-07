@@ -5,6 +5,89 @@ import { normaliseProCircuitState, getProCircuitDriverSeeds } from './proCircuit
 import { getProQualification } from './proSeason.js?v=20261030-r724';
 import { characters } from './characters.js?v=20261010-r459';
 
+import { cars } from './cars.js?v=20261026-r687';
+import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
+import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
+
+// Championship-only road-car pool; Le Mans prototypes are deliberately absent.
+// The car/build snapshots persist in the Championship save and never reroll.
+export const CHAMPIONSHIP_AI_CAR_POOL=Object.freeze([
+  'r34','evo6','rx7fd','s2000','r32','jza80','gc8','gdb','s15',
+]);
+export function createChampionshipAiGarage(championshipId,entrantId) {
+  const pool=CHAMPIONSHIP_AI_CAR_POOL.filter(id=>Boolean(cars[id]));
+  if(pool.length<3)throw Error('CHAMPIONSHIP AI CAR POOL INCOMPLETE');
+  const offset=hash(championshipId+':'+entrantId)%pool.length;
+  return Array.from({length:3},(_,slot)=>{
+    const carId=pool[(offset+slot*3)%pool.length];
+    const paintColor=[0xd43135,0x397dc1,0xe8c34a,0x52a57c,0xb0a3d9,0xf2f2ed][hash(entrantId+':paint:'+slot)%6];
+    const state=createRivalBuildState(cars[carId],5,{
+      seed:championshipId+':'+entrantId+':garage:'+slot,
+      paintColor,raceType:'Standing Start',
+      archetype:slot===0?'launchDrag':slot===1?'balancedStreet':'turboRoll',
+    });
+    // Championship rivals use the same actual upgrade schema as player cars.
+    // Regional packages are installed only when their prerequisites are met.
+    for(const group of ['tuning','drivetrainTuning','chassisTuning','exhaustNosTuning'])
+      for(const part of Object.keys(state[group]||{}))state[group][part]=3;
+    state.stock=false;
+    state.tuneLevel=3;
+    state.nosInstalled=true;
+    state.acquiredVia='tokyoChampionship';
+    const maps=[
+      {ecuBias:-2,boostBias:-1,gearBias:1},
+      {ecuBias:0,boostBias:0,gearBias:0},
+      {ecuBias:2,boostBias:1,gearBias:-1},
+    ];
+    state.stage3Calibration={...maps[slot]};
+    // A reproducible subset of compatible specialist packages, not a blanket
+    // grant of mutually incompatible upgrades or a hidden performance bonus.
+    state.specialistTuning=[];
+    const options=Object.values(TUNER_OPTION_BY_ID)
+      .filter(option=>option?.id&&option.regionId);
+    // Resolve prerequisite chains before picking the final regional set.
+    // The tuner system does not itself reject a conflicting package, so
+    // selecting a reproducible subset avoids granting every shop upgrade.
+    const eligible=[];
+    let pending=options.slice();
+    for(let pass=0;pass<options.length&&pending.length;pass++){
+      let progress=false;
+      pending=pending.filter(option=>{
+        if(!areTunerOptionRequirementsMet({...state,specialistTuning:eligible.map(o=>o.id)},option))
+          return true;
+        eligible.push(option);
+        progress=true;
+        return false;
+      });
+      if(!progress)break;
+    }
+    const ordered=eligible.sort((a,b)=>
+      (hash(entrantId+':'+slot+':'+a.id)%100000)-
+      (hash(entrantId+':'+slot+':'+b.id)%100000));
+    // Re-check dependencies on the final installation set: some packages
+    // require other specialist packages that may not have been selected.
+    const chosen=new Set();
+    const select=option=>{
+      if(!option||chosen.has(option.id)||chosen.size>=6)return;
+      for(const dependency of option.requirements?.specialist||[])
+        select(eligible.find(candidate=>candidate.id===dependency));
+      if(chosen.size<6&&areTunerOptionRequirementsMet(
+        {...state,specialistTuning:[...chosen]},option))chosen.add(option.id);
+    };
+    for(const option of ordered)select(option);
+    state.specialistTuning=[...chosen];
+    return {carId,state};
+  });
+}
+export function getChampionshipAiCar(raw,entrantId,stage='KNOCKOUT',round=0) {
+  const entrant=raw?.entrants?.find(e=>e.id===entrantId);
+  if(!entrant)return null;
+  const garage=entrant.garage;
+  if(!Array.isArray(garage)||garage.length!==3)return null; // legacy: original selection
+  const slot=stage==='FOUR_WIDE'?2:stage==='CREW'?1:0;
+  return garage[slot];
+}
+
 export const TOKYO_CHAMPIONSHIP_SCORING = Object.freeze({
   knockout: Object.freeze([20,17,13,9,5]),
   crew: Object.freeze([3,8,14,20]),
@@ -13,6 +96,26 @@ export const TOKYO_CHAMPIONSHIP_SCORING = Object.freeze({
 const PLAYER='player:driver';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const hash=s=>{let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return n>>>0;};
+// Event-specific vehicle locks. Legacy championships without locks are valid
+// until their first solo race. Never infer a lock from the previous event.
+export function getChampionshipEventCar(raw,stage) {
+  if(!['KNOCKOUT','FOUR_WIDE'].includes(stage))return null;
+  return raw?.eventCarLocks?.[stage]||null;
+}
+export function lockChampionshipEventCar(raw,stage,carId,registeredCarIds=[],ownedCarIds=[],devBypass=false) {
+  if(!raw||raw.completed||raw.stage!==stage||
+    !['KNOCKOUT','FOUR_WIDE'].includes(stage))
+    return {error:'CHAMPIONSHIP EVENT IS NOT ACTIVE'};
+  if(typeof carId!=='string'||!carId||
+    !ownedCarIds.includes(carId)||
+    (!devBypass&&(!Array.isArray(registeredCarIds)||!registeredCarIds.includes(carId))))
+    return {error:'SELECT ONE OF YOUR THREE REGISTERED CARS'};
+  const existing=getChampionshipEventCar(raw,stage);
+  if(existing&&existing!==carId)return {error:'CAR LOCKED FOR THIS CHAMPIONSHIP EVENT'};
+  return {championship:existing?raw:{
+    ...raw,eventCarLocks:{...(raw.eventCarLocks||{}),[stage]:carId}
+  }};
+}
 export function canEnterTokyoChampionship(raw) {
   const c=normaliseProCircuitState(raw),q=getProQualification(c);
   return c.calendar.round===8&&q.qualified&&!c.activeTournament&&!c.activeCrewEvent&&!c.activeTimedEvent&&!c.activeChampionship;
@@ -52,6 +155,7 @@ export function createProvisionalChampionship(raw) {
   // Snapshot skill tiers so old saves and completed brackets never reroll.
   const opposition=entrants.filter(r=>r.id!==PLAYER);
   opposition.forEach((r,i)=>r.skillTier=i<Math.round(opposition.length*.75)?5:4);
+  opposition.forEach(r=>{r.garage=createChampionshipAiGarage('tokyo:s'+c.season,r.id);});
   return {championship:{schema:1,id:'tokyo:s'+c.season,season:c.season,
     rosterType:'TOKYO_CHAMPIONSHIP',stage:'KNOCKOUT',entrants,
     knockout:{round:0,results:[]},crew:{results:[]},fourWide:{results:[]},

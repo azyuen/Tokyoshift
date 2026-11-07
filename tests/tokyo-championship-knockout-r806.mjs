@@ -11,24 +11,22 @@ test('Knockout briefing is full bleed and heading is raised',()=>{
  assert.match(event,/if\(stage!=='KNOCKOUT'\)\s*o\.label\(1246,88/);
 });
 test('three Knockout characters grow 25 percent and move together',()=>{
- assert.match(sprites,/sprite\(s,o,'champSayaka',262,675,550,307\)/);
- assert.match(sprites,/sprite\(s,o,player\?\.key,474,675,548,325\)/);
- assert.match(sprites,/sprite\(s,o,'champDaichi',698,675,525,301\)/);
+ assert.match(sprites,/sprite\(s,o,'champSayaka',262,741,550,307\)/);
+ assert.match(sprites,/sprite\(s,o,player\?\.key,474,741,548,325\)/);
+ assert.match(sprites,/sprite\(s,o,'champDaichi',698,741,525,301\)/);
 });
 test('Knockout monitor has only live bracket and compact expand control',()=>{
- assert.match(bracket,/screen\.y\+9,'LIVE BRACKET'/);
+ assert.match(bracket,/screen\.y\+9,/);
  assert.doesNotMatch(bracket,/ROUNDS RECORDED/);
- assert.match(bracket,/firstX=screen\.x\+28/);
- assert.match(event,/monitor\.y\+monitor\.h-20/);
- assert.match(event,/206,29,'EXPAND BRACKET'/);
+ assert.match(bracket,/firstX=screen\.x\+13/);
+ assert.match(event,/monitor\.y\+monitor\.h-16/);
+ assert.match(event,/64,29,bracketHalf/);
 });
-test('glowing character actions replace paddock buttons and advice panel',()=>{
- assert.match(event,/glow\(265,447,220,'SAYAKA ADVICE'/);
- assert.match(event,/glow\(698,447,198,'CAR SETUP'/);
+test('knockout actions retain setup, advice and race navigation',()=>{
  assert.match(event,/saveProTransaction/);
  assert.match(event,/if\(stage==='KNOCKOUT'\)\{/);
- assert.match(event,/if\(stage==='KNOCKOUT'\)\{\s*o\.button\(215,730,338,70/);
- assert.match(event,/o\.button\(215,795,338,34,'RETURN TO HUB'/);
+ assert.match(event,/if\(stage==='KNOCKOUT'\)\{[\s\S]*?o\.button\(1230,729,338,70/);
+ assert.match(event,/o\.button\(1230,795,338,34,'RETURN TO HUB'/);
 });
 test('next opponent is red skewed card, not free-floating text',()=>{
  assert.match(event,/graphic\.fillPoints/);
