@@ -7,6 +7,7 @@ import { characters } from './characters.js?v=20261010-r459';
 
 import { cars } from './cars.js?v=20261026-r687';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
+import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
 
 // Championship-only road-car pool; Le Mans prototypes are deliberately absent.
 // The car/build snapshots persist in the Championship save and never reroll.
@@ -25,6 +26,32 @@ export function createChampionshipAiGarage(championshipId,entrantId) {
       paintColor,raceType:'Standing Start',
       archetype:slot===0?'launchDrag':slot===1?'balancedStreet':'turboRoll',
     });
+    // Championship rivals use the same actual upgrade schema as player cars.
+    // Regional packages are installed only when their prerequisites are met.
+    for(const group of ['tuning','drivetrainTuning','chassisTuning','exhaustNosTuning'])
+      for(const part of Object.keys(state[group]||{}))state[group][part]=3;
+    state.stock=false;
+    state.tuneLevel=3;
+    state.nosInstalled=true;
+    state.acquiredVia='tokyoChampionship';
+    const maps=[
+      {ecuBias:-2,boostBias:-1,gearBias:1},
+      {ecuBias:0,boostBias:0,gearBias:0},
+      {ecuBias:2,boostBias:1,gearBias:-1},
+    ];
+    state.stage3Calibration={...maps[slot]};
+    // A reproducible subset of compatible specialist packages, not a blanket
+    // grant of mutually incompatible upgrades or a hidden performance bonus.
+    state.specialistTuning=[];
+    const options=Object.values(TUNER_OPTION_BY_ID).filter(option=>option?.id);
+    const ordered=options.sort((a,b)=>
+      (hash(entrantId+':'+slot+':'+a.id)%100000)-
+      (hash(entrantId+':'+slot+':'+b.id)%100000));
+    for(const option of ordered){
+      if(state.specialistTuning.length>=Math.min(6,options.length))break;
+      if(areTunerOptionRequirementsMet(state,option))
+        state.specialistTuning.push(option.id);
+    }
     return {carId,state};
   });
 }
