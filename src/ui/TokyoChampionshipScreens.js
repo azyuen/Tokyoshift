@@ -241,10 +241,10 @@ function mainSprites(s,o,view){
     });
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
-    sprite(s,o,'champSayaka',262,741,550,307);
-    sprite(s,o,player?.key,474,741,548,325);
-    sprite(s,o,'champDaichi',698,741,525,301);
-    sprite(s,o,'champHiroshi',1481,741,550,307);
+    sprite(s,o,'champSayaka',306,741,550,340);
+    sprite(s,o,player?.key,518,741,548,325);
+    sprite(s,o,'champDaichi',742,741,550,350);
+    sprite(s,o,'champHiroshi',1438,741,550,307,true);
   }else{
     sprite(s,o,'champSayaka',198,625,440,246);
     sprite(s,o,player?.key,447,627,438,260);
@@ -589,7 +589,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   const position=standings.findIndex(r=>r.id==='player:driver')+1;
   const points=standings.find(r=>r.id==='player:driver')?.total||0;
   o.label(44,stage==='KNOCKOUT'?23:82,'TOKYO CHAMPIONSHIP  /  EVENT '+event.number,19,MUTED,
-    {font:DISPLAY});
+    {font:DISPLAY,stroke:stage==='KNOCKOUT'});
   o.headline(44,stage==='KNOCKOUT'?55:119,event.title,41,GOLD,870);
   o.label(46,stage==='KNOCKOUT'?104:169,(stage==='KNOCKOUT'?'16-DRIVER ELIMINATION':
     stage==='CREW'?'THREE PLAYER-DRIVEN CREW HEATS':
@@ -613,8 +613,8 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   }else eventInfo(s,o,state,stage,bracketHalf);
   if(stage==='KNOCKOUT'&&displayMode!=='DETAILS'){
     const monitor=TOKYO_CHAMP_MONITORS.KNOCKOUT;
-    o.button(monitor.x+monitor.w-60,monitor.y+monitor.h-16,
-      64,29,bracketHalf?'UP':'DOWN',
+    o.button(monitor.x+monitor.w-52,monitor.y+27,
+      74,34,bracketHalf?'UP':'DOWN',
       ()=>showEvent(s,stage,actions,'BRACKET',bracketHalf?0:1));
   }
   const heat=active?heatFor(state):null;
@@ -633,11 +633,14 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     graphic.fillStyle(0x071728,.96);graphic.fillPoints(outline,true);
     graphic.lineStyle(3,0xe45868,1);graphic.strokePoints(outline,true);
     o.headline(89,652,active?'NEXT OPPONENT':'EVENT STATUS',24,'#ff7885',570);
-    const frameX=74,frameY=683,frameW=129,frameH=106,skew=16;
-    const framePoints=[{x:frameX+skew,y:frameY},
-      {x:frameX+frameW+skew,y:frameY},
-      {x:frameX+frameW-skew,y:frameY+frameH},
-      {x:frameX-skew,y:frameY+frameH}];
+    const frameX=74,frameY=683,frameW=129,frameH=106;
+    // Both edges follow the outer card's left-leaning parallelogram.
+    const leftTop=frameX+slant*(y+frameH-frameY)/h;
+    const leftBottom=frameX+slant*(y+frameH-(frameY+frameH))/h;
+    const framePoints=[{x:leftTop,y:frameY},
+      {x:leftTop+frameW,y:frameY},
+      {x:leftBottom+frameW,y:frameY+frameH},
+      {x:leftBottom,y:frameY+frameH}];
     const border=o.add(s.add.graphics().setDepth(220));
     border.fillStyle(0x783044,.87);border.fillPoints(framePoints,true);
     border.lineStyle(4,0x050a10,1);border.strokePoints(framePoints,true);
@@ -741,7 +744,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
         fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
       }).setOrigin(.5).setDepth(274));
     };
-    glow(265,465,220,'SAYAKA ADVICE',()=>{
+    glow(306,465,220,'ASK ADVICE',()=>{
       const current=circuit(s).activeChampionship;
       if(!current||current.id!==state.id)return;
       if(onCooldown){
@@ -759,7 +762,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
       }catch(error){s.proError=error.message;}
     },!active);
     glow(698,465,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
-    glow(1420,465,205,'EVENT DETAILS',()=>showEvent(s,stage,actions,
+    glow(1438,465,205,'EVENT DETAILS',()=>showEvent(s,stage,actions,
       displayMode==='DETAILS'?'BRACKET':'DETAILS',bracketHalf));
   }else advicePanel(s,o,state,stage,42,650,906);
   if(stage==='KNOCKOUT'){
