@@ -6,7 +6,7 @@ import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { cars } from '../data/cars.js?v=20261026-r687';
-import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircuitGenericDriverAsset, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261024-r680';
+import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261024-r680';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
@@ -72,7 +72,11 @@ function portraitAssets(s,stage){
   if(stage){
     out.push(['champSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png']);
     out.push(['champDaichi','assets/Characters/Main/pro_daichi_sakamoto.png']);
-    if(stage==='KNOCKOUT')out.push(['champHiroshi','assets/Characters/Central/hiroshi_sato_normal.png']);
+    if(stage==='KNOCKOUT'){
+      out.push(['champHiroshi','assets/Characters/Central/hiroshi_sato_normal.png']);
+      const generic=getProCircuitGenericDriverAsset(1);
+      if(generic)out.push([generic.key,generic.path]);
+    }
     const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
       'idle',{proCircuit:true});
     if(player?.key&&player.path)out.push([player.key,player.path]);
@@ -655,7 +659,20 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
         profile.image.setMask(maskShape.createGeometryMask());
         o.add({destroy:()=>maskShape.destroy()});
       }
-    }else o.label(100,726,'PRO DRIVER',13,PALE,{font:PIXEL});
+    }else{
+      const generic=getProCircuitGenericDriverAsset(1);
+      if(generic&&s.textures.exists(generic.key)){
+        const img=s.textures.get(generic.key).getSourceImage();
+        const scale=Math.max(frameW*1.6/Math.max(1,img.width),
+          frameH*2.2/Math.max(1,img.height));
+        const portrait=o.add(s.add.image(frameX+frameW/2-9,frameY+18,generic.key)
+          .setOrigin(.5,0).setScale(scale).setDepth(225));
+        const maskShape=s.make.graphics({add:false});
+        maskShape.fillStyle(0xffffff,1);maskShape.fillPoints(framePoints,true);
+        portrait.setMask(maskShape.createGeometryMask());
+        o.add({destroy:()=>maskShape.destroy()});
+      }else o.label(100,726,'PRO DRIVER',13,PALE,{font:PIXEL});
+    }
     const opponentDriver=c.drivers?.[opponent.id]||{};
     const opponentCarId=opponent.carId||opponentDriver.carId||
       opponentDriver.selectedCarId||heat?.opponentCarId;
