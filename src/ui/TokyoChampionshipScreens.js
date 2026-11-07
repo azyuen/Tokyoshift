@@ -2,7 +2,7 @@
 // Only presentation, navigation and one-use strategy notes live here.
 // Authoritative scoring, car locks and race settlement remain in the existing modules.
 import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
-  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar } from '../data/tokyoChampionship.js?v=20261030-r724';
+  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar, getChampionshipAiCar } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -674,8 +674,13 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
       }else o.label(100,726,'PRO DRIVER',13,PALE,{font:PIXEL});
     }
     const opponentDriver=c.drivers?.[opponent.id]||{};
-    const opponentCarId=opponent.carId||opponentDriver.carId||
+    // Use the persisted Championship garage snapshot for the actual knockout rival.
+    // Older saves without a garage retain the previous driver-car fallback.
+    const assignedOpponentCar=heat?.opponentId?
+      getChampionshipAiCar(state,heat.opponentId,'KNOCKOUT',heat.round||0):null;
+    const opponentCarId=assignedOpponentCar?.carId||opponent.carId||opponentDriver.carId||
       opponentDriver.selectedCarId||heat?.opponentCarId;
+    const opponentCarState=assignedOpponentCar?.state||opponent.opponentBuildState||{};
     const opponentCar=cars[opponentCarId]||{};
     o.label(231,684,String(opponent.name||'TO BE CONFIRMED').toUpperCase(),
       18,PALE,{font:DISPLAY,width:239});
@@ -692,8 +697,8 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
       typeof s.createCarDisplay==='function'){
       try{
         const parts=s.createCarDisplay(cars[opponentCarId],545,743,211,225,
-          opponent.paintColor??0x7f8899,null,false,
-          opponent.opponentBuildState||{})||[];
+          opponentCarState.paintColor??opponent.paintColor??0x7f8899,null,false,
+          opponentCarState)||[];
         for(const [index,part] of parts.entries()){
           if(index===2){part?.destroy?.();continue;}
           if(part)o.add(part);
