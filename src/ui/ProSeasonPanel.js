@@ -768,6 +768,27 @@ export function prepareDevTokyoChampionship(s) {
   s.proError=null;
   return true;
 }
+/** Developer-only reset of the current Championship fixture. No season reset,
+ * prize reversal, or changes to other professional events. */
+export function cancelDevTokyoChampionship(s) {
+  if(!s?.registry?.get('devMode'))return false;
+  if(s.registry.get('competitionState')?.active){
+    s.proError='FINISH OR EXIT THE CURRENT RACE FIRST';
+    return false;
+  }
+  const current=circuit(s);
+  if(!current.activeChampionship){
+    s.proError='NO ACTIVE TOKYO CHAMPIONSHIP TO CANCEL';
+    return false;
+  }
+  try{
+    saveProTransaction(s.registry,{proCircuit:{
+      ...current,activeChampionship:null,
+    }});
+    s.proError=null;
+    return true;
+  }catch(error){s.proError=error.message;return false;}
+}
 export function enterDevTokyoChampionship(s) {
   if(!prepareDevTokyoChampionship(s)){
     if(typeof s.renderLocation==='function')redraw(s);
