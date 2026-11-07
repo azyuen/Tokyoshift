@@ -705,6 +705,29 @@ export function showSeasonRecords(s,complete=false) {
     });
   } else o.btn(300,768,390,'CLOSE REPORT',o.close);
   if(!finished)return;
+  // Developer-only Championship restart control, on the same screen as RESUME.
+  // Never expose destructive fixture resets to regular career players.
+  if(s.registry.get('devMode')&&c.activeChampionship&&!c.activeChampionship.completed){
+    let withdrawArmed=false;
+    o.btn(1090,709,600,'WITHDRAW TOKYO',()=>{
+      if(!withdrawArmed){
+        withdrawArmed=true;
+        o.label(815,675,'CONFIRM: PRESS WITHDRAW TOKYO AGAIN',17)
+          .setColor('#f2a0a7');
+        return;
+      }
+      if(s.registry.get('competitionState')?.active){
+        o.label(815,675,'EXIT THE CURRENT RACE FIRST',17)
+          .setColor('#f2a0a7');
+        return;
+      }
+      const current=circuit(s);
+      if(!current.activeChampionship||current.activeChampionship.completed)return;
+      if(!commit(s,{proCircuit:{...current,activeChampionship:null}}))return;
+      o.close();
+      showSeasonRecords(s,true);
+    });
+  }
   if(report.canEnterTokyo&&!c.activeChampionship?.completed) {
     o.btn(1090,768,600,c.activeChampionship?
       'RESUME TOKYO CHAMPIONSHIP':'ENTER TOKYO CHAMPIONSHIP',()=>{
