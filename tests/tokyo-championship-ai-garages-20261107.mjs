@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from '../src/data/tunerShops.js';
 import assert from 'node:assert/strict';
 import {
   CHAMPIONSHIP_AI_CAR_POOL, createChampionshipAiGarage, getChampionshipAiCar,
@@ -30,8 +31,22 @@ test('Championship cars have level-three hardware, stage-three maps and speciali
       assert.ok(Object.values(state[group]).every(level=>level===3),group);
     assert.equal(state.nosInstalled,true);
     assert.equal(state.tuneLevel,3);
-    assert.equal(state.specialistTuning.length,6);
+    assert.ok(state.specialistTuning.length>0&&state.specialistTuning.length<=6);
     assert.ok(state.stage3Calibration);
     assert.equal(state.stage3Calibration.ecuBias,[-2,0,2][index]);
+  }
+});
+
+test('every selected regional package has its specialist prerequisites installed',()=>{
+  const garage=createChampionshipAiGarage('tokyo:s5','rival:prerequisites');
+  for(const {state} of garage){
+    const installed=new Set(state.specialistTuning);
+    for(const id of installed){
+      const option=TUNER_OPTION_BY_ID[id];
+      assert.ok(option,'unknown specialist option '+id);
+      assert.ok(areTunerOptionRequirementsMet(state,option),'invalid package '+id);
+      for(const required of option.requirements?.specialist||[])
+        assert.ok(installed.has(required),'missing dependency '+required);
+    }
   }
 });
