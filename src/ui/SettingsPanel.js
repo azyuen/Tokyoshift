@@ -1138,7 +1138,7 @@ export function showSettingsPanel(scene) {
       try{
         // Import only on use: avoid loading the full Pro Season engine on boot.
         const {prepareDevTokyoChampionship}=await import(
-          './ProSeasonPanel.js?v=20261107-r805-map'
+          './ProSeasonPanel.js?v=20261107-r807-dev-reset'
         );
         if(!scene.sys?.isActive?.()||
           !prepareDevTokyoChampionship(scene)){
