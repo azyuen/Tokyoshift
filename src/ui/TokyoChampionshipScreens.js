@@ -710,27 +710,49 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   if(stage==='KNOCKOUT'){
     const glow=(x,y,w,label,onClick,disabled=false)=>
       addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick,disabled});
+    const adviceRound=state.knockout?.round||0;
+    const lastAdviceRound=Number(state.lastSayakaKnockoutRound);
+    const onCooldown=Number.isInteger(lastAdviceRound)&&
+      lastAdviceRound>=adviceRound-1;
+    const showAdviceDialogue=message=>{
+      const nodes=[];
+      const add=n=>{nodes.push(n);return n;};
+      const close=()=>nodes.forEach(n=>n.destroy?.());
+      add(s.add.rectangle(780,420,1560,840,0x030711,.63)
+        .setDepth(270).setInteractive());
+      add(s.add.rectangle(780,417,790,260,0xf8f7f1,1)
+        .setStrokeStyle(3,0x8b99a5).setDepth(271));
+      add(s.add.text(437,322,'SAYAKA  /  RACE STRATEGY',{
+        fontFamily:DISPLAY,fontSize:'25px',fontStyle:'bold',color:'#172d43',
+      }).setDepth(272));
+      add(s.add.text(437,383,message,{
+        fontFamily:BODY,fontSize:'23px',color:'#182e41',
+        wordWrap:{width:690},lineSpacing:6,
+      }).setDepth(272));
+      add(s.add.rectangle(780,508,200,39,0x24485f,1)
+        .setDepth(273).setInteractive({useHandCursor:true})
+        .on('pointerdown',close));
+      add(s.add.text(780,508,'CONTINUE',{
+        fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
+      }).setOrigin(.5).setDepth(274));
+    };
     glow(265,465,220,'SAYAKA ADVICE',()=>{
       const current=circuit(s).activeChampionship;
       if(!current||current.id!==state.id)return;
-      if(current.adviceByEvent?.[stage]){
-        // Display the saved advice without modifying its one-use status.
-        const note=current.adviceByEvent[stage];
-        const popup=o.panel(488,523,600,112,.97,0x6bd9ff);
-        o.label(207,482,'SAYAKA ADVICE',20,GOLD,{font:DISPLAY});
-        o.label(207,513,note,17,PALE,{width:550});
-        popup.setInteractive().on('pointerdown',()=>showEvent(s,stage,actions));
+      if(onCooldown){
+        showAdviceDialogue('Sayaka needs one full heat between strategy briefings. Come back after your next race.');
         return;
       }
       if(!active)return;
       const note=getEventAdvice(current,stage);
-      const updated={...current,adviceByEvent:{
-        ...(current.adviceByEvent||{}),[stage]:note}};
-      try{saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
+      const updated={...current,lastSayakaKnockoutRound:adviceRound,
+        adviceByEvent:{...(current.adviceByEvent||{}),[stage]:note}};
+      try{
+        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
         s.proError=null;
+        showAdviceDialogue(note);
       }catch(error){s.proError=error.message;}
-      showEvent(s,stage,actions);
-    },!active&&!state.adviceByEvent?.[stage]);
+    },!active);
     glow(698,465,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
     glow(1420,465,205,'EVENT DETAILS',()=>showEvent(s,stage,actions,
       displayMode==='DETAILS'?'BRACKET':'DETAILS',bracketHalf));
