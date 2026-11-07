@@ -18,7 +18,7 @@ test('the knockout bracket uses persisted round pairings and winners',()=>{
   assert.match(file,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);
   assert.match(file,/history\[round\]\?\.matches\?\.\[i\]\?\.winner/);
   assert.match(file,/TBD/);
-  assert.match(file,/headers=\['TOP 16','TOP 8','TOP 4','FINAL'\]/);
+  assert.match(file,/\['ROUND OF 16','QUARTERFINALS','SEMIFINALS','GRAND FINAL'\]/);
   assert.match(file,/pair\.includes\('player:driver'\)/);
 });
 test('crew progress and four-wide lanes use real saved event data',()=>{
