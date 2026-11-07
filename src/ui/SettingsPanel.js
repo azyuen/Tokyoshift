@@ -1094,16 +1094,16 @@ export function showSettingsPanel(scene) {
     add(scene.add.text(1000,72,'D) TEST TOKYO',{
       fontFamily:PIXEL_FONT,fontSize:'7px',color:'#f1d9ff',
     }).setOrigin(.5).setDepth(184));
-    const devError=add(scene.add.text(780,112,'',{
+    const devError=add(scene.add.text(610,113,'',{
       fontFamily:BODY,fontSize:'16px',fontStyle:'700',
-      color:'#ffb7cb',wordWrap:{width:820},
+      color:'#ffb7cb',wordWrap:{width:590},
     }).setOrigin(.5,0).setDepth(184));
     // Explicit developer reset for repeating Championship tests. Require
     // confirmation to prevent accidental loss of the current bracket.
-    const stopTokyo=add(scene.add.rectangle(1210,72,205,40,0x46202c,.99)
+    const stopTokyo=add(scene.add.rectangle(1060,116,205,40,0x46202c,.99)
       .setStrokeStyle(2,0xe27c86).setDepth(183)
       .setInteractive({useHandCursor:true}));
-    add(scene.add.text(1210,72,'D) STOP TOKYO',{
+    add(scene.add.text(1060,116,'D) STOP TOKYO',{
       fontFamily:PIXEL_FONT,fontSize:'7px',color:'#ffd7dc',
     }).setOrigin(.5).setDepth(184));
     stopTokyo.on('pointerdown',async()=>{
