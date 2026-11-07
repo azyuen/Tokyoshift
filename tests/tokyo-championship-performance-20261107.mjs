@@ -6,7 +6,14 @@ import { cars } from '../src/data/cars.js';
 import { getVehiclePerformance } from '../src/vehicles/VehiclePerformance.js';
 import { createChampionshipAiGarage } from '../src/data/tokyoChampionship.js';
 
-// The production estimator uses Phaser.Math in its turbo simulation. Supply only\n// the two deterministic math helpers needed by this headless Node benchmark.\nglobalThis.Phaser ??= {Math:{\n  Clamp:(value,min,max)=>Math.min(max,Math.max(min,value)),\n  Linear:(start,end,t)=>start+(end-start)*t,\n}};\n\nconst groups=['tuning','drivetrainTuning','chassisTuning','exhaustNosTuning'];
+// The production estimator uses Phaser.Math in its turbo simulation. Supply only
+// the two deterministic math helpers needed by this headless Node benchmark.
+globalThis.Phaser ??= {Math:{
+  Clamp:(value,min,max)=>Math.min(max,Math.max(min,value)),
+  Linear:(start,end,t)=>start+(end-start)*t,
+}};
+
+const groups=['tuning','drivetrainTuning','chassisTuning','exhaustNosTuning'];
 const referenceCarIds=['r34','evo6','rx7fd','s2000','r32','jza80','gc8','gdb','s15']
   .filter(id=>cars[id]&&!cars[id].tuningLocked);
 function maxPlayerState(){
