@@ -654,7 +654,9 @@ function showEvent(s,stage,actions,displayMode='BRACKET'){
         o.add({destroy:()=>maskShape.destroy()});
       }
     }else o.label(100,726,'PRO DRIVER',13,PALE,{font:PIXEL});
-    const opponentCarId=opponent.carId||heat?.opponentCarId;
+    const opponentDriver=c.drivers?.[opponent.id]||{};
+    const opponentCarId=opponent.carId||opponentDriver.carId||
+      opponentDriver.selectedCarId||heat?.opponentCarId;
     const opponentCar=cars[opponentCarId]||{};
     o.label(231,684,String(opponent.name||'TO BE CONFIRMED').toUpperCase(),
       18,PALE,{font:DISPLAY,width:239});
@@ -662,9 +664,9 @@ function showEvent(s,stage,actions,displayMode='BRACKET'){
       opponentCarId||'CAR TO BE CONFIRMED').toUpperCase(),
       14,'#ff9ba5',{width:247});
     o.label(231,733,'CLASS CAP',11,MUTED);
-    o.label(326,730,'OPEN',15,PALE);
+    o.label(326,730,'NO ADDITIONAL CAP',15,PALE);
     o.label(231,753,'NOS',11,MUTED);
-    o.label(326,750,'EVENT RULES',15,PALE);
+    o.label(326,750,'STANDARD CHAMPIONSHIP',15,PALE);
     o.label(231,775,'CLASS',11,MUTED);
     o.label(326,771,'CHAMPIONSHIP',15,PALE);
     if(opponentCarId&&cars[opponentCarId]&&
