@@ -10,7 +10,8 @@ test('knockout uses exact Open Circuit glowing hotspot helper',()=>{
 test('knockout grid uses paddock-selected car and has no driver picker',()=>{
  const part=ui.slice(ui.indexOf('function enterGrid(){'),ui.indexOf('function showFullKnockout('));
  assert.match(part,/registry\.get\('selectedCarId'\)/);
- assert.match(part,/if\(stage==='CREW'\)return showCarPicker\(s,stage,actions\)/);\n assert.doesNotMatch(part,/if\(stage==='KNOCKOUT'\)return showCarPicker\(s,stage,actions\)/);
+ assert.match(part,/if\(stage==='CREW'\)return showCarPicker\(s,stage,actions\)/);
+ assert.doesNotMatch(part,/if\(stage==='KNOCKOUT'\)return showCarPicker\(s,stage,actions\)/);
 });
 test('opponent card uses Open Circuit 654 by 164 geometry and real data',()=>{
  assert.match(ui,/const x=52,y=643,w=654,h=164/);
