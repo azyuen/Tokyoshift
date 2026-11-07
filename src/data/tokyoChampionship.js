@@ -13,6 +13,26 @@ export const TOKYO_CHAMPIONSHIP_SCORING = Object.freeze({
 const PLAYER='player:driver';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const hash=s=>{let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return n>>>0;};
+// Event-specific vehicle locks. Legacy championships without locks are valid
+// until their first solo race. Never infer a lock from the previous event.
+export function getChampionshipEventCar(raw,stage) {
+  if(!['KNOCKOUT','FOUR_WIDE'].includes(stage))return null;
+  return raw?.eventCarLocks?.[stage]||null;
+}
+export function lockChampionshipEventCar(raw,stage,carId,registeredCarIds=[],ownedCarIds=[],devBypass=false) {
+  if(!raw||raw.completed||raw.stage!==stage||
+    !['KNOCKOUT','FOUR_WIDE'].includes(stage))
+    return {error:'CHAMPIONSHIP EVENT IS NOT ACTIVE'};
+  if(typeof carId!=='string'||!carId||
+    !ownedCarIds.includes(carId)||
+    (!devBypass&&(!Array.isArray(registeredCarIds)||!registeredCarIds.includes(carId))))
+    return {error:'SELECT ONE OF YOUR THREE REGISTERED CARS'};
+  const existing=getChampionshipEventCar(raw,stage);
+  if(existing&&existing!==carId)return {error:'CAR LOCKED FOR THIS CHAMPIONSHIP EVENT'};
+  return {championship:existing?raw:{
+    ...raw,eventCarLocks:{...(raw.eventCarLocks||{}),[stage]:carId}
+  }};
+}
 export function canEnterTokyoChampionship(raw) {
   const c=normaliseProCircuitState(raw),q=getProQualification(c);
   return c.calendar.round===8&&q.qualified&&!c.activeTournament&&!c.activeCrewEvent&&!c.activeTimedEvent&&!c.activeChampionship;
