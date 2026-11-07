@@ -6,6 +6,16 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## November 2026 — Pro Season open registration and Championship event-car selection (supersedes R753/R754 registration restrictions)
+
+- At **new** eight-round Pro Season registration, nominate **exactly three personally owned eligible cars of any drivetrain combination**. Three FF, three RWD, three AWD, or any mixture are allowed. Drivetrain is **not** a registration constraint.
+- The three nominated vehicle instance IDs remain fixed throughout that season and its qualifying Tokyo Championship. Cars remain owned, retain their upgrades/paint/history, and occupy the three secured Pro Paddock bays. Bays **04, 05 and 06 are neutral registration slots**, not fixed AWD/RWD/FF slots; show each car's actual resolved drivetrain.
+- Each individual Pro Season event continues to apply its own drivetrain, power, class, stock and NOS restrictions at **event entry/scrutineering**. A player can register a roster that cannot enter every restricted event; the UI must explain the event eligibility clearly without changing the roster.
+- Tokyo Championship individual events are **open drivetrain**. Select **one** registered car for the complete knockout event and **one** registered car for the complete four-wide event. The same car may be chosen for both, or different cars. Lock the selected vehicle for the duration of its event, not across both events.
+- Crew event eligibility and the seven-recruit pool are unchanged. Legacy in-progress Pro Seasons, existing event snapshots, and Championship saves must remain resumable under their saved state.
+- This section supersedes the older FF/RWD/AWD nomination requirement, drivetrain-labelled bay assignments and the single-car lock shared between knockout and four-wide wherever those rules appear below. Existing descriptions of event-specific drivetrain restrictions remain in force.
+- Implementation and test status: **specification only** until the matching registration, garage, UI, Championship and save-compatibility code changes are completed and tested. Do not describe this rule as live before deployment.
+
 ## November 2026 R756 — Pro Season venue and Daichi event preparation
 
 - Season screen retains the rankings and progress bars but removes the
