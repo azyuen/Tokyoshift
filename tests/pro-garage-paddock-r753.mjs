@@ -13,24 +13,24 @@ const initial={ef:'shinonomeWorkshop',ae86:'shinonomeCanalYard',
 function fresh(){const res=startProfessionalSeason(createDefaultProCircuitState(),
   ['ef','ae86','gc8'],owned);assert.ok(res.circuit,res.error);return res.circuit;}
 
-test('Pro Garage has three temporary bays without adding purchased garage capacity',()=>{
-  assert.deepEqual(PRO_GARAGE_BAYS.map(b=>[b.number,b.drive]),
-    [['04','AWD'],['05','RWD'],['06','FWD']]);
+test('virtual Pro Paddock has three numbered bays without changing garage capacity',()=>{
+  assert.deepEqual(PRO_GARAGE_BAYS.map(b=>b.number),
+    ['04','05','06']);
   assert.equal(PRO_GARAGE_WORKSHOP.capacity,3);
   assert.equal(PRO_GARAGE_WORKSHOP.tier,2);
   assert.equal(getGarageCapacity(2),MAX_GARAGE_CAPACITY);
 });
 
-test('registration moves exactly three registered personal cars with original garages saved',()=>{
+test('registration references three personal cars without moving their workshop assignments',()=>{
   const c=fresh();const staged=stageProGarage(c,owned,initial,2);
   assert.ok(staged.circuit,staged.error);
   assert.deepEqual(staged.circuit.proGarageOrigins,{
     ef:initial.ef,ae86:initial.ae86,gc8:initial.gc8,
   });
-  for(const id of ['ef','ae86','gc8'])assert.equal(staged.carGarageLocations[id],PRO_GARAGE_ID);
+  assert.deepEqual(staged.carGarageLocations,initial,'virtual paddock must not move cars');
   assert.equal(staged.carGarageLocations.r32,initial.r32);
   assert.deepEqual(getProGarageBayCars(staged.circuit,owned).map(b=>b.carId),
-    ['gc8','ae86','ef']);
+    ['ef','ae86','gc8']);
   const reload=normaliseProCircuitState(JSON.parse(JSON.stringify(staged.circuit)));
   assert.deepEqual(reload.proGarageOrigins,staged.circuit.proGarageOrigins);
   assert.deepEqual(normaliseCarGarageLocations(owned,staged.carGarageLocations,2),

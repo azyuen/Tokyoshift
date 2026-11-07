@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 jobs:
   real-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
@@ -32,3 +32,9 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/tokyoshift-server.log 2>&1 &
           sleep 2
           node tests/replay-browser-r574.mjs
+
+permissions:
+  contents: read
+concurrency:
+  group: replay-browser-r574-${{ github.ref }}
+  cancel-in-progress: true

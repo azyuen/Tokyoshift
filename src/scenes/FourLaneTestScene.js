@@ -1,3 +1,4 @@
+import { applyProRaceNosLimit } from '../data/proRaceNos.js?v=20261105-r802';
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
@@ -478,24 +479,14 @@ export default class FourLaneTestScene extends RaceScene {
       this.returnToDrag();
       return;
     }
-    const playerConfig = applyDifficultyToPlayerCarConfig(playerBuild.car, difficulty);
+    let playerConfig = applyDifficultyToPlayerCarConfig(playerBuild.car, difficulty);
     const eventNosRules=this.proDuel&&!this.proCrew
       ? this.proDuelState?.briefingRules
       : this.proCup
         ? getProfessionalRoundEvents(this.registry.get('proCircuit')?.calendar?.round).driver
         : this.proTimed
           ? getProfessionalRoundEvents(this.timedEvent?.round).driver : null;
-    if(eventNosRules){
-      const allowed=eventNosRules.noNos?0:
-        Number.isFinite(eventNosRules.maxNosShots)
-          ?Math.max(0,Math.floor(eventNosRules.maxNosShots)):null;
-      if(allowed!==null){
-        playerConfig.nosShots=Math.min(Number(playerConfig.nosShots||0),allowed);
-        playerConfig.nosCapacitySeconds=playerConfig.nosShots*
-          Number(playerConfig.nosShotDurationSeconds||1);
-        if(!playerConfig.nosShots)playerConfig.nosPower=0;
-      }
-    }
+    playerConfig = applyProRaceNosLimit(playerConfig, eventNosRules);
     const player = new Vehicle(playerConfig, playerBuild.engine);
     player.transmission.currentGear = 0;
     player.transmission.lastShiftQuality = 'NEUTRAL';
@@ -546,7 +537,8 @@ export default class FourLaneTestScene extends RaceScene {
           return;
         }
       }
-      const vehicle = new Vehicle(built.car, built.engine);
+      const rivalConfig = applyProRaceNosLimit(built.car, activeRules);
+      const vehicle = new Vehicle(rivalConfig, built.engine);
       vehicle.transmission.currentGear = 1;
       vehicle.transmission.lastShiftQuality = 'STAGED';
       const skill = applyDifficultyToRivalAi(
@@ -563,7 +555,7 @@ export default class FourLaneTestScene extends RaceScene {
           rating, playerDifficulty: difficulty, rollingStart: false,
           raceDistanceM: FOUR_LANE_TEST_DISTANCE_M,
         }),
-        config: built.car,
+        config: rivalConfig,
         paint: rivalRound?.paintColor??getProRaceRivalPaint(index),
         finishSeconds: null, disqualified: false,
       });

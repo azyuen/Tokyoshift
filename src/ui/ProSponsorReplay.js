@@ -5,7 +5,6 @@
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261027-r692';
 import { cars } from '../data/cars.js?v=20261026-r687';
 import { createDefaultProCircuitState } from '../data/proCircuit.js?v=20261017-r575';
-import { startProfessionalSeason } from '../data/proSeason.js?v=20261021-r628';
 import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { startChapter09 } from './Chapter09Story.js?v=20261027-r693';
 
@@ -37,8 +36,10 @@ export function beginProSponsorPlayableReplay(scene,{
   catch(e){console.warn('[Tokyo SHIFT] Cannot snapshot Chapter 09 replay',e);return false;}
   const car=owned.includes(registry.get('selectedCarId'))
     ?registry.get('selectedCarId'):owned[0];
-  const circuit=startProfessionalSeason(createDefaultProCircuitState());
-  if(!circuit.circuit)return false;
+  // This is a non-persistent sponsor exhibition, not a new season entry.
+  // New-season registration now requires three owned cars; imposing it here
+  // prevented a one-car profile from replaying its already-earned chapter.
+  const circuit={circuit:{...createDefaultProCircuitState(),seasonStatus:'ACTIVE'}};
   const sceneKey=scene.sys?.settings?.key||'GarageScene';
   sessions.set(registry,{
     values,slot:getActiveProfileIndex(),

@@ -80,7 +80,7 @@ test('second place advances to semifinal and preserves correct driver ID', () =>
 test('actual scene references the official ID and locked camera and gives preheat briefing', () => {
   const path = new URL('../src/scenes/FourLaneTestScene.js', import.meta.url);
   const source = fs.readFileSync(path, 'utf8');
-  assert.match(source, /id: this\.proCup \? 'player:driver' : 'player'/);
+  assert.match(source, /id: this\.proCup \|\| this\.champMode \? 'player:driver' : 'player'/);
   assert.match(source, /this\.finishCameraPx = null/);
   assert.match(source, /this\.cameraPx = this\.finishCameraPx \?\? chaseCameraPx/);
   assert.match(source, /this\.firstFinishClock/);

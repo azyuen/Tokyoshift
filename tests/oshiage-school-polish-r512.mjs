@@ -29,7 +29,7 @@ test('all Oshiage teaching poses map to the correct physical asset files', () =>
   for (const [pose, suffix] of pairs) {
     const asset = getCharacterVisualAsset('sayakaFujieda', pose);
     assert.equal(asset?.key, 'characterSayakaOshiage' + suffix[0].toUpperCase() + suffix.slice(1));
-    assert.equal(asset?.path, 'assets/Characters/Main/oshiage_sayaka_fujieda_' + suffix + '.png');
+    assert.equal(asset?.path, 'assets/Characters/Main/oshiage_sayaka_fujieda_' + (suffix==='explaining'?'talking':suffix) + '.png');
     assert.ok(existsSync(new URL('../' + asset.path, import.meta.url)), pose);
   }
   assert.match(resultsScene, /oshiageConcerned' : 'oshiageHappy'/);

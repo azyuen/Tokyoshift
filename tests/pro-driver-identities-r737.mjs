@@ -101,9 +101,13 @@ test('the settled heat affects its actual named driver and not the first undefin
   const result=settleLegacySeasonEvent(before,named,0);
   const first= named.rounds[0].opponentDriverId;
   assert.notEqual(result.drivers[first].rating,before.drivers[first].rating);
-  for(const id of Object.keys(before.drivers)){
-    if(id!==first)assert.equal(result.drivers[id].rating,before.drivers[id].rating);
-  }
+  assert.deepEqual(result.lastTournament.driverIds,[first]);
+  assert.equal(result.drivers[first].wins,before.drivers[first].wins+1);
+  assert.equal(result.drivers[first].entered,before.drivers[first].entered+1);
+  const background=result.calendar.history.at(-1).background;
+  assert.ok(!background.some(row=>row.kind==='DRIVER'&&row.id===first),
+    'live opponent must not be scored again by background simulation');
+  assert.ok(background.some(row=>row.kind==='DRIVER'&&row.id!==first));
 });
 test('both professional pages use the persisted opponentName and results have separate label/value columns',()=>{
   const race=readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');

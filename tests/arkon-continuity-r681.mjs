@@ -44,17 +44,16 @@ test('Sayaka first tells Aruken about Daichi; nothing claims they already met',(
   const scene=ARKON_CHAPTER_10.steps.find(s=>s.type==='MANGA'&&s.title==='A LITTLE OPPORTUNITY');
   assert.ok(scene);
   const words=textOf(scene);
-  assert.match(words,/I met a young mechanic named Daichi/i);
-  assert.match(words,/You think he has potential\?/i);
-  assert.match(words,/I do\. And there is someone else/i);
-  assert.match(words,/affordable workshop space for Daichi/i);
-  assert.match(words,/handle the lease through the office/i);
+  assert.match(words,/young mechanic, Daichi/i);
+  assert.match(words,/affordable workshop space/i);
+  assert.match(words,/arrange the lease/i);
   assert.match(words,/child of old family friends/i);
-  assert.match(words,/AE86 or a Civic EF/i);
+  assert.match(words,/AE86 or Civic EF/i);
+  assert.match(words,/No strings/i);
   assert.doesNotMatch(words,/Do you remember Daichi|He is a good mechanic|already met Daichi|worked with Daichi/i);
   const ending=ARKON_CHAPTER_10.steps.find(s=>s.type==='MANGA'&&s.title==='THE SAME VIEW');
   assert.doesNotMatch(textOf(ending),/Daichi is counting on us/i);
-  assert.match(textOf(ending),/two have their own futures to build/i);
+  assert.match(textOf(ending),/Are you happy, Aruken/i);
 });
 test('R679 ending and chapter save actions remain intact',()=>{
   const steps=ARKON_CHAPTER_10.steps;

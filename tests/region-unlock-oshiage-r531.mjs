@@ -65,10 +65,13 @@ test('Oshiage services open early; Skytree requires seven regional championships
   assert.equal(getOshiageEliteProgress(state(3,7)).complete,true);
   assert.equal(isTravelLocationUnlocked(state(3,7),'oshiageSkytreeMeet'),true);
 });
-test('Drag Complex unlocks with full recruited crew, not winning their battles', () => {
+test('Drag Complex requires completed crew battles and the Ginza invitation', () => {
   assert.equal(getCentralTokyoEligibility(state(100,7,6,0)).drag,false);
-  assert.equal(getCentralTokyoEligibility(state(100,7,7,0)).drag,true);
-  assert.equal(getCentralTokyoAccess(state(100,7,7,0)).drag,true);
+  assert.equal(getCentralTokyoEligibility(state(100,7,7,0)).drag,false);
+  const complete=state(100,7,7,7);
+  assert.equal(getCentralTokyoEligibility(complete).drag,true);
+  assert.equal(getCentralTokyoAccess(complete).drag,false);
+  assert.equal(getCentralTokyoAccess({...complete,centralTokyoUnlocks:{ginza:true}}).drag,true);
   assert.match(getCentralTokyoUnlockLabel(state(100,7,6,0),'tokyoDragComplex'),/RECRUIT FULL CREW/);
 });
 test('Ginza requires all seven completed crew battles plus the invitation', () => {
@@ -98,7 +101,7 @@ test('paint studio uses tappable HSV colour square, lower car and right-side act
   assert(s.includes('createCanvas(key, width, height)'));
   assert(s.includes("square.on('pointerdown', chooseSquare)"));
   assert(s.includes("strip.on('pointerdown', chooseHue)"));
-  assert(s.includes('car, state, 609, 410, 483, this.pendingPaint'));
+  assert(s.includes('car, state, 609, 419, 483, this.pendingPaint'));
   assert(!s.includes("this.button(SIDE.x + 112, y, 48, 42, '-'"));
   assert(s.includes("'APPLY PAINT // ' + MONEY(fee)"));
   assert(s.includes("'RETURN TO CUSTOM WORKS'"));

@@ -2,6 +2,7 @@ name: R531 Oshiage Interactive Smoke
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'src/scenes/OshiageScene.js'
       - 'tests/oshiage-custom-works-r531.mjs'
@@ -27,3 +28,9 @@ jobs:
           name: oshiage-r531-screenshots
           path: artifacts/oshiage-r531/
           if-no-files-found: ignore
+
+permissions:
+  contents: read
+concurrency:
+  group: r531-oshiage-browser-${{ github.ref }}
+  cancel-in-progress: true

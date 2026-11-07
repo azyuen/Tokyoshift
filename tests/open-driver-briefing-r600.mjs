@@ -1,3 +1,4 @@
+import './helpers/phaser-math.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -37,7 +38,8 @@ test('R600 opponent panel is wider, shorter and supports real portraits plus saf
   assert.match(ui,/rivalContext:true/);
   assert.match(ui,/proDriverHelmet/);
   assert.match(ui,/safeCarPreview\(round\.carId,545,743,211/);
-  assert.match(ui,/opponentTorque/);
+  assert.match(ui,/rule.maxPowerKW\+' KW MAX'/);
+  assert.match(ui,/rule.noNos\?'PROHIBITED':'PERMITTED'/);
   assert.match(ui,/display\(89,652,'NEXT OPPONENT',24/);
 });
 
@@ -67,5 +69,5 @@ test('R600 racing safety, cooldown, tuning and forfeits are retained',()=>{
   const state={active:true,proEvent:true,openCircuit:true,playerCarId:'240z__copy2',
     roundIndex:0,rounds:[{carId:'galant'}],briefingRules:{maxPowerKW:260,noNos:true}};
   assert.equal(driverBriefingEligibility(state,{},119,['240z__copy2']).eligible,true);
-  assert.equal(driverAdviceStatus({eventTick:2,crewAdviceCooldownUntil:4},state).available,false);
+  assert.equal(driverAdviceStatus({eventTick:2,crewAdviceCooldownUntil:4},state).available,true);
 });

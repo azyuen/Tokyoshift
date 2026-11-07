@@ -1,0 +1,2609 @@
+[
+  {
+    "id": "arkon-ch01-ch02-r685",
+    "paths": [
+      "src/data/arkonChapter01Revised.js",
+      "src/data/arkonChapter02.js",
+      "src/scenes/RaceScene.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryNativeStageTemplates.js",
+      "src/ui/ArkonStoryObjective.js",
+      "src/ui/GinzaBanterHud.js",
+      "src/ui/StoryContinuePrompt.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter01-02-polish-r685.mjs",
+      "tests/arkon-chapter02-r655.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter01Revised.js src/data/arkonChapter02.js src/story/StoryNativeStageTemplates.js src/ui/StoryStage.js src/ui/StoryContinuePrompt.js src/ui/ArkonStoryObjective.js src/ui/GinzaBanterHud.js src/story/StoryDirector.js src/scenes/RaceScene.js tests/arkon-chapter01-02-polish-r685.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter01-02-polish-r685.mjs tests/arkon-chapter02-r655.mjs tests/arkonStoryMode.test.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-school-polish-r512.mjs tests/arkon-story-r678.mjs tests/arkon-chapter07-r669.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-ch01-sayaka-r686",
+    "paths": [
+      "src/data/arkonChapter01.js",
+      "src/data/arkonChapter01Extended.js",
+      "src/data/arkonChapter01Revised.js",
+      "tests/arkon-ch01-sayaka-uniform-r686.mjs",
+      "tests/arkon-chapter01-02-polish-r685.mjs",
+      "tests/arkonStoryMode.test.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter01.js src/data/arkonChapter01Extended.js src/data/arkonChapter01Revised.js tests/arkon-ch01-sayaka-uniform-r686.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-ch01-sayaka-uniform-r686.mjs tests/arkonStoryMode.test.mjs tests/arkon-chapter01-02-polish-r685.mjs tests/arkon-chapter02-r655.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-ch04-work-r667",
+    "paths": [
+      "src/data/arkonChapter04.js",
+      "src/data/arkonChapter04Work.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonRwbContract.js",
+      "src/ui/ArkonStoryObjective.js",
+      "src/ui/RaceCoachHud.js",
+      "tests/arkon-ch04-work-r667.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter04.js\nnode --check src/data/arkonChapter04Work.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/ui/ArkonStoryObjective.js\nnode --check src/ui/ArkonRwbContract.js\nnode --check src/ui/RaceCoachHud.js\nnode --check src/state/GameState.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/arkon-ch04-work-r667.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-ch07-fixes-r682",
+    "paths": [
+      "src/data/arkonChapter06Work.js",
+      "src/data/arkonChapter07.js",
+      "src/data/arkonStoryCarProtection.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/state/GameState.js",
+      "tests/arkon-chapter07-fixes-r682.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonStoryCarProtection.js src/data/arkonChapter06Work.js src/data/arkonChapter07.js src/state/GameState.js src/scenes/CentralTokyoScene.js tests/arkon-chapter07-fixes-r682.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter07-fixes-r682.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-economy-polish-r675.mjs tests/arkon-continuity-r681.mjs tests/arkon-chapter10-r679.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-ch07-r684",
+    "paths": [
+      "src/data/arkonChapter07.js",
+      "src/data/arkonChapter07Progress.js",
+      "src/data/tunerShops.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/scenes/TunerShopScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "tests/arkon-chapter07-*.mjs",
+      "tests/arkon-suited-portraits-r683.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter07.js src/data/arkonChapter07Progress.js src/data/tunerShops.js src/scenes/TunerShopScene.js src/scenes/RaceScene.js src/scenes/GarageScene.js src/story/StoryDirector.js src/state/GameState.js tests/arkon-chapter07-visit-banter-parts-r684.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter07-visit-banter-parts-r684.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter07-fixes-r682.mjs tests/arkon-suited-portraits-r683.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter10-r674.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter03-r656",
+    "paths": [
+      "src/data/arkonChapter03.js",
+      "src/data/arkonChapter03Jobs.js",
+      "src/data/characters.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonCustomerTuning.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "tests/arkon-chapter03-r656.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter03.js\nnode --check src/data/arkonChapter03Jobs.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/ui/ArkonCustomerTuning.js\nnode --check src/ui/ArkonStoryArchivePanel.js\nnode --check src/ui/ArkonStoryObjective.js\nnode --check src/state/GameState.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/arkon-chapter03-r656.mjs tests/arkon-chapter02-r655.mjs tests/story-director-r639.mjs tests/arkonStoryMode.test.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter05-meets-r670",
+    "paths": [
+      "src/data/arkonChapter05.js",
+      "src/state/GameState.js",
+      "src/story/Chapter05MeetLayout.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/StoryContinuePrompt.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter05-meets-r670.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter05.js src/ui/StoryStage.js src/ui/StoryContinuePrompt.js src/story/StoryDirector.js src/story/StoryScript.js src/story/Chapter05MeetLayout.js src/state/GameState.js tests/arkon-chapter05-meets-r670.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter05-meets-r670.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter06-r668.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter05-r666",
+    "paths": [
+      "src/data/arkonChapter05.js",
+      "src/data/arkonChapter05Races.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "tests/arkon-chapter05-r666.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter05.js src/data/arkonChapter05Races.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/story/StoryScript.js src/scenes/RaceScene.js src/state/GameState.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js tests/arkon-chapter05-r666.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter06-economy-r675",
+    "paths": [
+      "src/data/arkonChapter06.js",
+      "src/data/arkonChapter06Work.js",
+      "src/data/workshopProgression.js",
+      "src/scenes/GarageScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/ui/ArkonCustomerTuning.js",
+      "src/ui/ArkonReplayExit.js",
+      "src/ui/ArkonRwbRestoration.js",
+      "src/ui/SettingsPanel.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter06-economy-polish-r675.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter06Work.js src/data/arkonChapter06.js src/ui/ArkonCustomerTuning.js src/ui/ArkonRwbRestoration.js src/ui/ArkonReplayExit.js src/ui/SettingsPanel.js src/scenes/GarageScene.js src/story/StoryDirector.js src/ui/StoryStage.js src/data/workshopProgression.js src/state/GameState.js tests/arkon-chapter06-economy-polish-r675.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter06-economy-polish-r675.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter06-polish-r671.mjs tests/arkon-chapter05-meets-r670.mjs tests/arkon-chapter05-r666.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter06-polish-r671",
+    "paths": [
+      "src/data/arkonChapter06.js",
+      "src/data/arkonChapter06Work.js",
+      "src/scenes/RaceScene.js",
+      "src/story/StoryDirector.js",
+      "src/ui/ArkonChapter06Finale.js",
+      "src/ui/ArkonRwbRestoration.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter06-polish-r671.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter06.js src/data/arkonChapter06Work.js src/ui/ArkonRwbRestoration.js src/ui/ArkonChapter06Finale.js src/ui/StoryStage.js src/story/StoryDirector.js src/scenes/RaceScene.js tests/arkon-chapter06-polish-r671.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter06-polish-r671.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-meets-r670.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter06-r668",
+    "paths": [
+      "src/data/arkonChapter06.js",
+      "src/data/arkonChapter06Work.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonChapter06Finale.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonRwbRestoration.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "tests/arkon-chapter06-r668.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter06.js src/data/arkonChapter06Work.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonRwbRestoration.js src/ui/ArkonChapter06Finale.js src/ui/ArkonStoryObjective.js src/ui/ArkonStoryArchivePanel.js src/ui/ArkonPlayableReplay.js src/scenes/RaceScene.js src/state/GameState.js tests/arkon-chapter06-r668.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter07-r669",
+    "paths": [
+      "src/data/arkonChapter07*.js",
+      "src/data/cars.js",
+      "src/scenes/RaceScene.js",
+      "src/scenes/TunerShopScene.js",
+      "src/state/GameState.js",
+      "src/story/**",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "tests/arkon-chapter07-r669.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter07.js src/data/arkonChapter07Progress.js src/data/cars.js src/data/storyDirectorScripts.js src/story/StoryScript.js src/story/StoryDirector.js src/scenes/RaceScene.js src/scenes/TunerShopScene.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js src/state/GameState.js tests/arkon-chapter07-r669.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter08-r672",
+    "paths": [
+      "src/data/arkonChapter08*.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter08-r672.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter08.js src/data/arkonChapter08Races.js src/data/storyDirectorScripts.js src/story/StoryScript.js src/story/StoryDirector.js src/data/characters.js src/ui/StoryStage.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js src/scenes/RaceScene.js src/scenes/GarageScene.js src/state/GameState.js tests/arkon-chapter08-r672.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-chapter08-r672.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-polish-r671.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter09-r673",
+    "paths": [
+      "src/data/arkonChapter09*.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/**",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "tests/arkon-chapter09-r673.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter09.js\nnode --check src/data/arkonChapter09Races.js\nnode --check src/story/StoryDirector.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/arkon-chapter09-r673.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter07-r669.mjs\n",
+      "node --test tests/startup-import-integrity-r508.mjs tests/arkon-chapter-replay-r657.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter10-cinematic-r749",
+    "paths": [
+      "src/data/arkonChapter10.js",
+      "src/scenes/RaceScene.js",
+      "src/story/ArkonR749CheckpointMigration.js",
+      "src/story/StoryDirector.js",
+      "src/ui/GinzaBanterHud.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter10-cinematic-r749.mjs"
+    ],
+    "commands": [
+      "for f in src/data/arkonChapter10.js src/ui/StoryStage.js src/scenes/RaceScene.js src/ui/GinzaBanterHud.js src/story/StoryDirector.js src/story/ArkonR749CheckpointMigration.js tests/arkon-chapter10-cinematic-r749.mjs; do node --check \"$f\"; done\n",
+      "node --test tests/arkon-chapter10-cinematic-r749.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/sayaka-pose-ch10-r748.mjs tests/arkon-story-r678.mjs tests/arkonStoryMode.test.mjs tests/career-continuity-r680.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter10-r674",
+    "paths": [
+      "src/data/arkonChapter10*.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonChapter10*.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryObjective.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter10-r674.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter10.js src/data/arkonChapter10Work.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonChapter10Finale.js src/ui/ArkonChapter10Restoration.js src/ui/ArkonStoryObjective.js src/ui/ArkonPlayableReplay.js src/ui/ArkonStoryArchivePanel.js src/ui/StoryStage.js src/scenes/RaceScene.js src/state/GameState.js tests/arkon-chapter10-r674.mjs; do\n  node --check \"$file\"\ndone\n",
+      "node --test tests/arkon-chapter10-r674.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter-replay-r657.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-chapter10-r679",
+    "paths": [
+      "src/data/arkonChapter0*.js",
+      "src/data/arkonChapter10*.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/ArkonR679CheckpointMigration.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonChapter10Finale.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-chapter10-r67*.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter05.js\nnode --check src/data/arkonChapter06.js\nnode --check src/data/arkonChapter10.js\nnode --check src/data/arkonChapter10Work.js\nnode --check src/state/GameState.js\nnode --check src/story/StoryScript.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/ArkonR679CheckpointMigration.js\nnode --check src/ui/ArkonPlayableReplay.js\nnode --check src/ui/ArkonChapter10Finale.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-story-r678.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-character-identity-r677",
+    "paths": [
+      "src/data/arkonChapter*.js",
+      "src/data/cars.js",
+      "src/data/chapter08.js",
+      "src/data/characterDisplayName.js",
+      "src/data/characters.js",
+      "src/data/cutscenes.js",
+      "src/data/ginzaScenes.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/Arkon*.js",
+      "src/ui/GinzaBanterHud.js",
+      "tests/arkon-character-identity-r677.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characterDisplayName.js\nnode --check src/data/characters.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/ui/ArkonStoryObjective.js\nnode --check tests/arkon-character-identity-r677.mjs\n",
+      "# Two pre-existing main-branch failures (R674 identity-equality assertion\n# and R532 fixed dialogue roster count) are tracked separately.\nnode --test tests/arkon-character-identity-r677.mjs tests/arkonStoryMode.test.mjs tests/arkon-chapter02-r655.mjs tests/arkon-chapter03-r656.mjs tests/arkon-chapter06-r668.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-arkon-showdowns-r637.mjs \n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-continuity-r681",
+    "paths": [
+      "docs/ARKON_R681_240Z_DAICHI_CONTINUITY.md",
+      "src/data/arkonChapter01*.js",
+      "src/data/arkonChapter10.js",
+      "src/data/storyDirectorScripts.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "tests/arkon-continuity-r681.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter01.js\nnode --check src/data/arkonChapter01Extended.js\nnode --check src/data/arkonChapter01Revised.js\nnode --check src/data/arkonChapter10.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/ui/ArkonStoryArchivePanel.js\nnode --check src/story/StoryDirector.js\n",
+      "node --test tests/arkon-continuity-r681.mjs tests/arkon-story-r678.mjs tests/arkon-chapter10-r679.mjs tests/career-continuity-r680.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-story-checks",
+    "paths": [
+      "src/data/arkonChapter01.js",
+      "src/data/arkonChapter01Extended.js",
+      "src/data/arkonChapter01Revised.js",
+      "src/data/arkonChapter02.js",
+      "src/data/arkonChapter04.js",
+      "src/data/arkonChapter04Ledger.js",
+      "src/data/arkonStoryWorkshopMechanic.js",
+      "src/data/centralTokyo.js",
+      "src/data/characters.js",
+      "src/data/ginzaGallery.js",
+      "src/data/oshiageSchool.js",
+      "src/data/storyDirectorScripts.js",
+      "src/data/travelRegions.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/ProfileSelectScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/ArkonStoryTime.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryNativeStageTemplates.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStoryArchivePanel.js",
+      "src/ui/ArkonStoryMeetObserver.js",
+      "src/ui/ArkonStoryObjective.js",
+      "src/ui/OfficePanel.js",
+      "src/ui/SettingsPanel.js",
+      "src/ui/ShowdownLayout.js",
+      "src/ui/StoryContinuePrompt.js",
+      "src/ui/StoryStage.js",
+      "src/ui/StreetShowdownView.js",
+      "src/ui/TravelMap.js",
+      "tests/arkon-chapter-replay-r657.mjs",
+      "tests/arkon-chapter02-r655.mjs",
+      "tests/arkon-chapter04-r659.mjs",
+      "tests/arkonStoryMode.test.mjs"
+    ],
+    "commands": [
+      "node --check src/state/GameState.js\nnode --check src/scenes/ProfileSelectScene.js\nnode --check src/data/arkonChapter01.js\nnode --check src/data/arkonChapter01Extended.js\nnode --check src/data/arkonChapter01Revised.js\nnode --check src/data/arkonChapter02.js\nnode --check src/data/arkonChapter04.js\nnode --check src/data/arkonChapter04Ledger.js\nnode --check tests/arkon-chapter04-r659.mjs\nnode --check src/ui/ArkonPlayableReplay.js\nnode --check src/story/ArkonStoryTime.js\nnode --check src/data/arkonStoryWorkshopMechanic.js\nnode --check src/data/characters.js\nnode --check src/ui/TravelMap.js\nnode --check src/ui/ArkonStoryMeetObserver.js\nnode --check src/data/oshiageSchool.js\nnode --check src/data/travelRegions.js\nnode --check src/data/centralTokyo.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/ui/StoryContinuePrompt.js\nnode --check src/ui/StoryStage.js\nnode --check src/story/StoryNativeStageTemplates.js\nnode --check src/ui/ShowdownLayout.js\nnode --check src/ui/StreetShowdownView.js\nnode --check src/ui/ArkonStoryObjective.js\nnode --check src/ui/ArkonStoryArchivePanel.js\nnode --check src/ui/OfficePanel.js\nnode --check src/ui/SettingsPanel.js\nnode --check src/story/StoryDirector.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/GarageScene.js\n",
+      "node --test tests/arkonStoryMode.test.mjs tests/arkon-chapter02-r655.mjs tests/arkon-chapter-replay-r657.mjs tests/arkon-chapter04-r659.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-story-polish-r665",
+    "paths": [
+      "src/data/arkonChapter03.js",
+      "src/data/arkonChapter04.js",
+      "src/data/arkonChapter04Ledger.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/ui/ArkonCustomerTuning.js",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "src/ui/SettingsPanel.js",
+      "src/ui/StoryStage.js",
+      "tests/arkon-story-polish-r665.mjs"
+    ],
+    "commands": [
+      "node --check src/data/arkonChapter03.js\nnode --check src/data/arkonChapter04.js\nnode --check src/data/arkonChapter04Ledger.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/ui/ArkonCustomerTuning.js\nnode --check src/ui/StoryStage.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/ui/OpeningPhonePrototype.js\nnode --check src/ui/ArkonPlayableReplay.js\nnode --check src/ui/SettingsPanel.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/arkon-story-polish-r665.mjs tests/arkon-chapter03-r656.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-story-r678",
+    "paths": [
+      "src/data/arkonChapter*.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/TunerShopScene.js",
+      "src/story/**",
+      "src/ui/ArkonPlayableReplay.js",
+      "src/ui/ArkonStory*.js",
+      "tests/arkon-chapter07-r669.mjs",
+      "tests/arkon-story-r678.mjs",
+      "tests/arkonStoryMode.test.mjs"
+    ],
+    "commands": [
+      "for file in src/data/arkonChapter01Revised.js src/data/arkonChapter02.js src/data/arkonChapter03.js src/data/arkonChapter04.js src/data/arkonChapter05.js src/data/arkonChapter07.js src/data/arkonChapter07Progress.js src/data/storyDirectorScripts.js src/story/StoryDirector.js src/ui/ArkonStoryObjective.js src/ui/ArkonStoryArchivePanel.js src/scenes/TunerShopScene.js tests/arkon-story-r678.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-story-r678.mjs tests/arkonStoryMode.test.mjs tests/arkon-chapter02-r655.mjs tests/arkon-chapter03-r656.mjs tests/arkon-chapter04-r659.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter10-r674.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "arkon-suit-r683",
+    "paths": [
+      "src/data/arkonChapter07.js",
+      "src/data/arkonChapter08.js",
+      "src/data/arkonChapter09.js",
+      "src/data/arkonChapter10.js",
+      "src/data/arkonSuitedMangaPose.js",
+      "src/data/characters.js",
+      "src/ui/MangaCutscene.js",
+      "tests/arkon-suited-portraits-r683.mjs"
+    ],
+    "commands": [
+      "for file in src/data/characters.js src/data/arkonSuitedMangaPose.js src/ui/MangaCutscene.js src/data/arkonChapter07.js src/data/arkonChapter08.js src/data/arkonChapter09.js src/data/arkonChapter10.js tests/arkon-suited-portraits-r683.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/arkon-suited-portraits-r683.mjs tests/arkon-chapter07-fixes-r682.mjs tests/arkon-chapter07-r669.mjs tests/arkon-chapter08-r672.mjs tests/arkon-chapter09-r673.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-continuity-r681.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "background-standards-r645",
+    "paths": [
+      "scripts/audit_backgrounds.py",
+      "src/data/storyBackgroundCatalog.js"
+    ],
+    "commands": [
+      "python3 scripts/audit_backgrounds.py --json /tmp/background-audit.json --markdown /tmp/background-audit.md"
+    ],
+    "artifacts": [
+      "/tmp/background-audit.json\n/tmp/background-audit.md\n"
+    ]
+  },
+  {
+    "id": "background-standards-regression-r645",
+    "paths": [
+      "assets/Garage/shinonome_warehouse_day.png",
+      "assets/Locations/TunerShops/shinagawa_zerosports_day.png",
+      "assets/Meet/Day/**",
+      "docs/background-audit/**",
+      "scripts/audit_backgrounds.py",
+      "scripts/normalize_backgrounds.py",
+      "src/main.js",
+      "src/story/BackgroundViewport.js",
+      "src/story/StoryDirector.js",
+      "src/ui/StoryStage.js",
+      "tests/background-viewport-r645.mjs",
+      "tests/dev-vault-story-r641.mjs",
+      "tests/story-arrival-pacing-r643.mjs",
+      "tests/story-background-perspective-r644.mjs",
+      "tools/background-calibrator.html"
+    ],
+    "commands": [
+      "node --check src/story/BackgroundViewport.js\nnode --check src/ui/StoryStage.js\nnode --check src/story/StoryDirector.js\nnode --check src/main.js\npython3 - <<'PY'\nimport pathlib,re\nhtml=pathlib.Path('tools/background-calibrator.html').read_text()\nmatch=re.search(r'<script type=\"module\">([\\s\\S]*?)</script>',html)\nassert match, 'Missing calibration client module'\npathlib.Path('/tmp/r645-background-calibrator.mjs').write_text(match.group(1))\nPY\nnode --check /tmp/r645-background-calibrator.mjs\n",
+      "python3 scripts/audit_backgrounds.py --json /tmp/r645-current-inventory.json\npython3 - <<'PY'\nimport json\ndata=json.load(open('/tmp/r645-current-inventory.json'))\ngroups={'outdoor_meet','outdoor_oshiage','outdoor_central',\n        'workshop_core','workshop_tuner','workshop_crew','workshop_dyno'}\nitems=[x for x in data['images'] if x['group'] in groups]\nassert len(items)==76, len(items)\nwrong=[x['path'] for x in items if (x['width'],x['height'])!=(1672,941)]\nassert not wrong,wrong\nprint('VERIFIED',len(items),'normalized vehicle-interior and outdoor background canvases')\nPY\n",
+      "node --test tests/background-viewport-r645.mjs tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/dev-vault-story-r641.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "career-continuity-r680",
+    "paths": [
+      "docs/CAREER_R680_PRE_PRO_CONTINUITY.md",
+      "src/data/chapter08.js",
+      "src/data/characters.js",
+      "src/data/cutscenes.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/MangaCutscene.js",
+      "tests/career-continuity-r680.mjs",
+      "tests/opening-chapter-r467.mjs",
+      "tests/sayaka-reika-continuity.mjs"
+    ],
+    "commands": [
+      "node --check src/data/cutscenes.js\nnode --check src/data/chapter08.js\nnode --check src/data/characters.js\nnode --check src/scenes/GarageScene.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/career-continuity-r680.mjs tests/chapter08-r568.mjs tests/story-archive-r570.mjs tests/arkon-chapter10-r679.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "career-pro-third-option",
+    "paths": [
+      "src/data/cutscenes.js",
+      "src/data/officeTrophies.js",
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/tokyoChampionship.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/OfficePanel.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/career-pro-third-option.mjs",
+      "tests/career-season-report.mjs",
+      "tests/career-tokyo-finale.mjs",
+      "tests/ci-phaser-math.mjs",
+      "tests/proSeason.simulation.test.js",
+      "tests/tokyoChampionship.simulation.test.js"
+    ],
+    "commands": [
+      "node --check src/data/proSeason.js\nnode --check src/data/proCircuit.js\nnode --check src/data/tokyoChampionship.js\nnode --check src/data/officeTrophies.js\nnode --check src/data/cutscenes.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/ui/OfficePanel.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check tests/career-pro-third-option.mjs\nnode --check tests/career-season-report.mjs\nnode --check tests/career-tokyo-finale.mjs\n",
+      "node --test tests/career-pro-third-option.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs tests/tokyoChampionship.simulation.test.js"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "career-v1-integration",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/tokyoChampionship.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/OfficePanel.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/career-tokyo-finale.mjs",
+      "tests/ci-phaser-math.mjs",
+      "tests/prestige-trophies-r583.mjs",
+      "tests/pro-tournament-phase2.mjs",
+      "tests/proSeason.simulation.test.js",
+      "tests/tokyoChampionship.simulation.test.js"
+    ],
+    "commands": [
+      "node --test tests/career-pro-third-option.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs tests/tokyoChampionship.simulation.test.js tests/proSeason.simulation.test.js",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/prestige-trophies-r583.mjs tests/pro-tournament-phase2.mjs tests/pro-sponsor-r692.mjs tests/pro-ranking-sponsor-r628.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "central-tokyo-startup-r449",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "tests/central-tokyo-startup-r449.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\nnode --test tests/central-tokyo-startup-r449.mjs\n",
+      "node --test tests/drag-complex-r448.mjs tests/pro-complex-r445.mjs tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter08-09-wardrobe-r646",
+    "paths": [
+      "src/data/chapter08.js",
+      "src/data/chapter09.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/MeetScene.js",
+      "src/ui/Chapter08GinzaRevealStage.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "tests/chapter08-09-wardrobe-r646.mjs",
+      "tests/meet-progression-actions-r550.mjs"
+    ],
+    "commands": [
+      "node --check src/data/chapter08.js\nnode --check src/data/chapter09.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/Chapter08GinzaRevealStage.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/Chapter09EstablishingShot.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\n",
+      "node --test tests/chapter08-09-wardrobe-r646.mjs tests/meet-progression-actions-r550.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/chapter09-establishing-r579.mjs tests/chapter09-portrait-stage-r585.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter08-phone-r571",
+    "paths": [
+      "src/data/chapter08.js",
+      "src/data/cutscenes.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/MangaCutscene.js",
+      "tests/chapter08-phone-r571.mjs"
+    ],
+    "commands": [
+      "node --check src/data/chapter08.js\nnode --check src/data/cutscenes.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/OpeningPhonePrototype.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/chapter08-phone-r571.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/story-archive-r570.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter08-r568",
+    "paths": [
+      "src/data/chapter08.js",
+      "src/data/cutscenes.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/SwipePortraitGallery.js",
+      "src/ui/TravelMap.js",
+      "tests/chapter08-r568.mjs"
+    ],
+    "commands": [
+      "node --check src/data/chapter08.js\nnode --check src/data/cutscenes.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/SwipePortraitGallery.js\nnode --check src/ui/TravelMap.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\n",
+      "node --test tests/chapter08-r568.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter08-replay-r569",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/Chapter08DevReplay.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/TravelMap.js",
+      "tests/chapter08-dev-replay-r569.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/Chapter08DevReplay.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/TravelMap.js\nnode --check src/state/GameState.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-background-r583",
+    "paths": [
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/MangaCutscene.js",
+      "tests/chapter09-establishing-r579.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/Chapter09Story.js\nnode --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\n",
+      "node --test tests/chapter09-establishing-r579.mjs\nnode --test tests/chapter09-drag-r577.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/pro-season-forfeit-r576.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-drag-r577",
+    "paths": [
+      "src/data/chapter09.js",
+      "src/data/cutscenes.js",
+      "src/data/storyChapters.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/chapter09-drag-r577.mjs"
+    ],
+    "commands": [
+      "node --check src/data/chapter09.js\nnode --check src/data/cutscenes.js\nnode --check src/data/characters.js\nnode --check src/data/storyChapters.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/chapter09-drag-r577.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-complex-r448.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-establishing-r579",
+    "paths": [
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/MangaCutscene.js",
+      "tests/chapter09-establishing-r579.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/CutsceneTester.js\n",
+      "node --test tests/chapter09-establishing-r579.mjs\nnode --test tests/chapter09-drag-r577.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-open-circuit-r575.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-hybrid-r582",
+    "paths": [
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "tests/chapter09-establishing-r579.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/Chapter09Story.js\nnode --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/StoryArchivePanel.js\n",
+      "node --test tests/chapter09-establishing-r579.mjs\nnode --test tests/chapter09-drag-r577.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/pro-season-forfeit-r576.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-regoroom-r580",
+    "paths": [
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/StoryArchivePanel.js",
+      "tests/chapter09-establishing-r579.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/chapter09-establishing-r579.mjs\nnode --test tests/chapter09-drag-r577.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/pro-season-forfeit-r576.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "chapter09-team-portraits-r585",
+    "paths": [
+      "src/data/chapter09.js",
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/MangaCutscene.js",
+      "tests/chapter09-establishing-r579.mjs",
+      "tests/chapter09-portrait-stage-r585.mjs"
+    ],
+    "commands": [
+      "node --check src/data/chapter09.js\nnode --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/StoryArchivePanel.js\n",
+      "node --test tests/chapter09-portrait-stage-r585.mjs\nnode --test tests/chapter09-establishing-r579.mjs\nnode --test tests/chapter09-drag-r577.mjs\nnode --test tests/story-archive-r570.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/pro-season-forfeit-r576.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "character-control-assets-r458",
+    "paths": [
+      "assets/Characters/**",
+      "src/data/characters.js",
+      "src/input/TouchControls.js",
+      "src/scenes/**",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/DynoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/RaceHUD.js",
+      "tests/character-control-assets-r458.mjs",
+      "tests/sayaka-reika-continuity.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characters.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/scenes/DynoScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/input/TouchControls.js\nnode --check src/ui/RaceHUD.js\n",
+      "node --test tests/character-control-assets-r458.mjs tests/sayaka-reika-continuity.mjs tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-3v3-ui-r549",
+    "paths": [
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "tests/crew-3v3-ui-r549.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/crew-3v3-ui-r549.mjs tests/crew-battle-rules-r547.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-battle-intro-r545",
+    "paths": [
+      "src/data/crewBattleIntroductions.js",
+      "src/scenes/MeetScene.js",
+      "src/state/GameState.js",
+      "tests/crew-battle-introduction-r545.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewBattleIntroductions.js\nnode --check src/scenes/MeetScene.js\nnode --check src/state/GameState.js\nnode --check tests/crew-battle-introduction-r545.mjs\n",
+      "node --test tests/crew-battle-introduction-r545.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-battle-rules-r547",
+    "paths": [
+      "assets/Garage/whiteboard_crewbattle.png",
+      "assets/Garage/whiteboard_crewrecruit.png",
+      "src/data/crewBattleIntroductions.js",
+      "src/data/crewBattlePlaybook.js",
+      "src/data/crewBattleRules.js",
+      "src/data/crewSystem.js",
+      "src/data/cutscenes.js",
+      "src/data/partUninstall.js",
+      "src/scenes/CrewSpaceScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "tests/crew-battle-introduction-r545.mjs",
+      "tests/crew-battle-rules-r547.mjs",
+      "tests/crew-playbook-r625.mjs",
+      "tests/crew-regulations-uninstall-r619.mjs",
+      "tests/crew-whiteboard-progression-r627.mjs",
+      "tests/region-crew-tuning-r529.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewBattleRules.js\nnode --check src/data/crewBattlePlaybook.js\nnode --check src/data/cutscenes.js\nnode --check src/data/crewSystem.js\nnode --check src/data/crewBattleIntroductions.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/data/partUninstall.js\n",
+      "node --test tests/crew-battle-rules-r547.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-playbook-r625.mjs tests/crew-whiteboard-progression-r627.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-global-recruit-r551",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "tests/crew-global-recruit-pity-r551.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewSystem.js\nnode --check src/state/GameState.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/crew-global-recruit-pity-r551.mjs tests/region-crew-tuning-r529.mjs tests/crew-battle-rules-r547.mjs tests/crew-battle-introduction-r545.mjs tests/meet-progression-actions-r550.mjs tests/meet-refresh-r469.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-oshiage-chassis-r615",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/data/oshiageRims.js",
+      "src/scenes/CrewSpaceScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/ui/TravelMap.js",
+      "tests/crew-oshiage-chassis-r615.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewSystem.js\nnode --check src/data/oshiageRims.js\nnode --check src/ui/TravelMap.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/CrewSpaceScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/main.js\n",
+      "node --test tests/crew-oshiage-chassis-r615.mjs tests/crew-global-recruit-pity-r551.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-recruit-easy-ai-r618",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/data/playerDifficulty.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "tests/crew-recruit-easy-ai-r618.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewSystem.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/main.js\nnode --check tests/crew-recruit-easy-ai-r618.mjs\n",
+      "node --test tests/crew-recruit-easy-ai-r618.mjs tests/crew-global-recruit-pity-r551.mjs tests/ginza-crew-wheel-r588.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "crew-registration-r581",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/CrewRegistrationPanel.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/crew-registration-r581.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/CrewRegistrationPanel.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/crew-registration-r581.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dev-tools-assets-20261017",
+    "paths": [
+      "assets/Cars/**",
+      "src/**",
+      "src/data/carReferenceGeometry.js",
+      "src/data/cars.js",
+      "src/data/cutscenes.js",
+      "src/data/heroCarAssets.js",
+      "src/data/tunerShops.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/scenes/TunerShopScene.js",
+      "src/scenes/WheelCalibrationScene.js",
+      "src/ui/CutsceneTester.js",
+      "src/vehicles/TunerDecals.js",
+      "src/vehicles/WheelFit.js",
+      "tests/dev-tools-assets-20261017.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/MeetScene.js\nnode --check src/scenes/WheelCalibrationScene.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/vehicles/WheelFit.js\nnode --check src/vehicles/TunerDecals.js\nnode --check src/data/cars.js\nnode --check src/data/cutscenes.js\n",
+      "node --test tests/dev-tools-assets-20261017.mjs tests/shinagawa-zero-sports-r526.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dev-vault-story-r641",
+    "paths": [
+      "src/data/devVaultStory.js",
+      "src/data/storyDirectorScripts.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/DevVaultStoryScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/StoryChoicePanel.js",
+      "tests/dev-vault-story-r641.mjs",
+      "tests/ginza-loan-return-r636.mjs",
+      "tests/story-director-r639.mjs"
+    ],
+    "commands": [
+      "node --check src/data/devVaultStory.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/ui/StoryChoicePanel.js\nnode --check src/scenes/DevVaultStoryScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\nnode --check src/main.js\n",
+      "node --test tests/dev-vault-story-r641.mjs tests/story-director-r639.mjs tests/ginza-loan-return-r636.mjs tests/ginza-arkon-showdowns-r637.mjs tests/ginza-banter-r633.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dialogue-layout-r640",
+    "paths": [
+      "src/scenes/RaceScene.js",
+      "src/ui/CompactDialogueLayout.js",
+      "src/ui/CompactStoryDialogue.js",
+      "src/ui/GinzaBanterHud.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "tests/dialogue-layout-r640.mjs",
+      "tests/opening-phone-prototype-r515.mjs",
+      "tests/phone-template-r572.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/CompactDialogueLayout.js\nnode --check src/ui/CompactStoryDialogue.js\nnode --check src/ui/GinzaBanterHud.js\nnode --check src/ui/RaceCoachHud.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/ui/OpeningPhonePrototype.js\nnode --check src/scenes/RaceScene.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/story/StoryDirector.js\nnode --test tests/startup-import-integrity-r508.mjs\n",
+      "node --test tests/dialogue-layout-r640.mjs tests/opening-phone-prototype-r515.mjs tests/phone-template-r572.mjs tests/scene-phone-meet-r564.mjs tests/ginza-arkon-showdowns-r637.mjs tests/ginza-banter-r633.mjs tests/story-director-r639.mjs tests/pro-victory-r616.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "drag-complex-r448",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/drag-complex-r448.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/main.js\n",
+      "node --test tests/drag-complex-r448.mjs",
+      "node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs tests/pro-complex-r445.mjs",
+      "node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "drag-open-circuit-r575",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/drag-open-circuit-r575.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proCircuit.js\nnode --check src/data/proSeason.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/ui/ProSeasonPanel.js\n",
+      "node --test tests/drag-open-circuit-r575.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dragcomplex-home-crowd-r721",
+    "paths": [
+      "assets/CentralTokyo/*.png",
+      "assets/CentralTokyo/dragcomplex/*.png",
+      "docs/background-audit/inventory.json",
+      "src/data/centralTokyo.js",
+      "src/data/dragComplexHomeVenue.js",
+      "src/scenes/CentralTokyoScene.js",
+      "tests/dragcomplex-home-crowd-r721.mjs",
+      "tests/dragstrip-parent-cleanup-r456.mjs"
+    ],
+    "commands": [
+      "node --check src/data/dragComplexHomeVenue.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/data/centralTokyo.js\n",
+      "node --test tests/dragcomplex-home-crowd-r721.mjs tests/dragstrip-parent-cleanup-r456.mjs",
+      "node --test tests/dragstrip-venue-variants-r455.mjs",
+      "node --test --test-name-pattern='all actively used meet|legitimate story interior|day and night within each real outdoor' tests/background-viewport-r645.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dragstrip-assets-r455",
+    "paths": [
+      "src/data/dragstripVenue.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/dragstrip-venue-variants-r455.mjs",
+      "tests/four-lane-prototype.mjs"
+    ],
+    "commands": [
+      "node --check src/data/dragstripVenue.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/main.js\n",
+      "node --test tests/dragstrip-venue-variants-r455.mjs",
+      "node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs tests/pro-complex-r445.mjs",
+      "node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs tests/drag-complex-r448.mjs tests/central-tokyo-startup-r449.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "dragstrip-parent-cleanup-r456",
+    "paths": [
+      "assets/CentralTokyo/*.png",
+      "index.html",
+      "sw.js",
+      "tests/dragstrip-parent-cleanup-r456.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "node --test tests/dragstrip-parent-cleanup-r456.mjs",
+      "node --test tests/dragstrip-venue-variants-r455.mjs tests/four-lane-prototype.mjs tests/central-tokyo-startup-r449.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "factory-paint-r623",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/data/factoryPaintPalettes.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/state/GameState.js",
+      "tests/factory-paint-palettes-r623.mjs"
+    ],
+    "commands": [
+      "node --check src/data/factoryPaintPalettes.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/state/GameState.js\nnode --check src/data/crewSystem.js\nnode --check src/main.js\n",
+      "node --test tests/factory-paint-palettes-r623.mjs tests/oshiage-paint-layout-r622.mjs tests/oshiage-paint-visual-r621.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "four-lane-finish",
+    "paths": [
+      "src/data/fourLaneFinish.js",
+      "src/data/proDriverBriefing.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProDriverBriefing.js",
+      "tests/four-lane-finish-regression.mjs",
+      "tests/pro-between-heats-r727.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/FourLaneTestScene.js\nnode --check src/data/fourLaneFinish.js\nnode --check src/data/proTournament.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/four-lane-finish-regression.mjs",
+      "node --test tests/four-lane-prototype.mjs",
+      "node --test tests/pro-tournament-phase2.mjs",
+      "node --test tests/pro-circuit-foundation.mjs",
+      "node --check src/scenes/FourLaneTestScene.js\nnode --check src/ui/ProDriverBriefing.js\nnode --check src/data/proDriverBriefing.js\n",
+      "node --test tests/pro-between-heats-r727.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "four-lane",
+    "paths": [
+      "src/data/fourLanePrototype.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/scenes/RaceScene.js",
+      "tests/four-lane-prototype.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/FourLaneTestScene.js\nnode --check src/data/fourLanePrototype.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\n",
+      "node --test tests/four-lane-prototype.mjs",
+      "node --test tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "galant-vr4-r502",
+    "paths": [
+      "src/data/carDriverFaceAnchors.js",
+      "src/data/carMagazine.js",
+      "src/data/carReferenceGeometry.js",
+      "src/data/cars.js",
+      "src/data/engines.js",
+      "tests/car-reference-geometry.mjs",
+      "tests/car-reference-rollout.mjs",
+      "tests/driver-face-anchors.mjs",
+      "tests/galant-vr4-r502.mjs"
+    ],
+    "commands": [
+      "node --check src/data/cars.js\nnode --check src/data/engines.js\nnode --check src/data/carReferenceGeometry.js\nnode --check src/data/carMagazine.js\nnode --check src/data/canonicalCarMigration.js\nnode --check tests/galant-vr4-r502.mjs\n",
+      "node --test tests/galant-vr4-r502.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "ginza-crew-wheel-r588",
+    "paths": [
+      "src/**",
+      "tests/ginza-crew-wheel-r588.mjs",
+      "tests/ginza-gallery-r56*.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/WheelCalibrationScene.js\nnode --check src/state/GameState.js\nnode --check src/state/CarSelection.js\nnode --check src/data/crewSystem.js\nnode --check src/data/crewDialogue.js\nnode --check src/data/cutscenes.js\nnode --check src/ui/MangaCutscene.js\n",
+      "node --test tests/ginza-crew-wheel-r588.mjs tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs tests/crew-global-recruit-pity-r551.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "ginza-denzaki-r695",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/ginzaGallery.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "tests/ginza-denzaki-permanent-r695.mjs",
+      "tests/lbwk-fullworks-r694.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/CentralTokyoScene.js\nnode --check tests/ginza-denzaki-permanent-r695.mjs\n",
+      "node --test tests/ginza-denzaki-permanent-r695.mjs tests/lbwk-fullworks-r694.mjs tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "ginza-gallery-r565",
+    "paths": [
+      "assets/Characters/Dev/**",
+      "src/data/cars.js",
+      "src/data/characters.js",
+      "src/data/ginzaBanter.js",
+      "src/data/ginzaGallery.js",
+      "src/data/ginzaLoanAccess.js",
+      "src/data/ginzaScenes.js",
+      "src/data/oshiageShowdown.js",
+      "src/data/proSeason.js",
+      "src/data/specialProfileRewards.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/CharacterSelectScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/GinzaBanterHud.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/TravelMap.js",
+      "tests/ginza-arkon-private-gallery-r629.mjs",
+      "tests/ginza-arkon-showdowns-r637.mjs",
+      "tests/ginza-banter-expressions-r634.mjs",
+      "tests/ginza-banter-r633.mjs",
+      "tests/ginza-gallery-r565.mjs",
+      "tests/ginza-gallery-r566.mjs",
+      "tests/ginza-gallery-r567.mjs",
+      "tests/ginza-loan-return-r636.mjs",
+      "tests/tokyo-r638-polish.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/CentralTokyoScene.js",
+      "node --check src/scenes/RaceScene.js",
+      "node --check src/scenes/MeetScene.js",
+      "node --check src/data/ginzaGallery.js",
+      "node --check src/data/ginzaScenes.js",
+      "node --check src/data/ginzaBanter.js",
+      "node --check src/data/ginzaLoanAccess.js",
+      "node --check src/data/specialProfileRewards.js",
+      "node --check src/data/oshiageShowdown.js",
+      "node --check src/scenes/GarageScene.js",
+      "node --check src/scenes/CharacterSelectScene.js",
+      "node --check src/ui/MangaCutscene.js",
+      "node --check src/ui/TravelMap.js",
+      "node --check src/scenes/OshiageScene.js",
+      "node --check src/ui/GinzaBanterHud.js",
+      "node --check src/data/characters.js",
+      "node --check src/data/cars.js",
+      "node --check src/state/GameState.js",
+      "node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-banter-r633.mjs tests/ginza-banter-expressions-r634.mjs tests/ginza-loan-return-r636.mjs tests/ginza-arkon-showdowns-r637.mjs tests/tokyo-r638-polish.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "gmg-canon-r742",
+    "paths": [
+      "docs/CHARACTER_BIBLE.md",
+      "docs/GMG_BUSINESS_AND_RACING_CANON_20261030.md",
+      "src/data/chapter09.js",
+      "src/data/ginzaScenes.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/ginza-gallery-r565.mjs",
+      "tests/gmg-canon-r742.mjs",
+      "tests/pro-sponsor-r692.mjs"
+    ],
+    "commands": [
+      "for f in src/data/chapter09.js src/data/ginzaScenes.js src/ui/ProSeasonPanel.js src/ui/ProSponsorStory.js src/scenes/CentralTokyoScene.js src/ui/MangaCutscene.js src/data/cutscenes.js tests/gmg-canon-r742.mjs; do node --check \"$f\"; done\n",
+      "node --test tests/gmg-canon-r742.mjs tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-denzaki-permanent-r695.mjs tests/ginza-gallery-r565.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "hero-assets-r525",
+    "paths": [
+      "assets/Cars/hero/**",
+      "assets/Cars/stock/**",
+      "src/data/**",
+      "src/vehicles/**",
+      "tests/hero-assets-r525.mjs"
+    ],
+    "commands": [
+      "node --test tests/hero-assets-r525.mjs tests/tuner-hero-conversions-r521.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-body-alignment.mjs tests/stock-expansion-r516.mjs tests/startup-import-integrity-r508.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "lbwk-fullworks-r694",
+    "paths": [
+      "src/data/cars.js",
+      "src/data/centralTokyo.js",
+      "src/data/endgameHeroCalibration.js",
+      "src/data/lbwkConversions.js",
+      "src/data/lbwkFullWorks.js",
+      "src/data/lbwkHeroCars.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/TunerShopScene.js",
+      "src/vehicles/VehiclePerformance.js",
+      "tests/lbwk-fullworks-r694.mjs"
+    ],
+    "commands": [
+      "for f in src/data/lbwkFullWorks.js src/data/lbwkConversions.js src/data/lbwkHeroCars.js src/data/endgameHeroCalibration.js src/data/centralTokyo.js src/data/cars.js src/scenes/TunerShopScene.js src/scenes/CentralTokyoScene.js src/vehicles/VehiclePerformance.js tests/lbwk-fullworks-r694.mjs; do\n  node --check \"$f\"\ndone\n",
+      "node --test tests/lbwk-fullworks-r694.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "meet-progression-r550",
+    "paths": [
+      "src/data/cutscenes.js",
+      "src/data/meetProgressionActions.js",
+      "src/data/regionalChallengeReturnQuotes.js",
+      "src/data/tunerChallenges.js",
+      "src/scenes/MeetScene.js",
+      "tests/crew-battle-introduction-r545.mjs",
+      "tests/meet-progression-actions-r550.mjs",
+      "tests/region-crew-tuning-r529.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/MeetScene.js\nnode --check src/data/meetProgressionActions.js\nnode --check src/data/regionalChallengeReturnQuotes.js\nnode --check src/data/tunerChallenges.js\nnode --check src/data/cutscenes.js\n",
+      "node --test tests/meet-progression-actions-r550.mjs tests/crew-battle-introduction-r545.mjs tests/crew-battle-rules-r547.mjs tests/crew-3v3-ui-r549.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs tests/meet-refresh-r469.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "meet-rival-profiles-r500",
+    "paths": [
+      "src/characters/CharacterProfileRenderer.js",
+      "src/data/encounterProfiles.js",
+      "src/scenes/MeetScene.js",
+      "src/ui/MangaCutscene.js",
+      "tests/meet-rival-cars-and-profiles-r500.mjs"
+    ],
+    "commands": [
+      "node --check src/data/encounterProfiles.js\nnode --check src/scenes/MeetScene.js\nnode --check src/characters/CharacterProfileRenderer.js\nnode --check src/ui/MangaCutscene.js\nnode --check tests/meet-rival-cars-and-profiles-r500.mjs\n",
+      "node --test tests/meet-rival-cars-and-profiles-r500.mjs tests/meet-refresh-r469.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/car-reference-rollout.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "normal-meet-car-variety-r717",
+    "paths": [
+      "src/data/meetMatchmaking.js",
+      "src/data/normalMeetCarSelection.js",
+      "src/data/tunerChallenges.js",
+      "src/scenes/MeetScene.js",
+      "tests/normal-meet-car-variety-r717.mjs",
+      "tests/shinjuku-difficulty-r788.mjs"
+    ],
+    "commands": [
+      "node --check src/data/normalMeetCarSelection.js\nnode --check src/data/meetMatchmaking.js\nnode --check src/scenes/MeetScene.js\nnode --check tests/normal-meet-car-variety-r717.mjs\nnode --check tests/shinjuku-difficulty-r788.mjs\n",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/normal-meet-car-variety-r717.mjs tests/shinjuku-difficulty-r788.mjs tests/meet-refresh-r469.mjs tests/region-crew-tuning-r529.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "open-circuit-beta-r712",
+    "paths": [
+      "src/data/proSeason.js",
+      "src/environment/WorldClock.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProDriverBriefing.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/ui/ProVictoryResults.js",
+      "tests/open-circuit-beta-r712.mjs",
+      "tests/pro-crew-heat-r589.mjs"
+    ],
+    "commands": [
+      "node --check src/environment/WorldClock.js\nnode --check src/data/proSeason.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/ProDriverBriefing.js\nnode --check src/ui/ProVictoryResults.js\nnode --check tests/open-circuit-beta-r712.mjs\n",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/open-circuit-beta-r712.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-crew-heat-r589.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "open-circuit-r592",
+    "paths": [
+      "src/data/proSeason.js",
+      "src/environment/WorldClock.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/open-circuit-rotation-r592.mjs"
+    ],
+    "commands": [
+      "node --check src/environment/WorldClock.js\nnode --check src/data/proSeason.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/open-circuit-rotation-r592.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "open-driver-briefing-r598",
+    "paths": [
+      "src/data/proDriverBriefing.js",
+      "src/data/proRacePaint.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProBriefingChrome.js",
+      "src/ui/ProCrewBattleLineup.js",
+      "src/ui/ProDriverBriefing.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/vehicles/VehiclePerformance.js",
+      "tests/drag-briefing-interactions-r607.mjs",
+      "tests/drag-complex-briefing-r606.mjs",
+      "tests/open-driver-briefing-r598.mjs",
+      "tests/open-driver-briefing-r599.mjs",
+      "tests/open-driver-briefing-r600.mjs",
+      "tests/open-driver-briefing-r601.mjs",
+      "tests/open-driver-briefing-r602.mjs",
+      "tests/open-driver-briefing-r603.mjs",
+      "tests/pro-briefing-consistency-r604.mjs",
+      "tests/pro-briefing-layout-r608.mjs",
+      "tests/pro-briefing-layout-r610.mjs",
+      "tests/pro-briefing-lifecycle-r605.mjs",
+      "tests/pro-briefing-paint-metrics-r726.mjs",
+      "tests/pro-briefing-unified-heat-r609.mjs",
+      "tests/pro-crew-continuous-r594.mjs",
+      "tests/pro-driver-setup-r630.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proDriverBriefing.js\nnode --check src/data/proSeason.js\nnode --check src/ui/ProDriverBriefing.js\nnode --check src/data/proRacePaint.js\nnode --check src/ui/ProBriefingChrome.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/vehicles/VehiclePerformance.js\n",
+      "node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/open-driver-briefing-r603.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-lifecycle-r605.mjs tests/drag-complex-briefing-r606.mjs tests/drag-briefing-interactions-r607.mjs tests/pro-briefing-layout-r608.mjs tests/pro-briefing-unified-heat-r609.mjs tests/pro-briefing-layout-r610.mjs tests/pro-driver-setup-r630.mjs tests/pro-briefing-paint-metrics-r726.mjs tests/pro-crew-visual-r596.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs",
+      "node --check src/ui/ProDriverBriefing.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/data/proRacePaint.js\n",
+      "node --test tests/pro-briefing-paint-metrics-r726.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "opening-chapter-r467",
+    "paths": [
+      "src/**",
+      "tests/magazine-issue01-r486.mjs",
+      "tests/opening-chapter-r467.mjs",
+      "tests/sayaka-reika-continuity.mjs"
+    ],
+    "commands": [
+      "node --check src/main.js\nnode --check src/state/GameState.js\nnode --check src/scenes/TrainStationScene.js\nnode --check src/scenes/CharacterSelectScene.js\nnode --check src/scenes/BootScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/ui/OfficePanel.js\nnode --check src/ui/TravelMap.js\nnode --check src/ui/OpeningMagazine.js\nnode --check src/ui/CarHistoryPanel.js\nnode --check src/ui/Issue01Pages.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/data/cutscenes.js\n",
+      "node --test tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs tests/magazine-issue01-r486.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "opening-phone-prototype-r515",
+    "paths": [
+      "src/data/cutscenes.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "tests/opening-phone-prototype-r515.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/OpeningPhonePrototype.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/data/cutscenes.js\n",
+      "node --test tests/opening-phone-prototype-r515.mjs tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs\nnode --test --test-name-pattern='phone|call' tests/opening-chapter-r467.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-coaching-r509",
+    "paths": [
+      "src/ai/DrivingCoach.js",
+      "src/ai/DrivingModel.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "tests/oshiage-coaching-r509.mjs"
+    ],
+    "commands": [
+      "node --check src/ai/DrivingCoach.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-manga-r511",
+    "paths": [
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/MangaCutscene.js",
+      "tests/oshiage-manga-r511.mjs",
+      "tests/oshiage-ui-r510.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/MangaCutscene.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs tests/sayaka-reika-continuity.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-paint-layout-r622",
+    "paths": [
+      "src/main.js",
+      "src/scenes/OshiageScene.js",
+      "tests/crew-oshiage-chassis-r615.mjs",
+      "tests/oshiage-paint-layout-r622.mjs",
+      "tests/oshiage-paint-visual-r621.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/OshiageScene.js\nnode --check src/main.js\nnode --check tests/oshiage-paint-layout-r622.mjs\n",
+      "node --test tests/oshiage-paint-layout-r622.mjs tests/oshiage-paint-visual-r621.mjs tests/crew-oshiage-chassis-r615.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-paint-visual-r621",
+    "paths": [
+      "src/main.js",
+      "src/scenes/OshiageScene.js",
+      "tests/crew-oshiage-chassis-r615.mjs",
+      "tests/oshiage-paint-visual-r621.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/OshiageScene.js\nnode --check src/main.js\nnode --check tests/oshiage-paint-visual-r621.mjs\n",
+      "node --test tests/oshiage-paint-visual-r621.mjs tests/crew-oshiage-chassis-r615.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-r496",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/oshiageElite.js",
+      "src/data/travelRegions.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/TravelMap.js",
+      "tests/oshiage-r496.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/data/oshiageElite.js\nnode --check src/data/centralTokyo.js\nnode --check src/ui/TravelMap.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-race-coach-hud-r513",
+    "paths": [
+      "src/scenes/RaceScene.js",
+      "src/ui/RaceCoachHud.js",
+      "tests/oshiage-race-coach-hud-r513.mjs",
+      "tests/oshiage-ui-r510.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/RaceCoachHud.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-rims-r501",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/oshiageRims.js",
+      "src/data/travelRegions.js",
+      "src/data/visualMods.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/state/GameState.js",
+      "tests/oshiage-rims-r501.mjs"
+    ],
+    "commands": [
+      "for src in src/scenes/OshiageScene.js src/scenes/CentralTokyoScene.js src/scenes/GarageScene.js src/data/oshiageRims.js src/data/visualMods.js src/data/centralTokyo.js src/state/GameState.js src/data/travelRegions.js; do\n  node --check \"$src\"\ndone\n",
+      "node --test tests/oshiage-r496.mjs",
+      "node --test --test-name-pattern=\"Oshiage displays\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"original rim IDs\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"already owned rims\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"restoring stock rims\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"unaffordable wheels\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"old bodykits\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"retired Auto Market\" tests/oshiage-rims-r501.mjs",
+      "node --test --test-name-pattern=\"Rims is second\" tests/oshiage-rims-r501.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-school-polish-r512",
+    "paths": [
+      "src/data/oshiageSchool.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/MangaCutscene.js",
+      "tests/oshiage-manga-r511.mjs",
+      "tests/oshiage-school-polish-r512.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/MangaCutscene.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/data/oshiageSchool.js\n",
+      "node --test tests/oshiage-school-polish-r512.mjs tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-showdown-r522",
+    "paths": [
+      "src/data/oshiageElite.js",
+      "src/data/oshiageShowdown.js",
+      "src/data/streetShowdowns.js",
+      "src/data/travelRegions.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/TravelMap.js",
+      "tests/oshiage-r496.mjs",
+      "tests/oshiage-showdown-r522.mjs",
+      "tests/progression-rebalance-r479.mjs"
+    ],
+    "commands": [
+      "for file in src/data/oshiageElite.js src/data/oshiageShowdown.js src/data/travelRegions.js src/ui/TravelMap.js src/scenes/OshiageScene.js src/scenes/RaceScene.js src/scenes/MeetScene.js src/data/streetShowdowns.js; do\n  node --check \"$file\"\ndone\n",
+      "node --test tests/oshiage-showdown-r522.mjs tests/oshiage-r496.mjs tests/oshiage-rims-r501.mjs tests/oshiage-yuna-rolling-r507.mjs tests/progression-rebalance-r479.mjs\n",
+      "node --test tests/startup-import-integrity-r508.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-ui-r510",
+    "paths": [
+      "src/data/oshiageSchool.js",
+      "src/scenes/OshiageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "tests/oshiage-ui-r510.mjs"
+    ],
+    "commands": [
+      "node --check src/data/oshiageSchool.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "oshiage-yuna-r507",
+    "paths": [
+      "src/scenes/OshiageScene.js",
+      "tests/oshiage-r496.mjs",
+      "tests/oshiage-yuna-rolling-r507.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/OshiageScene.js",
+      "node --test tests/oshiage-yuna-rolling-r507.mjs",
+      "node --test tests/oshiage-rims-r501.mjs tests/oshiage-r496.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "phone-dialogue-typography-r658",
+    "paths": [
+      "index.html",
+      "src/main.js",
+      "src/story/StoryDirector.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "src/ui/StoryDialogueTypography.js",
+      "sw.js",
+      "tests/chapter08-phone-r571.mjs",
+      "tests/phone-dialogue-typography-r658.mjs",
+      "tests/phone-template-r572.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "node --check src/ui/StoryDialogueTypography.js\nnode --check src/ui/RaceCoachHud.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/ui/OpeningPhonePrototype.js\nnode --check src/story/StoryDirector.js\nnode --check src/main.js\n",
+      "node --test \\\n  tests/phone-dialogue-typography-r658.mjs \\\n  tests/phone-template-r572.mjs \\\n  tests/opening-phone-prototype-r515.mjs \\\n  tests/chapter08-phone-r571.mjs \\\n  tests/scene-phone-meet-r564.mjs \\\n  tests/story-director-r639.mjs \\\n  tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "phone-template-r572",
+    "paths": [
+      "src/ui/CanalYardStory.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "tests/phone-template-r572.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/RaceCoachHud.js\nnode --check src/ui/PhoneConversation.js\nnode --check src/ui/OpeningPhonePrototype.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/ui/CanalYardStory.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/StoryArchivePlayback.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/TrainStationScene.js\n",
+      "node --test tests/phone-template-r572.mjs tests/chapter08-phone-r571.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/story-archive-r570.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pink-slip-progression",
+    "paths": [
+      "src/data/pinkSlipProgression.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "tests/pinkSlipProgression.test.mjs"
+    ],
+    "commands": [
+      "node --check src/data/pinkSlipProgression.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/state/GameState.js\nnode --check tests/pinkSlipProgression.test.mjs\n",
+      "node --test tests/pinkSlipProgression.test.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "prestige-trophies-r583",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proDragDuel.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/CrewRegistrationPanel.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/prestige-trophies-r583.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proCircuit.js\nnode --check src/data/proSeason.js\nnode --check src/data/proDragDuel.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/CrewRegistrationPanel.js\n",
+      "node --test tests/prestige-trophies-r583.mjs tests/drag-open-circuit-r575.mjs tests/drag-complex-r448.mjs tests/chapter09-drag-r577.mjs tests/pro-season-forfeit-r576.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-circuit",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/proCircuit.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/state/GameState.js",
+      "tests/pro-circuit-foundation.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proCircuit.js\nnode --check src/data/centralTokyo.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-complex-r445",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/proDragDuel.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/pro-complex-r445.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proDragDuel.js\nnode --check src/data/centralTokyo.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\n",
+      "node --test tests/pro-complex-r445.mjs",
+      "node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs",
+      "node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-crew-heat-r589",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProBriefingChrome.js",
+      "src/ui/ProCrewBattleLineup.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-briefing-consistency-r604.mjs",
+      "tests/pro-briefing-layout-r608.mjs",
+      "tests/pro-briefing-layout-r610.mjs",
+      "tests/pro-briefing-lifecycle-r605.mjs",
+      "tests/pro-briefing-unified-heat-r609.mjs",
+      "tests/pro-crew-continuous-r594.mjs",
+      "tests/pro-crew-heat-r589.mjs",
+      "tests/pro-crew-r591.mjs",
+      "tests/pro-crew-visual-r596.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-layout-r608.mjs tests/pro-briefing-lifecycle-r605.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ProCrewBattleLineup.js\nnode --check src/ui/ProBriefingChrome.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/data/proSeason.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\n",
+      "node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-visual-r596.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-layout-r608.mjs tests/pro-briefing-unified-heat-r609.mjs tests/pro-briefing-layout-r610.mjs tests/pro-briefing-lifecycle-r605.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-drag-season-roster",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/proCircuit.js",
+      "src/data/proDriverBriefing.js",
+      "src/data/proSeason.js",
+      "src/data/proTournament.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-drag-open-circuit-rotation-20261101.mjs",
+      "tests/pro-drag-season-roster-20261101.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proSeason.js\nnode --check src/data/proCircuit.js\nnode --check src/data/proTournament.js\nnode --check src/data/centralTokyo.js\nnode --check src/data/proDriverBriefing.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/ui/ProSeasonPanel.js\n",
+      "node --test tests/pro-drag-season-roster-20261101.mjs tests/pro-drag-open-circuit-rotation-20261101.mjs\nnode --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-economy-r714",
+    "paths": [
+      "index.html",
+      "src/data/centralTokyo.js",
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/proTournament.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProCrewBattleLineup.js",
+      "src/ui/ProDriverBriefing.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-economy-r714.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "for f in src/data/proCircuit.js src/data/proSeason.js src/data/proTournament.js src/data/centralTokyo.js src/scenes/CentralTokyoScene.js src/scenes/FourLaneTestScene.js src/ui/ProSeasonPanel.js src/ui/ProDriverBriefing.js src/ui/ProCrewBattleLineup.js src/main.js tests/pro-economy-r714.mjs; do node --check \"$f\"; done\n",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/pro-economy-r714.mjs tests/career-season-report.mjs tests/proSeason.simulation.test.js tests/pro-ranking-sponsor-r628.mjs tests/prestige-trophies-r583.mjs tests/career-pro-third-option.mjs tests/open-circuit-beta-r712.mjs tests/pro-crew-heat-r589.mjs tests/career-tokyo-finale.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-garage-r753",
+    "paths": [
+      "src/data/carMagazine.js",
+      "src/data/proCircuit.js",
+      "src/data/proGarage.js",
+      "src/data/workshopProgression.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/ui/ProSeasonDriverBriefing.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-garage-paddock-r753.mjs",
+      "tests/r754-pro-garage-open-drivetrain.mjs",
+      "tests/r755-pro-garage-display.mjs",
+      "tests/r756-pro-season-screen.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proGarage.js\nnode --check src/data/proCircuit.js\nnode --check src/data/carMagazine.js\nnode --check src/data/workshopProgression.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/ProSeasonDriverBriefing.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/pro-garage-paddock-r753.mjs tests/pro-drag-season-roster-20261101.mjs tests/r754-pro-garage-open-drivetrain.mjs tests/r755-pro-garage-display.mjs tests/r756-pro-season-screen.mjs\nnode --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-opponent-scrutineering-r729",
+    "paths": [
+      "src/data/proOpponentScrutineering.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/pro-opponent-scrutineering-r729.mjs",
+      "src/data/proRaceNos.js"
+    ],
+    "commands": [
+      "node --check src/data/proOpponentScrutineering.js\nnode --check src/data/proSeason.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\n",
+      "node --test tests/pro-opponent-scrutineering-r729.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-pricing-r447",
+    "paths": [
+      "src/data/centralTokyo.js",
+      "src/data/proTournament.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/pro-complex-r445.mjs"
+    ],
+    "commands": [
+      "node --check src/data/centralTokyo.js\nnode --check src/data/proTournament.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\n",
+      "node --test tests/pro-complex-r445.mjs",
+      "node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs",
+      "node --test tests/four-lane-finish-regression.mjs tests/four-lane-prototype.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-racing-sprites-r636",
+    "paths": [
+      "assets/Characters/Pro/**",
+      "src/characters/CharacterProfileRenderer.js",
+      "src/data/characters.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/Chapter09EstablishingShot.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/CrewRegistrationPanel.js",
+      "src/ui/ProCrewBattleLineup.js",
+      "src/ui/ProDriverBriefing.js",
+      "src/ui/ProVictoryResults.js",
+      "tests/open-driver-briefing-r601.mjs",
+      "tests/pro-character-sprites-r636.mjs",
+      "tests/pro-victory-r616.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characters.js\nnode --check src/characters/CharacterProfileRenderer.js\nnode --check src/ui/ProCrewBattleLineup.js\nnode --check src/ui/CrewRegistrationPanel.js\nnode --check src/ui/Chapter09EstablishingShot.js\nnode --check src/ui/Chapter09Story.js\nnode --check src/ui/ProDriverBriefing.js\nnode --check src/ui/ProVictoryResults.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/main.js\n",
+      "node --test tests/pro-character-sprites-r636.mjs tests/pro-victory-r616.mjs tests/open-driver-briefing-r601.mjs tests/pro-crew-visual-r596.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-rank-sponsor-r628",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/proTournament.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/ui/ProVictoryResults.js",
+      "tests/pro-ranking-sponsor-r628.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proCircuit.js\nnode --check src/data/proSeason.js\nnode --check src/data/proTournament.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/ProVictoryResults.js\n",
+      "node --test tests/pro-ranking-sponsor-r628.mjs\nnode --test tests/drag-open-circuit-r575.mjs\nnode --test tests/pro-victory-r616.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-season-collector-release",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proDriverBriefing.js",
+      "src/data/proSeason.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/ui/ProSeasonDriverBriefing.js",
+      "src/vehicles/VehiclePerformance.js",
+      "tests/pro-season-*.mjs",
+      "src/data/proRaceNos.js"
+    ],
+    "commands": [
+      "node --check src/data/proSeason.js\nnode --check src/data/proDriverBriefing.js\nnode --check src/ui/ProSeasonDriverBriefing.js\nnode --check src/data/proCircuit.js\nnode --check src/vehicles/VehiclePerformance.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/pro-season-calendar-rotation-20261102.mjs tests/pro-season-calendar-save-20261102.mjs tests/pro-season-nos-disable-20261102.mjs tests/pro-season-nos-vehicle-build-20261102.mjs\n",
+      "node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js tests/pro-drag-season-roster-20261101.mjs\nnode --test tests/r756-pro-season-screen.mjs tests/pro-opponent-scrutineering-r729.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-season-crew",
+    "paths": [
+      "src/**",
+      "tests/**"
+    ],
+    "commands": [
+      "node --check src/data/proSeason.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/state/GameState.js\n",
+      "node --test tests/*.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-season-driver-briefing-parity",
+    "paths": [
+      "index.html",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/ProSeasonDriverBriefing.js",
+      "tests/pro-season-driver-briefing-parity-20261104.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ProSeasonDriverBriefing.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\n",
+      "node --test tests/pro-season-driver-briefing-parity-20261104.mjs tests/pro-briefing-layout-r610.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-season-forfeit-r576",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-season-forfeit-r576.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ProSeasonPanel.js\nnode --check tests/pro-season-forfeit-r576.mjs\n",
+      "node --test tests/pro-season-forfeit-r576.mjs\nnode --test tests/drag-open-circuit-r575.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-season-simulation",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/tokyoChampionship.js",
+      "tests/proSeason.simulation.test.js",
+      "tests/tokyoChampionship.simulation.test.js"
+    ],
+    "commands": [
+      "node --check src/data/proSeason.js\nnode --check src/data/proCircuit.js\nnode --check src/data/tokyoChampionship.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/ui/ProSeasonPanel.js\n",
+      "node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-sidebar-r593",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/pro-home-spacing-r595.mjs",
+      "tests/pro-sidebar-r593.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ProSeasonPanel.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/pro-sidebar-r593.mjs tests/pro-home-spacing-r595.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-sponsor-r692",
+    "paths": [
+      "src/data/chapter09.js",
+      "src/data/cutscenes.js",
+      "src/data/tunerShops.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/RaceScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/ui/ProSponsorStory.js",
+      "tests/career-continuity-r680.mjs",
+      "tests/pro-sponsor-r692.mjs"
+    ],
+    "commands": [
+      "for file in src/data/chapter09.js src/data/cutscenes.js src/data/tunerShops.js src/ui/ProSponsorStory.js src/ui/ProSeasonPanel.js src/scenes/CentralTokyoScene.js src/scenes/RaceScene.js tests/pro-sponsor-r692.mjs; do\n  node --check \"$file\"\ndone\n",
+      "node --test tests/pro-sponsor-r692.mjs tests/career-continuity-r680.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-sponsor-recount-r693",
+    "paths": [
+      "src/data/storyChapters.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/Chapter09Story.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/ProSponsorReplay.js",
+      "src/ui/ProSponsorStory.js",
+      "src/ui/StoryArchivePanel.js",
+      "tests/chapter09-drag-r577.mjs",
+      "tests/chapter09-establishing-r579.mjs",
+      "tests/pro-sponsor-recount-r693.mjs",
+      "tests/story-archive-r570.mjs"
+    ],
+    "commands": [
+      "for f in src/ui/ProSponsorReplay.js src/ui/ProSponsorStory.js src/ui/CutsceneTester.js src/ui/StoryArchivePanel.js src/ui/Chapter09Story.js src/data/storyChapters.js src/state/GameState.js src/scenes/CentralTokyoScene.js src/scenes/RaceScene.js tests/pro-sponsor-recount-r693.mjs; do node --check \"$f\"; done\n",
+      "node --test tests/pro-sponsor-recount-r693.mjs tests/pro-sponsor-r692.mjs tests/story-archive-r570.mjs tests/chapter09-drag-r577.mjs tests/chapter09-establishing-r579.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-team-world-r724",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proSeason.js",
+      "src/data/tokyoChampionship.js",
+      "src/ui/OfficePanel.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/ui/ProTeamIdentity.js",
+      "tests/career-tokyo-finale.mjs",
+      "tests/pro-circuit-foundation.mjs",
+      "tests/pro-team-world-r724.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proCircuit.js\nnode --check src/data/proSeason.js\nnode --check src/data/tokyoChampionship.js\nnode --check src/ui/OfficePanel.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/ProTeamIdentity.js\n",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/pro-team-world-r724.mjs tests/pro-circuit-foundation.mjs tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js tests/career-tokyo-finale.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-tournament",
+    "paths": [
+      "src/data/proCircuit.js",
+      "src/data/proTournament.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "tests/pro-tournament-phase2.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proTournament.js\nnode --check src/data/proCircuit.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\n",
+      "node --test tests/pro-tournament-phase2.mjs",
+      "node --test tests/four-lane-prototype.mjs",
+      "node --test tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "pro-victory-r616",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/FourLaneTestScene.js",
+      "src/ui/ProSeasonPanel.js",
+      "src/ui/ProVictoryResults.js",
+      "tests/pro-victory-r616.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ProVictoryResults.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/FourLaneTestScene.js\nnode --check src/main.js\n",
+      "node --test tests/pro-victory-r616.mjs\nnode --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "r529-crew-travel",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/data/meetAssets.js",
+      "src/data/travelRegions.js",
+      "src/data/tunerChallenges.js",
+      "src/data/tunerShops.js",
+      "src/scenes/MeetScene.js",
+      "src/ui/TravelMap.js",
+      "tests/region-crew-tuning-r529.mjs"
+    ],
+    "commands": [
+      "node --check src/data/crewSystem.js\nnode --check src/data/tunerChallenges.js\nnode --check src/scenes/MeetScene.js\nnode --check src/data/travelRegions.js\nnode --check src/data/meetAssets.js\nnode --check src/ui/TravelMap.js\nnode --check src/data/tunerShops.js\n",
+      "node --test tests/region-crew-tuning-r529.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "r530-selected-car",
+    "paths": [
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/state/CarSelection.js",
+      "src/state/GameState.js",
+      "tests/selected-car-continuity-r530.mjs"
+    ],
+    "commands": [
+      "node --check src/state/CarSelection.js\nnode --check src/state/GameState.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/selected-car-continuity-r530.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "r531-unlocks-oshiage",
+    "paths": [
+      "src/data/careerProgression.js",
+      "src/data/centralTokyo.js",
+      "src/data/meetAssets.js",
+      "src/data/travelRegions.js",
+      "src/scenes/OshiageScene.js",
+      "src/ui/TravelMap.js",
+      "tests/region-unlock-oshiage-r531.mjs"
+    ],
+    "commands": [
+      "node --check src/data/careerProgression.js\nnode --check src/data/travelRegions.js\nnode --check src/data/centralTokyo.js\nnode --check src/data/meetAssets.js\nnode --check src/ui/TravelMap.js\nnode --check src/scenes/OshiageScene.js\n",
+      "node --test tests/region-unlock-oshiage-r531.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "r532-character-voice",
+    "paths": [
+      "src/data/characterRaceDialogue.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "tests/character-dialogue-r532.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characterRaceDialogue.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\n",
+      "node --test tests/character-dialogue-r532.mjs",
+      "node --test tests/race-dialogue-standard-r514.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "race-dialogue-standard-r514",
+    "paths": [
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "tests/opening-chapter-r467.mjs",
+      "tests/oshiage-race-coach-hud-r513.mjs",
+      "tests/race-dialogue-standard-r514.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/RaceCoachHud.js\nnode --check src/ui/PhoneConversation.js\n",
+      "node --test tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-coaching-r509.mjs\nnode --test --test-name-pattern='phone|call' tests/opening-chapter-r467.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "ref2-body-alignment",
+    "paths": [
+      "src/data/carReferenceGeometry.js",
+      "src/data/cars.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/scenes/TunerShopScene.js",
+      "src/vehicles/CarAppearance.js",
+      "tests/car-reference-geometry.mjs",
+      "tests/ref2-body-alignment.mjs"
+    ],
+    "commands": [
+      "node --check src/data/carReferenceGeometry.js\nnode --check src/data/cars.js\nnode --check src/vehicles/CarAppearance.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/TunerShopScene.js\nnode --check tests/ref2-body-alignment.mjs\n",
+      "node --test tests/ref2-body-alignment.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "regional-engine-balance-r484",
+    "paths": [
+      "src/data/cars.js",
+      "src/data/engines.js",
+      "src/data/regionalChallengeBuilds.js",
+      "src/data/tunerChallenges.js",
+      "src/vehicles/VehiclePerformance.js",
+      "tests/regional-engine-balance-r484.mjs"
+    ],
+    "commands": [
+      "node --check src/data/cars.js\nnode --check src/data/engines.js\nnode --check src/data/regionalChallengeBuilds.js\nnode --check src/vehicles/VehiclePerformance.js\nnode --check src/scenes/RaceScene.js\nnode --check tests/regional-engine-balance-r484.mjs\n",
+      "node --test tests/regional-engine-balance-r484.mjs tests/progression-rebalance-r479.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "replay-lifecycle-r574",
+    "paths": [
+      "src/scenes/CrewSpaceScene.js",
+      "src/scenes/GarageScene.js",
+      "src/ui/Chapter08DevReplay.js",
+      "src/ui/StoryArchivePlayback.js",
+      "src/ui/StoryReplaySession.js",
+      "tests/replay-lifecycle-r574.mjs",
+      "tests/story-archive-r570.mjs"
+    ],
+    "commands": [
+      "node --check src/scenes/GarageScene.js\nnode --check src/scenes/CrewSpaceScene.js\nnode --check src/ui/StoryArchivePlayback.js\nnode --check src/ui/StoryReplaySession.js\nnode --check src/ui/Chapter08DevReplay.js\nnode --check src/main.js\n",
+      "node --test tests/replay-lifecycle-r574.mjs tests/replay-travel-r573.mjs tests/story-archive-r570.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs tests/chapter08-phone-r571.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "replay-travel-r573",
+    "paths": [
+      "src/scenes/GarageScene.js",
+      "src/ui/Chapter08DevReplay.js",
+      "src/ui/SafeSceneTransition.js",
+      "src/ui/StoryArchivePanel.js",
+      "src/ui/StoryReplaySession.js",
+      "src/ui/TravelMap.js",
+      "tests/chapter08-dev-replay-r569.mjs",
+      "tests/replay-travel-r573.mjs",
+      "tests/story-archive-r570.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/SafeSceneTransition.js\nnode --check src/ui/StoryReplaySession.js\nnode --check src/ui/Chapter08DevReplay.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/StoryArchivePlayback.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/TravelMap.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/replay-travel-r573.mjs tests/story-archive-r570.mjs tests/chapter08-dev-replay-r569.mjs tests/chapter08-r568.mjs tests/chapter08-phone-r571.mjs tests/phone-template-r572.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "retired-ej1-r503",
+    "paths": [
+      "src/**",
+      "src/data/carDriverFaceAnchors.js",
+      "src/data/carMagazine.js",
+      "src/data/carRetirement.js",
+      "src/data/cars.js",
+      "src/data/centralTokyo.js",
+      "src/data/crewRoster.js",
+      "src/data/encounterProfiles.js",
+      "src/data/tunerChallenges.js",
+      "src/data/visualMods.js",
+      "src/scenes/MeetScene.js",
+      "src/state/GameState.js",
+      "tests/car-reference-rollout.mjs",
+      "tests/driver-face-anchors.mjs",
+      "tests/retired-ej1-r503.mjs"
+    ],
+    "commands": [
+      "for file in src/data/cars.js src/data/centralTokyo.js src/data/crewRoster.js src/data/tunerChallenges.js src/data/encounterProfiles.js src/data/carMagazine.js src/data/canonicalCarMigration.js src/data/carRetirement.js src/state/GameState.js src/scenes/MeetScene.js src/data/visualMods.js tests/retired-ej1-r503.mjs; do node --check \"$file\"; done\n",
+      "node --test tests/retired-ej1-r503.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/galant-vr4-r502.mjs tests/meet-rival-cars-and-profiles-r500.mjs tests/meet-refresh-r469.mjs tests/sayaka-reika-continuity.mjs tests/pinkSlipProgression.test.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "sayaka-event-advice-r728",
+    "paths": [
+      "src/data/proDriverBriefing.js",
+      "src/data/proSeason.js",
+      "src/ui/ProCrewBattleLineup.js",
+      "src/ui/ProDriverBriefing.js",
+      "src/ui/ProSeasonPanel.js",
+      "tests/open-driver-briefing-r600.mjs",
+      "tests/pro-between-heats-r727.mjs",
+      "tests/pro-briefing-lifecycle-r605.mjs",
+      "tests/sayaka-event-advice-r728.mjs"
+    ],
+    "commands": [
+      "node --check src/data/proDriverBriefing.js\nnode --check src/data/proSeason.js\nnode --check src/ui/ProDriverBriefing.js\nnode --check src/ui/ProCrewBattleLineup.js\nnode --check src/ui/ProSeasonPanel.js\n",
+      "node --test tests/sayaka-event-advice-r728.mjs",
+      "node --test tests/pro-between-heats-r727.mjs tests/drag-briefing-interactions-r607.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "sayaka-pose-ch10-r748",
+    "paths": [
+      "src/data/arkonChapter10.js",
+      "src/data/characters.js",
+      "src/data/cutscenes.js",
+      "src/story/ArkonR748CheckpointMigration.js",
+      "src/story/ArukenPresentation.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/ArkonStoryTimeJump.js",
+      "tests/arkon-ch01-sayaka-uniform-r686.mjs",
+      "tests/arkon-chapter10-r674.mjs",
+      "tests/arkon-chapter10-r679.mjs",
+      "tests/sayaka-pose-ch10-r748.mjs"
+    ],
+    "commands": [
+      "for f in src/data/characters.js src/data/arkonChapter10.js src/data/cutscenes.js src/story/ArukenPresentation.js src/story/ArkonR748CheckpointMigration.js src/story/StoryDirector.js src/story/StoryScript.js src/ui/ArkonStoryTimeJump.js tests/sayaka-pose-ch10-r748.mjs; do node --check \"$f\"; done\n",
+      "node --test tests/sayaka-pose-ch10-r748.mjs tests/arkon-chapter10-r674.mjs tests/arkon-chapter10-r679.mjs tests/arkon-ch01-sayaka-uniform-r686.mjs tests/career-continuity-r680.mjs tests/chapter08-09-wardrobe-r646.mjs tests/sayaka-post-ch09-voice.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "sayaka-post-ch09-dialogue",
+    "paths": [
+      "src/data/cutscenes.js",
+      "tests/pro-season-qualification-failure-scene.mjs",
+      "tests/sayaka-post-ch09-voice.mjs"
+    ],
+    "commands": [
+      "node --check src/data/cutscenes.js\nnode --check tests/sayaka-post-ch09-voice.mjs\n",
+      "node --test tests/sayaka-post-ch09-voice.mjs tests/pro-season-qualification-failure-scene.mjs tests/career-tokyo-finale.mjs tests/career-season-report.mjs tests/career-continuity-r680.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "sayaka-reika-r457",
+    "paths": [
+      "src/data/characters.js",
+      "src/data/crewRoster.js",
+      "src/data/cutscenes.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/MeetScene.js",
+      "src/state/GameState.js",
+      "tests/sayaka-reika-continuity.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characters.js\nnode --check src/data/crewRoster.js\nnode --check src/data/cutscenes.js\nnode --check src/state/GameState.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/sayaka-reika-continuity.mjs tests/pro-circuit-foundation.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "scene-phone-meet-r564",
+    "paths": [
+      "src/data/cutscenes.js",
+      "src/scenes/MeetScene.js",
+      "src/ui/OpeningPhonePrototype.js",
+      "src/ui/PhoneConversation.js",
+      "src/ui/RaceCoachHud.js",
+      "src/ui/SwipePortraitGallery.js",
+      "tests/scene-phone-meet-r564.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/SwipePortraitGallery.js",
+      "node --check src/ui/RaceCoachHud.js",
+      "node --check src/ui/OpeningPhonePrototype.js",
+      "node --check src/ui/PhoneConversation.js",
+      "node --check src/scenes/MeetScene.js",
+      "node --check src/data/cutscenes.js",
+      "node --test tests/scene-phone-meet-r564.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "season-qualification-cutscene-review",
+    "paths": [
+      "index.html",
+      "src/data/cutscenes.js",
+      "src/main.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/ui/MangaCutscene.js",
+      "src/ui/ProSeasonPanel.js",
+      "sw.js",
+      "tests/pro-season-qualification-failure-scene.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "node --check src/data/cutscenes.js\nnode --check src/ui/ProSeasonPanel.js\nnode --check src/ui/MangaCutscene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/main.js\nnode --check tests/pro-season-qualification-failure-scene.mjs\n",
+      "node --test tests/pro-season-qualification-failure-scene.mjs tests/career-season-report.mjs tests/career-tokyo-finale.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "shibuya-asset-rename-r459",
+    "paths": [
+      "assets/Characters/Shibuya/**",
+      "src/data/characters.js",
+      "tests/shibuya-asset-rename-r459.mjs"
+    ],
+    "commands": [
+      "node --check src/data/characters.js",
+      "node --test tests/shibuya-asset-rename-r459.mjs tests/character-control-assets-r458.mjs tests/sayaka-reika-continuity.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "shinagawa-zerosports-r526",
+    "paths": [
+      "src/data/characters.js",
+      "src/data/collectorExpansion.js",
+      "src/data/regionalChallengeBuilds.js",
+      "src/data/tunerShops.js",
+      "src/scenes/TunerShopScene.js",
+      "src/vehicles/TunerDecals.js",
+      "tests/shinagawa-zero-sports-r526.mjs"
+    ],
+    "commands": [
+      "node --check src/data/tunerShops.js",
+      "node --check src/scenes/TunerShopScene.js",
+      "node --test tests/shinagawa-zero-sports-r526.mjs tests/tuner-hero-conversions-r521.mjs tests/startup-import-integrity-r508.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "stock-assets-r505",
+    "paths": [
+      "assets/Cars/stock/**",
+      "src/data/**",
+      "src/data/carReferenceGeometry.js",
+      "src/data/cars.js",
+      "src/data/engines.js",
+      "src/scenes/CarReferenceCalibrationScene.js",
+      "src/state/GameState.js",
+      "src/vehicles/CarAppearance.js",
+      "tests/gf8-r517.mjs",
+      "tests/retired-ej1-r503.mjs",
+      "tests/stock-assets-r505.mjs",
+      "tests/stock-expansion-r516.mjs"
+    ],
+    "commands": [
+      "node --check src/data/carReferenceGeometry.js\nnode --check src/data/cars.js\nnode --check src/vehicles/CarAppearance.js\nnode --check src/scenes/CarReferenceCalibrationScene.js\nnode --check tests/stock-assets-r505.mjs\nnode --check tests/gf8-r517.mjs\n",
+      "node --test tests/stock-assets-r505.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs tests/galant-vr4-r502.mjs tests/retired-ej1-r503.mjs tests/stock-expansion-r516.mjs tests/gf8-r517.mjs tests/startup-import-integrity-r508.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "story-archive-r570",
+    "paths": [
+      "src/data/storyChapters.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/RaceScene.js",
+      "src/state/GameState.js",
+      "src/ui/CarHistoryPanel.js",
+      "src/ui/Chapter08DevReplay.js",
+      "src/ui/Chapter08Story.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/OfficePanel.js",
+      "src/ui/StoryArchivePanel.js",
+      "src/ui/StoryArchivePlayback.js",
+      "src/ui/StoryReplaySession.js",
+      "tests/story-archive-r570.mjs"
+    ],
+    "commands": [
+      "node --check src/data/storyChapters.js\nnode --check src/ui/StoryReplaySession.js\nnode --check src/ui/StoryArchivePlayback.js\nnode --check src/ui/StoryArchivePanel.js\nnode --check src/ui/Chapter08DevReplay.js\nnode --check src/ui/Chapter08Story.js\nnode --check src/ui/OfficePanel.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/ui/CarHistoryPanel.js\nnode --check src/state/GameState.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/scenes/CentralTokyoScene.js\n",
+      "node --test tests/story-archive-r570.mjs tests/chapter08-r568.mjs tests/chapter08-dev-replay-r569.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "story-arrival-pacing-r643",
+    "paths": [
+      "src/data/devVaultStory.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/DevVaultStoryScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/RaceScene.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/StoryComposition.js",
+      "src/ui/StoryContinuePrompt.js",
+      "tests/dev-vault-story-r641.mjs",
+      "tests/story-arrival-pacing-r643.mjs",
+      "tests/story-composition-arrival-r642.mjs",
+      "tests/story-director-r639.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/StoryContinuePrompt.js\nnode --check src/ui/StoryComposition.js\nnode --check src/data/devVaultStory.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/story/StoryScript.js\nnode --check src/story/StoryDirector.js\nnode --check src/scenes/DevVaultStoryScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/RaceScene.js\nnode --check src/main.js\n",
+      "node --test tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/dev-vault-story-r641.mjs tests/story-director-r639.mjs tests/ginza-loan-return-r636.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "story-background-perspective-r644",
+    "paths": [
+      "index.html",
+      "src/data/storyBackgroundCatalog.js",
+      "src/data/storyDirectorScripts.js",
+      "src/main.js",
+      "src/scenes/MeetScene.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryPerspective.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/StoryStage.js",
+      "sw.js",
+      "tests/dev-vault-story-r641.mjs",
+      "tests/story-arrival-pacing-r643.mjs",
+      "tests/story-background-perspective-r644.mjs",
+      "tests/story-director-r639.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "node --check src/data/storyBackgroundCatalog.js\nnode --check src/story/StoryPerspective.js\nnode --check src/ui/StoryStage.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/story/StoryDirector.js\nnode --check src/scenes/MeetScene.js\nnode --check src/main.js\n",
+      "node --test tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/dev-vault-story-r641.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "story-composition-r642",
+    "paths": [
+      "src/data/devVaultStory.js",
+      "src/data/storyDirectorScripts.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/DevVaultStoryScene.js",
+      "src/scenes/MeetScene.js",
+      "src/state/GameState.js",
+      "src/story/StoryDirector.js",
+      "src/story/StoryScript.js",
+      "src/ui/StoryCarRenderer.js",
+      "src/ui/StoryComposition.js",
+      "src/ui/StoryStage.js",
+      "tests/dev-vault-story-r641.mjs",
+      "tests/story-composition-arrival-r642.mjs",
+      "tests/story-director-r639.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/StoryComposition.js\nnode --check src/ui/StoryCarRenderer.js\nnode --check src/ui/StoryStage.js\nnode --check src/scenes/DevVaultStoryScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/data/devVaultStory.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/state/GameState.js\nnode --check src/main.js\n",
+      "node --test tests/story-composition-arrival-r642.mjs tests/dev-vault-story-r641.mjs tests/story-director-r639.mjs tests/ginza-loan-return-r636.mjs tests/ginza-banter-r633.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "story-director-r639",
+    "paths": [
+      "src/data/storyDirectorScripts.js",
+      "src/main.js",
+      "src/state/GameState.js",
+      "src/story/**",
+      "src/ui/CompactStoryDialogue.js",
+      "src/ui/CutsceneTester.js",
+      "src/ui/StoryStage.js",
+      "tests/story-director-r639.mjs"
+    ],
+    "commands": [
+      "node --check src/story/StoryDirector.js\nnode --check src/story/StoryScript.js\nnode --check src/ui/CompactStoryDialogue.js\nnode --check src/ui/StoryStage.js\nnode --check src/data/storyDirectorScripts.js\nnode --check src/ui/CutsceneTester.js\nnode --check src/state/GameState.js\nnode --check src/main.js\n",
+      "node --test tests/story-director-r639.mjs tests/ginza-banter-r633.mjs tests/story-archive-r570.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "street-paint-r624",
+    "paths": [
+      "src/data/oshiageElite.js",
+      "src/data/streetPaintPalettes.js",
+      "src/scenes/CentralTokyoScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "tests/street-paint-r624.mjs"
+    ],
+    "commands": [
+      "node --check src/data/streetPaintPalettes.js\nnode --check src/scenes/OshiageScene.js\nnode --check src/scenes/CentralTokyoScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/data/oshiageElite.js\n",
+      "node --test tests/street-paint-r624.mjs tests/factory-paint-palettes-r623.mjs tests/oshiage-paint-layout-r622.mjs tests/oshiage-paint-visual-r621.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "street-showdown-coupon-hunt-r716",
+    "paths": [
+      "index.html",
+      "src/data/streetShowdownCouponHunt.js",
+      "src/data/streetShowdowns.js",
+      "src/main.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/ui/OfficeCouponHuntPanel.js",
+      "sw.js",
+      "tests/street-showdown-coupon-hunt-r716.mjs",
+      "version.json"
+    ],
+    "commands": [
+      "for f in src/data/streetShowdownCouponHunt.js src/data/streetShowdowns.js src/scenes/MeetScene.js src/scenes/GarageScene.js src/ui/OfficeCouponHuntPanel.js src/main.js tests/street-showdown-coupon-hunt-r716.mjs; do node --check \"$f\"; done\n",
+      "node --import ./tests/ci-phaser-math.mjs --test tests/street-showdown-coupon-hunt-r716.mjs tests/region-crew-tuning-r529.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "street-showdown-view-r546",
+    "paths": [
+      "src/data/streetShowdownRoster.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/OshiageScene.js",
+      "src/ui/ShowdownLayout.js",
+      "src/ui/StreetShowdownView.js",
+      "tests/street-showdown-view-r546.mjs"
+    ],
+    "commands": [
+      "node --check src/ui/ShowdownLayout.js\nnode --check src/ui/StreetShowdownView.js\nnode --check src/data/streetShowdownRoster.js\nnode --check src/scenes/MeetScene.js\nnode --check src/scenes/OshiageScene.js\n",
+      "node --test tests/street-showdown-view-r546.mjs tests/progression-rebalance-r479.mjs tests/oshiage-showdown-r522.mjs tests/startup-import-integrity-r508.mjs\n"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "tuner-hero-conversions-r521",
+    "paths": [
+      "src/data/carOwnership.js",
+      "src/data/cars.js",
+      "src/data/tunerShops.js",
+      "src/scenes/TunerShopScene.js",
+      "tests/tuner-hero-conversions-r521.mjs"
+    ],
+    "commands": [
+      "node --test tests/tuner-hero-conversions-r521.mjs"
+    ],
+    "artifacts": []
+  },
+  {
+    "id": "tuner-stock-service-r676",
+    "paths": [
+      "src/data/crewSystem.js",
+      "src/data/stockTuneService.js",
+      "src/scenes/GarageScene.js",
+      "src/scenes/MeetScene.js",
+      "src/scenes/TunerShopScene.js",
+      "tests/tuner-stock-service-r676.mjs"
+    ],
+    "commands": [
+      "node --check src/data/stockTuneService.js\nnode --check src/data/crewSystem.js\nnode --check src/scenes/TunerShopScene.js\nnode --check src/scenes/GarageScene.js\nnode --check src/scenes/MeetScene.js\nnode --check src/main.js\nnode --check tests/tuner-stock-service-r676.mjs\n",
+      "node --test tests/tuner-stock-service-r676.mjs tests/crew-recruit-easy-ai-r618.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-global-recruit-pity-r551.mjs\n"
+    ],
+    "artifacts": []
+  }
+]

@@ -72,12 +72,12 @@ test('integration retains manga/phone, existing Ginza banter and player saves',(
   assert.match(director,/Phaser\.Core\.Events\.POST_STEP/);
   assert.match(compact,/createRaceDialogueHud\(scene/);
   assert.match(game,/installStoryDirector/);
-  assert.match(tester,/__directorDialogue/);
-  assert.match(tester,/__directorRoute/);
+  assert.doesNotMatch(tester,/__directorDialogue|__directorRoute/);
+  assert.match(tester,/ACTIVE_DEV_MICRO_SCENES/);
   assert.match(state,/storyDirectorProgress: null/);
   assert.match(state,/storyDirectorProgress: registry\.get/);
   assert.match(race,/if \(sceneCutsceneActive\(this\)\) return;/);
   assert.match(race,/this\.hasGinzaBanter = this\.isGinzaDemoRace && isNamedArkonDen\(this\.registry\)/);
-  assert.match(read('index.html'),/import\('\.\/src\/main\.js\?v=202610\d{2}-r\d+'\)/);
+  assert.match(read('index.html'),/import\('\.\/src\/main\.js\?v=\d{8}-r\d+'\)/);
   assert.match(read('sw.js'),/const BUILD = 'R\d+'/);
 });

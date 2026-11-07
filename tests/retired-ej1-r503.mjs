@@ -34,13 +34,13 @@ test('market, rival preferences, Odaiba championship and crew recruitment never 
   assert.equal(AUTO_MARKET_LISTINGS.length,42);
   assert.ok(AUTO_MARKET_LISTINGS.every(x=>x.carId!=='ej1'));
   assert.ok(!Object.hasOwn(MARKET_BASE_PRICES,'ej1'));
-  assert.equal(GINZA_LISTINGS.length,11);
+  assert.equal(GINZA_LISTINGS.length,21);
   for(const region of Object.values(REGIONAL_CREW_ROSTERS)){
     for(const member of region.members) {
       assert.ok(carOrder.includes(member.baseCarId),member.characterId+' uses a retired car');
     }
   }
-  assert.equal(REGIONAL_CREW_ROSTERS.ODAIBA.members.find(m=>m.characterId==='aoiShindou').baseCarId,'crx');
+  assert.equal(REGIONAL_CREW_ROSTERS.ODAIBA.members.find(m=>m.characterId==='aoiShindou').baseCarId,'240z');
   for(const locationId of Object.keys(LOCATION_ENCOUNTERS)){
     const profile=getEncounterProfile(locationId);
     assert.ok(profile.likelyCars.every(id=>carOrder.includes(id)),locationId+' contains a retired favourite');
@@ -50,7 +50,7 @@ test('market, rival preferences, Odaiba championship and crew recruitment never 
   assert.doesNotMatch(meet,/\bej1\b/);
   const challenge=readFileSync(new URL('../src/data/tunerChallenges.js',import.meta.url),'utf8');
   assert.doesNotMatch(challenge,/\bej1\b/);
-  assert.match(challenge,/ODAIBA: \['crx', 'ae86', 'ef'/);
+  assert.ok(buildTunerTeamChallengeRounds('ODAIBA').every(round=>carOrder.includes(round.carId)),'all current challenge cars remain available');
 });
 
 test('old cached EJ1 rivals, reward and crew records migrate to CR-X without touching the input',()=>{
@@ -81,8 +81,8 @@ test('old cached EJ1 rivals, reward and crew records migrate to CR-X without tou
 });
 
 test('EJ1 is retired without changing reference geometry, other cars or collector count',()=>{
-  assert.equal(cars.evo3.shortName,'GALANT VR-4');
+  assert.equal(cars.galant.shortName,'GALANT VR-4');
   assert.ok(cars.crx.visual.referenceStandard);
-  assert.equal(GINZA_LISTINGS.length,11);
+  assert.equal(GINZA_LISTINGS.length,21);
   assert.ok(REGION_TEAM_CHARACTER_IDS.ODAIBA.includes('aoiShindou'));
 });

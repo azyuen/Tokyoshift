@@ -9,7 +9,7 @@ test('R595: entry-fee captions sit 10px lower on all three event cards',()=>{
   // The same forEach renderer draws Driver, Crew and Trophy card labels.
   const cards=central.slice(central.indexOf('events.forEach((event, index) => {'),
     central.indexOf('this.drawDragSide(events[this.selectedEventIndex]',central.indexOf('events.forEach((event, index) => {')));
-  assert.match(cards,/CARDS\.y \+ 136,\s*event\.trophySlotClosed\?/);
+  assert.match(cards,/CARDS\.y \+ 136,\s*event\.seasonEnd\?/);
   assert.match(cards,/CARDS\.y \+ 104,\s*340,\s*116,/);
   const cardBottom=104+116/2,captionBottom=136+7/2;
   assert.ok(cardBottom-captionBottom>12,'entry label retains bottom padding');
@@ -26,7 +26,7 @@ test('R595: Scrutineering message has headroom for up to three wrapped lines',()
 
 test('R595: all three right-side professional actions have identical height and gaps',()=>{
   assert.match(panel,/s\.add\.rectangle\(x,y,w,40,enabled\?/);
-  assert.match(panel,/const x=side\.x\+side\.w\/2,y=side\.y\+624/);
+  assert.match(panel,/const x=side\.x\+side\.w\/2,y=side\.y\+\(open\?624:626\)/);
   assert.match(panel,/s\.add\.rectangle\(x,y,side\.w-36,40,/);
   assert.match(central,/const mapY = SIDE\.y \+ 674/);
   assert.match(central,/SIDE\.w - 36,\s*dragTheme \? 40 : 42,/);

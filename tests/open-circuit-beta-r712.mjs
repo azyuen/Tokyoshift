@@ -1,3 +1,4 @@
+import {assertBuildCacheContract,assertVersionedImport} from './helpers/module-contracts.mjs';
 // R711 beta fixes: deterministic Open Circuit scheduling, honest precision
 // scoring, private opponent specifications and reliable unpaid registration.
 import test from 'node:test';
@@ -134,23 +135,9 @@ test('open driver briefing is payable once and retains captured offer across pha
   assert.match(driverBrief,/ENTRY NOT SAVED/);
 });
 
-test('R714 installed PWA loads fresh changed modules without resetting asset cache',()=>{
-  const boot=source('src/main.js'),version=JSON.parse(source('version.json'));
-  const index=source('index.html'),sw=source('sw.js');
-  assert.equal(version.build,'R714');
-  assert.match(index,/id="build-stamp">R714/);
-  assert.match(index,/main\.js\?v=20261029-r714/);
-  assert.match(boot,/CentralTokyoScene\.js\?v=20261029-r714/);
-  assert.match(boot,/FourLaneTestScene\.js\?v=20261029-r714/);
-  assert.match(sw,/const BUILD = 'R714'/);
-  // Preserve the asset cache so large graphics are not downloaded afresh.
-  assert.match(sw,/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
-  for(const file of ['src/scenes/CentralTokyoScene.js',
-    'src/scenes/FourLaneTestScene.js','src/ui/ProSeasonPanel.js',
-    'src/ui/ProDriverBriefing.js','src/data/proDriverBriefing.js']){
-    const code=source(file);
-    for(const imported of code.split('\n').filter(l=>
-      /proSeason\.js|ProSeasonPanel\.js/.test(l)))
-      assert.match(imported,/v=20261029-r714/,'stale imported URL in '+file);
-  }
+test('installed PWA keeps a coherent build and resolves the changed professional modules',()=>{
+  assertBuildCacheContract();
+  for(const name of ['CentralTokyoScene','FourLaneTestScene'])assertVersionedImport('src/main.js',name);
+  for(const file of ['src/scenes/CentralTokyoScene.js','src/scenes/FourLaneTestScene.js','src/ui/ProSeasonPanel.js'])
+    assertVersionedImport(file,'proSeason');
 });

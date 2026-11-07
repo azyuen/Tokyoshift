@@ -1,3 +1,4 @@
+import {assertVersionedImport,assertBuildCacheContract} from './helpers/module-contracts.mjs';
 // New Career review beat: Pro Season qualification failure (not Tokyo loss).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -52,18 +53,12 @@ test('nonqualification reflection is honest and does not promise automatic entry
   assert.doesNotMatch(all,/guarantee|automatically|free title|\bqualified\b/i);
 });
 
-test('R719 production boot includes Office and career-story UI without wiping the large image cache',()=>{
-  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-  const version=JSON.parse(read('version.json'));
-  assert.equal(version.build,'R719');
-  assert.match(read('index.html'),/id="build-stamp">R719/);
-  assert.match(read('index.html'),/main\.js\?v=20261029-r719/);
-  assert.match(read('sw.js'),/const BUILD = 'R719'/);
-  assert.match(read('sw.js'),/const ASSET_CACHE = 'tokyoshift-assets-r688'/);
-  assert.match(read('src/main.js'),/CentralTokyoScene\.js\?v=20261029-r719/);
-  assert.match(read('src/scenes/CentralTokyoScene.js'),/ProSeasonPanel\.js\?v=20261029-r719/);
-  assert.match(read('src/ui/ProSeasonPanel.js'),/MangaCutscene\.js\?v=20261029-r718/);
-  assert.match(read('src/ui/MangaCutscene.js'),/cutscenes\.js\?v=20261029-r718/);
+test('production boot resolves career story UI without wiping persistent artwork',()=>{
+ assertBuildCacheContract();
+ assertVersionedImport('src/main.js','CentralTokyoScene');
+ assertVersionedImport('src/scenes/CentralTokyoScene.js','ProSeasonPanel');
+ assertVersionedImport('src/ui/ProSeasonPanel.js','MangaCutscene');
+ assertVersionedImport('src/ui/MangaCutscene.js','cutscenes');
 });
 
 test('qualified chapter 11 begins after the full eight-round season and never on a failed report',()=>{

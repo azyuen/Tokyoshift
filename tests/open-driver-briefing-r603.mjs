@@ -67,16 +67,16 @@ test('R603 purchase commits fee and reversible car preparation exactly once afte
   assert.match(buy({circuit:normaliseProCircuitState({eventTick:15,season:1})}).error,/EXPIRED/);
 });
 
-test('R603 Sayaka cooldown is staged and committed only with the entry payment',()=>{
+test('R603 Sayaka consultation is staged and committed only with entry',()=>{
   const initial=circuit(),initialState=draft();
   const consulted=consumeDriverAdvice(initial,initialState);
   assert.equal(consulted.error,undefined);
   assert.equal(initial.crewAdviceCooldownUntil,0);
-  assert.equal(consulted.circuit.crewAdviceCooldownUntil,17);
+  assert.equal(consulted.circuit.crewAdviceCooldownUntil,0);
   const pending={...consulted.competitionState,briefingAdviceText:'Maintain traction'};
   const out=buy({state:pending,adviceCircuit:consulted.circuit});
   assert.equal(out.error,undefined,out.error);
-  assert.equal(out.changes.proCircuit.crewAdviceCooldownUntil,17);
+  assert.equal(out.changes.proCircuit.crewAdviceCooldownUntil,0);
   assert.equal(out.changes.competitionState.briefingAdviceText,'Maintain traction');
   assert.equal(initial.crewAdviceCooldownUntil,0);
   assert.equal(buy().changes.proCircuit,undefined,

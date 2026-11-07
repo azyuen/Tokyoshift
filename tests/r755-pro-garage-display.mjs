@@ -40,7 +40,7 @@ test('Pro Garage hides only workshop car callouts while part selectors are kept'
   assert.match(source,/this\.createCarDisplay\([\s\S]*?placement\?\.width/);
 });
 
-test('Pro Garage bay vehicles sit farther right while the bay signs stay anchored',()=>{
+test('Pro Garage bay vehicles sit farther right without adding duplicate bay signs',()=>{
   const start=source.indexOf('  getProGarageBayPlacement(number){');
   const end=source.indexOf('\n  drawProGarageBayLineup(){',start);
   const method=source.slice(start,end);
@@ -53,7 +53,8 @@ test('Pro Garage bay vehicles sit farther right while the bay signs stay anchore
   }
   assert.ok(source.includes('const {x,carX,contactY,width,depth}=config;'));
   assert.ok(source.includes('this.createCarDisplay(cars[bay.carId],carX,y,width,depth)'));
-  assert.ok(source.includes('this.add.text(x,top,'),'bay signage remains anchored');
+  const lineup=source.slice(source.indexOf('  drawProGarageBayLineup(){'),source.indexOf('  refreshProGarageScrutineering(){'));
+  assert.doesNotMatch(lineup,/this\.add\.text/,'bay signs are already in the supplied artwork');
   assert.equal(source.split('placement?.carX??').length-1,2,
     'selected car and visual-mod preview must use the same shifted coordinates');
 });

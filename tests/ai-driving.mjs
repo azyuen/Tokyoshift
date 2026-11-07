@@ -8,7 +8,7 @@ import { applyDifficultyToRivalAi } from '../src/data/playerDifficulty.js';
 globalThis.Phaser = { Math: { Clamp: (v,a,b) => Math.max(a,Math.min(b,v)), Linear: (a,b,t) => a+(b-a)*t } };
 export function random(seed) { return () => { seed = (Math.imul(seed,1664525)+1013904223)>>>0; return seed/4294967296; }; }
 export const tuned = {
-  engineTuning: { intake:3, ecu:3, turbo:3, intercooler:3, internals:3 },
+  tuning: { intake:3, ecu:3, turbo:3, intercooler:3, engine:3 },
   drivetrainTuning: { clutch:3, gearbox:3, differential:3, suspension:3 },
   chassisTuning: { tyres:3, weightReduction:3 },
   exhaustNosTuning: { headers:3, exhaust:3, muffler:3, nosKit:3, nitrousShot:3 },
@@ -19,7 +19,7 @@ export function run(carId, rating, { rolling=false, state={}, difficulty='STANDA
   const frozen = JSON.stringify(built);
   const v = new Vehicle(built.car,built.engine);
   const skill = applyDifficultyToRivalAi(rolling ? getEncounterAi(rating) : boostAiForStandingStart(getEncounterAi(rating),rating),difficulty,{rollingStart:rolling});
-  const ai = new AI(v,skill,{rating,playerDifficulty:difficulty,rollingStart:rolling,random:random(seed)});
+  const ai = new AI(v,skill,{rating,playerDifficulty:difficulty,rollingStart:rolling,raceDistanceM:804.672,random:random(seed)});
   for(let time=-3;time<0;time+=dt) v.update(dt,ai.update(dt,time,null));
   if(rolling) {
     const speed=60/3.6, wheel=speed/(2*Math.PI*v.config.wheelRadius)*60;
@@ -52,7 +52,7 @@ export function run(carId, rating, { rolling=false, state={}, difficulty='STANDA
 }
 if(import.meta.url===`file://${process.argv[1]}`) {
   const rows=[];
-  for(const car of ['evo3','jza80','ek9']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
+  for(const car of ['galant','jza80','ek9']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
     const result=[];
     for(const rating of [2,3,4,5]) {
       const runs=Array.from({length:6},(_,i)=>run(car,rating,{state,rolling,seed:i+1}));

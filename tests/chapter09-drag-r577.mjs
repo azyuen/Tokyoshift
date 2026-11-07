@@ -41,8 +41,8 @@ test('Drag Scene triggers the same connected story after first arrival, and expo
  assert.match(central,/showProSeasonAction\(this,SIDE\)/);
  assert.match(central,/SIDE\.y \+ 574/);
  assert.match(central,/const mapY = SIDE\.y \+ 674/);
- assert.match(panel,/const x=side\.x\+side\.w\/2,y=side\.y\+624/);
- assert.match(panel,/const height=openCircuit\?169:c\.activeChampionship\?236:213/);
+ assert.match(panel,/const x=side\.x\+side\.w\/2,y=side\.y\+\(open\?624:626\)/);
+ assert.match(panel,/const height=openCircuit\?184:c\.activeChampionship\?213:188/);
  assert.match(panel,/function seasonConfirm\(/);
  assert.match(panel,/title:'FORFEIT CURRENT SEASON\?'/);
  assert.match(panel,/confirmLabel:'CONFIRM FORFEIT'/);
@@ -55,9 +55,9 @@ test('Drag Scene triggers the same connected story after first arrival, and expo
 test('registration and withdrawal keep distinct safe confirmation paths',()=>{
  const panel=source('src/ui/ProSeasonPanel.js');
  const block=panel.slice(panel.indexOf('function seasonConfirm'));
- assert.match(block,/START PROFESSIONAL SEASON\?/);
+ assert.match(block,/PRO SEASON \/\/ REGISTER THREE DRIVER CARS/);
  assert.match(block,/START SEASON/);
- assert.match(block,/startProfessionalSeason\(circuit\(s\)\)/);
+ assert.match(block,/startProfessionalSeason\(current,ids,ownedNow\)/);
  assert.match(block,/chapter09SeasonRegistration/);
  assert.match(block,/forfeitProfessionalSeason\(circuit\(s\)\)/);
  assert.match(block,/if\(state\?\.active&&state\.proEvent\)changes\.competitionState=null/);

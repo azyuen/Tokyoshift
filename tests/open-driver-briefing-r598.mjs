@@ -36,16 +36,16 @@ test('registered car ownership, power and NOS restrictions are checked on each h
   assert.equal(driverBriefingEligibility({...state,briefingRules:{maxPowerKW:null,noNos:false}}, {},500,['ae86']).eligible,true);
 });
 
-test('driver advice uses the existing crew professional-event cooldown and cannot be farmed between heats',()=>{
+test('driver advice is once per event and independent of the crew cooldown',()=>{
   const state=driver(),circuit={eventTick:14,crewAdviceCooldownUntil:0};
   assert.equal(driverAdviceStatus(circuit,state).available,true);
   const out=consumeDriverAdvice(circuit,state);
-  assert.equal(out.circuit.crewAdviceCooldownUntil,17);
+  assert.equal(out.circuit.crewAdviceCooldownUntil,0);
   assert.equal(out.competitionState.briefingAdviceUsed,true);
   assert.match(consumeDriverAdvice(out.circuit,out.competitionState).error,/ALREADY USED/);
   const nextHeat={...out.competitionState,roundIndex:1};
   assert.equal(driverAdviceStatus({...out.circuit,eventTick:15},nextHeat).available,false);
-  assert.equal(driverAdviceStatus({...out.circuit,eventTick:16},{...driver(),briefingAdviceUsed:false}).remaining,1);
+  assert.equal(driverAdviceStatus({...out.circuit,eventTick:16},{...driver(),briefingAdviceUsed:false}).remaining,0);
   assert.equal(driverAdviceStatus({...out.circuit,eventTick:17},driver()).available,true);
   assert.match(driverOpponentAdvice({shortName:'R32',drivetrain:'AWD'},{
     name:'Kenji Sato'},{}),/AWD/);

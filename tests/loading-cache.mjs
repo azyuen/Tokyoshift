@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createHash, webcrypto } from 'node:crypto';
 const source = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
 const hash = body => createHash('sha256').update(body).digest('hex');
-function worker({ body = 'original', revision = hash(body), shared = new Map(), brokenCache = false } = {}) {
+function worker({ body = 'original', revision = hash(body), shared = new Map(), brokenCache = false, hashGate = Promise.resolve() } = {}) {
   const handlers = {}, calls = [];
   const self = { location: { href: 'https://game.test/Tokyoshift/sw.js' },
     TOKYO_SHIFT_ASSET_REVISIONS: { 'assets/Cars/car.png': revision },
@@ -27,14 +27,16 @@ function worker({ body = 'original', revision = hash(body), shared = new Map(), 
       };
     }
   };
-  vm.runInNewContext(source, { self, caches, URL, Request, Response, Uint8Array, crypto: webcrypto, importScripts() {},
+  vm.runInNewContext(source, { self, caches, URL, Request, Response, Uint8Array, crypto: {subtle: {async digest(...args) {await hashGate; return webcrypto.subtle.digest(...args);}}}, importScripts() {},
     fetch: async request => { calls.push(request); if (offline) throw new Error('offline'); return new Response(body, {status}); } });
   return { shared, calls, setOffline(value) { offline=value; }, setStatus(value) { status=value; },
     async activate() { let task; handlers.activate({waitUntil(p) {task=p;}}); await task; },
-    async get(path='assets/Cars/car.png', options={}) {
-      let task;
-      handlers.fetch({ request: new Request(new URL(path, 'https://game.test/Tokyoshift/'), options), respondWith(p) {task=p;} });
-      return task;
+    async get(path='assets/Cars/car.png', options={}, drain=true) {
+      let task; const background=[];
+      handlers.fetch({ request: new Request(new URL(path, 'https://game.test/Tokyoshift/'), options), respondWith(p) {task=p;}, waitUntil(p) {background.push(p);} });
+      const response = await task;
+      if(drain) await Promise.all(background);
+      return response;
     }
   };
 }
@@ -97,4 +99,21 @@ test('worker activation discards obsolete asset hashes but retains verified curr
   warm.setOffline(true);
   assert.equal(await (await warm.get()).text(),'new art');
   assert.equal(warm.calls.length,0);
+});
+
+
+test('cold image response streams before slow hashing/cache persistence completes', async () => {
+  let release;
+  const hashGate = new Promise(resolve => { release = resolve; });
+  const w = worker({hashGate});
+  try {
+    const response = await Promise.race([
+      w.get('assets/Cars/car.png', {}, false),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('image blocked on hash')), 500)),
+    ]);
+    assert.equal(await response.text(), 'original');
+    const second = await w.get('assets/Cars/car.png', {}, false);
+    assert.equal(await second.text(), 'original');
+    assert.equal(w.calls.length, 1);
+  } finally { release(); }
 });

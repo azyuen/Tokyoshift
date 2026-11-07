@@ -76,9 +76,9 @@ test('Crew Space swaps the same hotspot and shows the tutorial board as static a
   assert.ok(staticViewer.includes("crewRecruitWhiteboard"));
   assert.ok(staticViewer.includes("CLOSE  X"));
   assert.ok(!staticViewer.includes("const targets ="));
-  assert.ok(bridge.includes("GarageScene.js?v=20261021-r627"));
-  assert.ok(main.includes("GarageScene.js?v=20261021-r627"));
-  assert.ok(main.includes("CrewSpaceScene.js?v=20261021-r627"));
+  assert.match(bridge,/GarageScene\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(main,/GarageScene\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(main,/CrewSpaceScene\.js\?v=\d{8}-r[\w-]+/);
 });
 
 test('Chapter 06 Daichi points at the tutorial whiteboard, Chapter 07 triggers swap', () => {

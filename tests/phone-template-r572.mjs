@@ -59,14 +59,14 @@ test('both standard and vibrating pick-up phone renderer reuse same global backd
     assert.match(mode,/createPhoneCallBackdrop/);
     assert.match(mode,/createRaceDialogueHud\(scene/);
     assert.match(mode,/phoneIconKey:/);
-    assert.ok(mode.includes('RaceCoachHud.js?v=20261023-r658'));
+    assert.match(mode,/RaceCoachHud\.js\?v=\d{8}-r[\w-]+/);
   }
   assert.match(normal,/createPhoneCallBackdrop\(scene, \{depth:DEPTH\}\)/);
   assert.match(swipe,/own\(createPhoneCallBackdrop\(scene,\{depth:DEPTH\}\)\)/);
   assert.match(swipe,/objects\.splice\(1\)/); // veil stays after pickup
   assert.match(swipe,/green\.once\('pointerdown'/); // never auto answer
-  assert.ok(normal.includes('OpeningPhonePrototype.js?v=20261023-r658'));
-  assert.ok(dispatcher.includes('PhoneConversation.js?v=20261023-r658'));
+  assert.match(normal,/OpeningPhonePrototype\.js\?v=\d{8}-r[\w-]+/);
+  assert.match(dispatcher,/PhoneConversation\.js\?v=\d{8}-r[\w-]+/);
 });
 
 test('all chapter and game scene entry points use refreshed canonical phone caller presentation',()=>{

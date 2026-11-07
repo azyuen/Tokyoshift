@@ -1,3 +1,4 @@
+import {assertVersionedImport,assertBuildCacheContract} from './helpers/module-contracts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -120,12 +121,9 @@ test('real travel map and race scene are gated, with no regular meet UI in bespo
   assert.ok(existsSync('assets/CentralTokyo/tokyo_ginza03.png'));
 });
 
-test('R641 boot and build import registration remains isolated',()=>{
-  const main=source('src/main.js');
-  assert.match(main,/DevVaultStoryScene/);
-  assert.match(main,/StoryDirector\.js\?v=20261022-r645/);
-  assert.match(main,/RaceScene\.js\?v=20261022-r643/);
-  assert.match(main,/CentralTokyoScene\.js\?v=20261022-r643/);
-  assert.match(source('version.json'),/R645/);
-  assert.match(source('index.html'),/R645/);
+test('developer scene remains deferred with resolvable story dependencies',()=>{
+ assertVersionedImport('src/main.js','DevVaultStoryScene');
+ assertVersionedImport('src/main.js','StoryDirector');
+ for(const name of ['RaceScene','CentralTokyoScene']) assertVersionedImport('src/main.js',name);
+ assertBuildCacheContract();
 });

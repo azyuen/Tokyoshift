@@ -12,9 +12,9 @@ test('forfeit button remains accessible from the right panel throughout Tokyo Ch
   assert.match(block,/c\.seasonStatus==='COMPLETE'/);
   assert.match(block,/WITHDRAW \/ FORFEIT SEASON/);
   assert.match(block,/showProSeasonWithdrawal\(s\)/);
-  assert.match(block,/side\.y\+624/);
+  assert.match(block,/side\.y\+\(open\?624:626\)/);
   const header=panel.slice(panel.indexOf('export function drawSeasonHeader'),panel.indexOf('export function drawCrewSidebar'));
-  assert.match(header,/const height=openCircuit\?169:c\.activeChampionship\?213:188/);
+  assert.match(header,/const height=openCircuit\?184:c\.activeChampionship\?213:188/);
   assert.doesNotMatch(header,/WITHDRAW \/ FORFEIT SEASON/);
 });
 

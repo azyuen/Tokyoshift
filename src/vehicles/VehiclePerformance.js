@@ -46,7 +46,7 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
     // Factory-authorised NOS remains part of the car's sealed specification.
     // Never overwrite a factory system with purchased aftermarket parts.
     const factoryNos = Number(config.nosPower || 0) > 0 &&
-      Number(config.nosShots || config.nosCapacitySeconds || 0) > 0;
+      Number(config.nosShots || 0) > 0;
     if (factoryNos) {
       if (state.nosEnabled === false) {
         config.nosPower = 0;

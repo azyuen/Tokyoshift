@@ -31,7 +31,7 @@ test('compact HUD and the two phone renderers use the same one-head notch-safe l
   assert.match(compact, /654 \+ COMPACT_DIALOGUE_SHIFT_X/);
 });
 
-test('phone maintains its blue theme, border and floating icon, with compact text size', () => {
+test('phone maintains its blue theme, border and floating icon, with shared story typography', () => {
   const standard = src('src/ui/PhoneConversation.js');
   const swipe = src('src/ui/OpeningPhonePrototype.js');
   assert.equal(RACE_DIALOGUE_THEMES.phone.border, 0x287bb5);
@@ -40,7 +40,8 @@ test('phone maintains its blue theme, border and floating icon, with compact tex
   for (const code of [standard,swipe]) {
     assert.match(code, /theme: 'phone'/);
     assert.match(code, /phoneIconKey:/);
-    assert.match(code, /setFontSize\('17px'\)\.setLineSpacing\(4\)/);
+    assert.doesNotMatch(code, /setFontSize\('17px'\)\.setLineSpacing\(4\)/);
+    assert.match(src('src/ui/RaceCoachHud.js'), /applyStoryDialogueTypography/);
   }
 });
 
