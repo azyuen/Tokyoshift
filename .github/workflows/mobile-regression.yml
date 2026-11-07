@@ -32,7 +32,7 @@ jobs:
       - name: Check Championship screen syntax and presentation contract
         run: |
           node --check src/ui/TokyoChampionshipScreens.js
-          node --test tests/tokyo-championship-ui-r801.mjs tests/tokyo-championship-monitors-dev-r802.mjs tests/tokyo-championship-hub-r803.mjs tests/tokyo-championship-hub-r804.mjs tests/tokyo-championship-hub-r805.mjs
+          node --test tests/tokyo-championship-ui-r801.mjs tests/tokyo-championship-monitors-dev-r802.mjs tests/tokyo-championship-hub-r803.mjs tests/tokyo-championship-hub-r804.mjs tests/tokyo-championship-hub-r805.mjs tests/tokyo-championship-dev-cancel-r807.mjs
           node --test tests/tokyoChampionship.simulation.test.js
       - name: Verify lazy Phaser scene registration and first-entry transition
         run: node --test tests/mobile-deferred-scenes-r788.mjs
