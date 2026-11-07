@@ -1,5 +1,5 @@
 import { applyProRaceNosLimit } from '../data/proRaceNos.js?v=20261105-r802';
-import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
+import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat, getChampionshipOpponentSkill, getChampionshipEventCar, settleTokyoChampionship, championshipStandings } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent, getProfessionalRoundEvents, getProfessionalOpponentBuild } from '../data/proSeason.js?v=20261030-r741';
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { isOpenDriverBriefing, restoreDriverBriefingParts, getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261030-r740';
@@ -447,7 +447,17 @@ export default class FourLaneTestScene extends RaceScene {
     const access = getProCircuitAccess(this.registry);
     if (this.champMode) {
       const owned=this.registry.get('ownedCarIds')||[];
-      if(!this.champState||!this.champHeat||!owned.includes(this.playerCarId)||this.registry.get('competitionState')?.active){this.returnToDrag();return;}
+      const stage=this.champMode==='CHAMP_KO'?'KNOCKOUT':
+        this.champMode==='CHAMP_FOUR'?'FOUR_WIDE':null;
+      const locked=stage?getChampionshipEventCar(this.champState,stage):null;
+      const registered=this.registry.get('proCircuit')?.registeredDriverCars;
+      if(!this.champState||!this.champHeat||!owned.includes(this.playerCarId)||
+        this.registry.get('competitionState')?.active||
+        (stage&&locked&&locked!==this.playerCarId)||
+        (stage&&!this.champState.devBypass&&Array.isArray(registered)&&
+          !registered.includes(this.playerCarId))){
+        this.returnToDrag();return;
+      }
     } else if (this.proCup) {
       const owned = this.registry.get('ownedCarIds') || [];
       if (!access.unlocked || !this.proHeat ||
