@@ -1098,12 +1098,47 @@ export function showSettingsPanel(scene) {
       fontFamily:BODY,fontSize:'16px',fontStyle:'700',
       color:'#ffb7cb',wordWrap:{width:820},
     }).setOrigin(.5,0).setDepth(184));
+    // Explicit developer reset for repeating Championship tests. Require
+    // confirmation to prevent accidental loss of the current bracket.
+    const stopTokyo=add(scene.add.rectangle(1210,72,205,40,0x46202c,.99)
+      .setStrokeStyle(2,0xe27c86).setDepth(183)
+      .setInteractive({useHandCursor:true}));
+    add(scene.add.text(1210,72,'D) STOP TOKYO',{
+      fontFamily:PIXEL_FONT,fontSize:'7px',color:'#ffd7dc',
+    }).setOrigin(.5).setDepth(184));
+    stopTokyo.on('pointerdown',async()=>{
+      if(!scene.registry.get('devMode')||transitioning)return;
+      const current=scene.registry.get('proCircuit');
+      if(!current?.activeChampionship){
+        devError.setText('NO ACTIVE TOKYO CHAMPIONSHIP');
+        return;
+      }
+      // Native confirmation is intentionally avoided in Phaser/PWA.
+      // A second press within this settings session confirms cancellation.
+      if(!scene._devTokyoCancelArmed){
+        scene._devTokyoCancelArmed=true;
+        devError.setText('PRESS D) STOP TOKYO AGAIN TO CONFIRM RESET');
+        return;
+      }
+      scene._devTokyoCancelArmed=false;
+      try{
+        const {cancelDevTokyoChampionship}=await import(
+          './ProSeasonPanel.js?v=20261107-r807-dev-reset'
+        );
+        if(!scene.sys?.isActive?.()||!cancelDevTokyoChampionship(scene)){
+          devError.setText(scene.proError||'COULD NOT CANCEL CHAMPIONSHIP');
+          return;
+        }
+        devError.setText('TOKYO CHAMPIONSHIP CANCELLED. D) TEST TOKYO TO RESTART.');
+      }catch(error){devError.setText(String(error?.message||error));}
+    });
     tokyoButton.on('pointerdown',async()=>{
+      scene._devTokyoCancelArmed=false;
       if(!scene.registry.get('devMode')||transitioning)return;
       try{
         // Import only on use: avoid loading the full Pro Season engine on boot.
         const {prepareDevTokyoChampionship}=await import(
-          './ProSeasonPanel.js?v=20261107-r806-knockout'
+          './ProSeasonPanel.js?v=20261107-r807-knockout-reset'
         );
         if(!scene.sys?.isActive?.()||
           !prepareDevTokyoChampionship(scene)){
