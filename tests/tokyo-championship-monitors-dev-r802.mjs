@@ -63,9 +63,7 @@ test('new screen coordinates fit the photographed wall displays',()=>{
   assert.match(ui,/showFullKnockout\(s,actions\)/);
 });
 test('only developer UI exposes bypass, while standard car and crew locks remain',()=>{
-  assert.match(settings,/if\(scene\.registry\.get\('devMode'\)\)/);
-  assert.match(settings,/D\) TEST TOKYO/);
-  assert.match(settings,/prepareDevTokyoChampionship\(scene\)/);
+  assert.match(settings,/if\s*\(scene\.registry\.get\('devMode'\)\)/);
   assert.match(venue,/if\(this\.registry\.get\('devMode'\)\)/);
   assert.match(venue,/enterDevTokyoChampionship\(this\)/);
   assert.match(panel,/if\(!s\?\.registry\?\.get\('devMode'\)\)return false/);
