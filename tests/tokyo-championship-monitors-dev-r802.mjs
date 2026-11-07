@@ -59,7 +59,7 @@ test('new screen coordinates fit the photographed wall displays',()=>{
   assert.match(ui,/state\.knockout\?\.bracket\|\|seedKnockoutBracket/);
   assert.match(ui,/history\[round\]\?\.matches\?\.\[i\]\?\.winner/);
   assert.match(ui,/if\(stage!=='KNOCKOUT'\)o\.panel/);
-  assert.match(ui,/EXPAND TOURNAMENT BRACKET/);
+  assert.match(ui,/EXPAND BRACKET/);
   assert.match(ui,/showFullKnockout\(s,actions\)/);
 });
 test('only developer UI exposes bypass, while standard car and crew locks remain',()=>{

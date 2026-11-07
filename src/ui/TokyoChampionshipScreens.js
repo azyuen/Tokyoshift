@@ -232,6 +232,11 @@ function mainSprites(s,o,view){
         playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
       sprite(s,o,a?.key,630+i*155,636,308,154);
     });
+  }else if(view==='KNOCKOUT'){
+    // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
+    sprite(s,o,'champSayaka',262,675,550,307);
+    sprite(s,o,player?.key,474,675,548,325);
+    sprite(s,o,'champDaichi',698,675,525,301);
   }else{
     sprite(s,o,'champSayaka',198,625,440,246);
     sprite(s,o,player?.key,447,627,438,260);
@@ -468,11 +473,11 @@ function eventInfo(s,o,state,stage){
     const entrant=new Map((state.entrants||[]).map(row=>[row.id,row]));
     const brackets=state.knockout?.bracket||seedKnockoutBracket(state.entrants);
     const history=state.knockout?.results||[];
-    const cellW=113,gap=12,firstX=screen.x+14;
+    const cellW=108,gap=15,firstX=screen.x+28;
     const starts=[0,1,2,3].map(r=>firstX+r*(cellW+gap));
-    const top=screen.y+49,pitch=(screen.h-73)/8;
+    const top=screen.y+65,pitch=(screen.h-104)/8;
     const centre=(round,index)=>top+pitch*(2**round)*(index+.5);
-    o.label(screen.x+15,screen.y+10,'TOKYO KNOCKOUTS  /  LIVE BRACKET',
+    o.label(screen.x+20,screen.y+9,'LIVE BRACKET',
       20,GOLD,{font:DISPLAY,stroke:true});
     const graphic=o.add(s.add.graphics().setDepth(225));
     graphic.lineStyle(1,0x8fb4d0,.70);
@@ -488,7 +493,7 @@ function eventInfo(s,o,state,stage){
       (entrant.get(id)?.name||'RIVAL').split(' ').slice(-1)[0].slice(0,11);
     for(let round=0;round<4;round++){
       const xx=starts[round];
-      o.label(xx,screen.y+35,headers[round],14,
+      o.label(xx,screen.y+49,headers[round],14,
         state.stage===stage&&(state.knockout?.round||0)===round?GOLD:MUTED);
       for(let i=0;i<8/(2**round);i++){
         const pair=brackets[round]?.[i]||[null,null],
@@ -505,8 +510,7 @@ function eventInfo(s,o,state,stage){
         });
       }
     }
-    o.label(screen.x+15,screen.y+screen.h-19,
-      'ROUNDS RECORDED  '+history.length+' / 4',15,GOLD,{font:DISPLAY});
+    // The bracket screen remains free of duplicate progress counters.
   }else if(stage==='CREW'){
     panelTitle(o,x,186,'CREW BATTLE SCOREBOARD');
     const results=state.crew?.results||[];
@@ -569,47 +573,108 @@ function showEvent(s,stage,actions){
   const c=circuit(s),state=c.activeChampionship;
   const active=state.stage===stage&&!state.completed;
   const st=statusFor(state,stage),event=EVENTS[stage];
-  const o=canvas(s,stage);o.actions=actions;
+  const o=canvas(s,stage,{hideTopChrome:stage==='KNOCKOUT'});o.actions=actions;
   mainSprites(s,o,stage);
   const standings=championshipStandings(state);
   const position=standings.findIndex(r=>r.id==='player:driver')+1;
   const points=standings.find(r=>r.id==='player:driver')?.total||0;
-  o.label(44,82,'TOKYO CHAMPIONSHIP  /  EVENT '+event.number,19,MUTED,
+  o.label(44,stage==='KNOCKOUT'?23:82,'TOKYO CHAMPIONSHIP  /  EVENT '+event.number,19,MUTED,
     {font:DISPLAY});
-  o.headline(44,119,event.title,41,GOLD,870);
-  o.label(46,169,(stage==='KNOCKOUT'?'16-DRIVER ELIMINATION':
+  o.headline(44,stage==='KNOCKOUT'?55:119,event.title,41,GOLD,870);
+  o.label(46,stage==='KNOCKOUT'?104:169,(stage==='KNOCKOUT'?'16-DRIVER ELIMINATION':
     stage==='CREW'?'THREE PLAYER-DRIVEN CREW HEATS':
     'QUALIFYING  /  SEMIFINALS  /  GRAND FINAL')+
     '   /   '+event.points+' POINTS AVAILABLE',18,PALE);
-  o.label(1246,88,'RANK #'+position+'  /  '+points+' PTS',
-    22,GOLD,{font:DISPLAY,stroke:true}).setOrigin(.5,0);
+  if(stage!=='KNOCKOUT')
+    o.label(1246,88,'RANK #'+position+'  /  '+points+' PTS',
+      22,GOLD,{font:DISPLAY,stroke:true}).setOrigin(.5,0);
 
   // The stage-specific competition visual is the single main information panel.
   // The Knockouts artwork already has a physical screen; never panel over it.
   if(stage!=='KNOCKOUT')o.panel(1245,381,558,424,.85,0x61778e);
   eventInfo(s,o,state,stage);
-  if(stage==='KNOCKOUT')o.button(1254,492,330,45,'EXPAND TOURNAMENT BRACKET',
-    ()=>showTokyoChampionshipScreens(s,{view:'BRACKET',actions}));
+  if(stage==='KNOCKOUT'){
+    const monitor=TOKYO_CHAMP_MONITORS.KNOCKOUT;
+    o.button(monitor.x+monitor.w-112,monitor.y+monitor.h-20,
+      206,29,'EXPAND BRACKET',
+      ()=>showTokyoChampionshipScreens(s,{view:'BRACKET',actions}));
+  }
   const heat=active?heatFor(state):null;
   const next=stage==='KNOCKOUT'?'ROUND '+((heat?.round||0)+1)+
     ' / 4  VS  '+(heat?.opponent?.name||'—'):
     stage==='CREW'?'HEAT '+((heat?.index||0)+1)+
     ' / 3  VS  '+(heat?.opponent?.name||'—'):
     ['QUALIFYING','SEMIFINAL','GRAND FINAL'][heat?.round||0];
-  o.label(993,615,active?'NEXT RACE  /  '+next:st+'  /  EVENT RECORDED',
+  if(stage==='KNOCKOUT'){
+    // Red motorsport parallelogram, echoing the standard Next Opponent card.
+    const x=966,y=550,w=529,h=105,slant=21;
+    const graphic=o.add(s.add.graphics().setDepth(222));
+    graphic.fillStyle(0x0b1727,.94);
+    graphic.fillPoints([{x:x+slant,y},{x:x+w,y},{x:x+w-slant,y:y+h},
+      {x,y:y+h}],true);
+    graphic.lineStyle(3,0xe45868,1);
+    graphic.strokePoints([{x:x+slant,y},{x:x+w,y},{x:x+w-slant,y:y+h},
+      {x,y:y+h},{x:x+slant,y}],false);
+    o.headline(x+34,y+11,active?'NEXT OPPONENT':'EVENT STATUS',25,'#ff7885',w-65);
+    o.label(x+35,y+52,active?(heat?.opponent?.name||'TO BE CONFIRMED'):
+      'EVENT RECORDED',23,PALE,{font:DISPLAY,width:w-72});
+    o.label(x+35,y+80,active?'ROUND '+((heat?.round||0)+1)+' / 4':
+      st,16,'#ff9ba5',{font:DISPLAY});
+  }else o.label(993,615,active?'NEXT RACE  /  '+next:st+'  /  EVENT RECORDED',
     20,active?GOLD:PALE,{width:525,stroke:true});
   if(s.proError)o.label(995,646,String(s.proError).slice(0,100),17,
     '#ffacb2',{width:515,stroke:true});
 
-  // One dialogue area; the two paddocks are accessible from navigation.
-  advicePanel(s,o,state,stage,42,650,906);
+  // Knockouts uses the glowing sprite hotspots found in other briefings.
+  // Preserve the existing one-use Sayaka advice transaction on activation.
+  if(stage==='KNOCKOUT'){
+    const glow=(x,y,w,text,action,disabled=false)=>{
+      const rect=o.add(s.add.rectangle(x,y,w,45,0x112d43,.91)
+        .setStrokeStyle(2,0x6bd9ff,1).setDepth(241));
+      const aura=o.add(s.add.rectangle(x,y,w+8,53,0x35c4f7,.11)
+        .setDepth(240));
+      o.label(x,y,text,19,disabled?'#899aa8':'#c6f5ff',
+        {font:DISPLAY,depth:243}).setOrigin(.5);
+      if(!disabled)rect.setInteractive({useHandCursor:true}).on('pointerdown',action);
+    };
+    glow(265,447,220,'SAYAKA ADVICE',()=>{
+      const current=circuit(s).activeChampionship;
+      if(!current||current.id!==state.id)return;
+      if(current.adviceByEvent?.[stage]){
+        // Display the saved advice without modifying its one-use status.
+        const note=current.adviceByEvent[stage];
+        const popup=o.panel(488,523,600,112,.97,0x6bd9ff);
+        o.label(207,482,'SAYAKA ADVICE',20,GOLD,{font:DISPLAY});
+        o.label(207,513,note,17,PALE,{width:550});
+        popup.setInteractive().on('pointerdown',()=>showEvent(s,stage,actions));
+        return;
+      }
+      if(!active)return;
+      const note=getEventAdvice(current,stage);
+      const updated={...current,adviceByEvent:{
+        ...(current.adviceByEvent||{}),[stage]:note}};
+      try{saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
+        s.proError=null;
+      }catch(error){s.proError=error.message;}
+      showEvent(s,stage,actions);
+    },!active&&!state.adviceByEvent?.[stage]);
+    glow(698,447,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
+  }else advicePanel(s,o,state,stage,42,650,906);
+  if(stage==='KNOCKOUT'){
+    o.button(215,730,338,70,active?'GO TO GRID':'EVENT COMPLETE',
+      ()=>enterGrid(),{red:active,disabled:!active});
+    o.button(215,795,338,34,'RETURN TO HUB',
+      ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
+    return;
+  }
   o.button(186,794,280,48,'CHAMPIONSHIP HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
   o.button(474,794,260,48,'PRO PADDOCK',
     ()=>openPaddock(s,state,'DRIVER'),{disabled:!active});
   o.button(743,794,260,48,'CREW PADDOCK',
     ()=>showPaddockCrewPicker(s,actions,[]),{disabled:!active});
-  o.button(1255,794,525,48,active?'GO TO GRID  /  '+next:'RETURN TO HUB',()=>{
+  o.button(1255,794,525,48,active?'GO TO GRID  /  '+next:'RETURN TO HUB',()=>enterGrid(),{red:active});
+  function enterGrid(){
     if(!active)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
     if(stage==='CREW')return showCarPicker(s,stage,actions);
     const carId=state.driverCarId||s._champSelectedDriverCar||
@@ -620,7 +685,7 @@ function showEvent(s,stage,actions){
     if(!carId)return showCarPicker(s,stage,actions);
     if(!actions.startRace(stage==='KNOCKOUT'?'CHAMP_KO':'CHAMP_FOUR',carId))
       showTokyoChampionshipScreens(s,{view:stage,actions});
-  },{red:active});
+  }
 }
 
 function showFullKnockout(s,actions){
