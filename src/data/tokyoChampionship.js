@@ -43,15 +43,39 @@ export function createChampionshipAiGarage(championshipId,entrantId) {
     // A reproducible subset of compatible specialist packages, not a blanket
     // grant of mutually incompatible upgrades or a hidden performance bonus.
     state.specialistTuning=[];
-    const options=Object.values(TUNER_OPTION_BY_ID).filter(option=>option?.id);
-    const ordered=options.sort((a,b)=>
+    const options=Object.values(TUNER_OPTION_BY_ID)
+      .filter(option=>option?.id&&option.regionId);
+    // Resolve prerequisite chains before picking the final regional set.
+    // The tuner system does not itself reject a conflicting package, so
+    // selecting a reproducible subset avoids granting every shop upgrade.
+    const eligible=[];
+    let pending=options.slice();
+    for(let pass=0;pass<options.length&&pending.length;pass++){
+      let progress=false;
+      pending=pending.filter(option=>{
+        if(!areTunerOptionRequirementsMet({...state,specialistTuning:eligible.map(o=>o.id)},option))
+          return true;
+        eligible.push(option);
+        progress=true;
+        return false;
+      });
+      if(!progress)break;
+    }
+    const ordered=eligible.sort((a,b)=>
       (hash(entrantId+':'+slot+':'+a.id)%100000)-
       (hash(entrantId+':'+slot+':'+b.id)%100000));
-    for(const option of ordered){
-      if(state.specialistTuning.length>=Math.min(6,options.length))break;
-      if(areTunerOptionRequirementsMet(state,option))
-        state.specialistTuning.push(option.id);
-    }
+    // Re-check dependencies on the final installation set: some packages
+    // require other specialist packages that may not have been selected.
+    const chosen=new Set();
+    const select=option=>{
+      if(!option||chosen.has(option.id)||chosen.size>=6)return;
+      for(const dependency of option.requirements?.specialist||[])
+        select(eligible.find(candidate=>candidate.id===dependency));
+      if(chosen.size<6&&areTunerOptionRequirementsMet(
+        {...state,specialistTuning:[...chosen]},option))chosen.add(option.id);
+    };
+    for(const option of ordered)select(option);
+    state.specialistTuning=[...chosen];
     return {carId,state};
   });
 }
