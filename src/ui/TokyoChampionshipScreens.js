@@ -12,6 +12,7 @@ import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
+import { showChampionshipCrewRosterPopup } from './ProCrewBattleLineup.js?v=20261108-crew-roster';
 import { PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
@@ -88,7 +89,7 @@ function portraitAssets(s,stage){
       if(row.asset?.key&&row.asset?.path)out.push([row.asset.key,row.asset.path]);
   }
   if(stage==='CREW'){
-    const members=crewBriefingUnits(s).slice(0,3);
+    const members=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
     for(const unit of members){
       const asset=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
         playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
@@ -110,7 +111,7 @@ function loadAssets(s,view,done){
   // not expose the Garage-only createCarDisplay helper.
   if(stage==='CREW'){
     // Preload car sprites used inside the three race-assignment cards.
-    for(const unit of crewBriefingUnits(s))
+    for(const unit of getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment))
       if(cars[unit.carId])queued+=preloadStoryCar(s,cars[unit.carId]);
   }
   if(stage==='KNOCKOUT'){
@@ -642,7 +643,7 @@ function showCrewBattleBriefing(s,o,state,actions){
     if(heat&&i>=results.length){
       const hit=o.add(s.add.rectangle(x,y,w,h,0xffffff,0).setDepth(250));
       hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>
-        showChampionshipCrewSelector(s,actions,null,i));
+        showChampionshipHeatCarPopup(s,actions,i));
     }
     o.label(x-88,y-82,'HEAT 0'+(i+1),17,GOLD,{font:DISPLAY,depth:237});
     o.headline(x-88,y-55,unit.name.toUpperCase(),19,PALE,178);
@@ -674,7 +675,10 @@ function showCrewBattleBriefing(s,o,state,actions){
   glow(1015,260,220,'CAR SETUP',()=>{
     const chosen=(state.crewSelectedIds||[]).map(id=>
       getCrewSeriesUnits(s.registry).find(u=>u.id===id)).filter(Boolean);
-    if(chosen.length!==3)return showChampionshipCrewSelector(s,actions);
+    if(chosen.length!==3){
+      const missing=[0,1,2].find(i=>!state.crewSelectedIds?.[i]);
+      return showChampionshipHeatCarPopup(s,actions,missing<0?0:missing);
+    }
     openPaddock(s,state,'CREW',chosen.map(u=>u.carId),chosen.map(u=>u.id));
   },!heat);
   // Compact, unobstructed matchup panel in the right third.
@@ -689,11 +693,40 @@ function showCrewBattleBriefing(s,o,state,actions){
   o.button(1167,789,250,54,'RETURN TO HUB',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
   o.button(1422,789,250,54,heat?'GO TO GRID':'EVENT COMPLETE',()=>{
     if(heat){
-      if((state.crewSelectedIds||[]).length!==3)return showChampionshipCrewSelector(s,actions);
+      if((state.crewSelectedIds||[]).length!==3){
+        const missing=[0,1,2].find(i=>!state.crewSelectedIds?.[i]);
+        return showChampionshipHeatCarPopup(s,actions,missing<0?0:missing);
+      }
       showCarPicker(s,'CREW',actions);
     }
   },{red:!!heat,disabled:!heat});
 }
+function showChampionshipHeatCarPopup(s,actions,slot){
+  const c=circuit(s),state=c.activeChampionship;
+  if(!state||state.stage!=='CREW'||state.completed)return;
+  const units=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
+  const selected=[...(state.crewSelectedIds||[])];
+  const results=state.crew?.results||[];
+  if(slot<results.length)return; // Completed heats cannot be reassigned.
+  showChampionshipCrewRosterPopup(s,{
+    units,selected,slot,
+    onClose:()=>showTokyoChampionshipScreens(s,{view:'CREW',actions}),
+    onSelect:id=>{
+      if(selected.some((other,i)=>i!==slot&&other===id))return;
+      const next=[...selected];next[slot]=id;
+      const fresh=circuit(s),active=fresh.activeChampionship;
+      if(!active||active.id!==state.id)return;
+      try{
+        saveProTransaction(s.registry,{proCircuit:{...fresh,activeChampionship:{
+          ...active,crewSelectedIds:next,
+        }}});
+        showTokyoChampionshipScreens(s,{view:'CREW',actions});
+      }catch(error){s.proError=error.message;
+        showTokyoChampionshipScreens(s,{view:'CREW',actions});}
+    },
+  });
+}
+
 function showChampionshipCrewSelector(s,actions,selected=null,slot=null){
   const c=circuit(s),state=c.activeChampionship;
   if(!state||state.stage!=='CREW')return showTokyoChampionshipScreens(s,{view:'HUB',actions});
