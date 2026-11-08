@@ -108,6 +108,11 @@ function loadAssets(s,view,done){
   }
   // The opponent car must be preloaded explicitly: Championship briefings do
   // not expose the Garage-only createCarDisplay helper.
+  if(stage==='CREW'){
+    // Preload car sprites used inside the three race-assignment cards.
+    for(const unit of crewBriefingUnits(s))
+      if(cars[unit.carId])queued+=preloadStoryCar(s,cars[unit.carId]);
+  }
   if(stage==='KNOCKOUT'){
     const state=circuit(s).activeChampionship;
     const heat=state?.stage==='KNOCKOUT'&&!state.completed?heatFor(state):null;
@@ -253,15 +258,16 @@ function mainSprites(s,o,view){
       if(title.width>170)title.setScale(170/title.width);
     });
   }else if(view==='CREW'){
-    sprite(s,o,'champSayaka',140,742,475,220);
+    // 2.5x visual scale relative to the original 420/308px figures.
+    // Their feet sit below the viewport to crop lower legs rather than shrink.
+    sprite(s,o,'champSayaka',142,1070,1050,510);
     const units=crewBriefingUnits(s);
     units.forEach((unit,i)=>{
-      const a=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
+      const asset=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
         playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
-      const x=360+i*218,selected=i===(circuit(s).activeChampionship?.crew?.results?.length||0);
-      sprite(s,o,a?.key,x,749,selected?535:490,215);
+      sprite(s,o,asset?.key,365+i*216,1080,770,385);
     });
-    sprite(s,o,'champDaichi',1020,747,455,215);
+    sprite(s,o,'champDaichi',1013,1070,1040,510);
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
     sprite(s,o,'champSayaka',306,741,550,340);
@@ -615,17 +621,32 @@ function showCrewBattleBriefing(s,o,state,actions){
   o.label(58,117,'THREE CREW HEATS  /  20 POINTS AVAILABLE',20,PALE,{stroke:true});
   // Large racers are the focus; Sayaka and Daichi are smaller support figures.
   units.forEach((unit,i)=>{
-    const x=360+i*218,y=557;
+    const x=365+i*216,y=653,w=207,h=184,slant=18;
     const active=i===results.length&&!!heat;
-    o.panel(x,y,199,100,active ? .96 : .82,active?0xf1bd65:0x61778e);
-    o.label(x-87,y-39,'HEAT 0'+(i+1),17,GOLD,{font:DISPLAY});
-    o.headline(x-87,y-13,unit.name.toUpperCase(),20,PALE,176);
-    o.label(x-87,y+19,cars[unit.carId]?.shortName||unit.carId,17,MUTED,{width:175});
-    if(active)o.label(x-86,y+44,'UP NEXT',15,GOLD);
+    // Slanted right edge, solid dark backing and a brighter next-heat outline.
+    const points=[{x:x-w/2+slant,y:y-h/2},{x:x+w/2,y:y-h/2},
+      {x:x+w/2-slant,y:y+h/2},{x:x-w/2,y:y+h/2}];
+    const card=o.add(s.add.graphics().setDepth(234));
+    card.fillStyle(0x091a2b,.95);card.fillPoints(points,true);
+    card.lineStyle(active?3:2,active?0xf1bd65:0x7790a5,1);
+    card.strokePoints(points,true);
+    o.label(x-88,y-82,'HEAT 0'+(i+1),17,GOLD,{font:DISPLAY,depth:237});
+    o.headline(x-88,y-55,unit.name.toUpperCase(),19,PALE,178);
+    o.label(x-88,y-29,cars[unit.carId]?.shortName||unit.carId,16,MUTED,
+      {width:177,depth:237});
+    if(cars[unit.carId]){
+      const parts=renderStoryCar(s,cars[unit.carId],{
+        x:x+2,groundY:y+77,targetWidth:174,depth:236,
+        shadow:false,garageGeometry:true,
+        paintColor:s.registry.get('carStates')?.[unit.carId]?.paintColor??0x8797a6,
+      });
+      parts.forEach(part=>o.add(part));
+    }
+    if(active)o.label(x-88,y+63,'UP NEXT',15,GOLD,{depth:238});
   });
   const glow=(x,y,w,label,action,disabled=false)=>
     addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:action,disabled});
-  glow(143,218,220,'ASK ADVICE',()=>{
+  glow(143,353,220,'ASK ADVICE',()=>{
     const c=circuit(s),currentState=c.activeChampionship;
     if(!currentState||currentState.completed)return;
     const note=currentState.adviceByEvent?.CREW||getEventAdvice(currentState,'CREW');
@@ -636,7 +657,7 @@ function showCrewBattleBriefing(s,o,state,actions){
     }
     showSayakaAdviceManga(s,note);
   },!heat);
-  glow(1015,218,220,'CAR SETUP',()=>{
+  glow(1015,353,220,'CAR SETUP',()=>{
     const chosen=(state.crewSelectedIds||[]).map(id=>
       getCrewSeriesUnits(s.registry).find(u=>u.id===id)).filter(Boolean);
     if(chosen.length!==3)return showChampionshipCrewSelector(s,actions);
