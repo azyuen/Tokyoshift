@@ -636,7 +636,12 @@ function showCrewBattleBriefing(s,o,state,actions){
     }
     showSayakaAdviceManga(s,note);
   },!heat);
-  glow(1015,218,220,'CAR SETUP',()=>showPaddockCrewPicker(s,actions,[]),!heat);
+  glow(1015,218,220,'CAR SETUP',()=>{
+    const chosen=(state.crewSelectedIds||[]).map(id=>
+      getCrewSeriesUnits(s.registry).find(u=>u.id===id)).filter(Boolean);
+    if(chosen.length!==3)return showChampionshipCrewSelector(s,actions);
+    openPaddock(s,state,'CREW',chosen.map(u=>u.carId),chosen.map(u=>u.id));
+  },!heat);
   // Compact, unobstructed matchup panel in the right third.
   o.panel(1331,406,402,320,.90,0xd2a66a);
   o.headline(1151,266,'NEXT OPPONENT',25,GOLD,353);
@@ -662,6 +667,8 @@ function showChampionshipCrewSelector(s,actions,selected=null){
   const available=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
   const fixed=(state.crewSelectedIds||[]).filter(id=>available.some(u=>u.id===id));
   const picked=selected||fixed;
+  const completedUnits=available.filter(u=>used.has(u.carId));
+  const required=completedUnits.map(u=>u.id);
   const o=canvas(s,'CREW',{hideTopChrome:true});
   o.headline(65,60,'SELECT YOUR THREE CREW DRIVERS',38,GOLD,1410);
   o.label(65,115,'CHOOSE THREE RECRUITED DRIVERS FOR THE CHAMPIONSHIP CREW BATTLES.',19,PALE);
@@ -673,11 +680,12 @@ function showChampionshipCrewSelector(s,actions,selected=null){
       const next=picked.includes(u.id)?picked.filter(id=>id!==u.id):
         picked.length<3?[...picked,u.id]:picked;
       showChampionshipCrewSelector(s,actions,next);
-    },{selected:picked.includes(u.id),disabled:used.has(u.carId)&&!picked.includes(u.id)});
+    },{selected:picked.includes(u.id),disabled:required.includes(u.id)});
   });
   o.button(322,757,460,52,'BACK TO BRIEFING',()=>showTokyoChampionshipScreens(s,{view:'CREW',actions}));
   o.button(1150,757,540,52,'CONFIRM CREW  /  '+picked.length+' OF 3',()=>{
-    if(picked.length!==3||new Set(picked).size!==3)return;
+    if(picked.length!==3||new Set(picked).size!==3||
+      required.some(id=>!picked.includes(id)))return;
     const now=circuit(s),active=now.activeChampionship;
     try{saveProTransaction(s.registry,{proCircuit:{...now,
       activeChampionship:{...active,crewSelectedIds:[...picked]}}});
