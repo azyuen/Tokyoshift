@@ -89,12 +89,24 @@ function portraitAssets(s,stage){
       if(row.asset?.key&&row.asset?.path)out.push([row.asset.key,row.asset.path]);
   }
   if(stage==='CREW'){
+    const playerId=s.registry.get('playerCharacterId')||'renMizuno';
     const members=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
     for(const unit of members){
       const asset=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
-        playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
+        playerCharacterId:playerId});
       if(asset?.key&&asset.path)out.push([asset.key,asset.path]);
     }
+    // The next rival's portrait comes from the real saved Championship field.
+    const champ=circuit(s).activeChampionship;
+    const opponent=champ?.stage==='CREW'&&!champ.completed?
+      getChampionshipCrewHeat(champ)?.opponent:null;
+    const index=Number.parseInt(String(opponent?.id||'').split(':').at(-1),10);
+    const portrait=opponent?.characterId&&characters[opponent.characterId]?
+      getCharacterVisualAsset(opponent.characterId,'idle',{
+        proCircuit:true,rivalContext:true,playerCharacterId:playerId,
+      }):getProCircuitGenericDriverAsset(Number.isFinite(index)?
+        ((index-1)%4+4)%4+1:1);
+    if(portrait?.key&&portrait.path)out.push([portrait.key,portrait.path]);
   }
   return out;
 }
@@ -234,13 +246,13 @@ function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false,depth=210){
 function crewBriefingUnits(s){
   const available=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
   const championship=circuit(s).activeChampionship;
-  const selected=[0,1,2].map(i=>championship?.crewSelectedIds?.[i]||
-    available.find(u=>u.carId===championship?.crew?.results?.[i]?.carId)?.id||null);
-  const occupied=new Set(selected.filter(Boolean));
-  const unused=available.filter(u=>!occupied.has(u.id));
-  // Preserve heat slot positions, even while a legacy save is being repaired.
-  return [0,1,2].map(i=>available.find(u=>u.id===selected[i])||unused.shift())
-    .filter(Boolean);
+  // Only show actually registered drivers. An empty heat must not display
+  // an unrelated crew member as though they had been selected.
+  return [0,1,2].map(i=>{
+    const id=championship?.crewSelectedIds?.[i]||
+      available.find(u=>u.carId===championship?.crew?.results?.[i]?.carId)?.id;
+    return available.find(u=>u.id===id)||null;
+  });
 }
 
 function mainSprites(s,o,view){
@@ -265,26 +277,37 @@ function mainSprites(s,o,view){
       if(title.width>170)title.setScale(170/title.width);
     });
   }else if(view==='CREW'){
-    // The three racers occupy the left two-thirds and remain full-size.
-    // Sayaka and Daichi are 30% smaller, lifted into the background at right.
-    const racers=crewBriefingUnits(s);
-    racers.forEach((unit,i)=>{
+    // The three selected drivers are the stars, spaced one above each card.
+    // An unselected heat gets an intentional empty silhouette, never a fake
+    // character assignment from the recruit pool.
+    const positions=[184,458,732];
+    crewBriefingUnits(s).forEach((unit,i)=>{
+      const x=positions[i],feet=989;
+      if(!unit){
+        const placeholder=o.add(s.add.graphics().setDepth(207));
+        placeholder.fillStyle(0x12263c,.4);
+        placeholder.fillEllipse(x,385,125,150);
+        placeholder.fillRoundedRect(x-92,458,184,320,65);
+        placeholder.lineStyle(2,0x54728f,.35);
+        placeholder.strokeEllipse(x,385,125,150);
+        return;
+      }
       const asset=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
         playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
-      const key=asset?.key;
-      if(!key||!s.textures.exists(key))return;
-      const source=s.textures.get(key).getSourceImage();
-      o.add(s.add.image(171+i*241,1055,key).setOrigin(.5,1)
-        .setScale(850/source.height).setDepth(210));
+      if(!asset?.key||!s.textures.exists(asset.key))return;
+      const source=s.textures.get(asset.key).getSourceImage();
+      o.add(s.add.image(x,feet,asset.key).setOrigin(.5,1)
+        .setScale(762/Math.max(1,source.height)).setDepth(210));
     });
+    // Advisors are smaller and slightly behind the race team.
     for(const p of [
-      {key:'champSayaka',x:885},
-      {key:'champDaichi',x:1065},
+      {key:'champSayaka',x:921},
+      {key:'champDaichi',x:1082},
     ]){
       if(!s.textures.exists(p.key))continue;
       const source=s.textures.get(p.key).getSourceImage();
-      o.add(s.add.image(p.x,940,p.key).setOrigin(.5,1)
-        .setScale(595/source.height).setDepth(209));
+      o.add(s.add.image(p.x,810,p.key).setOrigin(.5,1)
+        .setScale(505/Math.max(1,source.height)).setDepth(209));
     }
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
