@@ -233,7 +233,9 @@ function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false,depth=210){
 }
 function crewBriefingUnits(s){
   const available=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
-  const selected=circuit(s).activeChampionship?.crewSelectedIds||[];
+  const championship=circuit(s).activeChampionship;
+  const selected=[0,1,2].map(i=>championship?.crewSelectedIds?.[i]||
+    available.find(u=>u.carId===championship?.crew?.results?.[i]?.carId)?.id||null);
   const occupied=new Set(selected.filter(Boolean));
   const unused=available.filter(u=>!occupied.has(u.id));
   // Preserve heat slot positions, even while a legacy save is being repaired.
@@ -757,19 +759,25 @@ function showChampionshipHeatCarPopup(s,actions,slot=0){
   if(!available.length){s.proError='NO ELIGIBLE CREW CARS';return;}
   const lockedSlots=results.map((_,i)=>i);
   const initial=Math.max(results.length,Math.min(2,Number(slot)||0));
+  // Recover completed heat identities on older saves that predate the
+  // three-slot Championship selection, without rewriting race history.
+  const existing=[0,1,2].map(i=>state.crewSelectedIds?.[i]||
+    available.find(u=>u.carId===results[i]?.carId)?.id||null);
   showChampionshipCrewRosterPopup(s,{
-    units:available,selected:state.crewSelectedIds||[],slot:initial,
+    units:available,selected:existing,slot:initial,
     lockedSlots,
     onConfirm:ids=>{
       const fresh=circuit(s),current=fresh.activeChampionship;
       if(!current||current.id!==state.id||current.stage!=='CREW')return;
       const locked=current.crew?.results?.length||0;
-      const chosen=ids.map(id=>available.find(u=>u.id===id));
+      const valid=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
+      const chosen=ids.map(id=>valid.find(u=>u.id===id));
       if(ids.length!==3||chosen.some(u=>!u)||
         new Set(ids).size!==3||
         new Set(chosen.map(u=>u.carId)).size!==3||
         Array.from({length:locked},(_,i)=>i).some(i=>
-          ids[i]!==current.crewSelectedIds?.[i])){
+          ids[i]!== (current.crewSelectedIds?.[i]||
+            valid.find(u=>u.carId===current.crew?.results?.[i]?.carId)?.id))){
         s.proError='INVALID CREW LINEUP: CHECK ALL THREE HEATS';
         return showTokyoChampionshipScreens(s,{view:'CREW',actions});
       }
