@@ -158,6 +158,7 @@ export function createProvisionalChampionship(raw) {
   opposition.forEach(r=>{r.garage=createChampionshipAiGarage('tokyo:s'+c.season,r.id);});
   return {championship:{schema:1,id:'tokyo:s'+c.season,season:c.season,
     rosterType:'TOKYO_CHAMPIONSHIP',stage:'KNOCKOUT',entrants,
+    championshipRegisteredCars:null, // independent locked trio; set at Championship entry
     knockout:{round:0,results:[]},crew:{results:[]},fourWide:{results:[]},
     points:Object.fromEntries(entrants.map(r=>[r.id,{knockout:0,crew:0,fourWide:0}])),
     completed:false,championId:null}};
