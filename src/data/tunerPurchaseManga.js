@@ -99,7 +99,8 @@ export function makeHeroBuildManga(shop, donor, hero, quote = {}) {
     figures.push('POWER: ' + fromPower + ' → ' + toPower + ' kW');
   if (Number.isFinite(fromTorque) && Number.isFinite(toTorque))
     figures.push('TORQUE: ' + fromTorque + ' → ' + toTorque + ' Nm');
-  const breakdown = shop?.cosmeticOnly
+  const isFullWorks = Boolean(shop?.cosmeticOnly);
+  const breakdown = isFullWorks
     ? 'Parts ' + money(quote?.fullPartsCost) +
       ', installed parts credit −' + money(quote?.installedCredit) +
       ', specialist premium ' + money(quote?.specialistPremium) + '. '
@@ -112,8 +113,10 @@ export function makeHeroBuildManga(shop, donor, hero, quote = {}) {
         ' into the ' + String(hero?.name || 'hero car') + '.',
     },
     {
-      text: (figures.join('  |  ') || 'The completed car uses a dedicated performance build.') +
-        '\nThe donor is permanently replaced by a fixed-spec collector car. Its tuning cannot be changed afterwards.',
+      text: (isFullWorks ? 'FACTORY TO HERO // ' : '') +
+        (figures.join('  |  ') || 'The completed car uses a dedicated performance build.') +
+        (isFullWorks ? '\nFull Level 3 tuning and three NOS shots. ' : '\n') +
+        'The donor is permanently replaced by a fixed-spec collector car. Tuning is sealed.',
     },
     decision(
       breakdown + (voice.close || 'This is the full build price.') +
