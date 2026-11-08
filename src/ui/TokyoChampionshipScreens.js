@@ -11,6 +11,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
+import { stageProGarage, PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
 const W=1560, H=840;
@@ -718,19 +719,19 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     const rankX=52,rankY=643,rankW=230,rankH=164,rankSlant=21;
     const rankShape=o.add(s.add.graphics().setDepth(219));
     rankShape.fillStyle(0x071728,.96);
-    rankShape.fillPoints([{x:rankX+rankSlant,y:rankY},
+    rankShape.fillPoints([{x:rankX,y:rankY},
       {x:rankX+rankW,y:rankY},
       {x:rankX+rankW-rankSlant,y:rankY+rankH},
       {x:rankX,y:rankY+rankH}],true);
     rankShape.lineStyle(3,0xc4a66a,.95);
-    rankShape.strokePoints([{x:rankX+rankSlant,y:rankY},
+    rankShape.strokePoints([{x:rankX,y:rankY},
       {x:rankX+rankW,y:rankY},
       {x:rankX+rankW-rankSlant,y:rankY+rankH},
       {x:rankX,y:rankY+rankH}],true);
-    o.label(79,654,'DRIVER STANDINGS',17,GOLD,{font:DISPLAY});
-    o.label(79,692,'CHAMPIONSHIP POINTS',12,MUTED);
+    o.headline(70,650,'DRIVER STANDINGS',24,GOLD,196);
+    o.label(79,692,'POINTS',15,MUTED);
     o.label(79,709,fmt(rivalStanding?.total??0),25,PALE,{font:DISPLAY});
-    o.label(79,749,'CHAMPIONSHIP RANK',12,MUTED);
+    o.label(79,749,'RANK',15,MUTED);
     o.label(79,766,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',21,PALE,{font:DISPLAY});
     // Use the shared car renderer rather than the Garage-only scene helper.
     // Render at the right-hand end of the card, clear of the opponent stats.
@@ -795,7 +796,8 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
         showAdviceDialogue(note);
       }catch(error){s.proError=error.message;}
     },!active);
-    glow(742,465,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
+    glow(742,465,198,'CAR SETUP',()=>needsChampionshipCars(s)?
+      showChampionshipCarRegistration(s,actions):openPaddock(s,state,'DRIVER'),!active);
     glow(1438,465,205,'EVENT DETAILS',()=>showEvent(s,stage,actions,
       displayMode==='DETAILS'?'BRACKET':'DETAILS',bracketHalf));
   }else advicePanel(s,o,state,stage,42,650,906);
@@ -818,6 +820,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   function enterGrid(){
     if(!active)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
     if(stage==='CREW')return showCarPicker(s,stage,actions);
+    if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
     const selected=s.registry.get('selectedCarId');
     const roster=c.registeredDriverCars||[];
     const locked=getChampionshipEventCar(state,stage);
@@ -911,6 +914,52 @@ function showCarPicker(s,stage,actions){
   });
   o.button(327,755,460,52,'BACK TO EVENT BRIEFING',
     ()=>showTokyoChampionshipScreens(s,{view:stage,actions}));
+}
+// Legacy Championship saves can lack the three-car Pro Season roster.
+// Recover it explicitly without restarting the season or resetting any races.
+function needsChampionshipCars(s){
+  const c=circuit(s),owned=s.registry.get('ownedCarIds')||[];
+  return Boolean(c.activeChampionship&&!c.activeChampionship.completed&&
+    (!Array.isArray(c.registeredDriverCars)||c.registeredDriverCars.length!==3||
+      c.registeredDriverCars.some(id=>!owned.includes(id))));
+}
+function showChampionshipCarRegistration(s,actions,chosen=[]){
+  const c=circuit(s),state=c.activeChampionship;
+  if(!state||state.completed)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
+  const owned=[...new Set(s.registry.get('ownedCarIds')||[])]
+    .filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan);
+  const o=canvas(s,'HUB');o.actions=actions;
+  o.headline(64,94,'CHAMPIONSHIP CAR REGISTRATION',37,GOLD,1420);
+  o.label(65,151,'SELECT THREE DIFFERENT OWNED CARS FOR PRO PADDOCK BAYS 04–06.',21,PALE);
+  o.label(65,184,'Your Championship progress, scores and existing car ownership will be preserved.',18,MUTED);
+  o.panel(780,433,1370,420,.95);
+  owned.forEach((id,i)=>{
+    const x=275+(i%3)*495,y=269+Math.floor(i/3)*58;
+    if(y>616)return;
+    const slot=chosen.indexOf(id);
+    o.button(x,y,452,48,(slot>=0?'BAY '+PRO_GARAGE_BAYS[slot].number+'  /  ':'')+
+      (cars[id].shortName||cars[id].name||id),()=>{
+      const next=slot>=0?chosen.filter(v=>v!==id):
+        chosen.length<3?[...chosen,id]:[...chosen.slice(0,2),id];
+      showChampionshipCarRegistration(s,actions,next);
+    },{selected:slot>=0});
+  });
+  o.label(80,677,chosen.length+' / 3 CARS SELECTED',21,GOLD);
+  o.button(280,776,360,48,'BACK',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
+  o.button(1125,776,560,48,'REGISTER THREE CARS',()=>{
+    if(chosen.length!==3||new Set(chosen).size!==3)return;
+    const current=circuit(s),ownedNow=s.registry.get('ownedCarIds')||[];
+    const staged=stageProGarage({...current,registeredDriverCars:chosen,
+      proGarageOrigins:null},ownedNow,s.registry.get('carGarageLocations')||{},
+      Number(s.registry.get('garageTier')||0));
+    if(staged.error){s.proError=staged.error;return showChampionshipCarRegistration(s,actions,chosen);}
+    try{
+      saveProTransaction(s.registry,{proCircuit:staged.circuit,
+        carGarageLocations:staged.carGarageLocations});
+      s.proError=null;
+      showTokyoChampionshipScreens(s,{view:state.stage,actions});
+    }catch(error){s.proError=error.message;showChampionshipCarRegistration(s,actions,chosen);}
+  },{red:true,disabled:chosen.length!==3});
 }
 function openPaddock(s,state,type,crewIds=[],crewDrivers=[]){
   if(!state||state.completed)return;
