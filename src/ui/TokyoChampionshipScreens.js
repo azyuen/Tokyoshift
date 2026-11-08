@@ -11,6 +11,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
@@ -294,30 +295,32 @@ function getEventAdvice(state,stage){
   return 'Four lanes magnify every launch error. Keep the championship car predictable under pressure: a strong qualifying place can take you into the final.';
 }
 
+function showSayakaAdviceManga(s,message){
+  return playMangaCutscene(s,{
+    id:'tokyoChampionshipSayakaAdvice',
+    title:'TOKYO CHAMPIONSHIP // SAYAKA ADVICE',
+    once:false,
+    characters:{left:'sayakaFujieda'},
+    pages:[{speaker:'left',pose:'homeExplaining',text:message}],
+    finalActionLabel:'BACK TO BRIEFING',
+  });
+}
+
 function advicePanel(s,o,state,stage,x,y,w){
-  // One shallow pit-wall card replaces two competing dialogue boxes.
   const active=stage===state.stage&&!state.completed;
-  const saved=state.adviceByEvent?.[stage];
-  o.panel(x+w/2,y+48,w,96,.84,0x85745a);
-  o.label(x+15,y+8,'SAYAKA  //  RACE STRATEGY',17,GOLD,{font:DISPLAY});
-  if(saved){
-    o.label(x+15,y+34,saved,17,PALE,{width:w-35});
-  }else if(active){
-    o.label(x+15,y+36,'Ask Sayaka for a one-time briefing before this event.',17,MUTED,
-      {width:w-260});
-    o.button(x+w-118,y+68,215,39,'ASK SAYAKA',()=>{
-      const c=circuit(s),current=c.activeChampionship;
-      if(!current||current.id!==state.id||current.stage!==stage||
-        current.adviceByEvent?.[stage])return;
-      const note=getEventAdvice(current,stage);
-      const updated={...current,adviceByEvent:{...(current.adviceByEvent||{}),[stage]:note}};
+  o.button(x+w/2,y+48,360,55,'ASK SAYAKA',()=>{
+    const c=circuit(s),current=c.activeChampionship;
+    if(!current||current.id!==state.id||!active)return;
+    const note=current.adviceByEvent?.[stage]||getEventAdvice(current,stage);
+    if(!current.adviceByEvent?.[stage]){
       try{
-        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
-        s.proError=null;
-      }catch(error){s.proError=error.message;}
-      showTokyoChampionshipScreens(s,{view:stage,actions:o.actions});
-    },{red:true});
-  }else o.label(x+15,y+37,'Race strategy consultation closed for this event.',17,MUTED);
+        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:{
+          ...current,adviceByEvent:{...(current.adviceByEvent||{}),[stage]:note},
+        }}});
+      }catch(error){s.proError=error.message;return;}
+    }
+    showSayakaAdviceManga(s,note);
+  },{red:true,disabled:!active});
 }
 
 // Event details are a non-navigating takeover of the physical wall monitor.
@@ -758,33 +761,11 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     const lastAdviceRound=Number(state.lastSayakaKnockoutRound);
     const onCooldown=Number.isInteger(lastAdviceRound)&&
       lastAdviceRound>=adviceRound-1;
-    const showAdviceDialogue=message=>{
-      const nodes=[];
-      const add=n=>{nodes.push(n);return n;};
-      const close=()=>nodes.forEach(n=>n.destroy?.());
-      add(s.add.rectangle(780,420,1560,840,0x030711,.63)
-        .setDepth(270).setInteractive());
-      add(s.add.rectangle(780,417,790,260,0xf8f7f1,1)
-        .setStrokeStyle(3,0x8b99a5).setDepth(271));
-      add(s.add.text(437,322,'SAYAKA  /  RACE STRATEGY',{
-        fontFamily:DISPLAY,fontSize:'25px',fontStyle:'bold',color:'#172d43',
-      }).setDepth(272));
-      add(s.add.text(437,383,message,{
-        fontFamily:BODY,fontSize:'23px',color:'#182e41',
-        wordWrap:{width:690},lineSpacing:6,
-      }).setDepth(272));
-      add(s.add.rectangle(780,508,200,39,0x24485f,1)
-        .setDepth(273).setInteractive({useHandCursor:true})
-        .on('pointerdown',close));
-      add(s.add.text(780,508,'CONTINUE',{
-        fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
-      }).setOrigin(.5).setDepth(274));
-    };
     glow(306,465,220,'ASK ADVICE',()=>{
       const current=circuit(s).activeChampionship;
       if(!current||current.id!==state.id)return;
       if(onCooldown){
-        showAdviceDialogue('Sayaka needs one full heat between strategy briefings. Come back after your next race.');
+        showSayakaAdviceManga(s,'Give it a heat before we talk strategy again. Focus on your launch and keep your shifts clean.');
         return;
       }
       if(!active)return;
@@ -794,7 +775,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
       try{
         saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:updated}});
         s.proError=null;
-        showAdviceDialogue(note);
+        showSayakaAdviceManga(s,note);
       }catch(error){s.proError=error.message;}
     },!active);
     glow(742,465,198,'CAR SETUP',()=>needsChampionshipCars(s)?
