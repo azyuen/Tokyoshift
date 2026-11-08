@@ -949,7 +949,7 @@ function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
   o.label(80,677,chosen.length+' / 3 CARS SELECTED   /   PAGE '+(page+1)+' OF '+pages,21,GOLD);
   if(page>0)o.button(770,675,180,42,'PREV',()=>showChampionshipCarRegistration(s,actions,chosen,page-1));
   if(page<pages-1)o.button(970,675,180,42,'NEXT',()=>showChampionshipCarRegistration(s,actions,chosen,page+1));
-  o.button(280,776,360,48,'BACK',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
+  o.button(280,776,360,48,'BACK TO SEASON',()=>{o.close();actions?.returnToSeason?.();});
   o.button(1125,776,560,48,'REGISTER THREE CARS',()=>{
     if(chosen.length!==3||new Set(chosen).size!==3)return;
     const current=circuit(s),ownedNow=s.registry.get('ownedCarIds')||[];
@@ -960,7 +960,7 @@ function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
       saveProTransaction(s.registry,{proCircuit:{...current,
         activeChampionship:{...current.activeChampionship,championshipRegisteredCars:[...chosen]}}});
       s.proError=null;
-      showTokyoChampionshipScreens(s,{view:state.stage,actions});
+      showTokyoChampionshipScreens(s,{view:'HUB',actions});
     }catch(error){s.proError=error.message;showChampionshipCarRegistration(s,actions,chosen);}
   },{red:true,disabled:chosen.length!==3});
 }
