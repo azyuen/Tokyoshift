@@ -640,8 +640,7 @@ function showCrewBattleBriefing(s,o,state,actions){
     card.strokePoints(points,true);
     // Heat cards are the selection controls, like Open Circuit's crew lineup.
     if(heat&&i>=results.length){
-      const hit=o.add(s.add.polygon(0,0,points.map(p=>[p.x,p.y]).flat(),
-        0xffffff,0).setOrigin(0,0).setDepth(250));
+      const hit=o.add(s.add.rectangle(x,y,w,h,0xffffff,0).setDepth(250));
       hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>
         showChampionshipCrewSelector(s,actions,null,i));
     }
