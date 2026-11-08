@@ -694,9 +694,11 @@ function showCrewBattleBriefing(s,o,state,actions){
     ribbon.fillStyle(active?0x6c4924:0x13344a,.98);
     ribbon.fillPoints([{x:x+slope+3,y:y+3},{x:x+w-3,y:y+3},
       {x:x+w-7,y:y+43},{x:x+9,y:y+43}],true);
-    o.headline(x+22,y+9,'HEAT 0'+(i+1),23,active?GOLD:PALE,w-37);
+    // Text must sit above the 234/235-depth card and ribbon artwork.
+    o.headline(x+22,y+9,'HEAT 0'+(i+1),23,active?GOLD:PALE,w-37)
+      .setDepth(240);
     o.headline(x+20,y+54,(unit?.name||'SELECT DRIVER').toUpperCase(),
-      21,unit?PALE:GOLD,w-39);
+      21,unit?PALE:GOLD,w-39).setDepth(240);
     o.label(x+20,y+85,
       car?.shortName||car?.name||'CHOOSE A CREW CAR',17,
       unit?MUTED:'#98acbf',{width:w-40,depth:239});
