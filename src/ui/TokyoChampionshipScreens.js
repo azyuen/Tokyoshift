@@ -11,7 +11,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
-import { stageProGarage, PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
+import { PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
 const W=1560, H=840;
@@ -823,7 +823,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     if(stage==='CREW')return showCarPicker(s,stage,actions);
     if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
     const selected=s.registry.get('selectedCarId');
-    const roster=c.registeredDriverCars||[];
+    const roster=state.championshipRegisteredCars||[];
     const locked=getChampionshipEventCar(state,stage);
     const carId=locked||((state.devBypass||roster.includes(selected))&&selected)||
       (state.devBypass?state.driverCarId:null)||roster[0];
@@ -895,7 +895,7 @@ function showCarPicker(s,stage,actions){
   const owned=s.registry.get('ownedCarIds')||[];
   const roster=crew?units.map(u=>u.carId):
     (state.driverCarId?[state.driverCarId]:
-      (state.devBypass?owned:Array.isArray(c.registeredDriverCars)?c.registeredDriverCars:owned))
+      (state.championshipRegisteredCars||[]))
         .filter(id=>owned.includes(id)&&cars[id]&&!cars[id].ginzaDemo&&
           !cars[id].crewLoan&&(state.devBypass||!getProSeasonDriverCarError(c,id)));
   o.panel(780,438,1330,540,.94);
@@ -921,8 +921,9 @@ function showCarPicker(s,stage,actions){
 function needsChampionshipCars(s){
   const c=circuit(s),owned=s.registry.get('ownedCarIds')||[];
   return Boolean(c.activeChampionship&&!c.activeChampionship.completed&&
-    (!Array.isArray(c.registeredDriverCars)||c.registeredDriverCars.length!==3||
-      c.registeredDriverCars.some(id=>!owned.includes(id))));
+    (!Array.isArray(c.activeChampionship.championshipRegisteredCars)||
+      c.activeChampionship.championshipRegisteredCars.length!==3||
+      c.activeChampionship.championshipRegisteredCars.some(id=>!owned.includes(id))));
 }
 function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
   const c=circuit(s),state=c.activeChampionship;
@@ -931,7 +932,7 @@ function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
     .filter(id=>cars[id]&&!cars[id].ginzaDemo&&!cars[id].crewLoan);
   const o=canvas(s,'HUB');o.actions=actions;
   o.headline(64,94,'CHAMPIONSHIP CAR REGISTRATION',37,GOLD,1420);
-  o.label(65,151,'SELECT THREE DIFFERENT OWNED CARS FOR PRO PADDOCK BAYS 04–06.',21,PALE);
+  o.label(65,151,'REGISTER THREE OWNED CARS FOR THE TOKYO CHAMPIONSHIP.',21,PALE);
   o.label(65,184,'Your Championship progress, scores and existing car ownership will be preserved.',18,MUTED);
   o.panel(780,433,1370,420,.95);
   const pages=Math.max(1,Math.ceil(owned.length/18));
@@ -953,13 +954,12 @@ function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
   o.button(1125,776,560,48,'REGISTER THREE CARS',()=>{
     if(chosen.length!==3||new Set(chosen).size!==3)return;
     const current=circuit(s),ownedNow=s.registry.get('ownedCarIds')||[];
-    const staged=stageProGarage({...current,registeredDriverCars:chosen,
-      proGarageOrigins:null},ownedNow,s.registry.get('carGarageLocations')||{},
-      Number(s.registry.get('garageTier')||0));
-    if(staged.error){s.proError=staged.error;return showChampionshipCarRegistration(s,actions,chosen,page);}
+    if(chosen.some(id=>!ownedNow.includes(id))){
+      s.proError='SELECTED CAR NO LONGER OWNED';return showChampionshipCarRegistration(s,actions,chosen,page);
+    }
     try{
-      saveProTransaction(s.registry,{proCircuit:staged.circuit,
-        carGarageLocations:staged.carGarageLocations});
+      saveProTransaction(s.registry,{proCircuit:{...current,
+        activeChampionship:{...current.activeChampionship,championshipRegisteredCars:[...chosen]}}});
       s.proError=null;
       showTokyoChampionshipScreens(s,{view:state.stage,actions});
     }catch(error){s.proError=error.message;showChampionshipCarRegistration(s,actions,chosen);}
