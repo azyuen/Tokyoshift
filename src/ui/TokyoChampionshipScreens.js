@@ -475,9 +475,10 @@ function showHub(s,actions,{displayStage=null,displayProfileId=null,standingsPag
   const nextEvent=EVENTS[current];
   o.button(left+width/2+3*(width+gap),centreY,width,height,
     finalAction?'CHAMPIONSHIP RESULTS':'ENTER EVENT '+(nextEvent?.number||'01'),
-    ()=>showTokyoChampionshipScreens(s,{
-      view:finalAction?'RESULT':current,actions,
-    }),{red:true,subtitle:finalAction?'VIEW FINAL PODIUM':
+    ()=>needsChampionshipCars(s)?showChampionshipCarRegistration(s,actions):
+      showTokyoChampionshipScreens(s,{
+        view:finalAction?'RESULT':current,actions,
+      }),{red:true,subtitle:finalAction?'VIEW FINAL PODIUM':
       'OPEN '+(nextEvent?.short||'NEXT EVENT')+' BRIEFING'});
   // Separate, full-width-of-event blue map shortcut below the red action.
   // Close the Hub overlay before presenting the existing region map.
@@ -923,7 +924,7 @@ function needsChampionshipCars(s){
     (!Array.isArray(c.registeredDriverCars)||c.registeredDriverCars.length!==3||
       c.registeredDriverCars.some(id=>!owned.includes(id))));
 }
-function showChampionshipCarRegistration(s,actions,chosen=[]){
+function showChampionshipCarRegistration(s,actions,chosen=[],page=0){
   const c=circuit(s),state=c.activeChampionship;
   if(!state||state.completed)return showTokyoChampionshipScreens(s,{view:'HUB',actions});
   const owned=[...new Set(s.registry.get('ownedCarIds')||[])]
@@ -933,18 +934,21 @@ function showChampionshipCarRegistration(s,actions,chosen=[]){
   o.label(65,151,'SELECT THREE DIFFERENT OWNED CARS FOR PRO PADDOCK BAYS 04–06.',21,PALE);
   o.label(65,184,'Your Championship progress, scores and existing car ownership will be preserved.',18,MUTED);
   o.panel(780,433,1370,420,.95);
-  owned.forEach((id,i)=>{
+  const pages=Math.max(1,Math.ceil(owned.length/18));
+  page=Math.max(0,Math.min(page,pages-1));
+  owned.slice(page*18,(page+1)*18).forEach((id,i)=>{
     const x=275+(i%3)*495,y=269+Math.floor(i/3)*58;
-    if(y>616)return;
     const slot=chosen.indexOf(id);
     o.button(x,y,452,48,(slot>=0?'BAY '+PRO_GARAGE_BAYS[slot].number+'  /  ':'')+
       (cars[id].shortName||cars[id].name||id),()=>{
       const next=slot>=0?chosen.filter(v=>v!==id):
         chosen.length<3?[...chosen,id]:[...chosen.slice(0,2),id];
-      showChampionshipCarRegistration(s,actions,next);
+      showChampionshipCarRegistration(s,actions,next,page);
     },{selected:slot>=0});
   });
-  o.label(80,677,chosen.length+' / 3 CARS SELECTED',21,GOLD);
+  o.label(80,677,chosen.length+' / 3 CARS SELECTED   /   PAGE '+(page+1)+' OF '+pages,21,GOLD);
+  if(page>0)o.button(770,675,180,42,'PREV',()=>showChampionshipCarRegistration(s,actions,chosen,page-1));
+  if(page<pages-1)o.button(970,675,180,42,'NEXT',()=>showChampionshipCarRegistration(s,actions,chosen,page+1));
   o.button(280,776,360,48,'BACK',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
   o.button(1125,776,560,48,'REGISTER THREE CARS',()=>{
     if(chosen.length!==3||new Set(chosen).size!==3)return;
@@ -952,7 +956,7 @@ function showChampionshipCarRegistration(s,actions,chosen=[]){
     const staged=stageProGarage({...current,registeredDriverCars:chosen,
       proGarageOrigins:null},ownedNow,s.registry.get('carGarageLocations')||{},
       Number(s.registry.get('garageTier')||0));
-    if(staged.error){s.proError=staged.error;return showChampionshipCarRegistration(s,actions,chosen);}
+    if(staged.error){s.proError=staged.error;return showChampionshipCarRegistration(s,actions,chosen,page);}
     try{
       saveProTransaction(s.registry,{proCircuit:staged.circuit,
         carGarageLocations:staged.carGarageLocations});
