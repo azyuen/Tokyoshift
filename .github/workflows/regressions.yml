@@ -24,6 +24,8 @@ jobs:
       - run: node --test tests/regression-selection.mjs
       - name: GC8 tuner state and car-selection regression
         run: node --test tests/tuner-gc8-state-consistency-20261108.mjs
+      - name: Tuner purchase manga confirmations
+        run: node --test tests/tuner-purchase-manga-20261108.mjs tests/tuner-hero-conversions-r521.mjs tests/tuner-stock-service-r676.mjs
       - name: Championship AI garages and performance benchmark
         run: |
           node --test tests/tokyo-championship-ai-garages-20261107.mjs
