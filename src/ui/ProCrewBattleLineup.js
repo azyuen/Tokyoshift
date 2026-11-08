@@ -575,3 +575,82 @@ function draw(s,opts){
   renderLineup();renderFooter();
   if(Number.isInteger(opts.popupSlot))openRoster();
 }
+
+
+/**
+ * Championship heat-slot picker. Uses the Open Circuit crew roster popup's
+ * layout (seven numbered driver rows with portrait, car and drivetrain).
+ * It is independent of the Open Circuit fixture/payment state.
+ */
+export function showChampionshipCrewRosterPopup(s,{units=[],selected=[],slot=0,lockedSlots=[],onSelect,onClose}={}){
+  const pending=loadAssets(s,units);
+  if(pending){
+    s._proOverlayClose?.();
+    const blocker=s.add.rectangle(W/2,H/2,W,H,0x030915,.95).setDepth(300).setInteractive();
+    const caption=s.add.text(W/2,H/2,'LOADING CREW CARS',{
+      fontFamily:PIXEL,fontSize:'18px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(301);
+    const finish=()=>{blocker.destroy();caption.destroy();
+      if(s.sys?.isActive?.())showChampionshipCrewRosterPopup(s,{units,selected,slot,lockedSlots,onSelect,onClose});
+    };
+    s.load.once('complete',finish);s.load.start();return;
+  }
+  s._proOverlayClose?.();
+  const nodes=[];
+  const add=node=>{nodes.push(node);return node;};
+  const close=()=>{
+    if(s._proOverlayClose===close)s._proOverlayClose=null;
+    nodes.forEach(node=>node?.destroy?.());
+    s.events.off('shutdown',close);
+  };
+  s._proOverlayClose=close;s.events.once('shutdown',close);
+  const rect=(x,y,w,h,fill,border,depth=251)=>add(s.add.rectangle(x,y,w,h,fill,1)
+    .setStrokeStyle(2,border).setDepth(depth));
+  const txt=(x,y,value,size=16,color='#f4f3f3',depth=254)=>add(s.add.text(x,y,value,{
+    fontFamily:BODY,fontSize:size+'px',color,fontStyle:'600',
+  }).setDepth(depth));
+  rect(W/2,H/2,W,H,0x030915,0x030915,249).setAlpha(.72)
+    .setInteractive().on('pointerdown',()=>{close();onClose?.();});
+  rect(1235,411,596,740,0x061421,BLUE,250);
+  txt(970,60,'SELECT CREW DRIVER  /  HEAT 0'+(slot+1),19,'#fff4f2',253);
+  const state=s.registry.get('carStates')||{};
+  units.slice(0,7).forEach((u,i)=>{
+    const y=110+i*83,assigned=selected.indexOf(u.id);
+    const locked=lockedSlots.includes(i)||selected.some((id,j)=>j!==slot&&id===u.id);
+    const border=assigned>=0?RED:BLUE;
+    const hit=rect(1235,y+30,558,76,assigned>=0?0x26384d:0x0a1d2e,border);
+    if(!locked)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+      close();onSelect?.(u.id,slot);
+    });
+    rect(991,y+29,40,40,assigned>=0?0x913347:0x10273a,border,254);
+    if(assigned>=0)txt(985,y+14,String(assigned+1),21,'#ffffff',255);
+    const asset=getCharacterVisualAsset(u.id,'idle',{
+      playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',proCircuit:true,
+    });
+    if(asset?.key&&s.textures.exists(asset.key)){
+      const source=s.textures.get(asset.key).getSourceImage();
+      add(s.add.image(1071,y+63,asset.key).setOrigin(.5,1)
+        .setScale(Math.min(65/source.height,64/source.width)).setDepth(253));
+    }
+    const who=txt(1119,y+1,u.name,18,locked?'#8595a3':'#f4f3f3');
+    if(who.width>142)who.setScale(142/who.width);
+    const model=txt(1119,y+26,cars[u.carId]?.shortName||u.carId,15,'#c0dce8');
+    if(model.width>142)model.setScale(142/model.width);
+    txt(1119,y+48,normaliseDrive(u.drivetrain)+' · '+Math.round(u.powerKW||0)+' kW',
+      14,'#99bfce');
+    const car=cars[u.carId];
+    if(car&&typeof s.createCarDisplay==='function'){
+      try{
+        const parts=s.createCarDisplay(car,1414,y+30,145,253,
+          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+        parts.forEach((part,index)=>{
+          if(index===2){part?.destroy?.();return;}
+          if(part)add(part.setDepth?.(253)||part);
+        });
+      }catch(error){console.warn('[Tokyo SHIFT] Crew car preview unavailable',u.carId,error);}
+    }
+  });
+  const back=rect(1420,734,182,44,0x11283b,BLUE,260)
+    .setInteractive({useHandCursor:true}).on('pointerdown',()=>{close();onClose?.();});
+  txt(1391,724,'CLOSE',17,'#ffffff',261);
+}
