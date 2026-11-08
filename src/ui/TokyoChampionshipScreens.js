@@ -709,11 +709,24 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     o.label(326,750,'STANDARD CHAMPIONSHIP',15,PALE);
     o.label(231,775,'CLASS',11,MUTED);
     o.label(326,771,'CHAMPIONSHIP',15,PALE);
+    // Current Championship points and position from the authoritative standings.
+    // A new event begins at zero; tied entrants follow the seeded tie-break order.
+    const standings=championshipStandings(state);
+    const rivalIndex=standings.findIndex(row=>row.id===(heat?.opponentId||opponent.id));
+    const rivalStanding=rivalIndex>=0?standings[rivalIndex]:null;
+    // Independent ranking card, outside the opponent parallelogram.
+    o.add(s.add.rectangle(980,725,228,164,0x071728,.96)
+      .setStrokeStyle(2,0xc4a66a,.95).setDepth(219));
+    o.label(882,654,'DRIVER STANDINGS',17,GOLD,{font:DISPLAY});
+    o.label(882,692,'CHAMPIONSHIP POINTS',12,MUTED);
+    o.label(882,709,fmt(rivalStanding?.total??0),25,PALE,{font:DISPLAY});
+    o.label(882,749,'CHAMPIONSHIP RANK',12,MUTED);
+    o.label(882,766,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',21,PALE,{font:DISPLAY});
     // Use the shared car renderer rather than the Garage-only scene helper.
     // Render at the right-hand end of the card, clear of the opponent stats.
     if(opponentCarId&&cars[opponentCarId]){
       const parts=renderStoryCar(s,cars[opponentCarId],{
-        x:740,groundY:788,targetWidth:255,depth:228,
+        x:612,groundY:788,targetWidth:255,depth:228,
         paintColor:opponentCarState.paintColor??opponent.paintColor??0x7f8899,
         shadow:false,garageGeometry:true,
       });
