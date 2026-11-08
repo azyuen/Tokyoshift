@@ -8,6 +8,7 @@ import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
   getTunerShopForRegion,
@@ -76,6 +77,9 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   preload() {
+    // A race can temporarily replace selectedCarId. Use the player's last
+    // deliberate personal-car selection before checking regional tuning.
+    restorePreferredCar(this.registry);
     const shop = getTunerShopForRegion(this.regionId);
     if (!shop || !isTunerShopUnlocked(this.registry, this.regionId)) return;
 
@@ -764,7 +768,11 @@ export default class TunerShopScene extends Phaser.Scene {
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
         SIDE.y + 330,
-        currentId ? 'THIS CAR IS NOT TUNABLE HERE' : 'NO CURRENT CAR',
+        currentId
+          ? (cars[currentId]?.collector || cars[currentId]?.tuningLocked
+            ? 'COLLECTOR BUILD // SPECIALIST TUNING SEALED'
+            : 'THIS CAR IS NOT TUNABLE HERE')
+          : 'NO CURRENT CAR',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
