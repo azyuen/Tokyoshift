@@ -487,7 +487,8 @@ export default class EngineTuningScene extends Phaser.Scene {
       tuneLevel: Number(existing.tuneLevel || 0),
       acquiredVia: existing.acquiredVia || (id === 'ae86' ? 'starter' : 'garage'),
       ...existing,
-      tuning: normaliseEngineTuning(existing.tuning || existing.engineTuning || {}),
+      tuning: getEngineTuning(existing),
+      engineTuning: getEngineTuning(existing),
     };
 
     this.carStates[id] = state;
@@ -763,6 +764,7 @@ export default class EngineTuningScene extends Phaser.Scene {
 
     const state = this.ensureCarState(this.selectedCarId);
     state.tuning = normaliseEngineTuning(this.pendingTuning);
+    state.engineTuning = { ...state.tuning };
     state.stock = getEngineTuningCount(state.tuning) === 0 && !state.nosInstalled;
 
     this.carStates[this.selectedCarId] = state;
