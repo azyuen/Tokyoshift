@@ -4,6 +4,7 @@ import { LBWK_CATALOG, getLbwkConversionQuote } from '../data/lbwkFullWorks.js?v
 import {recordArkonCh7TunerVisit,claimArkonCh7FirstVisitScene} from '../data/arkonChapter07Progress.js?v=20261025-r684';
 import {getArkonCh7FirstTunerManga} from '../data/arkonChapter07.js?v=20261025-r684';
 import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
+import {makeSpecialistTuneManga, makeHeroBuildManga} from '../data/tunerPurchaseManga.js';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars } from '../data/cars.js?v=20261027-r694';
@@ -971,125 +972,33 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   showTuneConfirmation(carId, option) {
-    if (!carId || !option) return;
-
+    if (!carId || !option || this.getCurrentTunableCarId() !== carId) return;
     const car = cars[carId];
-    const carState = (this.registry.get('carStates') || {})[carId] || {};
-    const installed = getInstalledSpecialistTuning(carState);
-    if (installed.includes(option.id)) return;
-    if (!areTunerOptionRequirementsMet(carState, option)) return;
-
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    if (state.stockTuneService || getInstalledSpecialistTuning(state).includes(option.id) ||
+        !areTunerOptionRequirementsMet(state, option)) return;
     const cost = Math.max(0, Number(option.cost || 0));
-    const cash = Number(this.registry.get('cash') || 0);
-    if (cash < cost) return;
+    if (Number(this.registry.get('cash') || 0) < cost) {
+      this.showToast('INSUFFICIENT FUNDS');
+      return;
+    }
 
     this.clearPopup();
-
-    const shade = this.addPopup(this.add.rectangle(
-      780,
-      420,
-      1560,
-      840,
-      0x020304,
-      0.74
-    ).setDepth(150).setInteractive());
-
-    const panel = this.addPopup(this.add.rectangle(
-      780,
-      420,
-      700,
-      356,
-      0x091119,
-      0.995
-    ).setStrokeStyle(2, 0x65cfc8, 1).setDepth(151));
-
-    this.addPopup(this.add.text(780, 305, 'CONFIRM SPECIALIST TUNE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '13px',
-      color: '#e9fffb',
-    }).setOrigin(0.5).setDepth(152));
-
-    this.addPopup(this.add.text(
-      780,
-      352,
-      (car?.shortName || car?.name || carId) + '  //  ' + (option.shortName || option.name),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffffff',
-        align: 'center',
-        wordWrap: { width: 590 },
-      }
-    ).setOrigin(0.5).setDepth(152));
-
-    this.addPopup(this.add.text(
-      780,
-      408,
-      option.description || option.benefit,
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '12px',
-        color: '#aebfc5',
-        fontStyle: '600',
-        align: 'center',
-        wordWrap: { width: 560 },
-      }
-    ).setOrigin(0.5).setDepth(152));
-
-    this.addPopup(this.add.text(
-      780,
-      466,
-      option.benefit + '     ' + money(cost),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#d8c17f',
-        align: 'center',
-      }
-    ).setOrigin(0.5).setDepth(152));
-
-    const cancel = this.addPopup(this.add.rectangle(
-      640,
-      535,
-      230,
-      54,
-      0x171d21,
-      1
-    ).setStrokeStyle(1, 0x68747a, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(152));
-
-    const apply = this.addPopup(this.add.rectangle(
-      920,
-      535,
-      230,
-      54,
-      0x10292b,
-      1
-    ).setStrokeStyle(2, 0x65cfc8, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(152));
-
-    this.addPopup(this.add.text(640, 535, 'CANCEL', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#cbd5d9',
-    }).setOrigin(0.5).setDepth(153));
-
-    this.addPopup(this.add.text(920, 535, 'YES // APPLY', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#e9fffb',
-    }).setOrigin(0.5).setDepth(153));
-
-    cancel.on('pointerdown', () => this.clearPopup());
-    apply.on('pointerdown', () => {
-      this.clearPopup();
-      this.installSpecialistTune(carId, option);
-    });
-
-    shade.on('pointerdown', () => {});
-    panel.setInteractive();
+    // Runtime manga, not a one-time story scene. The final black YES button
+    // is the only path to installation; NO and SKIP never spend credits.
+    const played = playMangaCutscene(this,
+      makeSpecialistTuneManga(this.shop, car, option), {
+        preloadPagePosesOnly: true,
+        onComplete: ({ reason }) => {
+          if (reason !== 'action') return;
+          if (this.getCurrentTunableCarId() !== carId) {
+            this.showToast('SELECTED CAR CHANGED');
+            return;
+          }
+          this.installSpecialistTune(carId, option);
+        },
+      });
+    if (!played?.played) this.showToast('FINISH THE CURRENT SCENE FIRST');
   }
 
   showDecalMode() {
@@ -1938,90 +1847,50 @@ export default class TunerShopScene extends Phaser.Scene {
 
   showBuildConfirmation() {
     this.clearPopup();
-
-    const shade = this.addPopup(this.add.rectangle(
-      780,
-      420,
-      1560,
-      840,
-      0x020304,
-      0.70
-    ).setDepth(150).setInteractive());
-
-    const panel = this.addPopup(this.add.rectangle(
-      780,
-      420,
-      650,
-      310,
-      0x091119,
-      0.99
-    ).setStrokeStyle(2, 0xe2b464, 1).setDepth(151));
-
-    this.addPopup(this.add.text(780, 335, 'CONFIRM HERO BUILD', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '14px',
-      color: '#fff1d5',
-    }).setOrigin(0.5).setDepth(152));
-
-    const quotedPrice=this.shop.cosmeticOnly
-      ? (this.getLbwkCurrentQuote()?.total || 0) : Number(this.shop.buildCost||0);
-    this.addPopup(this.add.text(
-      780,
-      392,
-      this.shop.donorLabel + ' will be permanently rebuilt as\n' +
-        cars[this.shop.heroCarId].name + '.\n\nBUILD COST  ' + money(quotedPrice),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#d7e0e4',
-        fontStyle: '700',
-        align: 'center',
-        lineSpacing: 6,
-      }
-    ).setOrigin(0.5).setDepth(152));
-
-    const no = this.addPopup(this.add.rectangle(
-      650,
-      505,
-      210,
-      54,
-      0x171d21,
-      1
-    ).setStrokeStyle(1, 0x68747a, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(152));
-
-    const yes = this.addPopup(this.add.rectangle(
-      910,
-      505,
-      210,
-      54,
-      0x2a2115,
-      1
-    ).setStrokeStyle(2, 0xe2b464, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(152));
-
-    this.addPopup(this.add.text(650, 505, 'NO', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#cbd5d9',
-    }).setOrigin(0.5).setDepth(153));
-
-    this.addPopup(this.add.text(910, 505, 'YES // BUILD', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#fff1d5',
-    }).setOrigin(0.5).setDepth(153));
-
-    no.on('pointerdown', () => {
-      this.clearPopup();
+    const donorId = this.getCurrentCarId();
+    const heroId = this.shop?.heroCarId;
+    const owned = this.registry.get('ownedCarIds') || [];
+    const donor = cars[donorId];
+    const hero = cars[heroId];
+    const state = (this.registry.get('carStates') || {})[donorId] || {};
+    if (!donor || !hero || getBaseCarId(donorId) !== this.shop?.donorCarId ||
+        owned.includes(heroId) || (!this.shop.cosmeticOnly && state.stock === false)) {
       this.showHeroMode();
-    });
+      return;
+    }
+    // LBWK uses a live parts-and-credit quote; all other tuner builds retain
+    // their fixed purchase price. Both are rechecked at final conversion.
+    const quoted = this.shop.cosmeticOnly ? this.getLbwkCurrentQuote() : null;
+    if (this.shop.cosmeticOnly && !quoted) {
+      this.showHeroMode();
+      return;
+    }
+    const cost = Math.max(0, Number(this.shop.cosmeticOnly
+      ? quoted.total : this.shop.buildCost) || 0);
+    if (Number(this.registry.get('cash') || 0) < cost) {
+      this.showToast('INSUFFICIENT FUNDS');
+      this.showHeroMode();
+      return;
+    }
 
-    yes.on('pointerdown', () => this.confirmHeroConversion());
-    shade.on('pointerdown', () => {});
-    panel.setInteractive();
+    const played = playMangaCutscene(this,
+      makeHeroBuildManga(this.shop, donor, hero, { ...quoted, total: cost }), {
+        preloadPagePosesOnly: true,
+        onComplete: ({ reason }) => {
+          if (reason !== 'action') {
+            this.showHeroMode();
+            return;
+          }
+          // Never convert a different car if another scene changed selection.
+          if (this.getCurrentCarId() !== donorId || this.shop?.heroCarId !== heroId) {
+            this.showHeroMode();
+            this.showToast('BUILD SELECTION CHANGED');
+            return;
+          }
+          this.confirmHeroConversion();
+        },
+      });
+    if (!played?.played) this.showHeroMode();
   }
 
   confirmHeroConversion() {
