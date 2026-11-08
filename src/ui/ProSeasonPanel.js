@@ -896,17 +896,18 @@ function startChampionshipRace(s,mode,carId) {
     const heat=mode==='CHAMP_KO'?getChampionshipKnockoutHeat(state):
       getChampionshipFourWideHeat(state);
     if(!heat){s.proError='NO ACTIVE CHAMPIONSHIP HEAT';return false;}
-    if(!state.driverCarId&&!state.devBypass&&getProSeasonDriverCarError(c,carId)){
-      s.proError='CHOOSE A CAR FROM YOUR THREE REGISTERED SEASON CARS';return false;
+    const registered=state.championshipRegisteredCars||[];
+    if(!registered.includes(carId)){
+      s.proError='CHOOSE ONE OF YOUR THREE CHAMPIONSHIP REGISTERED CARS';return false;
     }
-    if(state.driverCarId&&state.driverCarId!==carId){
-      s.proError='USE YOUR REGISTERED CHAMPIONSHIP DRIVER CAR';return false;
+    const stage=mode==='CHAMP_KO'?'KNOCKOUT':'FOUR_WIDE';
+    const locked=state.eventCarLocks?.[stage];
+    if(locked&&locked!==carId){
+      s.proError='CAR LOCKED FOR THIS CHAMPIONSHIP EVENT';return false;
     }
-    if(!state.driverCarId){
-      // Lock the driver's car for both individual and four-wide stages,
-      // without an entry fee or a duplicate registration.
-      if(!commit(s,{proCircuit:{...c,
-        activeChampionship:{...state,driverCarId:carId}}}))return false;
+    if(!locked){
+      if(!commit(s,{proCircuit:{...c,activeChampionship:{...state,
+        eventCarLocks:{...(state.eventCarLocks||{}),[stage]:carId}}}}))return false;
     }
   }
   s.proError=null;
