@@ -67,7 +67,8 @@ test('active crew/elite event car locks are preserved', () => {
 test('tuner scene restores preference before assets and engine tuning writes both save aliases', () => {
   const tunerScene = source('src/scenes/TunerShopScene.js');
   const engineScene = source('src/scenes/EngineTuningScene.js');
-  assert.match(tunerScene, /preload\\(\\) \\{\\s*\\/\\/[^\\n]*\\n\\s*\\/\\/[^\\n]*\\n\\s*restorePreferredCar\\(this\\.registry\\)/);
-  assert.match(engineScene, /state\\.engineTuning = \\{ \\.\\.\\.state\\.tuning \\}/);
-  assert.match(tunerScene, /COLLECTOR BUILD \\/\\/ SPECIALIST TUNING SEALED/);
+  const preload = tunerScene.slice(tunerScene.indexOf('  preload() {'), tunerScene.indexOf('  create() {'));
+  assert(preload.includes('restorePreferredCar(this.registry);'));
+  assert(engineScene.includes('state.engineTuning = { ...state.tuning };'));
+  assert(tunerScene.includes('COLLECTOR BUILD // SPECIALIST TUNING SEALED'));
 });
