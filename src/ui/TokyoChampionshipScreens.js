@@ -258,16 +258,24 @@ function mainSprites(s,o,view){
       if(title.width>170)title.setScale(170/title.width);
     });
   }else if(view==='CREW'){
-    // 2.5x visual scale relative to the original 420/308px figures.
-    // Their feet sit below the viewport to crop lower legs rather than shrink.
-    sprite(s,o,'champSayaka',142,1070,1050,510);
-    const units=crewBriefingUnits(s);
-    units.forEach((unit,i)=>{
-      const asset=getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
-        playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'});
-      sprite(s,o,asset?.key,365+i*216,1080,770,385);
+    // Use a shared visual height/baseline for all five figures. The earlier
+    // crew maxWidth cap was shrinking their sprites disproportionately.
+    const lineup=[
+      {key:'champSayaka',x:140},
+      ...crewBriefingUnits(s).map((unit,i)=>({
+        key:getCharacterVisualAsset(unit.id,'idle',{proCircuit:true,
+          playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno'})?.key,
+        x:365+i*216,
+      })),
+      {key:'champDaichi',x:1013},
+    ];
+    lineup.forEach(({key,x})=>{
+      if(!key||!s.textures.exists(key))return;
+      const source=s.textures.get(key).getSourceImage();
+      const height=850,feet=1080;
+      const scale=height/source.height;
+      o.add(s.add.image(x,feet,key).setOrigin(.5,1).setScale(scale).setDepth(210));
     });
-    sprite(s,o,'champDaichi',1013,1070,1040,510);
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
     sprite(s,o,'champSayaka',306,741,550,340);
@@ -630,6 +638,13 @@ function showCrewBattleBriefing(s,o,state,actions){
     card.fillStyle(0x091a2b,.95);card.fillPoints(points,true);
     card.lineStyle(active?3:2,active?0xf1bd65:0x7790a5,1);
     card.strokePoints(points,true);
+    // Heat cards are the selection controls, like Open Circuit's crew lineup.
+    if(heat&&i>=results.length){
+      const hit=o.add(s.add.polygon(0,0,points.map(p=>[p.x,p.y]).flat(),
+        0xffffff,0).setOrigin(0,0).setDepth(250));
+      hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>
+        showChampionshipCrewSelector(s,actions,null,i));
+    }
     o.label(x-88,y-82,'HEAT 0'+(i+1),17,GOLD,{font:DISPLAY,depth:237});
     o.headline(x-88,y-55,unit.name.toUpperCase(),19,PALE,178);
     o.label(x-88,y-29,cars[unit.carId]?.shortName||unit.carId,16,MUTED,
@@ -646,7 +661,7 @@ function showCrewBattleBriefing(s,o,state,actions){
   });
   const glow=(x,y,w,label,action,disabled=false)=>
     addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:action,disabled});
-  glow(143,353,220,'ASK ADVICE',()=>{
+  glow(143,260,220,'ASK ADVICE',()=>{
     const c=circuit(s),currentState=c.activeChampionship;
     if(!currentState||currentState.completed)return;
     const note=currentState.adviceByEvent?.CREW||getEventAdvice(currentState,'CREW');
@@ -657,7 +672,7 @@ function showCrewBattleBriefing(s,o,state,actions){
     }
     showSayakaAdviceManga(s,note);
   },!heat);
-  glow(1015,353,220,'CAR SETUP',()=>{
+  glow(1015,260,220,'CAR SETUP',()=>{
     const chosen=(state.crewSelectedIds||[]).map(id=>
       getCrewSeriesUnits(s.registry).find(u=>u.id===id)).filter(Boolean);
     if(chosen.length!==3)return showChampionshipCrewSelector(s,actions);
@@ -671,8 +686,7 @@ function showCrewBattleBriefing(s,o,state,actions){
   o.label(1151,400,'HEATS WON  '+results.filter(v=>v.won).length+' / 3',22,PALE);
   o.label(1151,443,'HEATS COMPLETED  '+results.length+' / 3',18,MUTED);
   o.label(1151,490,'YOU DRIVE EACH SELECTED CREW CAR',16,GOLD,{width:352});
-  o.button(1334,585,355,48,'CHANGE CREW',()=>showChampionshipCrewSelector(s,actions),
-    {disabled:!heat});
+
   o.button(1167,789,250,54,'RETURN TO HUB',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
   o.button(1422,789,250,54,heat?'GO TO GRID':'EVENT COMPLETE',()=>{
     if(heat){
@@ -681,7 +695,7 @@ function showCrewBattleBriefing(s,o,state,actions){
     }
   },{red:!!heat,disabled:!heat});
 }
-function showChampionshipCrewSelector(s,actions,selected=null){
+function showChampionshipCrewSelector(s,actions,selected=null,slot=null){
   const c=circuit(s),state=c.activeChampionship;
   if(!state||state.stage!=='CREW')return showTokyoChampionshipScreens(s,{view:'HUB',actions});
   const used=new Set((state.crew?.results||[]).map(r=>r.carId));
@@ -691,17 +705,24 @@ function showChampionshipCrewSelector(s,actions,selected=null){
   const completedUnits=available.filter(u=>used.has(u.carId));
   const required=completedUnits.map(u=>u.id);
   const o=canvas(s,'CREW',{hideTopChrome:true});
-  o.headline(65,60,'SELECT YOUR THREE CREW DRIVERS',38,GOLD,1410);
-  o.label(65,115,'CHOOSE THREE RECRUITED DRIVERS FOR THE CHAMPIONSHIP CREW BATTLES.',19,PALE);
+  o.headline(65,60,slot===null?'SELECT YOUR THREE CREW DRIVERS':
+    'SELECT DRIVER  /  HEAT 0'+(slot+1),38,GOLD,1410);
+  o.label(65,115,'CHOOSE FROM YOUR RECRUITED CREW. COMPLETED HEATS REMAIN LOCKED.',19,PALE);
   o.panel(780,417,1400,490,.95);
   available.forEach((u,i)=>{
     const x=410+(i%2)*700,y=226+Math.floor(i/2)*96;
     o.button(x,y,645,65,(picked.includes(u.id)?'✓  ':'')+u.name.toUpperCase()+
       '  /  '+(cars[u.carId]?.shortName||u.carId),()=>{
+      if(slot!==null){
+        if(picked.some((id,j)=>id===u.id&&j!==slot))return;
+        const next=[...picked];next[slot]=u.id;
+        return showChampionshipCrewSelector(s,actions,next,slot);
+      }
       const next=picked.includes(u.id)?picked.filter(id=>id!==u.id):
         picked.length<3?[...picked,u.id]:picked;
-      showChampionshipCrewSelector(s,actions,next);
-    },{selected:picked.includes(u.id),disabled:required.includes(u.id)});
+      showChampionshipCrewSelector(s,actions,next,null);
+    },{selected:picked.includes(u.id),disabled:required.includes(u.id)||
+      (slot!==null&&picked.includes(u.id)&&picked[slot]!==u.id)});
   });
   o.button(322,757,460,52,'BACK TO BRIEFING',()=>showTokyoChampionshipScreens(s,{view:'CREW',actions}));
   o.button(1150,757,540,52,'CONFIRM CREW  /  '+picked.length+' OF 3',()=>{
