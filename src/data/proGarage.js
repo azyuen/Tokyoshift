@@ -70,9 +70,17 @@ export function shouldReleaseProGarage(raw){
 
 export function getProGarageBayCars(raw,ownedCarIds=[]){
   const c=normaliseProCircuitState(raw);
-  if(!c.proGarageOrigins||!Array.isArray(c.registeredDriverCars))return [];
-  return PRO_GARAGE_BAYS.map((bay,index)=>{
-    const id=c.registeredDriverCars[index];
-    return {...bay,carId:ownedCarIds.includes(id)?id:null};
-  });
+  const championship=c.activeChampionship;
+  // Championship has its own locked trio. The paddock is a virtual view of
+  // owned cars and never changes the Pro Season registration or garage homes.
+  const championshipCars=championship&&!championship.completed&&
+    Array.isArray(championship.championshipRegisteredCars)&&
+    championship.championshipRegisteredCars.length===3?
+      championship.championshipRegisteredCars:null;
+  const roster=championshipCars||
+    (c.proGarageOrigins&&Array.isArray(c.registeredDriverCars)?c.registeredDriverCars:null);
+  if(!roster)return [];
+  return PRO_GARAGE_BAYS.map((bay,index)=>({
+    ...bay,carId:ownedCarIds.includes(roster[index])?roster[index]:null,
+  }));
 }
