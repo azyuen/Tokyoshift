@@ -825,12 +825,11 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     const selected=s.registry.get('selectedCarId');
     const roster=state.championshipRegisteredCars||[];
     const locked=getChampionshipEventCar(state,stage);
-    const carId=locked||((state.devBypass||roster.includes(selected))&&selected)||
-      (state.devBypass?state.driverCarId:null)||roster[0];
+    const carId=locked||(roster.includes(selected)&&selected)||roster[0];
     if(!carId){s.proError='SELECT A REGISTERED CAR IN PRO PADDOCK';
       return showEvent(s,stage,actions);}
     const check=lockChampionshipEventCar(state,stage,carId,roster,
-      s.registry.get('ownedCarIds')||[],Boolean(state.devBypass));
+      s.registry.get('ownedCarIds')||[],false);
     if(check.error){s.proError=check.error;return showEvent(s,stage,actions);}
     try{
       if(check.championship!==state)
@@ -1063,6 +1062,8 @@ export function showTokyoChampionshipScreens(s,{view='HUB',driverId=null,profile
   const target=view==='EVENT'?state.stage:EVENTS[view]?view:view;
   const assetView=target==='BRACKET'?'KNOCKOUT':target==='CREW_PICK'?'CREW':EVENTS[target]?target:'HUB';
   if(loadAssets(s,assetView,()=>showTokyoChampionshipScreens(s,{view,driverId,profileHubPage,actions})))return;
+  // Mandatory before the opening briefing; also repairs older in-progress saves.
+  if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
   if(target==='CREW_PICK')return showCarPicker(s,'CREW',actions);
   if(target==='BRACKET')return showFullKnockout(s,actions);
   if(target==='STANDINGS')return showStandings(s,actions);
