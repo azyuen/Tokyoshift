@@ -639,14 +639,14 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     ['QUALIFYING','SEMIFINAL','GRAND FINAL'][heat?.round||0];
   if(stage==='KNOCKOUT'){
     // Widen the knockout card to reserve a distinct right-hand car display bay.
-    const x=52,y=643,w=800,h=164,slant=21;
+    const x=300,y=643,w=802,h=164,slant=21;
     const graphic=o.add(s.add.graphics().setDepth(219));
     const outline=[{x:x+slant,y},{x:x+w,y},{x:x+w-slant,y:y+h},
       {x,y:y+h}];
     graphic.fillStyle(0x071728,.96);graphic.fillPoints(outline,true);
     graphic.lineStyle(3,0xe45868,1);graphic.strokePoints(outline,true);
-    o.headline(89,652,active?'NEXT OPPONENT':'EVENT STATUS',24,'#ff7885',700);
-    const frameX=74,frameY=683,frameW=129,frameH=106;
+    o.headline(337,652,active?'NEXT OPPONENT':'EVENT STATUS',24,'#ff7885',700);
+    const frameX=322,frameY=683,frameW=129,frameH=106;
     // Both edges follow the outer card's left-leaning parallelogram.
     const leftTop=frameX+slant*(y+frameH-frameY)/h;
     const leftBottom=frameX+slant*(y+frameH-(frameY+frameH))/h;
@@ -687,7 +687,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
         maskShape.fillStyle(0xffffff,1);maskShape.fillPoints(framePoints,true);
         portrait.setMask(maskShape.createGeometryMask());
         o.add({destroy:()=>maskShape.destroy()});
-      }else o.label(100,726,'PRO DRIVER',13,PALE,{font:PIXEL});
+      }else o.label(348,726,'PRO DRIVER',13,PALE,{font:PIXEL});
     }
     const opponentDriver=c.drivers?.[opponent.id]||{};
     // Use the persisted Championship garage snapshot for the actual knockout rival.
@@ -698,35 +698,45 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
       opponentDriver.selectedCarId||heat?.opponentCarId;
     const opponentCarState=assignedOpponentCar?.state||opponent.opponentBuildState||{};
     const opponentCar=cars[opponentCarId]||{};
-    o.label(231,684,String(opponent.name||'TO BE CONFIRMED').toUpperCase(),
+    o.label(479,684,String(opponent.name||'TO BE CONFIRMED').toUpperCase(),
       18,PALE,{font:DISPLAY,width:239});
-    o.label(231,708,String(opponentCar.name||opponentCar.shortName||
+    o.label(479,708,String(opponentCar.name||opponentCar.shortName||
       opponentCarId||'CAR TO BE CONFIRMED').toUpperCase(),
       14,'#ff9ba5',{width:247});
-    o.label(231,733,'CLASS CAP',11,MUTED);
-    o.label(326,730,'NO ADDITIONAL CAP',15,PALE);
-    o.label(231,753,'NOS',11,MUTED);
-    o.label(326,750,'STANDARD CHAMPIONSHIP',15,PALE);
-    o.label(231,775,'CLASS',11,MUTED);
-    o.label(326,771,'CHAMPIONSHIP',15,PALE);
+    o.label(479,733,'CLASS CAP',11,MUTED);
+    o.label(574,730,'NO ADDITIONAL CAP',15,PALE);
+    o.label(479,753,'NOS',11,MUTED);
+    o.label(574,750,'STANDARD CHAMPIONSHIP',15,PALE);
+    o.label(479,775,'CLASS',11,MUTED);
+    o.label(574,771,'CHAMPIONSHIP',15,PALE);
     // Current Championship points and position from the authoritative standings.
     // A new event begins at zero; tied entrants follow the seeded tie-break order.
     const standings=championshipStandings(state);
     const rivalIndex=standings.findIndex(row=>row.id===(heat?.opponentId||opponent.id));
     const rivalStanding=rivalIndex>=0?standings[rivalIndex]:null;
-    // Independent ranking card, outside the opponent parallelogram.
-    o.add(s.add.rectangle(980,725,228,164,0x071728,.96)
-      .setStrokeStyle(2,0xc4a66a,.95).setDepth(219));
-    o.label(882,654,'DRIVER STANDINGS',17,GOLD,{font:DISPLAY});
-    o.label(882,692,'CHAMPIONSHIP POINTS',12,MUTED);
-    o.label(882,709,fmt(rivalStanding?.total??0),25,PALE,{font:DISPLAY});
-    o.label(882,749,'CHAMPIONSHIP RANK',12,MUTED);
-    o.label(882,766,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',21,PALE,{font:DISPLAY});
+    // Independent parallelogram: 18px gutter to the opponent card.
+    const rankX=52,rankY=643,rankW=230,rankH=164,rankSlant=21;
+    const rankShape=o.add(s.add.graphics().setDepth(219));
+    rankShape.fillStyle(0x071728,.96);
+    rankShape.fillPoints([{x:rankX+rankSlant,y:rankY},
+      {x:rankX+rankW,y:rankY},
+      {x:rankX+rankW-rankSlant,y:rankY+rankH},
+      {x:rankX,y:rankY+rankH}],true);
+    rankShape.lineStyle(3,0xc4a66a,.95);
+    rankShape.strokePoints([{x:rankX+rankSlant,y:rankY},
+      {x:rankX+rankW,y:rankY},
+      {x:rankX+rankW-rankSlant,y:rankY+rankH},
+      {x:rankX,y:rankY+rankH}],true);
+    o.label(79,654,'DRIVER STANDINGS',17,GOLD,{font:DISPLAY});
+    o.label(79,692,'CHAMPIONSHIP POINTS',12,MUTED);
+    o.label(79,709,fmt(rivalStanding?.total??0),25,PALE,{font:DISPLAY});
+    o.label(79,749,'CHAMPIONSHIP RANK',12,MUTED);
+    o.label(79,766,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',21,PALE,{font:DISPLAY});
     // Use the shared car renderer rather than the Garage-only scene helper.
     // Render at the right-hand end of the card, clear of the opponent stats.
     if(opponentCarId&&cars[opponentCarId]){
       const parts=renderStoryCar(s,cars[opponentCarId],{
-        x:612,groundY:788,targetWidth:255,depth:228,
+        x:925,groundY:788,targetWidth:255,depth:228,
         paintColor:opponentCarState.paintColor??opponent.paintColor??0x7f8899,
         shadow:false,garageGeometry:true,
       });
@@ -792,9 +802,9 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   if(stage==='KNOCKOUT'){
     const chosen=s.registry.get('selectedCarId');
     const chosenName=cars[chosen]?.shortName||cars[chosen]?.name||'SELECT CAR IN PADDOCK';
-    o.button(1370,729,338,70,active?'GO TO GRID':'EVENT COMPLETE',
+    o.button(1330,707,420,70,active?'GO TO GRID':'EVENT COMPLETE',
       ()=>enterGrid(),{red:active,disabled:!active,subtitle:chosenName});
-    o.button(1370,795,338,34,'RETURN TO HUB',
+    o.button(1330,773,420,34,'RETURN TO HUB',
       ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
     return;
   }
