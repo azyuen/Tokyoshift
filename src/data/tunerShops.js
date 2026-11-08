@@ -1,4 +1,5 @@
 import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r392';
+import { getEngineTuning } from './tuning.js';
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
@@ -782,10 +783,12 @@ export function areTunerOptionRequirementsMet(carState = {}, option = null) {
 
   const requirements = option.requirements || {};
   const installed = new Set(getInstalledSpecialistTuning(carState));
+  // The garage and legacy engine-tuning screen store the same upgrades under
+  // different fields. Always use the canonical read path used by race physics.
+  const engineTuning = getEngineTuning(carState);
 
   for (const [id, level] of Object.entries(requirements.engine || {})) {
-    const source = carState.engineTuning || carState.tuning || {};
-    if (readLevel(source, id) < Number(level || 0)) return false;
+    if (readLevel(engineTuning, id) < Number(level || 0)) return false;
   }
 
   for (const [id, level] of Object.entries(requirements.drivetrain || {})) {
