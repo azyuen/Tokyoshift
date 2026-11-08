@@ -221,8 +221,15 @@ export default class GarageScene extends Phaser.Scene {
       : explicitCrewMode;
     const currentPro=normaliseProCircuitState(this.registry.get('proCircuit'));
     this.crewProPaddockMode = Boolean(data?.crewProPaddockMode);
-    this.crewProPaddockCars = this.crewProPaddockMode ? [...new Set((data?.crewProPaddockCars||[]).filter(id=>cars[id]))].slice(0,3) : [];
-    this.crewProPaddockDrivers=this.crewProPaddockMode ? (data?.crewProPaddockDrivers||[]).slice(0,3) : [];
+    // Preserve each Championship heat's exact bay index, including unassigned
+    // slots. Filtering nulls used to shift later cars into the wrong bays.
+    this.crewProPaddockCars=this.crewProPaddockMode?
+      [0,1,2].map(i=>{
+        const id=data?.crewProPaddockCars?.[i];
+        return id&&cars[id]?id:null;
+      }):[];
+    this.crewProPaddockDrivers=this.crewProPaddockMode?
+      [0,1,2].map(i=>data?.crewProPaddockDrivers?.[i]||null):[];
     this.proGarageMode = Boolean(this.crewProPaddockMode || data?.proGarageMode ||
       data?.workshopLocationId===PRO_GARAGE_ID ||
       this.registry.get('workshopLocationId')===PRO_GARAGE_ID);
