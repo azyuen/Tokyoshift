@@ -713,7 +713,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     // Render at the right-hand end of the card, clear of the opponent stats.
     if(opponentCarId&&cars[opponentCarId]){
       const parts=renderStoryCar(s,cars[opponentCarId],{
-        x:805,groundY:788,targetWidth:255,depth:228,
+        x:740,groundY:788,targetWidth:255,depth:228,
         paintColor:opponentCarState.paintColor??opponent.paintColor??0x7f8899,
         shadow:false,garageGeometry:true,
       });
