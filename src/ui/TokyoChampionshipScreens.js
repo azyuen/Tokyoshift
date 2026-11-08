@@ -639,7 +639,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     ['QUALIFYING','SEMIFINAL','GRAND FINAL'][heat?.round||0];
   if(stage==='KNOCKOUT'){
     // Widen the knockout card to reserve a distinct right-hand car display bay.
-    const x=52,y=643,w=980,h=164,slant=21;
+    const x=52,y=643,w=800,h=164,slant=21;
     const graphic=o.add(s.add.graphics().setDepth(219));
     const outline=[{x:x+slant,y},{x:x+w,y},{x:x+w-slant,y:y+h},
       {x,y:y+h}];
@@ -714,11 +714,14 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     const standings=championshipStandings(state);
     const rivalIndex=standings.findIndex(row=>row.id===(heat?.opponentId||opponent.id));
     const rivalStanding=rivalIndex>=0?standings[rivalIndex]:null;
-    o.label(846,678,'CHAMPIONSHIP',15,GOLD,{font:DISPLAY});
-    o.label(846,702,'POINTS',12,MUTED);
-    o.label(846,718,fmt(rivalStanding?.total??0),23,PALE,{font:DISPLAY});
-    o.label(846,752,'RANKING',12,MUTED);
-    o.label(846,769,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',19,PALE,{font:DISPLAY});
+    // Independent ranking card, outside the opponent parallelogram.
+    o.add(s.add.rectangle(980,725,228,164,0x071728,.96)
+      .setStrokeStyle(2,0xc4a66a,.95).setDepth(219));
+    o.label(882,654,'DRIVER STANDINGS',17,GOLD,{font:DISPLAY});
+    o.label(882,692,'CHAMPIONSHIP POINTS',12,MUTED);
+    o.label(882,709,fmt(rivalStanding?.total??0),25,PALE,{font:DISPLAY});
+    o.label(882,749,'CHAMPIONSHIP RANK',12,MUTED);
+    o.label(882,766,rivalIndex>=0?'#'+(rivalIndex+1)+' / '+standings.length:'—',21,PALE,{font:DISPLAY});
     // Use the shared car renderer rather than the Garage-only scene helper.
     // Render at the right-hand end of the card, clear of the opponent stats.
     if(opponentCarId&&cars[opponentCarId]){
