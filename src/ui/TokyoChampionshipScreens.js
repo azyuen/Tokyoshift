@@ -301,7 +301,7 @@ function showSayakaAdviceManga(s,message){
     title:'TOKYO CHAMPIONSHIP // SAYAKA ADVICE',
     once:false,
     characters:{left:'sayakaFujieda'},
-    pages:[{speaker:'left',pose:'homeExplaining',text:message}],
+    pages:[{speaker:'left',pose:'track',text:message}],
     finalActionLabel:'BACK TO BRIEFING',
   });
 }
