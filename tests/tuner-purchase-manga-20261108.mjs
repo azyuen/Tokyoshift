@@ -60,6 +60,8 @@ test('Liberty Walk final page displays parts credit and exact live quoted payabl
   const quote = { total: 1123400, fullPartsCost: 2450000,
     installedCredit: 1700000, specialistPremium: 373400 };
   const manga = makeHeroBuildManga(shop, cars['240z'], cars.libertyWalk240z, quote);
+  assert(manga.pages[1].text.includes('FACTORY TO HERO'));
+  assert(manga.pages[1].text.includes('Full Level 3 tuning and three NOS shots'));
   assert(manga.pages[2].text.includes('installed parts credit −¥ 1,700,000'));
   assert(manga.pages[2].text.includes('Total to pay: ¥ 1,123,400'));
   assert.equal(finalPage(manga).actionLabel, 'YES, ¥ 1,123,400');
