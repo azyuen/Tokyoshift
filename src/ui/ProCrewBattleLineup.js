@@ -578,79 +578,202 @@ function draw(s,opts){
 
 
 /**
- * Championship heat-slot picker. Uses the Open Circuit crew roster popup's
- * layout (seven numbered driver rows with portrait, car and drivetrain).
- * It is independent of the Open Circuit fixture/payment state.
+ * Tokyo Championship roster editor. Uses the Open Circuit seven-driver
+ * row design but sits OVER the existing Championship briefing and edits all
+ * three heat assignments in one visit. No Pro Season room background is shown.
  */
-export function showChampionshipCrewRosterPopup(s,{units=[],selected=[],slot=0,lockedSlots=[],onSelect,onClose}={}){
-  const pending=loadAssets(s,units);
-  if(pending){
-    s._proOverlayClose?.();
-    const blocker=s.add.rectangle(W/2,H/2,W,H,0x030915,.95).setDepth(300).setInteractive();
-    const caption=s.add.text(W/2,H/2,'LOADING CREW CARS',{
-      fontFamily:PIXEL,fontSize:'18px',color:'#ffffff',
-    }).setOrigin(.5).setDepth(301);
-    const finish=()=>{blocker.destroy();caption.destroy();
-      if(s.sys?.isActive?.())showChampionshipCrewRosterPopup(s,{units,selected,slot,lockedSlots,onSelect,onClose});
-    };
-    s.load.once('complete',finish);s.load.start();return;
-  }
-  s._proOverlayClose?.();
-  const nodes=[];
-  const add=node=>{nodes.push(node);return node;};
-  const close=()=>{
-    if(s._proOverlayClose===close)s._proOverlayClose=null;
-    nodes.forEach(node=>node?.destroy?.());
-    s.events.off('shutdown',close);
-  };
-  s._proOverlayClose=close;s.events.once('shutdown',close);
-  const rect=(x,y,w,h,fill,border,depth=251)=>add(s.add.rectangle(x,y,w,h,fill,1)
-    .setStrokeStyle(2,border).setDepth(depth));
-  const txt=(x,y,value,size=16,color='#f4f3f3',depth=254)=>add(s.add.text(x,y,value,{
-    fontFamily:BODY,fontSize:size+'px',color,fontStyle:'600',
-  }).setDepth(depth));
-  rect(W/2,H/2,W,H,0x030915,0x030915,249).setAlpha(.72)
-    .setInteractive().on('pointerdown',()=>{close();onClose?.();});
-  rect(1235,411,596,740,0x061421,BLUE,250);
-  txt(970,60,'SELECT CREW DRIVER  /  HEAT 0'+(slot+1),19,'#fff4f2',253);
-  const state=s.registry.get('carStates')||{};
-  units.slice(0,7).forEach((u,i)=>{
-    const y=110+i*83,assigned=selected.indexOf(u.id);
-    const locked=lockedSlots.includes(i)||selected.some((id,j)=>j!==slot&&id===u.id);
-    const border=assigned>=0?RED:BLUE;
-    const hit=rect(1235,y+30,558,76,assigned>=0?0x26384d:0x0a1d2e,border);
-    if(!locked)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-      close();onSelect?.(u.id,slot);
+function queueChampionshipRosterAssets(s,units){
+  let count=0;
+  const selected=s.registry.get('playerCharacterId')||'renMizuno';
+  for(const unit of units){
+    const a=getCharacterVisualAsset(unit.id,'idle',{
+      playerCharacterId:selected,proCircuit:true,
     });
-    rect(991,y+29,40,40,assigned>=0?0x913347:0x10273a,border,254);
-    if(assigned>=0)txt(985,y+14,String(assigned+1),21,'#ffffff',255);
-    const asset=getCharacterVisualAsset(u.id,'idle',{
-      playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',proCircuit:true,
-    });
-    if(asset?.key&&s.textures.exists(asset.key)){
-      const source=s.textures.get(asset.key).getSourceImage();
-      add(s.add.image(1071,y+63,asset.key).setOrigin(.5,1)
-        .setScale(Math.min(65/source.height,64/source.width)).setDepth(253));
+    if(a?.key&&a.path&&!s.textures.exists(a.key)){
+      s.load.image(a.key,getCharacterAssetUrl(a.path));count++;
     }
-    const who=txt(1119,y+1,u.name,18,locked?'#8595a3':'#f4f3f3');
-    if(who.width>142)who.setScale(142/who.width);
-    const model=txt(1119,y+26,cars[u.carId]?.shortName||u.carId,15,'#c0dce8');
-    if(model.width>142)model.setScale(142/model.width);
-    txt(1119,y+48,normaliseDrive(u.drivetrain)+' · '+Math.round(u.powerKW||0)+' kW',
-      14,'#99bfce');
+  }
+  const state=s.registry.get('carStates')||{};
+  const unique=Object.fromEntries(
+    units.filter(u=>cars[u.carId]).map(u=>[u.carId,cars[u.carId]]));
+  count+=preloadCarAppearanceAssets(s,unique,'20261108-champ-roster');
+  for(const [id,car] of Object.entries(unique))
+    count+=preloadCarWheel(s,car,state[id]||{});
+  return count;
+}
+
+export function showChampionshipCrewRosterPopup(s,options={}){
+  if(s._championshipCrewRosterLoading)return;
+  const {units=[],selected=[],slot=0,lockedSlots=[],onConfirm,onClose}=options;
+  const queued=options._loaded?0:queueChampionshipRosterAssets(s,units);
+  if(queued){
+    s._championshipCrewRosterLoading=true;
+    const shade=s.add.rectangle(W/2,H/2,W,H,0x030915,.74)
+      .setDepth(300).setInteractive();
+    const caption=s.add.text(W/2,H/2,'PREPARING CREW ROSTER',{
+      fontFamily:PIXEL,fontSize:'16px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(301);
+    const cleanup=()=>{shade.destroy();caption.destroy();
+      s._championshipCrewRosterLoading=false;};
+    const abort=()=>{s.load.off('complete',finish);cleanup();};
+    const finish=()=>{
+      s.events.off('shutdown',abort);cleanup();
+      if(!s.sys?.isActive?.())return;
+      const unique=Object.fromEntries(
+        units.filter(u=>cars[u.carId]).map(u=>[u.carId,cars[u.carId]]));
+      ensureDerivedModularCarTextures(s,unique);
+      showChampionshipCrewRosterPopup(s,{...options,_loaded:true});
+    };
+    s.events.once('shutdown',abort);
+    s.load.once('complete',finish);
+    s.load.start();
+    return;
+  }
+
+  s._championshipCrewRosterClose?.();
+  const nodes=[],add=o=>{nodes.push(o);return o;};
+  let closed=false;
+  const close=()=>{
+    if(closed)return;
+    closed=true;
+    nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    s.events.off('shutdown',close);
+    if(s._championshipCrewRosterClose===close)s._championshipCrewRosterClose=null;
+  };
+  s._championshipCrewRosterClose=close;
+  s.events.once('shutdown',close);
+  const rect=(x,y,w,h,fill,border,depth=313)=>add(s.add.rectangle(
+    x,y,w,h,fill,1).setStrokeStyle(2,border).setDepth(depth));
+  const text=(x,y,value,size=16,color='#f4f3f3',depth=315,pixel=false)=>
+    add(s.add.text(x,y,String(value),{
+      fontFamily:pixel?PIXEL:BODY,fontSize:size+'px',
+      fontStyle:'600',color,
+    }).setFontSize(size).setDepth(depth));
+  const draft=[0,1,2].map(i=>selected[i]||null);
+  const locked=new Set(lockedSlots);
+  let currentSlot=locked.has(slot)?[0,1,2].find(i=>!locked.has(i))??slot:slot;
+  const chooseSlot=i=>{if(locked.has(i))return;currentSlot=i;refresh();};
+  const dismiss=()=>{close();onClose?.();};
+
+  // Keep the existing Tokyo Championship artwork and all sprites underneath.
+  rect(W/2,H/2,W,H,0x030915,0x030915,300).setAlpha(.65)
+    .setInteractive().on('pointerdown',dismiss);
+  rect(1235,417,596,758,0x061421,BLUE,310);
+  text(966,51,'CHAMPIONSHIP CREW LINEUP',18,'#fff4f2',315,true);
+  text(968,82,'SELECT A HEAT, THEN CHOOSE A CREW DRIVER',14,'#a8d0e2',315);
+
+  const tabs=[];
+  for(let i=0;i<3;i++){
+    const x=1038+i*197;
+    const hit=rect(x,140,184,61,0x11283b,BLUE,314);
+    if(!locked.has(i))hit.setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>chooseSlot(i));
+    const title=text(x,121,'HEAT 0'+(i+1),15,'#f2c67d',316,true).setOrigin(.5);
+    const driver=text(x,145,'SELECT DRIVER',13,'#d5e7ef',316).setOrigin(.5);
+    tabs.push({hit,title,driver});
+  }
+
+  const rowNodes=[];
+  const carStates=s.registry.get('carStates')||{};
+  const player=s.registry.get('playerCharacterId')||'renMizuno';
+  units.slice(0,7).forEach((u,i)=>{
+    const y=214+i*74;
+    const hit=rect(1235,y,558,68,0x0a1d2e,BLUE,313);
+    hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+      const other=draft.indexOf(u.id);
+      if(locked.has(currentSlot)||(other>=0&&locked.has(other)))return;
+      if(other!==-1&&other!==currentSlot){
+        const previous=draft[currentSlot];
+        draft[other]=previous;
+      }
+      draft[currentSlot]=u.id;
+      // Automatically move to the next unfilled heat; tabs always permit
+      // revisiting any pending heat before committing the full roster.
+      const next=[0,1,2].find(j=>!locked.has(j)&&!draft[j]);
+      if(next!==undefined)currentSlot=next;
+      refresh();
+    });
+    const numberBox=rect(991,y,40,40,0x10273a,BLUE,315);
+    const number=text(991,y,'',19,'#ffffff',317,true).setOrigin(.5);
+    const a=getCharacterVisualAsset(u.id,'idle',{
+      playerCharacterId:player,proCircuit:true,
+    });
+    if(a?.key&&s.textures.exists(a.key)){
+      const src=s.textures.get(a.key).getSourceImage();
+      add(s.add.image(1064,y+31,a.key).setOrigin(.5,1)
+        .setScale(Math.min(64/src.height,63/src.width)).setDepth(315));
+    }
+    const who=text(1119,y-28,u.name,18,'#f4f3f3',316);
+    if(who.width>144)who.setScale(144/who.width);
+    const model=text(1119,y-3,cars[u.carId]?.shortName||u.carId,
+      15,'#c0dce8',316);
+    if(model.width>144)model.setScale(144/model.width);
+    const specs=text(1119,y+18,normaliseDrive(u.drivetrain)+
+      ' · '+Math.round(u.powerKW||0)+' kW',14,'#99bfce',316);
+    if(specs.width>148)specs.setScale(148/specs.width);
     const car=cars[u.carId];
     if(car&&typeof s.createCarDisplay==='function'){
       try{
-        const parts=s.createCarDisplay(car,1414,y+30,145,253,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+        const parts=s.createCarDisplay(car,1414,y,145,253,
+          getCarPaintColor(carStates[u.carId]||{}),null,false,carStates[u.carId]||{});
         parts.forEach((part,index)=>{
           if(index===2){part?.destroy?.();return;}
-          if(part)add(part.setDepth?.(253)||part);
+          if(part){part.setDepth?.(315);add(part);}
         });
-      }catch(error){console.warn('[Tokyo SHIFT] Crew car preview unavailable',u.carId,error);}
+      }catch(err){
+        console.warn('[Tokyo SHIFT] Championship crew preview unavailable',u.carId,err);
+      }
     }
+    rowNodes.push({hit,numberBox,number,who});
   });
-  const back=rect(1420,734,182,44,0x11283b,BLUE,260)
-    .setInteractive({useHandCursor:true}).on('pointerdown',()=>{close();onClose?.();});
-  txt(1391,724,'CLOSE',17,'#ffffff',261);
+
+  const done=rect(1324,753,224,47,0x153e38,0x65e7bf,322)
+    .setInteractive({useHandCursor:true});
+  const doneText=text(1324,752,'CONFIRM CREW',15,'#ffffff',323,true).setOrigin(.5);
+  const cancel=rect(1086,753,194,47,0x11283b,BLUE,322)
+    .setInteractive({useHandCursor:true}).on('pointerdown',dismiss);
+  text(1086,752,'CANCEL',14,'#ffffff',323,true).setOrigin(.5);
+  const message=text(967,705,'SELECT THREE DIFFERENT CREW CARS',14,
+    '#e6c180',319);
+  const canConfirm=()=>{
+    const ids=draft.filter(Boolean);
+    const carIds=ids.map(id=>units.find(u=>u.id===id)?.carId);
+    return ids.length===3&&new Set(ids).size===3&&
+      new Set(carIds).size===3&&!carIds.includes(undefined)&&
+      [...locked].every(i=>draft[i]===selected[i]);
+  };
+  done.on('pointerdown',()=>{
+    if(!canConfirm())return;
+    const result=[...draft];close();onConfirm?.(result);
+  });
+
+  function refresh(){
+    tabs.forEach((tab,i)=>{
+      const selectedTab=i===currentSlot;
+      tab.hit.setFillStyle(locked.has(i)?0x202935:
+        selectedTab?0x593d28:0x11283b);
+      tab.hit.setStrokeStyle(selectedTab?3:2,
+        selectedTab?0xf1bd65:locked.has(i)?0x5c6a78:BLUE);
+      const name=units.find(u=>u.id===draft[i])?.name||'SELECT DRIVER';
+      tab.driver.setText(locked.has(i)?'LOCKED  /  '+name:name);
+      if(tab.driver.width>165)tab.driver.setScale(165/tab.driver.width);
+    });
+    rowNodes.forEach((r,i)=>{
+      const u=units[i],assigned=draft.indexOf(u.id);
+      const blocked=assigned>=0&&locked.has(assigned);
+      r.hit.setFillStyle(assigned>=0?0x273d50:0x0a1d2e);
+      r.hit.setStrokeStyle(2,assigned>=0?RED:BLUE);
+      r.numberBox.setFillStyle(assigned>=0?0x913347:0x10273a);
+      r.numberBox.setStrokeStyle(2,assigned>=0?RED:BLUE);
+      r.number.setText(assigned>=0?String(assigned+1):'');
+      r.who.setColor(blocked?'#8a9cab':'#f4f3f3');
+    });
+    const ready=canConfirm();
+    done.setFillStyle(ready?0x153e38:0x26303a);
+    done.setStrokeStyle(2,ready?0x65e7bf:0x586676);
+    doneText.setColor(ready?'#ffffff':'#8e9baa');
+    message.setText(ready?'ALL THREE HEATS ASSIGNED  /  READY TO CONFIRM':
+      'ASSIGN THREE DISTINCT CREW CARS BEFORE CONFIRMING');
+  }
+  refresh();
 }
