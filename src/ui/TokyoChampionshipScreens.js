@@ -661,7 +661,6 @@ function showCrewBattleBriefing(s,o,state,actions){
     const unit=available.find(u=>u.id===id);
     const car=unit&&cars[unit.carId];
     const active=Boolean(heat&&i===results.length);
-    const complete=i<results.length;
     o.label(x-101,py+16,'HEAT 0'+(i+1),20,active?GOLD:PALE,
       {font:DISPLAY,depth:241});
     const driverName=unit?.name||'SELECT DRIVER';
@@ -677,10 +676,6 @@ function showCrewBattleBriefing(s,o,state,actions){
       });
       parts.forEach(part=>o.add(part));
     }
-    if(complete)o.label(x-101,py+ph-28,
-      results[i]?.won?'WIN':'LOSS',14,results[i]?.won?'#81d7a5':'#ef9ca4',
-      {depth:243});
-    else if(active)o.label(x-101,py+ph-29,'UP NEXT',14,GOLD,{depth:243});
     if(active){
       const hi=o.add(s.add.graphics().setDepth(244));
       hi.lineStyle(3,0xf0c778,.95);
