@@ -15,7 +15,8 @@ export const PRO_GARAGE_BAYS = Object.freeze([
 
 export function stageProGarage(raw,ownedCarIds=[],locations={},garageTier=0){
   const c=normaliseProCircuitState(raw);
-  if(c.seasonStatus!=='ACTIVE'||!Array.isArray(c.registeredDriverCars)||
+  if((c.seasonStatus!=='ACTIVE'&&!(c.activeChampionship&&!c.activeChampionship.completed))||
+    !Array.isArray(c.registeredDriverCars)||
     c.registeredDriverCars.length!==3)return {error:'THREE REGISTERED PRO SEASON CARS REQUIRED'};
   // Migrate older saves which physically moved their cars into the paddock.
   // Preserve each original workshop so the car is visible in both places.
