@@ -10,6 +10,7 @@ import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircui
 import { saveProTransaction } from '../state/GameState.js?v=20261030-r739';
 import { addProGlowingHotspot } from './ProBriefingChrome.js?v=20261020-r613';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
+import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
 
 const W=1560, H=840;
@@ -102,6 +103,19 @@ function loadAssets(s,view,done){
   const seen=new Set();
   for(const [key,path] of images)if(!seen.has(key)&&!s.textures.exists(key)){
     seen.add(key);s.load.image(key,path);queued++;
+  }
+  // The opponent car must be preloaded explicitly: Championship briefings do
+  // not expose the Garage-only createCarDisplay helper.
+  if(stage==='KNOCKOUT'){
+    const state=circuit(s).activeChampionship;
+    const heat=state?.stage==='KNOCKOUT'&&!state.completed?heatFor(state):null;
+    const rival=heat?.opponent||{};
+    const driver=circuit(s).drivers?.[rival.id]||{};
+    const assigned=heat?.opponentId?
+      getChampionshipAiCar(state,heat.opponentId,'KNOCKOUT',heat.round||0):null;
+    const id=assigned?.carId||rival.carId||driver.carId||
+      driver.selectedCarId||heat?.opponentCarId;
+    if(cars[id])queued+=preloadStoryCar(s,cars[id]);
   }
   if(!queued)return false;
   closeSceneOverlay(s);
@@ -695,17 +709,15 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     o.label(326,750,'STANDARD CHAMPIONSHIP',15,PALE);
     o.label(231,775,'CLASS',11,MUTED);
     o.label(326,771,'CHAMPIONSHIP',15,PALE);
-    if(opponentCarId&&cars[opponentCarId]&&
-      typeof s.createCarDisplay==='function'){
-      try{
-        const parts=s.createCarDisplay(cars[opponentCarId],680,745,270,215,
-          opponentCarState.paintColor??opponent.paintColor??0x7f8899,null,false,
-          opponentCarState)||[];
-        for(const [index,part] of parts.entries()){
-          if(index===2){part?.destroy?.();continue;}
-          if(part){part.setDepth?.(228);o.add(part);}
-        }
-      }catch(error){console.warn('[Tokyo SHIFT] Championship rival car preview',error);}
+    // Use the shared car renderer rather than the Garage-only scene helper.
+    // Render at the right-hand end of the card, clear of the opponent stats.
+    if(opponentCarId&&cars[opponentCarId]){
+      const parts=renderStoryCar(s,cars[opponentCarId],{
+        x:805,groundY:788,targetWidth:255,depth:228,
+        paintColor:opponentCarState.paintColor??opponent.paintColor??0x7f8899,
+        shadow:false,garageGeometry:true,
+      });
+      parts.forEach(part=>o.add(part));
     }
   }else o.label(993,615,active?'NEXT RACE  /  '+next:st+'  /  EVENT RECORDED',
     20,active?GOLD:PALE,{width:525,stroke:true});
@@ -760,7 +772,7 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
         showAdviceDialogue(note);
       }catch(error){s.proError=error.message;}
     },!active);
-    glow(698,465,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
+    glow(742,465,198,'CAR SETUP',()=>openPaddock(s,state,'DRIVER'),!active);
     glow(1438,465,205,'EVENT DETAILS',()=>showEvent(s,stage,actions,
       displayMode==='DETAILS'?'BRACKET':'DETAILS',bracketHalf));
   }else advicePanel(s,o,state,stage,42,650,906);
