@@ -201,13 +201,13 @@ function canvas(s,view,{hideTopChrome=false}={}){
   };
   return {add,close,label,headline,panel,button,iconButton};
 }
-function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false){
+function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false,depth=210){
   if(!key||!s.textures.exists(key))return;
   const image=s.textures.get(key).getSourceImage();
   const scale=Math.min(maxHeight/image.height,maxWidth/image.width);
   o.add(s.add.ellipse(x,feet-7,maxWidth*.87,37,0x020711,.60).setDepth(211));
   o.add(s.add.image(x,feet,key).setOrigin(.5,1).setScale(scale)
-    .setFlipX(flip).setDepth(210));
+    .setFlipX(flip).setDepth(depth));
 }
 function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
@@ -242,9 +242,9 @@ function mainSprites(s,o,view){
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
     sprite(s,o,'champSayaka',306,741,550,340);
-    sprite(s,o,player?.key,518,741,548,325);
+    sprite(s,o,player?.key,518,741,550,340);
     sprite(s,o,'champDaichi',742,741,550,350);
-    sprite(s,o,'champHiroshi',1438,741,550,307,true);
+    sprite(s,o,'champHiroshi',1438,741,550,340,true,240);
   }else{
     sprite(s,o,'champSayaka',198,625,440,246);
     sprite(s,o,player?.key,447,627,438,260);
@@ -624,15 +624,14 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     ' / 3  VS  '+(heat?.opponent?.name||'—'):
     ['QUALIFYING','SEMIFINAL','GRAND FINAL'][heat?.round||0];
   if(stage==='KNOCKOUT'){
-    // Identical 654×164 Open Circuit opponent-card geometry, shifted left.
-    // Red is the sole Championship colour substitution.
-    const x=52,y=643,w=654,h=164,slant=21;
+    // Widen the knockout card to reserve a distinct right-hand car display bay.
+    const x=52,y=643,w=800,h=164,slant=21;
     const graphic=o.add(s.add.graphics().setDepth(219));
     const outline=[{x:x+slant,y},{x:x+w,y},{x:x+w-slant,y:y+h},
       {x,y:y+h}];
     graphic.fillStyle(0x071728,.96);graphic.fillPoints(outline,true);
     graphic.lineStyle(3,0xe45868,1);graphic.strokePoints(outline,true);
-    o.headline(89,652,active?'NEXT OPPONENT':'EVENT STATUS',24,'#ff7885',570);
+    o.headline(89,652,active?'NEXT OPPONENT':'EVENT STATUS',24,'#ff7885',700);
     const frameX=74,frameY=683,frameW=129,frameH=106;
     // Both edges follow the outer card's left-leaning parallelogram.
     const leftTop=frameX+slant*(y+frameH-frameY)/h;
@@ -699,12 +698,12 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
     if(opponentCarId&&cars[opponentCarId]&&
       typeof s.createCarDisplay==='function'){
       try{
-        const parts=s.createCarDisplay(cars[opponentCarId],545,743,211,225,
+        const parts=s.createCarDisplay(cars[opponentCarId],680,745,270,215,
           opponentCarState.paintColor??opponent.paintColor??0x7f8899,null,false,
           opponentCarState)||[];
         for(const [index,part] of parts.entries()){
           if(index===2){part?.destroy?.();continue;}
-          if(part)o.add(part);
+          if(part){part.setDepth?.(228);o.add(part);}
         }
       }catch(error){console.warn('[Tokyo SHIFT] Championship rival car preview',error);}
     }
@@ -768,9 +767,9 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   if(stage==='KNOCKOUT'){
     const chosen=s.registry.get('selectedCarId');
     const chosenName=cars[chosen]?.shortName||cars[chosen]?.name||'SELECT CAR IN PADDOCK';
-    o.button(1230,729,338,70,active?'GO TO GRID':'EVENT COMPLETE',
+    o.button(1370,729,338,70,active?'GO TO GRID':'EVENT COMPLETE',
       ()=>enterGrid(),{red:active,disabled:!active,subtitle:chosenName});
-    o.button(1230,795,338,34,'RETURN TO HUB',
+    o.button(1370,795,338,34,'RETURN TO HUB',
       ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
     return;
   }
