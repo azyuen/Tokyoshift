@@ -617,7 +617,7 @@ function showCrewBattleBriefing(s,o,state,actions){
   units.forEach((unit,i)=>{
     const x=360+i*218,y=557;
     const active=i===results.length&&!!heat;
-    o.panel(x,y,199,100,active?.96:.82,active?0xf1bd65:0x61778e);
+    o.panel(x,y,199,100,active ? .96 : .82,active?0xf1bd65:0x61778e);
     o.label(x-87,y-39,'HEAT 0'+(i+1),17,GOLD,{font:DISPLAY});
     o.headline(x-87,y-13,unit.name.toUpperCase(),20,PALE,176);
     o.label(x-87,y+19,cars[unit.carId]?.shortName||unit.carId,17,MUTED,{width:175});
@@ -646,10 +646,13 @@ function showCrewBattleBriefing(s,o,state,actions){
   o.label(1151,443,'HEATS COMPLETED  '+results.length+' / 3',18,MUTED);
   o.label(1151,490,'YOU DRIVE EACH SELECTED CREW CAR',16,GOLD,{width:352});
   o.button(1334,585,355,48,'CHANGE CREW',()=>showChampionshipCrewSelector(s,actions),
-    {disabled:!heat||results.length>0});
+    {disabled:!heat});
   o.button(1167,789,250,54,'RETURN TO HUB',()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
   o.button(1422,789,250,54,heat?'GO TO GRID':'EVENT COMPLETE',()=>{
-    if(heat)showCarPicker(s,'CREW',actions);
+    if(heat){
+      if((state.crewSelectedIds||[]).length!==3)return showChampionshipCrewSelector(s,actions);
+      showCarPicker(s,'CREW',actions);
+    }
   },{red:!!heat,disabled:!heat});
 }
 function showChampionshipCrewSelector(s,actions,selected=null){
@@ -670,7 +673,7 @@ function showChampionshipCrewSelector(s,actions,selected=null){
       const next=picked.includes(u.id)?picked.filter(id=>id!==u.id):
         picked.length<3?[...picked,u.id]:picked;
       showChampionshipCrewSelector(s,actions,next);
-    },{selected:picked.includes(u.id),disabled:used.has(u.carId)});
+    },{selected:picked.includes(u.id),disabled:used.has(u.carId)&&!picked.includes(u.id)});
   });
   o.button(322,757,460,52,'BACK TO BRIEFING',()=>showTokyoChampionshipScreens(s,{view:'CREW',actions}));
   o.button(1150,757,540,52,'CONFIRM CREW  /  '+picked.length+' OF 3',()=>{
@@ -957,7 +960,9 @@ function showCarPicker(s,stage,actions){
   const crew=stage==='CREW';
   const heat=crew?getChampionshipCrewHeat(state):null;
   const used=new Set(heat?.usedCarIds||[]);
-  const units=crew?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&!used.has(u.carId)):[];
+  const selectedCrew=state.crewSelectedIds||[];
+  const units=crew?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&
+    !used.has(u.carId)&&selectedCrew.includes(u.id)):[];
   const owned=s.registry.get('ownedCarIds')||[];
   const roster=crew?units.map(u=>u.carId):
     (state.driverCarId?[state.driverCarId]:
