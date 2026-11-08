@@ -234,9 +234,13 @@ function sprite(s,o,key,x,feet,maxHeight=410,maxWidth=245,flip=false,depth=210){
 function crewBriefingUnits(s){
   const available=getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment);
   const selected=circuit(s).activeChampionship?.crewSelectedIds||[];
-  const ordered=selected.map(id=>available.find(u=>u.id===id)).filter(Boolean);
-  return [...ordered,...available.filter(u=>!ordered.some(v=>v.id===u.id))].slice(0,3);
+  const occupied=new Set(selected.filter(Boolean));
+  const unused=available.filter(u=>!occupied.has(u.id));
+  // Preserve heat slot positions, even while a legacy save is being repaired.
+  return [0,1,2].map(i=>available.find(u=>u.id===selected[i])||unused.shift())
+    .filter(Boolean);
 }
+
 function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
     'idle',{proCircuit:true});
@@ -1043,8 +1047,10 @@ function showCarPicker(s,stage,actions){
   const heat=crew?getChampionshipCrewHeat(state):null;
   const used=new Set(heat?.usedCarIds||[]);
   const selectedCrew=state.crewSelectedIds||[];
+  const nextSlot=(state.crew?.results||[]).length;
+  const heatDriver=selectedCrew[nextSlot];
   const units=crew?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&
-    !used.has(u.carId)&&selectedCrew.includes(u.id)):[];
+    !used.has(u.carId)&&u.id===heatDriver):[];
   const owned=s.registry.get('ownedCarIds')||[];
   const roster=crew?units.map(u=>u.carId):
     (state.driverCarId?[state.driverCarId]:
