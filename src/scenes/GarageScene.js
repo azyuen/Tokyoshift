@@ -1927,24 +1927,27 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    // Shared NOS status/activation on the workshop HOME menu. Factory-fitted
-    // LBWK bottles exist in the car specification, not exhaustNosTuning, so
-    // their status must never depend on purchased parts alone.
+    // Compact NOS status and action live INSIDE the EXHAUST / NOS menu row.
+    // This matters: Crew Space's service/navigation starts at screen y=608,
+    // and the normal Warehouse service button starts at y=662. A separate
+    // bottom-right NOS button would overlap and block those touch targets.
+    const nosRow = this.upgradeButtons.find(item => item.name === 'EXHAUST / NOS');
+    nosRow?.arrow?.setVisible(false);
     this.nosHomeStatusText = this.add.text(
-      SIDE.x + 24, SIDE.y + 512, '', {
+      SIDE.x + 24, SIDE.y + 476, '', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#93bfdd',
         wordWrap: { width: SIDE.w - 48 },
       }
     ).setDepth(38);
     this.nosHomeButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2, SIDE.y + 566,
-      SIDE.w - 36, 42, 0x12352e, 1
-    ).setStrokeStyle(1, 0x62e8c7, 1).setDepth(37);
+      SIDE.x + SIDE.w - 80, SIDE.y + 381,
+      120, 31, 0x12352e, 1
+    ).setStrokeStyle(1, 0x62e8c7, 1).setDepth(39);
     this.nosHomeLabel = this.add.text(
-      SIDE.x + SIDE.w / 2, SIDE.y + 566, '', {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eafff6',
+      SIDE.x + SIDE.w - 80, SIDE.y + 381, '', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eafff6',
       }
-    ).setOrigin(0.5).setDepth(38);
+    ).setOrigin(0.5).setDepth(40);
     this.refreshNosHomeControls();
 
   }
@@ -2009,12 +2012,13 @@ export default class GarageScene extends Phaser.Scene {
             (status.enabled ? 'ACTIVE' : 'OFF') +
             (status.factory ? ' (FACTORY)' : '');
     this.nosHomeStatusText.setText(description);
+    // The home status sits between CHASSIS and Crew Space's top service button.
     this.nosHomeStatusText.setColor(status.active ? '#a9e9cf' : '#93bfdd');
     this.nosHomeButton.removeAllListeners('pointerdown');
     const ready = allowed && status.usable;
-    const label = !allowed ? 'NOS UNAVAILABLE'
-      : !status.usable ? 'INSTALL VIA EXHAUST / NOS'
-        : status.enabled ? 'DISABLE NOS FOR RACE' : 'ENABLE NOS FOR RACE';
+    const label = !allowed ? 'NOS N/A'
+      : !status.usable ? 'INSTALL NOS  >'
+        : status.enabled ? 'NOS OFF  >' : 'NOS ON  >';
     this.nosHomeLabel?.setText(label).setColor(allowed ? '#eafff6' : '#71838c');
     this.nosHomeButton.setFillStyle(allowed ? 0x12352e : 0x17202a, 1)
       .setStrokeStyle(1, allowed ? 0x62e8c7 : 0x52616a, 1);
