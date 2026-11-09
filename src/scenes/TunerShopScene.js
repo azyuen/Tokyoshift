@@ -80,6 +80,9 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   preload() {
+    // A crew hero keeps its crew__ ID; hydrate its collector artwork/spec in
+    // both scene and physics catalogues before queuing donor assets.
+    syncCrewHeroCarModels(this.registry);
     // A race can temporarily replace selectedCarId. Use the player's last
     // deliberate personal-car selection before checking regional tuning.
     restorePreferredCar(this.registry);
