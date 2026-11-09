@@ -1,4 +1,5 @@
 import { cars } from './cars.js?v=20261026-r687';
+import { syncCrewHeroCarModels } from './crewHeroBuilds.js';
 import { stockClassFor } from './stockClasses.js?v=20261026-r687';
 import { getDefaultFactoryPaintColor } from './factoryPaintPalettes.js?v=20261020-r623';
 import {
@@ -722,6 +723,9 @@ export function removeCrewMember(registry, regionId) {
   registry.set('carGarageLocations', locations);
   registry.set('crewPendingRecruit', null);
   registry.set('crewInviteInterest', null);
+  // If this member owned a converted crew hero, restore the stock runtime
+  // alias now that their saved loan car has been withdrawn.
+  syncCrewHeroCarModels(registry);
 
   if (registry.get('selectedCarId') === loanCarId) {
     registry.set('selectedCarId', owned.find(id => !cars[id]?.crewLoan) || owned[0] || null);
