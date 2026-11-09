@@ -116,7 +116,9 @@ export function makeHeroBuildManga(shop, donor, hero, quote = {}) {
       text: (isFullWorks ? 'FACTORY TO HERO // ' : '') +
         (figures.join('  |  ') || 'The completed car uses a dedicated performance build.') +
         (isFullWorks ? '\nFull Level 3 tuning and three NOS shots. ' : '\n') +
-        'The donor is permanently replaced by a fixed-spec collector car. Tuning is sealed.',
+        (donor?.crewLoan
+          ? 'The recruited driver keeps this loan car. Its body and performance become a sealed hero build.'
+          : 'The donor is permanently replaced by a fixed-spec collector car. Tuning is sealed.'),
     },
     decision(
       breakdown + (voice.close || 'This is the full build price.') +
