@@ -138,7 +138,7 @@ test('Daichi UI exposes both tabs, four levels, real build readouts and disabled
     assert.ok(BRIEFING_POWER_PARTS.some(p=>p.id===part));
   assert.ok(ui.includes('ENGINE + NOS') && ui.includes('GRIP + WEIGHT'));
   assert.ok(ui.includes("level===0?'STOCK':'L'+level"));
-  assert.ok(ui.includes('setDriverPowerPartLevels(carState,requestedLevels)'));
+  assert.ok(ui.includes('setDriverPowerPartLevels(carState,requestedLevels,state.playerCarId)'));
   assert.ok(ui.includes('addLiveEngineeringMetrics(carState)'));
   assert.ok(ui.includes("Number(config?.vehicleMassKg)"));
   assert.ok(ui.includes('previewMetrics(previewState)'));

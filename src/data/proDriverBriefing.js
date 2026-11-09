@@ -3,6 +3,8 @@ import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { getExhaustNosTuning } from './secondaryTuning.js?v=20261026-r687';
+import { getNosEquipment, withNosEnabled } from './nosEquipment.js';
+import { cars } from './cars.js?v=20261026-r687';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261030-r739';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
@@ -78,7 +80,10 @@ export function driverBriefingEligibility(state, carState = {}, powerKW = 0, own
   if (!owned.includes(state?.playerCarId)) problems.push('REGISTERED CAR NOT OWNED');
   if (rules.maxPowerKW != null && (!Number.isFinite(powerKW) || powerKW > rules.maxPowerKW))
     problems.push('POWER EXCEEDS ' + rules.maxPowerKW + ' KW LIMIT');
-  const nos = Boolean(carState.nosInstalled) || Number(carState.exhaustNosTuning?.nosKit || 0) > 0;
+  const car = cars[state?.playerCarId] || cars[getBaseCarId(state?.playerCarId)] || {};
+  // Scrutineer what can actually fire, not an installation flag. Disabled
+  // LBWK factory NOS and a stored purchased bottle are legal in NO NOS heats.
+  const nos = getNosEquipment(car, carState).active;
   if (rules.noNos && nos) problems.push('NOS IS PROHIBITED');
   if (rules.stock) problems.push(...getFactoryStockStatus(carState).reasons);
   if (rules.drivetrain) {
@@ -118,7 +123,9 @@ export function driverOpponentAdvice(opponentCar = {}, opponent = {}, playerCar 
 
 // Don't delete purchased NOS upgrades. A saved, reversible removal is kept in
 // the car state; it survives reload and is restored after the competition ends.
-export function toggleBriefingNos(state = {}) {
+export function toggleBriefingNos(state = {}, carId = null) {
+  const factory = getNosEquipment(cars[carId || state.crewHeroCarId] || {},state);
+  if (factory.factory) return withNosEnabled(state,!factory.enabled);
   const next = { ...state, exhaustNosTuning: { ...(state.exhaustNosTuning || {}) } };
   if (state.proBriefingNosStash) {
     next.nosInstalled = Boolean(state.proBriefingNosStash.nosInstalled);
@@ -165,7 +172,7 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
 
 // Install any owned level from 0 through the level purchased before the
 // professional event. Never create extra upgrades or modify the bought kit.
-export function getDriverPowerPartLevelInfo(carState = {}, partId) {
+export function getDriverPowerPartLevelInfo(carState = {}, partId, carId = null) {
   const part = BRIEFING_POWER_PARTS.find(p => p.id === partId);
   if (!part) return null;
   const stash = carState.proBriefingPowerStash?.[part.group] || {};
@@ -174,6 +181,13 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
     : part.group === 'exhaustNosTuning'
       ? getExhaustNosTuning(carState) : carState[part.group] || {};
   if (partId === 'nosKit') {
+    const factory = getNosEquipment(cars[carId || carState.crewHeroCarId] || {},carState);
+    if (factory.factory) return {
+      current: factory.enabled ? factory.equippedShots : 0,
+      original: factory.equippedShots,
+      stored: !factory.enabled,
+      factory: true,
+    };
     const nosStash = carState.proBriefingNosStash;
     const savedKit = nosStash?.exhaustNosTuning || {};
     const current = Math.max(
@@ -194,12 +208,18 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
   return { current, original, stored };
 }
 
-export function setDriverPowerPartLevel(carState = {}, partId, targetLevel = 0) {
+export function setDriverPowerPartLevel(carState = {}, partId, targetLevel = 0, carId = null) {
   const part = BRIEFING_POWER_PARTS.find(p => p.id === partId);
-  const info = getDriverPowerPartLevelInfo(carState, partId);
+  const info = getDriverPowerPartLevelInfo(carState, partId, carId);
   if (!part || !info || !Number.isInteger(targetLevel) ||
       targetLevel < 0 || targetLevel > info.original) return carState;
   if (targetLevel === info.current) return carState;
+  if (partId === 'nosKit' && info.factory) {
+    // Sealed factory equipment cannot be physically downgraded or stashed.
+    // OFF/ON is sufficient for NOS-free events and never loses OEM shots.
+    return (targetLevel === 0 || targetLevel === info.original)
+      ? withNosEnabled(carState,targetLevel > 0) : carState;
+  }
   if (partId === 'nosKit') {
     // Pro Season can manually fit any lower-capacity bottle the player has
     // already purchased (L1/L2/L3). Preserve the original kit in the same
@@ -251,11 +271,11 @@ export function removeDriverPowerPart(carState = {}, partId) {
 
 // Batch downgrade requests stage all levels first. Saves/payment remain an
 // explicit one-time transaction handled by CentralTokyoScene.
-export function setDriverPowerPartLevels(carState = {}, requestedLevels = {}) {
+export function setDriverPowerPartLevels(carState = {}, requestedLevels = {}, carId = null) {
   let next = carState;
   for (const part of BRIEFING_POWER_PARTS) {
     if (Object.prototype.hasOwnProperty.call(requestedLevels, part.id))
-      next = setDriverPowerPartLevel(next, part.id, requestedLevels[part.id]);
+      next = setDriverPowerPartLevel(next, part.id, requestedLevels[part.id], carId);
   }
   return next;
 }

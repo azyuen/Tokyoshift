@@ -5,7 +5,8 @@ import { cars } from '../data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../data/carOwnership.js';
 import { engines } from '../data/engines.js?v=20261026-r687';
 import { applyEngineTuning } from '../data/tuning.js?v=20261026-r687';
-import { applySecondaryTuning, getExhaustNosTuning, EXHAUST_NOS_TUNING_PARTS } from '../data/secondaryTuning.js?v=20261026-r687';
+import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20261026-r687';
+import { getNosEquipment } from '../data/nosEquipment.js';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
 import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261026-r687';
 
@@ -43,37 +44,14 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engine = clone(engineConfig || {});
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
-    // Factory-authorised NOS remains part of the car's sealed specification.
-    // Never overwrite a factory system with purchased aftermarket parts.
-    const factoryNos = Number(config.nosPower || 0) > 0 &&
-      Number(config.nosShots || 0) > 0;
-    if (factoryNos) {
-      if (state.nosEnabled === false) {
-        config.nosPower = 0;
-        config.nosShots = 0;
-        config.nosCapacitySeconds = 0;
-      }
-      return { car: config, engine };
-    }
-
-    // Additional NOS is the sole allowed modification to a sealed collector.
-    // Derive shot count / power from the actual purchased parts, not a cached
-    // state.nosPower value, so legacy saves and imported cars remain correct.
-    const kit = getExhaustNosTuning(state);
-    const bottle = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[kit.nosKit];
-    const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[kit.nitrousShot];
-    const shots = Number(bottle?.shots || 0);
-    if (shots > 0 && Number(shot?.powerHp || 0) > 0 && state.nosEnabled !== false) {
-      config.nosPower = Number(shot.powerHp);
-      config.nosShots = shots;
-      config.nosShotDurationSeconds = Number(bottle.shotDurationSeconds || 1);
-      config.nosCapacitySeconds = shots * config.nosShotDurationSeconds;
-    } else {
-      config.nosPower = 0;
-      config.nosShots = 0;
-      config.nosShotDurationSeconds = 1.0;
-      config.nosCapacitySeconds = 0;
-    }
+    // Fixed factory performance is untouched. NOS may be factory-fitted
+    // (LBWK), bought separately (other collectors), or restored from a legacy
+    // one-shot save. The SAME resolver powers the garage and race HUD.
+    const nos = getNosEquipment(config, state);
+    config.nosPower = nos.powerHp;
+    config.nosShots = nos.shots;
+    config.nosShotDurationSeconds = nos.shotDurationSeconds;
+    config.nosCapacitySeconds = nos.capacitySeconds;
     return { car: config, engine };
   }
 
@@ -91,31 +69,14 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   tuned.stage3Calibration = calibrated.calibration;
   tuned.stage3CalibrationEligibility = calibrated.eligibility;
   refreshEngineOutput(tuned.car,tuned.engine);
-  const exhaustNos = getExhaustNosTuning(state);
-
-  if (exhaustNos.nosKit <= 0) {
-    if (!state.nosInstalled) {
-      tuned.car.nosPower = 0;
-      tuned.car.nosShots = 0;
-      tuned.car.nosShotDurationSeconds = 1.0;
-      tuned.car.nosCapacitySeconds = 0;
-    } else {
-      // Old pre-parts-tree saves remain usable as a conservative single-shot
-      // system rather than inheriting their old 5-second continuous bottle.
-      tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
-      tuned.car.nosShots = 1;
-      tuned.car.nosShotDurationSeconds = 1.0;
-      tuned.car.nosCapacitySeconds = 1.0;
-    }
-  }
-
-  // Driver-operated NOS master switch: fitted hardware stays in the save,
-  // but the race vehicle cannot fire a disabled system.
-  if (state.nosEnabled === false) {
-    tuned.car.nosPower = 0;
-    tuned.car.nosShots = 0;
-    tuned.car.nosCapacitySeconds = 0;
-  }
+  // Match the same fitted/active status that the player sees in every
+  // garage. Do not report a kit as race-ready without a nitrous shot; the
+  // master switch does not delete or reduce purchased hardware.
+  const nos = getNosEquipment(config, state);
+  tuned.car.nosPower = nos.powerHp;
+  tuned.car.nosShots = nos.shots;
+  tuned.car.nosShotDurationSeconds = nos.shotDurationSeconds;
+  tuned.car.nosCapacitySeconds = nos.capacitySeconds;
   return tuned;
 }
 

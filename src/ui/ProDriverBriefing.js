@@ -601,8 +601,8 @@ function draw(s,state,options){
         :BRIEFING_POWER_PARTS.slice(9);
       const firstColumnSize=partPage===0?5:3;
       parts.forEach((part,i)=>{
-        const info=getDriverPowerPartLevelInfo(previewState,part.id);
-        const owned=getDriverPowerPartLevelInfo(carState,part.id);
+        const info=getDriverPowerPartLevelInfo(previewState,part.id,state.playerCarId);
+        const owned=getDriverPowerPartLevelInfo(carState,part.id,state.playerCarId);
         const max=owned?.original||0;
         const current=info?.current||0;
         const x=i<firstColumnSize?610:1030;
@@ -634,10 +634,10 @@ function draw(s,state,options){
               fontFamily:PIXEL,fontSize:'9px',color:active?'#071923':'#dcecf4',
             }).setOrigin(.5).setDepth(276));
             if(usable)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-              if(slot.level===getDriverPowerPartLevelInfo(carState,part.id)?.current)
+              if(slot.level===getDriverPowerPartLevelInfo(carState,part.id,state.playerCarId)?.current)
                 delete requestedLevels[part.id];
               else requestedLevels[part.id]=slot.level;
-              previewState=setDriverPowerPartLevels(carState,requestedLevels);
+              previewState=setDriverPowerPartLevels(carState,requestedLevels,state.playerCarId);
               redraw();previewMetrics(previewState);refreshApply();
             });
           });
@@ -656,10 +656,10 @@ function draw(s,state,options){
             color:active?'#071923':enabled?'#dcecf4':'#647782',
           }).setOrigin(.5).setDepth(276));
           if(enabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-            if(level===getDriverPowerPartLevelInfo(carState,part.id)?.current)
+            if(level===getDriverPowerPartLevelInfo(carState,part.id,state.playerCarId)?.current)
               delete requestedLevels[part.id];
             else requestedLevels[part.id]=level;
-            previewState=setDriverPowerPartLevels(carState,requestedLevels);
+            previewState=setDriverPowerPartLevels(carState,requestedLevels,state.playerCarId);
             redraw();previewMetrics(previewState);refreshApply();
           });
         }
@@ -668,7 +668,7 @@ function draw(s,state,options){
     modalBtn(532,730,238,'BACK TO SETUP',openTune);
     modalBtn(1116,730,236,'RESTORE ALL',()=>{
       let next=restoreDriverPowerParts(carState);
-      if(next.proBriefingNosStash)next=toggleBriefingNos(next);
+      if(next.proBriefingNosStash)next=toggleBriefingNos(next,state.playerCarId);
       dismiss();close();options.onCarState?.(next);
     });
     redraw();refreshApply();

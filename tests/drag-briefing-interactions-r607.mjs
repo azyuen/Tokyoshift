@@ -41,7 +41,7 @@ test('R607 batch removals change three parts in one state and restore every purc
 });
 test('R607 multi-selection applies only once, not per item click',()=>{
  assert.match(driver,/const requestedLevels=\{\}/);
- assert.match(driver,/setDriverPowerPartLevels\(carState,requestedLevels\)/);
+  assert.match(driver,/setDriverPowerPartLevels\(carState,requestedLevels,state\.playerCarId\)/);
  assert.match(driver,/APPLY LEVELS \/\/ /);
  assert.match(driver,/ENGINE \+ NOS/);
  assert.match(driver,/GRIP \+ WEIGHT/);
