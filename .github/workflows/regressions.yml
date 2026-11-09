@@ -28,6 +28,8 @@ jobs:
         run: node --test tests/tuner-purchase-manga-20261108.mjs tests/tuner-hero-conversions-r521.mjs tests/tuner-stock-service-r676.mjs
       - name: Modified donor and crew loan hero conversion regressions
         run: node --test tests/tuner-crew-hero-20261110.mjs tests/tuner-hero-conversions-r521.mjs tests/lbwk-fullworks-r694.mjs
+      - name: NOS factory/purchased equipment and garage consistency
+        run: node --test tests/nos-equipment-audit-20261110.mjs tests/pro-season-nos-disable-20261102.mjs tests/pro-season-nos-vehicle-build-20261102.mjs tests/tuner-crew-hero-20261110.mjs
       - name: Championship AI garages and performance benchmark
         run: |
           node --test tests/tokyo-championship-ai-garages-20261107.mjs
