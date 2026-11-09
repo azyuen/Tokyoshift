@@ -10,6 +10,11 @@ import { getProfessionalCarEligibility } from '../src/data/proSeason.js';
 import { getCrewLoanCarId } from '../src/data/crewRoster.js';
 import { syncCrewHeroCarModels } from '../src/data/crewHeroBuilds.js';
 
+globalThis.Phaser = { Math: {
+  Clamp: (value,min,max) => Math.max(min, Math.min(max,value)),
+  Linear: (a,b,t) => a+(b-a)*t,
+}};
+
 const race = (id,state={}) => getBuiltCar(id,state)?.car;
 const eq = (id,state={}) => getNosEquipment(cars[id],state);
 
