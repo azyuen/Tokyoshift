@@ -95,6 +95,7 @@ import {
   removeAllCrewMembers,
   recruitRandomDevCrew,
   repairCrewRosterFromOwnedLoanCars,
+  isActiveCrewLoanCar,
 } from '../data/crewSystem.js?v=20261101-r748';
 import {
   WORKSHOP_TIERS,
@@ -116,6 +117,7 @@ import {
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261024-r675';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
+import { getNosEquipment, withNosEnabled } from '../data/nosEquipment.js';
 import { getProGarageBayCars } from '../data/proGarage.js?v=20261103-r774';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getProfessionalCarEligibility, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261030-r741';
@@ -1925,6 +1927,26 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
+    // Shared NOS status/activation on the workshop HOME menu. Factory-fitted
+    // LBWK bottles exist in the car specification, not exhaustNosTuning, so
+    // their status must never depend on purchased parts alone.
+    this.nosHomeStatusText = this.add.text(
+      SIDE.x + 24, SIDE.y + 512, '', {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#93bfdd',
+        wordWrap: { width: SIDE.w - 48 },
+      }
+    ).setDepth(38);
+    this.nosHomeButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2, SIDE.y + 566,
+      SIDE.w - 36, 42, 0x12352e, 1
+    ).setStrokeStyle(1, 0x62e8c7, 1).setDepth(37);
+    this.nosHomeLabel = this.add.text(
+      SIDE.x + SIDE.w / 2, SIDE.y + 566, '', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eafff6',
+      }
+    ).setOrigin(0.5).setDepth(38);
+    this.refreshNosHomeControls();
+
   }
 
   isSelectedCarTuningLocked() {
@@ -1934,26 +1956,86 @@ export default class GarageScene extends Phaser.Scene {
       car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
   }
 
-  canSelectedCollectorInstallNos() {
-    const car = cars[this.selectedCarId];
+  getSelectedNosEquipment() {
+    const car = cars[this.selectedCarId] || {};
     const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
-    return Boolean(this.selectedCarId && !this.crewMode &&
-      !isArkonRwbRestoration(this.registry, this.selectedCarId) &&
-      (car?.collector || car?.tuningLocked || state.tuningLocked ||
-        state.immutable || state.collector) &&
-      !car?.ginzaDemo && !car?.crewLoan &&
-      true);
+    return getNosEquipment(car, state);
+  }
+
+  canManageSelectedNos() {
+    if (!this.selectedCarId || !this.ownedCarIds?.includes(this.selectedCarId) ||
+        isArkonRwbRestoration(this.registry, this.selectedCarId)) return false;
+    const car = cars[this.selectedCarId];
+    if (!car || car.ginzaDemo) return false;
+    // Recruited crew cars remain borrowed, but they are customisable for as
+    // long as the driver belongs to the active crew. The same rule applies
+    // inside the Crew Pro Paddock and normal Crew Space.
+    return !car.crewLoan ||
+      isActiveCrewLoanCar(this.registry, this.selectedCarId);
+  }
+
+  canSelectedCollectorInstallNos() {
+    return this.canManageSelectedNos() && this.isSelectedCarTuningLocked();
   }
 
   canSelectedCollectorAccessNos() {
-    const car=cars[this.selectedCarId];
-    const state=(this.registry.get('carStates')||{})[this.selectedCarId]||{};
-    const factoryNos=Number(car?.nosPower||0)>0 &&
-      Number(car?.nosShots||car?.nosCapacitySeconds||0)>0;
-    return this.canSelectedCollectorInstallNos() ||
-      Boolean(this.selectedCarId&&!this.crewMode&&!car?.ginzaDemo&&!car?.crewLoan&&
-        !isArkonRwbRestoration(this.registry,this.selectedCarId)&&
-        (car?.tuningLocked||state.tuningLocked||state.immutable||state.collector||car?.collector)&&factoryNos);
+    return this.canSelectedCollectorInstallNos();
+  }
+
+  setSelectedNosEnabled(enabled) {
+    if (!this.canManageSelectedNos()) return false;
+    const carId = this.selectedCarId;
+    const states = { ...(this.registry.get('carStates') || {}) };
+    const status = getNosEquipment(cars[carId], states[carId] || {});
+    if (!status.usable) return false;
+    states[carId] = withNosEnabled(states[carId] || {}, enabled);
+    this.registry.set('carStates', states);
+    saveSessionState(this.registry);
+    this.refreshNosHomeControls();
+    this.refreshSecondaryNosSwitch?.();
+    this.updateMoveCarButtonState?.();
+    return true;
+  }
+
+  refreshNosHomeControls() {
+    if (!this.nosHomeStatusText?.active || !this.nosHomeButton?.active) return;
+    const allowed = this.canManageSelectedNos();
+    const status = this.getSelectedNosEquipment();
+    const description = !allowed ? 'NOS // NO ELIGIBLE CAR'
+      : !status.fitted ? 'NOS // NOT FITTED'
+        : !status.usable ? 'NOS // BOTTLE FITTED - SHOT NEEDED'
+          : 'NOS // ' + status.equippedShots + ' SHOTS / ' +
+            status.equippedPowerHp + ' HP // ' +
+            (status.enabled ? 'ACTIVE' : 'OFF') +
+            (status.factory ? ' (FACTORY)' : '');
+    this.nosHomeStatusText.setText(description);
+    this.nosHomeStatusText.setColor(status.active ? '#a9e9cf' : '#93bfdd');
+    this.nosHomeButton.removeAllListeners('pointerdown');
+    const ready = allowed && status.usable;
+    const label = !allowed ? 'NOS UNAVAILABLE'
+      : !status.usable ? 'INSTALL VIA EXHAUST / NOS'
+        : status.enabled ? 'DISABLE NOS FOR RACE' : 'ENABLE NOS FOR RACE';
+    this.nosHomeLabel?.setText(label).setColor(allowed ? '#eafff6' : '#71838c');
+    this.nosHomeButton.setFillStyle(allowed ? 0x12352e : 0x17202a, 1)
+      .setStrokeStyle(1, allowed ? 0x62e8c7 : 0x52616a, 1);
+    if (allowed) {
+      this.nosHomeButton.setInteractive({ useHandCursor: true });
+      this.nosHomeButton.on('pointerdown', () => {
+        if (!this.canManageSelectedNos() || this.engineMode ||
+            this.secondaryMode || this.chassisMode) return;
+        if (ready) {
+          if (this.setSelectedNosEnabled(!status.enabled)) {
+            this.showWorkshopToast(status.enabled
+              ? 'NOS DISABLED // HARDWARE RETAINED' : 'NOS ENABLED');
+          }
+        } else {
+          this.selectUpgrade('EXHAUST / NOS');
+          this.enterSecondaryTuningMode('exhaustNos');
+        }
+      });
+    } else if (this.nosHomeButton.input) {
+      this.nosHomeButton.disableInteractive();
+    }
   }
 
   refreshTuningCategoryAvailability() {
@@ -1988,6 +2070,7 @@ export default class GarageScene extends Phaser.Scene {
         item.arrow.setText('>').setColor('#8cb6cf');
       }
     });
+    this.refreshNosHomeControls();
   }
 
   getActiveWorkshop() {
@@ -8465,7 +8548,7 @@ export default class GarageScene extends Phaser.Scene {
     this.selectedUpgrade = name;
 
     if (this.selectedCarId && this.isSelectedCarTuningLocked() &&
-        !(name === 'EXHAUST / NOS' && this.canSelectedCollectorInstallNos())) {
+        !(name === 'EXHAUST / NOS' && this.canSelectedCollectorAccessNos())) {
       this.refreshTuningCategoryAvailability();
       return;
     }
