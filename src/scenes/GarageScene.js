@@ -2006,11 +2006,11 @@ export default class GarageScene extends Phaser.Scene {
     const status = this.getSelectedNosEquipment();
     const description = !allowed ? 'NOS // NO ELIGIBLE CAR'
       : !status.fitted ? 'NOS // NOT FITTED'
-        : !status.usable ? 'NOS // BOTTLE FITTED - SHOT NEEDED'
-          : 'NOS // ' + status.equippedShots + ' SHOTS / ' +
+        : !status.usable ? 'NOS // BOTTLE FITTED, SHOT NEEDED'
+          : 'NOS ' + status.equippedShots + ' SHOTS / ' +
             status.equippedPowerHp + ' HP // ' +
-            (status.enabled ? 'ACTIVE' : 'OFF') +
-            (status.factory ? ' (FACTORY)' : '');
+            (status.enabled ? 'ON' : 'OFF') +
+            (status.factory ? ' // OEM' : '');
     this.nosHomeStatusText.setText(description);
     // The home status sits between CHASSIS and Crew Space's top service button.
     this.nosHomeStatusText.setColor(status.active ? '#a9e9cf' : '#93bfdd');
