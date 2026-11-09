@@ -43,7 +43,7 @@ const HUB={image:'tokyoChampHubBg',path:'championship_hub.png'};
 const championshipPhase=()=>getWorldPhase()==='day'?'day':'night';
 const backgroundFor=(item,phase=championshipPhase())=>({
   key:item.image+'_'+phase,
-  path:'assets/CentralTokyo/dragcomplex/'+item.path.replace(/\\.png$/, '_'+phase+'.png')+'?v=20261110-champ-daynight',
+  path:'assets/CentralTokyo/dragcomplex/'+item.path.replace(/\.png$/, '_'+phase+'.png')+'?v=20261110-champ-daynight',
 });
 const circuit=s=>normaliseProCircuitState(s.registry.get('proCircuit'));
 const fmt=n=>Number(n||0).toLocaleString('en-US');
