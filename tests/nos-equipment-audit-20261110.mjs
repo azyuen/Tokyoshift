@@ -8,6 +8,7 @@ import { getNosEquipment, withNosEnabled } from '../src/data/nosEquipment.js';
 import { getBuiltCar } from '../src/vehicles/VehiclePerformance.js';
 import { getProfessionalCarEligibility } from '../src/data/proSeason.js';
 import { getCrewLoanCarId } from '../src/data/crewRoster.js';
+import { driverBriefingEligibility, getDriverPowerPartLevelInfo, setDriverPowerPartLevels } from '../src/data/proDriverBriefing.js';
 import { syncCrewHeroCarModels } from '../src/data/crewHeroBuilds.js';
 
 globalThis.Phaser = { Math: {
@@ -127,4 +128,27 @@ test('garage homepage and sealed collector pages use a single NOS permission and
   assert.match(garage,/FACTORY NOS INCLUDED/);
   assert.match(garage,/this\.secondaryNosSwitch/);
   assert.match(vehicle,/getNosEquipment\(config, state\)/);
+});
+
+
+test('Open Circuit briefing recognises factory LBWK shots and can switch them off for a NO NOS event',()=>{
+  const carId='lbwkR34';
+  const entry={active:true,proEvent:true,openCircuit:true,rounds:[{id:'heat1'}],
+    roundIndex:0,playerCarId:carId,briefingRules:{noNos:true}};
+  const state={lbwkFullWorks:true,collector:true,nosInstalled:true};
+  const blocked=driverBriefingEligibility(entry,state,100,[carId]);
+  assert.ok(blocked.problems.some(s=>s.includes('NOS')),JSON.stringify(blocked));
+  const fitted=getDriverPowerPartLevelInfo(state,'nosKit',carId);
+  assert.equal(fitted.current,3);
+  assert.equal(fitted.original,3);
+  assert.equal(fitted.factory,true);
+  const off=setDriverPowerPartLevels(state,{nosKit:0},carId);
+  assert.equal(off.nosEnabled,false);
+  assert.equal(off.nosInstalled,true);
+  assert.equal(off.exhaustNosTuning,undefined);
+  assert.ok(driverBriefingEligibility(entry,off,100,[carId]).eligible);
+  const refitted=setDriverPowerPartLevels(off,{nosKit:3},carId);
+  assert.equal(refitted.nosEnabled,true);
+  assert.equal(race(carId,refitted)?.nosShots,3);
+  assert.ok(driverBriefingEligibility(entry,refitted,100,[carId]).problems.some(s=>s.includes('NOS')));
 });
