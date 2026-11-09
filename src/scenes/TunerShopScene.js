@@ -135,7 +135,10 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     }
 
-    const currentCarId = this.registry.get('selectedCarId');
+    // Owned duplicate models are registered in the garage catalogue when a
+    // profile loads; the tuner has its own asset-versioned catalogue copy.
+    // Resolve this local alias before checking/preloading the donor car.
+    const currentCarId = this.getCurrentCarId();
     const owned = this.registry.get('ownedCarIds') || [];
     const carStates = this.registry.get('carStates') || {};
     const carIds = [...new Set([
@@ -569,7 +572,24 @@ export default class TunerShopScene extends Phaser.Scene {
   getCurrentCarId() {
     const carId = this.registry.get('selectedCarId');
     const owned = this.registry.get('ownedCarIds') || [];
-    return carId && owned.includes(carId) && cars[carId] ? carId : null;
+    if (!carId || !owned.includes(carId)) return null;
+    if (!cars[carId]) {
+      const baseId = getBaseCarId(carId);
+      const match = String(carId).match(/__copy([2-9][0-9]*)$/);
+      const base = cars[baseId];
+      if (match && baseId !== carId && base && !base.collector &&
+          !base.tuningLocked && !base.uniqueOwned) {
+        // Match carOwnership's per-instance alias rather than rejecting an
+        // otherwise eligible modified GC8/240Z copy at the tuner entrance.
+        cars[carId] = {
+          ...base, id: carId, ownedBaseCarId: baseId,
+          ownedCopyNumber: Number(match[1]),
+          crewLoan: false, crewOwnerCharacterId: null, crewBaseCarId: null,
+          visual: { ...(base.visual || {}) },
+        };
+      }
+    }
+    return cars[carId] ? carId : null;
   }
 
   getCurrentTunableCarId() {
