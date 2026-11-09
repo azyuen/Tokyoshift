@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cars } from '../src/data/cars.js';
+import { cars } from '../src/data/cars.js?v=20261027-r694';
 import { getBaseCarId } from '../src/data/carOwnership.js';
 import { TUNER_SHOPS, getTunerShopForRegion } from '../src/data/tunerShops.js';
 import { LBWK_CATALOG, getLbwkConversionQuote } from '../src/data/lbwkFullWorks.js';
