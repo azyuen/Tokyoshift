@@ -119,6 +119,7 @@ test('hero manga NO/SKIP cannot initiate irreversible conversion', () => {
   const methodUnderTest = method('showBuildConfirmation()', 'confirmHeroConversion()', {
     cars,
     getBaseCarId: id => id,
+    isActiveCrewLoanCar: () => false,
     makeHeroBuildManga,
     playMangaCutscene: (_scene, definition, options) => {
       pending = { definition, options }; return { played: true };
