@@ -9,6 +9,7 @@ import { getCrewLoanCarId } from '../src/data/crewRoster.js';
 import { isActiveCrewLoanCar, getCrewBattleUnits, removeCrewMember } from '../src/data/crewSystem.js';
 import { isCompatibleCrewHeroBuild, syncCrewHeroCarModels } from '../src/data/crewHeroBuilds.js';
 import { makeHeroBuildManga } from '../src/data/tunerPurchaseManga.js';
+import { getBuiltCar } from '../src/vehicles/VehiclePerformance.js';
 
 const source = name => readFileSync(new URL('../' + name, import.meta.url), 'utf8');
 const sceneSource = source('src/scenes/TunerShopScene.js');
@@ -131,6 +132,12 @@ test('crew LBWK conversion credits installed Level 2/3 hardware and includes thr
   assert.equal(cars[sc.loanId].nosShots,3);
   assert.equal(cars[sc.loanId].nosPower,75);
   assert.equal(cars[sc.loanId].tuningLocked,true);
+  const actualRaceCar = getBuiltCar(sc.loanId,sc.data.carStates[sc.loanId]);
+  assert.ok(actualRaceCar, 'converted crew loan renders in race engine');
+  assert.equal(actualRaceCar.car.nosShots,3,'actual race uses LBWK 3-shot NOS');
+  assert.equal(actualRaceCar.car.nosPower,75,'actual race uses LBWK NOS power');
+  assert.equal(actualRaceCar.car.powerKW,cars.libertyWalk240z.powerKW,
+    'actual race uses hero output rather than original crew 240Z');
   assert.equal(sc.data.carGarageLocations[sc.loanId],'crewSpace');
 });
 
