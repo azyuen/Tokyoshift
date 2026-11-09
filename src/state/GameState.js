@@ -9,6 +9,7 @@ import {
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
+import { syncCrewHeroCarModels } from '../data/crewHeroBuilds.js';
 import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js?v=20261014-r503';
 import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js?v=20261015-r520';
 import { getDefaultFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
@@ -1789,6 +1790,9 @@ export function normaliseState(input = {}) {
 export function applyStateToRegistry(registry, input) {
   const state = normaliseState(input);
   Object.entries(state).forEach(([key, value]) => registry.set(key, value));
+  // Restore each recruited driver's owned hero-car body/spec before any scene
+  // computes performance or preloads artwork. Clears aliases from other profiles.
+  syncCrewHeroCarModels(registry);
   registry.set('__profileSlotIndex', getActiveProfileIndex());
   registry.set('__playTimerStartedAt', Date.now());
   return state;
