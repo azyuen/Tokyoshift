@@ -7,8 +7,10 @@ import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
 import {makeSpecialistTuneManga, makeHeroBuildManga} from '../data/tunerPurchaseManga.js';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars } from '../data/cars.js?v=20261027-r694';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { isActiveCrewLoanCar } from '../data/crewSystem.js';
+import { syncCrewHeroCarModels } from '../data/crewHeroBuilds.js';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
@@ -78,6 +80,9 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   preload() {
+    // A crew hero keeps its crew__ ID; hydrate its collector artwork/spec in
+    // both scene and physics catalogues before queuing donor assets.
+    syncCrewHeroCarModels(this.registry);
     // A race can temporarily replace selectedCarId. Use the player's last
     // deliberate personal-car selection before checking regional tuning.
     restorePreferredCar(this.registry);
@@ -130,7 +135,10 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     }
 
-    const currentCarId = this.registry.get('selectedCarId');
+    // Owned duplicate models are registered in the garage catalogue when a
+    // profile loads; the tuner has its own asset-versioned catalogue copy.
+    // Resolve this local alias before checking/preloading the donor car.
+    const currentCarId = this.getCurrentCarId();
     const owned = this.registry.get('ownedCarIds') || [];
     const carStates = this.registry.get('carStates') || {};
     const carIds = [...new Set([
@@ -564,7 +572,24 @@ export default class TunerShopScene extends Phaser.Scene {
   getCurrentCarId() {
     const carId = this.registry.get('selectedCarId');
     const owned = this.registry.get('ownedCarIds') || [];
-    return carId && owned.includes(carId) && cars[carId] ? carId : null;
+    if (!carId || !owned.includes(carId)) return null;
+    if (!cars[carId]) {
+      const baseId = getBaseCarId(carId);
+      const match = String(carId).match(/__copy([2-9][0-9]*)$/);
+      const base = cars[baseId];
+      if (match && baseId !== carId && base && !base.collector &&
+          !base.tuningLocked && !base.uniqueOwned) {
+        // Match carOwnership's per-instance alias rather than rejecting an
+        // otherwise eligible modified GC8/240Z copy at the tuner entrance.
+        cars[carId] = {
+          ...base, id: carId, ownedBaseCarId: baseId,
+          ownedCopyNumber: Number(match[1]),
+          crewLoan: false, crewOwnerCharacterId: null, crewBaseCarId: null,
+          visual: { ...(base.visual || {}) },
+        };
+      }
+    }
+    return cars[carId] ? carId : null;
   }
 
   getCurrentTunableCarId() {
@@ -635,8 +660,17 @@ export default class TunerShopScene extends Phaser.Scene {
     const donorExists = Boolean(cars[this.shop.donorCarId]);
     const currentIsDonor = getBaseCarId(currentCarId) === this.shop.donorCarId;
     const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
-    const donorEligible = currentIsDonor && (this.shop.cosmeticOnly || donorState.stock !== false);
-    const heroOwned = owned.includes(this.shop.heroCarId);
+    // Ordinary modified cars and active recruited crew loan cars are equally
+    // valid donors. A completed sealed collector cannot be converted twice.
+    const crewDonor = isActiveCrewLoanCar(this.registry, currentCarId);
+    const carModel = cars[currentCarId];
+    const donorEligible = currentIsDonor && Boolean(carModel) &&
+      !carModel.collector && !carModel.tuningLocked &&
+      !donorState.collector && !donorState.tuningLocked && !donorState.immutable &&
+      (!carModel.crewLoan || crewDonor);
+    // Crew conversions retain the crew__ instance, so a personal copy of the
+    // same hero does not block a member's own hero build.
+    const heroOwned = !crewDonor && owned.includes(this.shop.heroCarId);
     const cost = this.shop.cosmeticOnly ? (this.getLbwkCurrentQuote()?.total || 0)
       : Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
@@ -677,6 +711,34 @@ export default class TunerShopScene extends Phaser.Scene {
       }
       return;
     }
+
+    // Regional shops previously showed the hero on stage but no conversion
+    // action at all. Surface the actual build quote for every eligible donor.
+    const label = value => this.sideContent.add(this.add.text(
+      SIDE.x + 27, SIDE.y + value.y, value.text, {
+        fontFamily: value.body ? BODY_FONT : PIXEL_FONT,
+        fontSize: value.size || '9px', color: value.color || '#dce7eb',
+        wordWrap: { width: SIDE.w - 54 }, lineSpacing: 7,
+      }
+    ));
+    label({ y: 338, text: 'HERO CONVERSION', size: '12px', color: '#ffe2a3' });
+    label({ y: 392, text: this.shop.donorLabel + '  >  ' + (hero?.shortName || hero?.name || 'HERO'), size: '8px' });
+    label({ y: 454, text: 'TUNED DONORS ACCEPTED // FIXED SPEC', size: '8px', color: '#a9ddc0' });
+    label({ y: 496, text: 'BUILD COST  ' + money(cost), size: '9px', color: '#f3c77b' });
+    const available = donorEligible && !heroOwned && cash >= cost;
+    const message = heroOwned ? 'HERO ALREADY OWNED' : !currentIsDonor
+      ? 'SELECT THE DONOR MODEL' : !donorEligible
+        ? 'CAR NOT ELIGIBLE' : cash < cost ? 'INSUFFICIENT FUNDS' : 'DO THE HERO BUILD  >';
+    const y = SIDE.y + SIDE.h - 152;
+    const button = this.addDynamic(this.add.rectangle(
+      SIDE.x + SIDE.w / 2, y, SIDE.w - 56, 47,
+      available ? 0x392916 : 0x17202a, 1
+    ).setStrokeStyle(2, available ? 0xe2b464 : 0x52616a, 1).setDepth(60));
+    this.addDynamic(this.add.text(SIDE.x + SIDE.w / 2, y, message, {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: available ? '#fff1d5' : '#83939d',
+    }).setOrigin(0.5).setDepth(61));
+    if (available) button.setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.rollInDonor());
 
   }
 
@@ -1756,8 +1818,10 @@ export default class TunerShopScene extends Phaser.Scene {
     const currentCarId=this.getCurrentCarId();
     const donor=cars[currentCarId];
     const donorState=(this.registry.get('carStates')||{})[currentCarId]||{};
-    if (!donor || getBaseCarId(currentCarId)!==this.shop.donorCarId ||
-        (!this.shop.cosmeticOnly && donorState.stock===false)) return;
+    if (!donor || getBaseCarId(currentCarId) !== this.shop.donorCarId ||
+        donor.collector || donor.tuningLocked || donorState.collector ||
+        donorState.tuningLocked || donorState.immutable ||
+        (donor.crewLoan && !isActiveCrewLoanCar(this.registry, currentCarId))) return;
 
     this.conversionInProgress=true;
     this.clearDynamic();
@@ -1827,7 +1891,8 @@ export default class TunerShopScene extends Phaser.Scene {
     add(467,'LBWK PREMIUM  '+money(quote?.specialistPremium||0),'8px');
     add(495,'TO PAY  '+money(quote?.total||0),'9px','#ffe2a3');
     const cash=Number(this.registry.get('cash')||0);
-    const owned=(this.registry.get('ownedCarIds')||[]).includes(hero.id);
+    const owned=!isActiveCrewLoanCar(this.registry, currentId) &&
+      (this.registry.get('ownedCarIds')||[]).includes(hero.id);
     const ready=Boolean(quote)&&cash>=quote.total&&!owned;
     const makeAction=(y,label,enabled,handler,highlight=false)=>{
       const box=this.addDynamic(this.add.rectangle(SIDE.x+SIDE.w/2,SIDE.y+y,
@@ -1853,8 +1918,11 @@ export default class TunerShopScene extends Phaser.Scene {
     const donor = cars[donorId];
     const hero = cars[heroId];
     const state = (this.registry.get('carStates') || {})[donorId] || {};
+    const crewDonor = isActiveCrewLoanCar(this.registry, donorId);
     if (!donor || !hero || getBaseCarId(donorId) !== this.shop?.donorCarId ||
-        owned.includes(heroId) || (!this.shop.cosmeticOnly && state.stock === false)) {
+        donor.collector || donor.tuningLocked || state.collector || state.tuningLocked ||
+        state.immutable || (donor.crewLoan && !crewDonor) ||
+        (!crewDonor && owned.includes(heroId))) {
       this.showHeroMode();
       return;
     }
@@ -2004,75 +2072,93 @@ export default class TunerShopScene extends Phaser.Scene {
     const heroId = this.shop.heroCarId;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const donorIndex = owned.indexOf(donorId);
-    if (
-      !donorId ||
-      getBaseCarId(donorId) !== donorBaseId ||
-      donorIndex < 0 ||
-      owned.includes(heroId)
-    ) return false;
-
+    const crewDonor = isActiveCrewLoanCar(this.registry, donorId);
+    const donor = cars[donorId];
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const donorState = carStates[donorId] || {};
-    if (!this.shop.cosmeticOnly && donorState.stock === false) return false;
+
+    if (!donorId || getBaseCarId(donorId) !== donorBaseId || donorIndex < 0 ||
+        !donor || donor.collector || donor.tuningLocked || donorState.collector ||
+        donorState.tuningLocked || donorState.immutable ||
+        (donor.crewLoan && !crewDonor) ||
+        (!crewDonor && owned.includes(heroId))) return false;
     if (this.shop.cosmeticOnly && !isTunerShopUnlocked(this.registry, this.regionId)) return false;
 
     const cash = Number(this.registry.get('cash') || 0);
-    const quote=this.shop.cosmeticOnly
-      ? getLbwkConversionQuote(LBWK_CATALOG.find(item=>item.id===heroId),donorState)
+    // Always recalculate this after the player's final YES click. NOS and
+    // all paid hardware levels already installed are credited for LBWK.
+    const quote = this.shop.cosmeticOnly
+      ? getLbwkConversionQuote(LBWK_CATALOG.find(item => item.id === heroId), donorState)
       : null;
-    if(this.shop.cosmeticOnly && !quote) return false;
-    const cost=Math.max(0,this.shop.cosmeticOnly?quote.total:Number(this.shop.buildCost||0));
-    if(cash<cost) return false;
+    if (this.shop.cosmeticOnly && !quote) return false;
+    const cost = Math.max(0, this.shop.cosmeticOnly ? quote.total
+      : Number(this.shop.buildCost || 0));
+    if (cash < cost) return false;
 
+    const now = Date.now();
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
     const donorLocation = locations[donorId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
-
-    recordCarDeparture(this.registry, donorId, 'converted', {
-      convertedTo: heroId,
-    });
-
-    owned.splice(donorIndex, 1, heroId);
-    delete carStates[donorId];
-    carStates[heroId] = {
+    const heroState = {
       stock: false,
       collector: true,
       immutable: true,
       tuningLocked: true,
-      acquiredVia: 'tuner-shop',
+      acquiredVia: crewDonor ? 'crewLoan' : 'tuner-shop',
       nosInstalled: Boolean(this.shop.cosmeticOnly),
       lbwkFullWorks: Boolean(this.shop.cosmeticOnly),
       lbwkPartsCredit: quote?.installedCredit || 0,
       lbwkPremiumPaid: quote?.specialistPremium || 0,
       tunerShopId: this.shop.id,
       convertedFrom: donorId,
-      builtAt: Date.now(),
+      builtAt: now,
     };
 
-    delete locations[donorId];
-    locations[heroId] = donorLocation;
+    if (crewDonor) {
+      // A crew car is BORROWED from its driver. Replacing its crew__ ID with
+      // heroId would orphan crewMembers[region].loanCarId, breaking races,
+      // registration and returning that member's car on departure. Preserve
+      // that stable identity, ownership and Crew Space garage slot instead.
+      carStates[donorId] = {
+        ...heroState,
+        crewLoan: true,
+        crewOwnerCharacterId: donor.crewOwnerCharacterId,
+        crewBaseCarId: donorBaseId,
+        crewHeroCarId: heroId,
+        convertedFromModel: donorBaseId,
+      };
+      locations[donorId] = 'crewSpace';
+    } else {
+      recordCarDeparture(this.registry, donorId, 'converted', { convertedTo: heroId });
+      owned.splice(donorIndex, 1, heroId);
+      delete carStates[donorId];
+      carStates[heroId] = heroState;
+      delete locations[donorId];
+      locations[heroId] = donorLocation;
+    }
 
     const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
     progress[this.shop.id] = {
       ...(progress[this.shop.id] || {}),
-      discovered: true,
-      heroBuilt: true,
-      heroCarId: heroId,
-      builtAt: Date.now(),
+      discovered: true, heroBuilt: true, heroCarId: heroId, builtAt: now,
     };
 
     this.registry.set('ownedCarIds', owned);
-    this.registry.set('selectedCarId', heroId);
+    this.registry.set('selectedCarId', crewDonor ? donorId : heroId);
     this.registry.set('carStates', carStates);
     this.registry.set('carGarageLocations', locations);
     this.registry.set('tunerShopProgress', progress);
     this.registry.set('cash', cash - cost);
     this.registry.set('gameOver', false);
-    recordCarAcquisition(this.registry, heroId, {
-      acquiredVia: 'tuner-shop',
-      convertedFrom: donorId,
-    });
+    if (crewDonor) {
+      // The single loan-car model now renders and races with the hero's
+      // calibrated specs, while its recruited driver still owns that car.
+      syncCrewHeroCarModels(this.registry);
+    } else {
+      recordCarAcquisition(this.registry, heroId, {
+        acquiredVia: 'tuner-shop', convertedFrom: donorId,
+      });
+    }
     saveSessionState(this.registry);
-
     return true;
   }
 
@@ -2113,6 +2199,8 @@ export default class TunerShopScene extends Phaser.Scene {
       'odaiba7eleven';
 
     showTravelMap(this, {
+      travelMode: this.registry.get('crewSpaceActive') &&
+        cars[this.registry.get('selectedCarId')]?.crewLoan ? 'crew' : 'default',
       currentLocationId,
       title: 'TOKYO REGION MAP',
       actionVerb: 'DRIVE',

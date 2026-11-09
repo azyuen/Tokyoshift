@@ -1114,7 +1114,11 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
-    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
+    // Crew cars still cannot drive around Central Tokyo or use the Gallery,
+    // but a recruited driver's compatible donor may visit the unlocked LBWK
+    // tuner for a sealed hero conversion.
+    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO' &&
+      !isTunerShopUnlocked(scene.registry, 'CENTRAL_TOKYO');
     const regionOpen = openingTrainMode || (!crewRegionBlocked && (
       selectedRegionId === currentRegionId ||
       isTravelRegionUnlocked(scene.registry, selectedRegionId)
@@ -1321,7 +1325,8 @@ export function showTravelMap(scene, options = {}) {
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const crewRegionBlocked = crewTravelMode && regionId === 'CENTRAL_TOKYO';
+    const crewRegionBlocked = crewTravelMode && regionId === 'CENTRAL_TOKYO' &&
+      !isTunerShopUnlocked(scene.registry, 'CENTRAL_TOKYO');
     const unlocked = openingTrainMode || chapter08GinzaMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
     ));
@@ -1381,7 +1386,7 @@ export function showTravelMap(scene, options = {}) {
     ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
-      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
+      if (crewRegionBlocked) return;
       if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
       selectedRegionId = regionId;
 

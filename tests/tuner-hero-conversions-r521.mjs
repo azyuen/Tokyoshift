@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cars, carOrder } from '../src/data/cars.js';
+import { cars, carOrder } from '../src/data/cars.js?v=20261026-r687';
 import { getBaseCarId, registerOwnedCarInstance } from '../src/data/carOwnership.js';
 import {
   TUNER_SHOPS,
@@ -79,12 +79,16 @@ function simulate(shop, { donorId = shop.donorCarId, cash = shop.buildCost,
   const events = [];
   const convert = new Function(
     'getBaseCarId', 'recordCarDeparture', 'recordCarAcquisition', 'saveSessionState',
+    'cars', 'isActiveCrewLoanCar', 'syncCrewHeroCarModels',
     'return function performHeroConversion(){' + methodBody + '}'
   )(
     getBaseCarId,
     (_registry, id, reason) => events.push(['depart', id, reason]),
     (_registry, id) => events.push(['acquire', id]),
-    () => events.push(['save'])
+    () => events.push(['save']),
+    cars,
+    () => false,
+    () => {}
   );
   const scene = { shop, registry, getCurrentCarId: () => registryState.selectedCarId };
   return { success: convert.call(scene), state: registryState, events };
@@ -108,9 +112,12 @@ for (const [region] of Object.entries(EXPECTED)) {
     assert.equal(second.state.carStates[shop.heroCarId].convertedFrom,
       shop.donorCarId + '__copy2');
 
+    const tuned = simulate(shop, { stock: false });
+    assert.equal(tuned.success, true, 'modified original donors must be convertible');
+    assert.deepEqual(tuned.state.ownedCarIds, [shop.heroCarId]);
+
     for (const opts of [
       { cash: shop.buildCost - 1 },
-      { stock: false },
       { alreadyOwned: true },
     ]) {
       const rejected = simulate(shop, opts);
