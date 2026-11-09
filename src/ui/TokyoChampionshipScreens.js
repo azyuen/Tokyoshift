@@ -15,6 +15,7 @@ import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { showChampionshipCrewRosterPopup } from './ProCrewBattleLineup.js?v=20261108-champ-three-heat';
 import { PRO_GARAGE_BAYS } from '../data/proGarage.js?v=20261101-r753';
 import { PRO_GARAGE_ID } from '../data/workshopProgression.js?v=20261024-r675';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20261029-r713';
 
 const W=1560, H=840;
 const BODY='"Rajdhani", sans-serif', DISPLAY='"Exo 2", sans-serif', PIXEL='"Silkscreen", monospace';
@@ -37,7 +38,13 @@ const EVENTS={
     image:'tokyoChampFourBg',path:'championship_fourwide.png'},
 };
 const HUB={image:'tokyoChampHubBg',path:'championship_hub.png'};
-const bgPath=name=>'assets/CentralTokyo/dragcomplex/'+name+'?v=20261106-r802-wall-art';
+// Keep day and night artwork in separate Phaser textures so changing phase
+// never reuses the previously decoded image. The game clock is authoritative.
+const championshipPhase=()=>getWorldPhase()==='day'?'day':'night';
+const backgroundFor=(item,phase=championshipPhase())=>({
+  key:item.image+'_'+phase,
+  path:'assets/CentralTokyo/dragcomplex/'+item.path.replace(/\\.png$/, '_'+phase+'.png')+'?v=20261110-champ-daynight',
+});
 const circuit=s=>normaliseProCircuitState(s.registry.get('proCircuit'));
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const closeSceneOverlay=s=>s._proOverlayClose?.();
@@ -113,7 +120,8 @@ function portraitAssets(s,stage){
 function loadAssets(s,view,done){
   const stage=EVENTS[view]?view:null;
   const item=stage?EVENTS[stage]:HUB;
-  const images=[[item.image,bgPath(item.path)],...portraitAssets(s,stage).map(([k,p])=>[k,getCharacterAssetUrl(p)])];
+  const bg=backgroundFor(item);
+  const images=[[bg.key,bg.path],...portraitAssets(s,stage).map(([k,p])=>[k,getCharacterAssetUrl(p)])];
   let queued=0;
   const seen=new Set();
   for(const [key,path] of images)if(!seen.has(key)&&!s.textures.exists(key)){
@@ -168,11 +176,37 @@ function canvas(s,view,{hideTopChrome=false}={}){
   s._proOverlayClose=close;s.events.once('shutdown',close);
   const item=EVENTS[view]||HUB;
   add(s.add.rectangle(W/2,H/2,W,H,0x080d17,1).setDepth(200).setInteractive());
-  if(s.textures.exists(item.image)){
-    const src=s.textures.get(item.image).getSourceImage();
+  const bg=backgroundFor(item);
+  const initialKey=s.textures.exists(bg.key)?bg.key:item.image;
+  let backdropImage=null;
+  if(s.textures.exists(initialKey)){
+    const src=s.textures.get(initialKey).getSourceImage();
     const scale=Math.max(W/src.width,H/src.height);
-    add(s.add.image(W/2,H/2,item.image).setScale(scale).setDepth(201));
+    backdropImage=add(s.add.image(W/2,H/2,initialKey).setScale(scale).setDepth(201));
   }
+  // Update the visible backdrop if the 15-minute world phase rolls over while
+  // the Championship overlay is open; never recreate its interactive UI.
+  let visiblePhase=championshipPhase();
+  let loadingPhase=null;
+  const refreshBackground=()=>{
+    const phase=championshipPhase();
+    if(phase===visiblePhase||loadingPhase===phase)return;
+    const next=backgroundFor(item,phase);
+    const apply=()=>{
+      if(closed||championshipPhase()!==phase||!s.textures.exists(next.key))return;
+      const src=s.textures.get(next.key).getSourceImage();
+      if(backdropImage)backdropImage.setTexture(next.key).setScale(Math.max(W/src.width,H/src.height));
+      else backdropImage=add(s.add.image(W/2,H/2,next.key).setScale(Math.max(W/src.width,H/src.height)).setDepth(201));
+      visiblePhase=phase;
+    };
+    if(s.textures.exists(next.key)){apply();return;}
+    loadingPhase=phase;
+    s.load.image(next.key,next.path);
+    s.load.once('complete',()=>{loadingPhase=null;apply();});
+    if(!s.load.isLoading())s.load.start();
+  };
+  const phaseTimer=s.time.addEvent({delay:5000,loop:true,callback:refreshBackground});
+  nodes.push({destroy:()=>phaseTimer.remove()});
   // The Hub is a full-bleed scene. Other overlays/briefings retain their
   // original close control and small top navigation bar.
   if(!hideTopChrome)
