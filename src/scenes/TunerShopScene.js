@@ -7,7 +7,7 @@ import {playMangaCutscene} from '../ui/MangaCutscene.js?v=20261025-r683';
 import {makeSpecialistTuneManga, makeHeroBuildManga} from '../data/tunerPurchaseManga.js';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars } from '../data/cars.js?v=20261027-r694';
+import { cars } from '../data/cars.js?v=20261026-r687';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js';
 import { syncCrewHeroCarModels } from '../data/crewHeroBuilds.js';
