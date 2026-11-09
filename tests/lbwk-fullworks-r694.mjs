@@ -99,7 +99,7 @@ test('Aruken RB26 one-off is separate from story body and career 240Z, sold at G
 
 test('Live conversion quote is applied at confirmation and at final payment; no flat fee still charged',()=>{
   const scene=source('src/scenes/TunerShopScene.js');
-  assert.match(scene,/getLbwkConversionQuote\(LBWK_CATALOG.find\(item=>item.id===heroId\),donorState\)/);
+  assert.match(scene,/getLbwkConversionQuote\(LBWK_CATALOG\.find\(item\s*=>\s*item\.id\s*===\s*heroId\),\s*donorState\)/);
   assert.match(scene,/quote\.total/);
   assert.match(scene,/INSTALLED CREDIT/);
   assert.match(scene,/lbwkPartsCredit/);
