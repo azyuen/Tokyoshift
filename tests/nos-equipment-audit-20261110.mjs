@@ -120,8 +120,8 @@ test('garage homepage and sealed collector pages use a single NOS permission and
   const vehicle=readFileSync(new URL('../src/vehicles/VehiclePerformance.js',import.meta.url),'utf8');
   assert.match(garage,/getSelectedNosEquipment\(\)/);
   assert.match(garage,/this\.refreshNosHomeControls\(\)/);
-  assert.match(garage,/DISABLE NOS FOR RACE/);
-  assert.match(garage,/INSTALL VIA EXHAUST \/ NOS/);
+  assert.match(garage,/NOS OFF  >/);
+  assert.match(garage,/INSTALL NOS  >/);
   assert.match(garage,/canSelectedCollectorAccessNos\(\) \{\s*return this\.canSelectedCollectorInstallNos\(\);/);
   assert.match(garage,/isActiveCrewLoanCar\(this\.registry, this\.selectedCarId\)/);
   assert.match(garage,/factoryNos && \['nosKit','nitrousShot'\]/);
@@ -151,4 +151,13 @@ test('Open Circuit briefing recognises factory LBWK shots and can switch them of
   assert.equal(refitted.nosEnabled,true);
   assert.equal(race(carId,refitted)?.nosShots,3);
   assert.ok(driverBriefingEligibility(entry,refitted,100,[carId]).problems.some(s=>s.includes('NOS')));
+});
+
+
+test('NOS main-menu action does not obstruct Warehouse service or Crew Space navigation',()=>{
+  const garage=readFileSync(new URL('../src/scenes/GarageScene.js',import.meta.url),'utf8');
+  assert.match(garage,/nosHomeButton = this\.add\.rectangle\(\s*SIDE\.x \+ SIDE\.w - 80, SIDE\.y \+ 381/);
+  assert.match(garage,/nosRow\?\.arrow\?\.setVisible\(false\)/);
+  assert.match(garage,/const y = this\.crewMode \? 608 : this\.proGarageMode \? 716 : 662/);
+  assert.match(garage,/this\.nosHomeStatusText = this\.add\.text\(\s*SIDE\.x \+ 24, SIDE\.y \+ 476/);
 });
