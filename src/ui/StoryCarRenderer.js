@@ -16,7 +16,7 @@ export function preloadStoryCar(scene,car,cacheBust='20261022-r642') {
 
 export function renderStoryCar(scene,car,{
   x=1030,groundY=720,targetWidth=1000,depth=8,flipX=false,
-  paintColor=0xffffff,shadow=true,garageGeometry=false,editorCanvas=false,
+  paintColor=0xffffff,shadow=true,shadowOpacity=.48,shadowWidthScale=1,garageGeometry=false,editorCanvas=false,
 }={}) {
   if(!scene?.textures || !car?.visual)return [];
   const textureKey=getCarBodyTextureKey(scene,car);
@@ -45,8 +45,8 @@ export function renderStoryCar(scene,car,{
   const drawX=editorCanvas ? x : getReferenceRightX(car,x,scale);
   const objects=[];
   const add=obj=>{if(obj)objects.push(obj);return obj;};
-  if(shadow)add(scene.add.ellipse(x,groundY-5,Math.max(250,targetWidth*.83),
-    Math.max(27,targetWidth*.035),0x000000,.48).setDepth(depth-.5));
+  if(shadow)add(scene.add.ellipse(x,groundY-5,Math.max(250,targetWidth*.83)*shadowWidthScale,
+    Math.max(27,targetWidth*.035),0x000000,shadowOpacity).setDepth(depth-.5));
   const key=car.visual.wheelKey;
   if(key && scene.textures.exists(key)){
     const source=scene.textures.get(key).getSourceImage();
