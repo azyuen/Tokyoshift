@@ -135,14 +135,14 @@ function loadAssets(s,view,done){
       if(cars[unit.carId])queued+=preloadStoryCar(s,cars[unit.carId]);
   }
   if(stage==='FOUR_WIDE'){
-    // The selected Championship car is featured on the actual briefing.
-    // Preload all registered cars so garage selection changes are visible.
+    // Load only the one car displayed in the briefing (important on older
+    // phones). Returning from Daichi's paddock preloads a newly chosen car.
     const championship=circuit(s).activeChampionship;
     const registered=championship?.championshipRegisteredCars||[];
+    const selected=s.registry.get('selectedCarId');
     const chosen=getChampionshipEventCar(championship,'FOUR_WIDE')||
-      s.registry.get('selectedCarId');
-    for(const id of new Set([...registered,chosen].filter(Boolean)))
-      if(cars[id])queued+=preloadStoryCar(s,cars[id]);
+      (registered.includes(selected)?selected:registered[0]);
+    if(cars[chosen])queued+=preloadStoryCar(s,cars[chosen]);
   }
   if(stage==='KNOCKOUT'){
     const state=circuit(s).activeChampionship;
