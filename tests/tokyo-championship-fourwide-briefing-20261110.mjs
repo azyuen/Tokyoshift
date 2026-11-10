@@ -60,7 +60,7 @@ test('four-wide hero car and actor positions use the requested new layout',()=>{
   assert.match(screens,/sprite\(s,o,player\?\.key,133,817,677,322,true\)/);
   assert.match(screens,/sprite\(s,o,'champSayaka',336,817,680,306\)/);
   assert.match(screens,/sprite\(s,o,'champDaichi',548,817,665,310\)/);
-  assert.match(entry,/targetWidth:865,depth:207/);
+  assert.match(entry,/x:855,groundY:738,targetWidth:822,depth:207/);
   assert.match(entry,/shadowOpacity:\.29,shadowWidthScale:1\.28/);
   assert.match(entry,/o\.headline\(px\+70,y\+/);
   assert.match(entry,/o\.label\(px\+pw-23,y\+20/);
