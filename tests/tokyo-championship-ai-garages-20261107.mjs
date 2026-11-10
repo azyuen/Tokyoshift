@@ -21,7 +21,10 @@ test('rival event car selection persists through save and reload',()=>{
   const state=JSON.parse(JSON.stringify({entrants:[{id:'rival',garage}]}));
   assert.deepEqual(getChampionshipAiCar(state,'rival','KNOCKOUT'),garage[0]);
   assert.deepEqual(getChampionshipAiCar(state,'rival','CREW'),garage[1]);
-  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE'),garage[2]);\n  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',1),garage[0]);\n  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',2),garage[1]);\n  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',2),getChampionshipAiCar(state,'rival','FOUR_WIDE',2));
+  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE'),garage[2]);
+  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',1),garage[0]);
+  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',2),garage[1]);
+  assert.deepEqual(getChampionshipAiCar(state,'rival','FOUR_WIDE',2),getChampionshipAiCar(state,'rival','FOUR_WIDE',2));
   assert.equal(getChampionshipAiCar({entrants:[{id:'rival'}]},'rival'),null);
 });
 
