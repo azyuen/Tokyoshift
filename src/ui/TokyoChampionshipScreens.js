@@ -1072,11 +1072,11 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     o.label(px+18,py+397,String(s.proError).slice(0,51),14,
       '#ffadb6',{width:pw-36});
   }else if(mode!=='HEAT'&&maxPage>0){
-    o.iconButton(px+38,py+405,'◀',
+    o.iconButton(px+38,py+393,'◀',
       ()=>show(mode,Math.max(0,shownPage-1)),{disabled:shownPage===0});
-    o.label(px+pw/2,py+395,(shownPage+1)+' / '+(maxPage+1),17,PALE)
+    o.label(px+pw/2,py+384,(shownPage+1)+' / '+(maxPage+1),17,PALE)
       .setOrigin(.5,0);
-    o.iconButton(px+pw-38,py+405,'▶',
+    o.iconButton(px+pw-38,py+393,'▶',
       ()=>show(mode,Math.min(maxPage,shownPage+1)),
       {disabled:shownPage===maxPage});
   }
