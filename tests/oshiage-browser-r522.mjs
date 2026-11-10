@@ -14,13 +14,27 @@ try {
     }
   });
   await page.goto('http://127.0.0.1:8765/', {waitUntil:'domcontentloaded'});
-  await page.waitForFunction(() => {
-    const game = window.TOKYO_SHIFT;
-    const canvas = document.querySelector('canvas');
-    return Boolean(game?.scene?.scenes?.length && canvas &&
-      document.body.dataset.scene &&
-      document.getElementById('loading-label')?.textContent === 'READY');
-  }, null, {timeout: 30000});
+  try {
+    await page.waitForFunction(() => {
+      const game = window.TOKYO_SHIFT;
+      const canvas = document.querySelector('canvas');
+      return Boolean(game?.scene?.scenes?.length && canvas &&
+        document.body.dataset.scene &&
+        document.getElementById('loading-label')?.textContent === 'READY');
+    }, null, {timeout: 30000});
+  } catch(error) {
+    console.log('BOOT TIMEOUT DIAGNOSTIC', JSON.stringify(await page.evaluate(() => ({
+      hasPhaser: Boolean(window.Phaser),
+      hasGame: Boolean(window.TOKYO_SHIFT),
+      loadingLabel: document.getElementById('loading-label')?.textContent,
+      bootError: document.getElementById('boot-diagnostic-message')?.textContent,
+      splashError: document.getElementById('loading-screen')?.getAttribute('data-boot-error'),
+      bodyScene: document.body.dataset.scene,
+      scripts:[...document.scripts].map(x=>x.src).filter(Boolean).slice(-5),
+    })),null,2));
+    console.log('PAGE ERRORS',JSON.stringify(errors.slice(-25),null,2));
+    throw error;
+  }
   console.log('GAME READY FOR OSHIAGE', JSON.stringify(await page.evaluate(() => ({
     scenes: window.TOKYO_SHIFT.scene.scenes.filter(s => s.sys.isActive())
       .map(s => s.sys.settings.key),
