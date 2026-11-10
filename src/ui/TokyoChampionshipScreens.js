@@ -369,9 +369,9 @@ function mainSprites(s,o,view){
   }else if(view==='FOUR_WIDE'){
     // Player faces the grid, with all three characters slightly lower in the
     // frame. Keep the smaller driver standings card below the player's feet.
-    sprite(s,o,player?.key,133,805,677,322,true);
-    sprite(s,o,'champSayaka',336,805,680,306);
-    sprite(s,o,'champDaichi',548,805,665,310);
+    sprite(s,o,player?.key,133,817,677,322,true);
+    sprite(s,o,'champSayaka',336,817,680,306);
+    sprite(s,o,'champDaichi',548,817,665,310);
   }
 }
 function standingName(c,row){
@@ -990,7 +990,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   if(car){
     const carState=s.registry.get('carStates')?.[carId]||{};
     const parts=renderStoryCar(s,car,{
-      x:820,groundY:738,targetWidth:910,depth:207,
+      x:820,groundY:738,targetWidth:865,depth:207,
       shadow:true,shadowOpacity:.29,shadowWidthScale:1.28,garageGeometry:true,
       paintColor:carState.paintColor??0x8797a6,
     });
@@ -1071,18 +1071,18 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     o.add(s.add.rectangle(px+pw/2,y+20,pw-28,40,
       mine?0x4a3925:0x142639,.96)
       .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
-    o.label(px+16,y+7,String(item?.number??(i+1)).padStart(2,'0'),19,
+    o.label(px+23,y+7,String(item?.number??(i+1)).padStart(2,'0'),19,
       mine?GOLD:PALE,{font:DISPLAY});
-    o.headline(px+59,y+(item?.result?1:8),
+    o.headline(px+70,y+(item?.result?1:8),
       item?(mine?'YOU':item.name).toUpperCase():'AWAITING',18,
-      mine?GOLD:item?PALE:MUTED,pw-172);
+      mine?GOLD:item?PALE:MUTED,pw-192);
     if(item?.result)
-      o.label(px+59,y+23,item.result,13,mine?GOLD:MUTED,
-        {width:pw-172});
+      o.label(px+70,y+23,item.result,13,mine?GOLD:MUTED,
+        {width:pw-192});
     // Display the driver's current Championship standing at the far right,
     // including the player. This is NOT the lane number or a fabricated rank.
     if(item&&rank>0)
-      o.label(px+pw-16,y+20,'RANK #'+rank,14,
+      o.label(px+pw-23,y+20,'RANK #'+rank,14,
         mine?GOLD:PALE,{font:DISPLAY}).setOrigin(1,.5);
   }
   if(s.proError)
