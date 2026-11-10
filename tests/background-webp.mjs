@@ -36,13 +36,19 @@ test('generated WebP map targets existing artwork with no duplicate PNG',()=>{
   }
 });
 
-test('Phaser image loader maps images but keeps texture keys and other parameters',()=>{
-  class Loader {}
-  Loader.prototype.image=function(key,url,...args){return {key,url,args};};
-  const Phaser={Loader:{LoaderPlugin:Loader}};
+test('Phaser 3.90 file type installer wraps each loader and preserves image keys',()=>{
+  const FileTypesManager={
+    install(loader){
+      loader.image=function(key,url,...args){return {key,url,args};};
+      return loader;
+    },
+  };
+  const Phaser={Loader:{FileTypesManager}};
   installBackgroundWebpLoader(Phaser);
-  installBackgroundWebpLoader(Phaser); // idempotent on multiple app boots
-  const instance=new Loader();
+  installBackgroundWebpLoader(Phaser);
+  const instance={};
+  const returned=FileTypesManager.install(instance);
+  assert.equal(returned,instance);
   const [original,converted]=Object.entries(BACKGROUND_WEBP_ASSETS)[0]||[
     'assets/Cars/stock/gdb.png','assets/Cars/stock/gdb.png'];
   const result=instance.image('champ-key',original+'?phase=day','custom');
@@ -54,6 +60,9 @@ test('Phaser image loader maps images but keeps texture keys and other parameter
   assert.equal(obj.key.url,converted);
   assert.equal(instance.image('stock','assets/Cars/stock/gdb.png').url,
     'assets/Cars/stock/gdb.png');
+  const second={};
+  FileTypesManager.install(second);
+  assert.equal(second.image('another',original).url,converted);
 });
 
 test('WebP URL redirect is installed before the game starts, with no profile changes',()=>{
