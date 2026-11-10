@@ -1,5 +1,5 @@
-import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261110-fourwide-briefing';
-import { createDevTokyoChampionship, createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
+import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261110-fourwide-car-switch';
+import { createDevTokyoChampionship, createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES, selectChampionshipFourWideCar } from '../data/tokyoChampionship.js?v=20261110-fourwide-switch';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
 import { maybePlayProSponsorStory } from './ProSponsorStory.js?v=20261030-r742';
@@ -901,13 +901,22 @@ function startChampionshipRace(s,mode,carId) {
       s.proError='CHOOSE ONE OF YOUR THREE CHAMPIONSHIP REGISTERED CARS';return false;
     }
     const stage=mode==='CHAMP_KO'?'KNOCKOUT':'FOUR_WIDE';
-    const locked=state.eventCarLocks?.[stage];
-    if(locked&&locked!==carId){
-      s.proError='CAR LOCKED FOR THIS CHAMPIONSHIP EVENT';return false;
-    }
-    if(!locked){
-      if(!commit(s,{proCircuit:{...c,activeChampionship:{...state,
-        eventCarLocks:{...(state.eventCarLocks||{}),[stage]:carId}}}}))return false;
+    if(mode==='CHAMP_FOUR'){
+      // Four-Wide heats may use any of the three Championship-registered
+      // cars. A Pro Paddock switch updates only this event's selection.
+      const choice=selectChampionshipFourWideCar(state,carId,registered,owned);
+      if(choice.error){s.proError=choice.error;return false;}
+      if(choice.championship!==state&&!commit(s,{proCircuit:{...c,
+        activeChampionship:choice.championship}}))return false;
+    }else{
+      const locked=state.eventCarLocks?.[stage];
+      if(locked&&locked!==carId){
+        s.proError='CAR LOCKED FOR THIS CHAMPIONSHIP EVENT';return false;
+      }
+      if(!locked){
+        if(!commit(s,{proCircuit:{...c,activeChampionship:{...state,
+          eventCarLocks:{...(state.eventCarLocks||{}),[stage]:carId}}}}))return false;
+      }
     }
   }
   s.proError=null;
