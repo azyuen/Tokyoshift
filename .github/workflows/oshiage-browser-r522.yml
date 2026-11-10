@@ -1,7 +1,7 @@
 name: Oshiage Meet Browser R522
 on:
   push:
-    branches: [main]
+    branches: [main, test/webp-boot-diagnostics-20261110]
     paths:
       - 'src/scenes/OshiageScene.js'
       - 'src/data/oshiageShowdown.js'
