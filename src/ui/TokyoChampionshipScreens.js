@@ -1057,7 +1057,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     o.add(s.add.rectangle(px+pw/2,y+20,pw-34,55,
       mine?0x4a3925:0x142639,.96)
       .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
-    o.label(px+24,y+3,'0'+(item?.number||i+1),20,
+    o.label(px+24,y+3,String(item?.number??(i+1)).padStart(2,'0'),20,
       mine?GOLD:PALE,{font:DISPLAY});
     o.headline(px+72,y+1,
       item?(mine?'YOU':item.name).toUpperCase():'AWAITING',20,
@@ -1066,9 +1066,9 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
       {width:pw-107});
   }
   if(mode!=='HEAT'&&maxPage>0){
-    o.button(px+90,py+445,125,37,'◀ PREV',
+    o.button(px+90,py+445,125,37,mode==='RESULTS'?'◀ NEWER':'◀ PREV',
       ()=>show(mode,Math.max(0,shownPage-1)),{disabled:shownPage===0});
-    o.button(px+pw-89,py+445,125,37,'NEXT ▶',
+    o.button(px+pw-89,py+445,125,37,mode==='RESULTS'?'OLDER ▶':'NEXT ▶',
       ()=>show(mode,Math.min(maxPage,shownPage+1)),
       {disabled:shownPage===maxPage});
   }
