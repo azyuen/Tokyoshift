@@ -961,9 +961,6 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   o.headline(47,51,'FOUR-WIDE FINALE',46,GOLD,980);
   o.label(49,110,'QUALIFYING  /  SEMIFINALS  /  GRAND FINAL   •   40 POINTS AVAILABLE',
     19,PALE,{stroke:true,width:1025});
-  o.label(1180,72,'RANK '+(playerIndex>=0?'#'+(playerIndex+1):'—')+
-    '  /  '+(player?.total||0)+' PTS',20,GOLD,{font:DISPLAY,stroke:true});
-
   const glow=(x,y,w,label,fn,disabled=false)=>
     addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:fn,disabled});
   glow(135,485,206,'ASK ADVICE',()=>{
