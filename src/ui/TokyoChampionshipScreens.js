@@ -1026,7 +1026,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='GRID',fieldPage=0){
     const top=ry+153+index*73;
     const mine=id==='player:driver';
     o.panel(rx+rw/2,top+31,rw-38,63,
-      mine?.97:.85,mine?0xdbb56e:0x58728a);
+      mine ? .97 : .85,mine?0xdbb56e:0x58728a);
     o.headline(rx+32,top+8,(result?String(index+1):'L'+(index+1)),
       21,mine?GOLD:MUTED,37);
     o.headline(rx+78,top+8,nameFor(id).toUpperCase(),21,
