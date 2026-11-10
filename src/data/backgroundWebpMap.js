@@ -16,19 +16,26 @@ export function resolveBackgroundWebpUrl(url) {
 
 /** Call before the Phaser.Game constructor creates its first scene. */
 export function installBackgroundWebpLoader(Phaser) {
-  const loader = Phaser?.Loader?.LoaderPlugin?.prototype;
-  if (!loader || typeof loader.image !== 'function')
-    throw new Error('Phaser image loader unavailable for WebP background mapping');
-  if (loader.__tokyoBackgroundWebpMapped) return;
-  const original = loader.image;
-  const transform = input => Array.isArray(input) ?
-    input.map(transform) :
-    input && typeof input === 'object' ?
-      { ...input, url: resolveBackgroundWebpUrl(input.url) } :
-      input;
-  loader.image = function(key, url, ...args) {
-    return original.call(this, transform(key),
-      resolveBackgroundWebpUrl(url), ...args);
+  // In Phaser 3.90, FileTypesManager injects image() onto EACH LoaderPlugin
+  // instance. There is no LoaderPlugin.prototype.image method to patch.
+  const types=Phaser?.Loader?.FileTypesManager;
+  if(!types || typeof types.install !== 'function')
+    throw new Error('Phaser file type installer unavailable for WebP mapping');
+  if(types.__tokyoBackgroundWebpMapped)return;
+  const originalInstall=types.install;
+  const transform=input=>Array.isArray(input)?input.map(transform):
+    input && typeof input==='object'?
+      {...input,url:resolveBackgroundWebpUrl(input.url)}:input;
+  types.install=function(loader){
+    const result=originalInstall.call(this,loader);
+    if(typeof loader?.image!=='function')
+      throw new Error('Phaser image loader missing after file types install');
+    const originalImage=loader.image;
+    loader.image=function(key,url,...args){
+      return originalImage.call(this,transform(key),
+        resolveBackgroundWebpUrl(url),...args);
+    };
+    return result;
   };
-  loader.__tokyoBackgroundWebpMapped = true;
+  types.__tokyoBackgroundWebpMapped=true;
 }
