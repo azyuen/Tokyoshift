@@ -1,4 +1,5 @@
 import { makeDeferredScene } from './ui/DeferredScene.js?v=20261104-r788';
+import { installBackgroundWebpLoader } from './data/backgroundWebpMap.js?v=20261110-backgrounds';
 // Tokyo SHIFT boot recovery: load scene modules dynamically so a broken import
 // cannot strand the splash at the initial 3% with no diagnostic.
 const GAME_WIDTH = 1560;
@@ -159,6 +160,9 @@ async function startTokyoShift() {
       scene: allScenes,
     };
 
+    // Redirect only converted background image URLs to WebP. Texture keys,
+    // original scene declarations and persistent player saves are unchanged.
+    installBackgroundWebpLoader(Phaser);
     window.TOKYO_SHIFT = new Phaser.Game(config);
     // Optional Story Director is installed after boot. A narrative module error
     // must never prevent a player reaching their profile on mobile/iPad.
