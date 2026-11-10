@@ -367,12 +367,11 @@ function mainSprites(s,o,view){
     sprite(s,o,'champDaichi',742,741,550,350);
     sprite(s,o,'champHiroshi',1438,741,550,340,true,240);
   }else if(view==='FOUR_WIDE'){
-    // Lift the team by about one third of their previous 680px sprite height.
-    // Player and Sayaka trade places: the player anchors the standings box
-    // on the left and faces right towards the Four-Wide grid.
-    sprite(s,o,player?.key,133,740,677,322,true);
-    sprite(s,o,'champSayaka',336,740,680,306);
-    sprite(s,o,'champDaichi',548,740,665,310);
+    // Player faces the grid, with all three characters slightly lower in the
+    // frame. Keep the smaller driver standings card below the player's feet.
+    sprite(s,o,player?.key,133,785,677,322,true);
+    sprite(s,o,'champSayaka',336,785,680,306);
+    sprite(s,o,'champDaichi',548,785,665,310);
   }
 }
 function standingName(c,row){
@@ -965,7 +964,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     19,PALE,{stroke:true,width:1025});
   const glow=(x,y,w,label,fn,disabled=false)=>
     addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:fn,disabled});
-  glow(336,265,190,'ASK ADVICE',()=>{
+  glow(336,503,190,'ASK ADVICE',()=>{
     const c=circuit(s),current=c.activeChampionship;
     if(!current||current.id!==state.id||current.completed||
       current.stage!=='FOUR_WIDE')return;
@@ -979,7 +978,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     }
     showSayakaAdviceManga(s,note);
   },!active);
-  glow(548,265,190,'CAR SETUP',()=>{
+  glow(548,503,190,'CAR SETUP',()=>{
     if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
     openPaddock(s,state,'DRIVER');
   },!active);
@@ -991,7 +990,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   if(car){
     const carState=s.registry.get('carStates')?.[carId]||{};
     const parts=renderStoryCar(s,car,{
-      x:820,groundY:738,targetWidth:1137.5,depth:207,
+      x:820,groundY:738,targetWidth:910,depth:207,
       shadow:true,garageGeometry:true,
       paintColor:carState.paintColor??0x8797a6,
     });
@@ -1015,18 +1014,18 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   o.label(bx+110,by+76,playerIndex>=0?'#'+(playerIndex+1)+' / '+all.length:'—',
     21,PALE,{font:DISPLAY});
 
-  // ONE column in the right panel: next four-car heat, other drivers,
-  // or actual archived four-wide results. Never synthesize a future grid.
-  const px=1169,py=269,pw=357,ph=541;
-  o.panel(px+pw/2,py+ph/2,pw,ph,.94,0xd3ad72);
-  o.headline(px+18,py+15,'FOUR-WIDE GRID',26,GOLD,pw-36);
-  // Glyph-only navigation: retain generous invisible touch targets, without
-  // the outlined button boxes that cluttered the prior four-wide card.
-  o.iconButton(px+35,py+81,'◀',()=>switchMode(-1));
-  o.iconButton(px+pw-35,py+81,'▶',()=>switchMode(1));
+  // Smaller, independent upper-right grid card. The two race-navigation
+  // buttons intentionally remain anchored to the previous bottom-right
+  // positions, OUTSIDE this panel, to reveal more of the garage background.
+  const px=1169,py=76,pw=357,ph=343;
+  o.panel(px+pw/2,py+ph/2,pw,ph,.91,0xd3ad72);
+  o.headline(px+18,py+12,'FOUR-WIDE GRID',25,GOLD,pw-36);
+  // Previous/next views use glyph-only hotspots (no button boxes).
+  o.iconButton(px+35,py+66,'◀',()=>switchMode(-1));
+  o.iconButton(px+pw-35,py+66,'▶',()=>switchMode(1));
   const viewTitle=mode==='HEAT'?(live?'NEXT HEAT':'LAST HEAT'):
     mode==='FIELD'?'DRIVER FIELD':'PREVIOUS RESULTS';
-  o.headline(px+75,py+66,viewTitle,21,PALE,pw-150);
+  o.headline(px+78,py+51,viewTitle,21,PALE,pw-156);
   let records=[];
   let detail='';
   if(mode==='FIELD'){
@@ -1048,39 +1047,51 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
       (rounds[result.round]||'FOUR-WIDE'):'NO RECORDED HEAT';
   }else{
     records=(live?.entrants||[]).map((id,i)=>({
-      id,name:entrants.get(id)?.name||'RIVAL',number:i+1,
-      result:id==='player:driver'?'YOUR LANE':
-        'RANK #'+(all.findIndex(row=>row.id===id)+1),
+      id,name:entrants.get(id)?.name||'RIVAL',number:i+1,result:'',
     }));
     detail=(rounds[live?.round]||'FOUR-WIDE')+'  /  FOUR DRIVERS';
   }
-  o.label(px+19,py+115,detail,17,GOLD,{width:pw-38});
-  for(let i=0;i<4;i++){
-    const item=records[i],y=py+151+i*57,mine=item?.id==='player:driver';
-    o.add(s.add.rectangle(px+pw/2,y+20,pw-30,52,
-      mine?0x4a3925:0x142639,.96)
-      .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
-    o.label(px+24,y+3,String(item?.number??(i+1)).padStart(2,'0'),20,
-      mine?GOLD:PALE,{font:DISPLAY});
-    o.headline(px+72,y+1,
-      item?(mine?'YOU':item.name).toUpperCase():'AWAITING',20,
-      mine?GOLD:item?PALE:MUTED,pw-106);
-    if(item)o.label(px+73,y+31,item.result,14,mine?GOLD:MUTED,
-      {width:pw-107});
-  }
-  if(s.proError){
-    o.label(px+18,py+397,String(s.proError).slice(0,51),14,
-      '#ffadb6',{width:pw-36});
-  }else if(mode!=='HEAT'&&maxPage>0){
-    o.iconButton(px+38,py+393,'◀',
+  // For field/history views the small arrows page through saved entries.
+  // They share the subtitle row instead of requiring an extra footer.
+  if(mode!=='HEAT'&&maxPage>0){
+    o.iconButton(px+27,py+114,'◀',
       ()=>show(mode,Math.max(0,shownPage-1)),{disabled:shownPage===0});
-    o.label(px+pw/2,py+384,(shownPage+1)+' / '+(maxPage+1),17,PALE)
-      .setOrigin(.5,0);
-    o.iconButton(px+pw-38,py+393,'▶',
+    o.label(px+pw/2,py+105,
+      detail+'  •  '+(shownPage+1)+'/'+(maxPage+1),14,GOLD,
+      {width:pw-115}).setOrigin(.5,0);
+    o.iconButton(px+pw-27,py+114,'▶',
       ()=>show(mode,Math.min(maxPage,shownPage+1)),
       {disabled:shownPage===maxPage});
+  }else{
+    o.label(px+16,py+106,detail,16,GOLD,{width:pw-32});
   }
-  o.button(px+pw/2,py+ph-91,pw-32,54,
+  for(let i=0;i<4;i++){
+    const item=records[i],y=py+146+i*47,mine=item?.id==='player:driver';
+    const rank=item?all.findIndex(row=>row.id===item.id)+1:0;
+    o.add(s.add.rectangle(px+pw/2,y+20,pw-28,40,
+      mine?0x4a3925:0x142639,.96)
+      .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
+    o.label(px+16,y+7,String(item?.number??(i+1)).padStart(2,'0'),19,
+      mine?GOLD:PALE,{font:DISPLAY});
+    o.headline(px+59,y+(item?.result?1:8),
+      item?(mine?'YOU':item.name).toUpperCase():'AWAITING',18,
+      mine?GOLD:item?PALE:MUTED,pw-172);
+    if(item?.result)
+      o.label(px+59,y+23,item.result,13,mine?GOLD:MUTED,
+        {width:pw-172});
+    // Display the driver's current Championship standing at the far right,
+    // including the player. This is NOT the lane number or a fabricated rank.
+    if(item&&rank>0)
+      o.label(px+pw-16,y+20,'RANK #'+rank,14,
+        mine?GOLD:PALE,{font:DISPLAY}).setOrigin(1,.5);
+  }
+  if(s.proError)
+    o.label(px+18,py+ph-9,String(s.proError).slice(0,51),14,
+      '#ffadb6',{width:pw-36}).setOrigin(0,1);
+
+  // Keep the established navigation coordinates and touch sizes unchanged.
+  // These buttons no longer sit inside (or extend) the compact grid card.
+  o.button(px+pw/2,719,pw-32,54,
     active?'GO TO GRID':'EVENT COMPLETE',()=>{
       if(!active)return;
       if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
@@ -1109,7 +1120,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
       if(!actions.startRace('CHAMP_FOUR',id))
         showTokyoChampionshipScreens(s,{view:'FOUR_WIDE',actions});
     },{red:active,disabled:!active});
-  o.button(px+pw/2,py+ph-29,pw-32,42,'RETURN TO HUB',
+  o.button(px+pw/2,781,pw-32,42,'RETURN TO HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
 }
 
