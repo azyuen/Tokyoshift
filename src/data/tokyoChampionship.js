@@ -116,6 +116,23 @@ export function lockChampionshipEventCar(raw,stage,carId,registeredCarIds=[],own
     ...raw,eventCarLocks:{...(raw.eventCarLocks||{}),[stage]:carId}
   }};
 }
+/**
+ * Four-Wide is a three-heat finale: allow the player to choose a different
+ * CHAMPIONSHIP-REGISTERED personal car between heats in the Pro Paddock.
+ * This updates only the Four-Wide car choice. Knockout event locks remain
+ * permanent and past heat results are never rewritten.
+ */
+export function selectChampionshipFourWideCar(raw,carId,registeredCarIds=[],ownedCarIds=[]) {
+  if(!raw||raw.completed||raw.stage!=='FOUR_WIDE')
+    return {error:'FOUR-WIDE CHAMPIONSHIP EVENT IS NOT ACTIVE'};
+  if(typeof carId!=='string'||!carId||
+    !Array.isArray(registeredCarIds)||!registeredCarIds.includes(carId)||
+    !Array.isArray(ownedCarIds)||!ownedCarIds.includes(carId))
+    return {error:'SELECT ONE OF YOUR THREE CHAMPIONSHIP REGISTERED CARS'};
+  if(raw.eventCarLocks?.FOUR_WIDE===carId)return {championship:raw};
+  return {championship:{...raw,
+    eventCarLocks:{...(raw.eventCarLocks||{}),FOUR_WIDE:carId}}};
+}
 export function canEnterTokyoChampionship(raw) {
   const c=normaliseProCircuitState(raw),q=getProQualification(c);
   return c.calendar.round===8&&q.qualified&&!c.activeTournament&&!c.activeCrewEvent&&!c.activeTimedEvent&&!c.activeChampionship;
