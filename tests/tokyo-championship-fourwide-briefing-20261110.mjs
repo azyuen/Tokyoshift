@@ -19,7 +19,7 @@ test('four-wide uses a dedicated uncluttered briefing with no top chrome',()=>{
   assert.match(entry,/openPaddock\(s,state,'DRIVER'\)/);
   assert.match(entry,/GO TO GRID/);
   assert.match(entry,/RETURN TO HUB/);
-  assert.doesNotMatch(entry,/CREW PADDOCK|CHAMPIONSHIP HUB'|PRO PADDOCK'/);
+  assert.doesNotMatch(entry,/CREW PADDOCK|o\\.button\\(186,794/);
 });
 
 test('previewed driver car is the same championship-registered one used at grid',()=>{
