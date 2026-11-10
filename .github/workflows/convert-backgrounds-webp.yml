@@ -1,0 +1,58 @@
+name: Convert Tokyo SHIFT background PNGs to WebP
+on:
+  push:
+    branches:
+      - feature/webp-backgrounds-20261110
+    paths:
+      - 'scripts/convert-backgrounds-webp.py'
+      - 'src/data/backgroundWebpMap.js'
+      - 'src/data/backgroundWebpTable.js'
+      - 'src/main.js'
+      - 'tests/background-webp.mjs'
+      - '.github/workflows/convert-backgrounds-webp.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  convert-and-upload:
+    if: github.ref == 'refs/heads/feature/webp-backgrounds-20261110'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install WebP encoder
+        run: python -m pip install 'Pillow>=11,<13'
+      - name: Convert only full-scene backgrounds (originals remain recoverable in Git history)
+        run: python scripts/convert-backgrounds-webp.py
+      - name: Rebuild browser asset integrity manifest
+        run: node scripts/generate-asset-manifest.mjs
+      - name: Verify source file references, WebP paths and loader integration
+        run: |
+          node --check src/main.js
+          node --test tests/background-webp.mjs tests/startup-import-integrity-r508.mjs tests/loading-cache.mjs
+          node scripts/generate-asset-manifest.mjs --check
+          node --input-type=module -e "import {BACKGROUND_WEBP_ASSETS} from './src/data/backgroundWebpTable.js'; if (Object.keys(BACKGROUND_WEBP_ASSETS).length < 50) process.exit(1); console.log(Object.keys(BACKGROUND_WEBP_ASSETS).length, 'background URLs redirected to WebP')"
+      - name: Record image-size savings
+        run: |
+          git status --short | tail -25
+          git status --short | wc -l
+          du -sh assets
+      - name: Commit converted files to the development branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A assets/Meet assets/CentralTokyo assets/Locations/TunerShops assets/Garage assets/Oshiage assets/Ui src/data/backgroundWebpTable.js asset-manifest.js
+          if ! git diff --cached --quiet; then
+            git commit -m 'Convert full-scene backgrounds to verified WebP and update cache manifest'
+            git push origin HEAD:feature/webp-backgrounds-20261110
+          fi
