@@ -930,13 +930,194 @@ function showChampionshipHeatCarPopup(s,actions,slot=0){
 }
 
 
+/**
+ * Four-Wide finale: one live four-car matchup per screen. The arrows cycle
+ * between the next player heat, the full field, and archived player heat
+ * finishes. All results and opponent identities come from the saved bracket.
+ */
+function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
+  const active=state.stage==='FOUR_WIDE'&&!state.completed;
+  const live=active?getChampionshipFourWideHeat(state):null;
+  const all=championshipStandings(state);
+  const playerIndex=all.findIndex(row=>row.id==='player:driver');
+  const player=all[playerIndex];
+  const entrants=new Map((state.entrants||[]).map(row=>[row.id,row]));
+  const rounds=['QUALIFYING','SEMIFINAL','GRAND FINAL'];
+  const history=(state.fourWide?.results||[]).map(record=>
+    (record.heats||[]).find(heat=>heat.entrants?.includes('player:driver')))
+    .filter(Boolean);
+  const modes=['HEAT','FIELD',...(history.length?['RESULTS']:[])];
+  const mode=modes.includes(displayMode)?displayMode:'HEAT';
+  const maxPage=mode==='FIELD'?Math.max(0,Math.ceil(all.length/4)-1):
+    mode==='RESULTS'?Math.max(0,history.length-1):0;
+  const shownPage=Math.min(maxPage,Math.max(0,Number(page)||0));
+  const show=(nextMode,nextPage=0)=>showEvent(s,'FOUR_WIDE',actions,nextMode,nextPage);
+  const switchMode=delta=>{
+    const index=modes.indexOf(mode);
+    show(modes[(index+delta+modes.length)%modes.length]);
+  };
+  o.label(47,19,'TOKYO CHAMPIONSHIP  /  EVENT 03',19,PALE,
+    {font:DISPLAY,stroke:true});
+  o.headline(47,51,'FOUR-WIDE FINALE',46,GOLD,980);
+  o.label(49,110,'QUALIFYING  /  SEMIFINALS  /  GRAND FINAL   •   40 POINTS AVAILABLE',
+    19,PALE,{stroke:true,width:1025});
+  o.label(1180,72,'RANK '+(playerIndex>=0?'#'+(playerIndex+1):'—')+
+    '  /  '+(player?.total||0)+' PTS',20,GOLD,{font:DISPLAY,stroke:true});
+
+  const glow=(x,y,w,label,fn,disabled=false)=>
+    addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:fn,disabled});
+  glow(135,485,206,'ASK ADVICE',()=>{
+    const c=circuit(s),current=c.activeChampionship;
+    if(!current||current.id!==state.id||current.completed||
+      current.stage!=='FOUR_WIDE')return;
+    const note=current.adviceByEvent?.FOUR_WIDE||getEventAdvice(current,'FOUR_WIDE');
+    if(!current.adviceByEvent?.FOUR_WIDE){
+      try{
+        saveProTransaction(s.registry,{proCircuit:{...c,activeChampionship:{
+          ...current,adviceByEvent:{...(current.adviceByEvent||{}),FOUR_WIDE:note},
+        }}});
+      }catch(error){s.proError=error.message;return;}
+    }
+    showSayakaAdviceManga(s,note);
+  },!active);
+  glow(542,485,206,'CAR SETUP',()=>{
+    if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
+    openPaddock(s,state,'DRIVER');
+  },!active);
+
+  // Centre-stage hero car; never invent an opponent or show an unregistered
+  // garage vehicle. The same locked/selected ID is used by GO TO GRID.
+  const carId=fourWideDisplayCarId(s,state);
+  const car=carId&&cars[carId];
+  if(car){
+    const carState=s.registry.get('carStates')?.[carId]||{};
+    const parts=renderStoryCar(s,car,{
+      x:815,groundY:736,targetWidth:455,depth:216,
+      shadow:true,garageGeometry:true,
+      paintColor:carState.paintColor??0x8797a6,
+    });
+    parts.forEach(part=>o.add(part));
+    o.headline(655,764,(car.shortName||car.name||carId).toUpperCase(),
+      22,PALE,337).setDepth(233);
+    o.label(655,791,getChampionshipEventCar(state,'FOUR_WIDE')?
+      'LOCKED FOR FOUR-WIDE':'CHAMPIONSHIP REGISTERED CAR',
+    15,GOLD,{width:340});
+  }else{
+    o.headline(655,706,'SELECT A REGISTERED CAR',20,GOLD,365);
+    o.label(655,742,'USE DAICHI\'S CAR SETUP',17,PALE);
+  }
+
+  // Compact personal driver standings, matching the other event briefings.
+  const bx=39,by=658,bw=247,bh=151;
+  o.panel(bx+bw/2,by+bh/2,bw,bh,.94,0xd1ae6c);
+  o.headline(bx+15,by+12,'DRIVER STANDINGS',22,GOLD,bw-30);
+  o.label(bx+17,by+67,'POINTS',15,MUTED);
+  o.label(bx+17,by+91,String(player?.total??0),29,PALE,{font:DISPLAY});
+  o.label(bx+133,by+67,'RANK',15,MUTED);
+  o.label(bx+133,by+93,playerIndex>=0?'#'+(playerIndex+1)+' / '+all.length:'—',
+    23,PALE,{font:DISPLAY});
+
+  // ONE column in the right panel: next four-car heat, other drivers,
+  // or actual archived four-wide results. Never synthesize a future grid.
+  const px=1134,py=184,pw=393,ph=627;
+  o.panel(px+pw/2,py+ph/2,pw,ph,.94,0xd3ad72);
+  o.headline(px+18,py+15,'FOUR-WIDE GRID',26,GOLD,pw-36);
+  o.button(px+36,py+81,49,38,'◀',()=>switchMode(-1));
+  o.button(px+pw-36,py+81,49,38,'▶',()=>switchMode(1));
+  const viewTitle=mode==='HEAT'?(live?'NEXT HEAT':'LAST HEAT'):
+    mode==='FIELD'?'DRIVER FIELD':'PREVIOUS RESULTS';
+  o.headline(px+75,py+66,viewTitle,21,PALE,pw-150);
+  let records=[];
+  let detail='';
+  if(mode==='FIELD'){
+    records=all.slice(shownPage*4,shownPage*4+4).map((row,i)=>({
+      id:row.id,name:row.name,number:shownPage*4+i+1,
+      result:row.total+' PTS',
+    }));
+    detail='DRIVERS '+(shownPage*4+1)+'–'+
+      Math.min(all.length,(shownPage+1)*4)+' / '+all.length;
+  }else if(mode==='RESULTS'||!live){
+    const result=history[Math.max(0,history.length-1-shownPage)];
+    const finished=result?.results||[];
+    records=finished.length?finished.map((row,i)=>({
+      id:row.id,name:entrants.get(row.id)?.name||'RIVAL',
+      number:i+1,result:row.finishSeconds==null?'NO TIME':
+        Number(row.finishSeconds).toFixed(3)+' S',
+    })):[];
+    detail=result?'ROUND '+(result.round+1)+'  /  '+
+      (rounds[result.round]||'FOUR-WIDE'):'NO RECORDED HEAT';
+  }else{
+    records=(live?.entrants||[]).map((id,i)=>({
+      id,name:entrants.get(id)?.name||'RIVAL',number:i+1,
+      result:id==='player:driver'?'YOUR LANE':
+        'RANK #'+(all.findIndex(row=>row.id===id)+1),
+    }));
+    detail=(rounds[live?.round]||'FOUR-WIDE')+'  /  FOUR DRIVERS';
+  }
+  o.label(px+19,py+115,detail,17,GOLD,{width:pw-38});
+  for(let i=0;i<4;i++){
+    const item=records[i],y=py+167+i*62,mine=item?.id==='player:driver';
+    o.add(s.add.rectangle(px+pw/2,y+20,pw-34,55,
+      mine?0x4a3925:0x142639,.96)
+      .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
+    o.label(px+24,y+3,'0'+(item?.number||i+1),20,
+      mine?GOLD:PALE,{font:DISPLAY});
+    o.headline(px+72,y+1,
+      item?(mine?'YOU':item.name).toUpperCase():'AWAITING',20,
+      mine?GOLD:item?PALE:MUTED,pw-106);
+    if(item)o.label(px+73,y+31,item.result,14,mine?GOLD:MUTED,
+      {width:pw-107});
+  }
+  if(mode!=='HEAT'&&maxPage>0){
+    o.button(px+90,py+445,125,37,'◀ PREV',
+      ()=>show(mode,Math.max(0,shownPage-1)),{disabled:shownPage===0});
+    o.button(px+pw-89,py+445,125,37,'NEXT ▶',
+      ()=>show(mode,Math.min(maxPage,shownPage+1)),
+      {disabled:shownPage===maxPage});
+  }
+  if(s.proError)o.label(px+20,py+489,String(s.proError).slice(0,54),15,
+    '#ffadb6',{width:pw-40});
+  o.button(px+pw/2,py+ph-98,pw-34,58,
+    active?'GO TO GRID':'EVENT COMPLETE',()=>{
+      if(!active)return;
+      if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
+      const current=circuit(s),saved=current.activeChampionship;
+      const id=fourWideDisplayCarId(s,saved);
+      if(!id){
+        s.proError='SELECT A CHAMPIONSHIP CAR IN PRO PADDOCK';
+        return showEvent(s,'FOUR_WIDE',actions,mode,shownPage);
+      }
+      const registered=saved.championshipRegisteredCars||[];
+      const locked=lockChampionshipEventCar(saved,'FOUR_WIDE',id,registered,
+        s.registry.get('ownedCarIds')||[],false);
+      if(locked.error){
+        s.proError=locked.error;
+        return showEvent(s,'FOUR_WIDE',actions,mode,shownPage);
+      }
+      try{
+        if(locked.championship!==saved)
+          saveProTransaction(s.registry,{proCircuit:{
+            ...current,activeChampionship:locked.championship,
+          }});
+      }catch(error){
+        s.proError=error.message;
+        return showEvent(s,'FOUR_WIDE',actions,mode,shownPage);
+      }
+      if(!actions.startRace('CHAMP_FOUR',id))
+        showTokyoChampionshipScreens(s,{view:'FOUR_WIDE',actions});
+    },{red:active,disabled:!active});
+  o.button(px+pw/2,py+ph-34,pw-34,43,'RETURN TO HUB',
+    ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
+}
+
 function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   const c=circuit(s),state=c.activeChampionship;
   const active=state.stage===stage&&!state.completed;
   const st=statusFor(state,stage),event=EVENTS[stage];
-  const o=canvas(s,stage,{hideTopChrome:stage==='KNOCKOUT'||stage==='CREW'});o.actions=actions;
+  const o=canvas(s,stage,{hideTopChrome:stage==='KNOCKOUT'||stage==='CREW'||stage==='FOUR_WIDE'});o.actions=actions;
   mainSprites(s,o,stage);
   if(stage==='CREW')return showCrewBattleBriefing(s,o,state,actions);
+  if(stage==='FOUR_WIDE')return showFourWideBriefing(s,o,state,actions,displayMode,bracketHalf);
   const standings=championshipStandings(state);
   const position=standings.findIndex(r=>r.id==='player:driver')+1;
   const points=standings.find(r=>r.id==='player:driver')?.total||0;
