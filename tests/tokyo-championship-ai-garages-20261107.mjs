@@ -2,7 +2,8 @@ import test from 'node:test';
 import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from '../src/data/tunerShops.js';
 import assert from 'node:assert/strict';
 import {
-  CHAMPIONSHIP_AI_CAR_POOL, CHAMPIONSHIP_AI_RARE_CAR_POOL,\n  CHAMPIONSHIP_AI_RARE_CAR_PERCENT, createChampionshipAiGarage, getChampionshipAiCar,
+  CHAMPIONSHIP_AI_CAR_POOL, CHAMPIONSHIP_AI_RARE_CAR_POOL,
+  CHAMPIONSHIP_AI_RARE_CAR_PERCENT, createChampionshipAiGarage, getChampionshipAiCar,
 } from '../src/data/tokyoChampionship.js';
 
 test('each rival receives three distinct, deterministic road-car builds',()=>{
