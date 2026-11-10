@@ -1058,7 +1058,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='GRID',fieldPage=0){
     o.label(rx+22,ry+123,'CHAMPIONSHIP STANDINGS  /  '+(page+1)+' OF 2',
       18,GOLD,{width:rw-40});
     standings.slice(page*8,page*8+8).forEach((driver,i)=>{
-      const yy=ry+160+i*42,mine=driver.id==='player:driver';
+      const yy=ry+160+i*39,mine=driver.id==='player:driver';
       o.add(s.add.rectangle(rx+rw/2,yy+18,rw-40,38,
         mine?0x4e3f27:0x14283d,.93).setStrokeStyle(1,
           mine?0xd0ad72:0x3c536a).setDepth(225));
@@ -1068,7 +1068,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='GRID',fieldPage=0){
       const score=o.label(rx+rw-34,yy+6,fmt(driver.total)+' PTS',
         17,mine?GOLD:PALE);score.setOrigin(1,0);
     });
-    o.button(rx+rw/2,ry+525,rw-42,36,
+    o.button(rx+rw/2,ry+505,rw-42,34,
       page?'PREVIOUS 8 DRIVERS':'NEXT 8 DRIVERS',
       ()=>showEvent(s,'FOUR_WIDE',actions,'FIELD',page?0:1));
   }else{
