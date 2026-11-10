@@ -2,7 +2,7 @@
 // Only presentation, navigation and one-use strategy notes live here.
 // Authoritative scoring, car locks and race settlement remain in the existing modules.
 import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
-  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar, selectChampionshipFourWideCar, getChampionshipAiCar } from '../data/tokyoChampionship.js?v=20261030-r724';
+  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar, selectChampionshipFourWideCar, getChampionshipAiCar } from '../data/tokyoChampionship.js?v=20261110-fourwide-switch';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { cars } from '../data/cars.js?v=20261026-r687';
