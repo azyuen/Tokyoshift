@@ -990,7 +990,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   if(car){
     const carState=s.registry.get('carStates')?.[carId]||{};
     const parts=renderStoryCar(s,car,{
-      x:820,groundY:738,targetWidth:865,depth:207,
+      x:855,groundY:738,targetWidth:822,depth:207,
       shadow:true,shadowOpacity:.29,shadowWidthScale:1.28,garageGeometry:true,
       paintColor:carState.paintColor??0x8797a6,
     });
