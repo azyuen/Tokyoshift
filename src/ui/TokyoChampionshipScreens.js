@@ -134,6 +134,11 @@ function loadAssets(s,view,done){
     for(const unit of getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment))
       if(cars[unit.carId])queued+=preloadStoryCar(s,cars[unit.carId]);
   }
+  if(stage==='FOUR_WIDE'){
+    const state=circuit(s).activeChampionship;
+    const id=state&&fourWideDisplayCarId(s,state);
+    if(id&&cars[id])queued+=preloadStoryCar(s,cars[id]);
+  }
   if(stage==='KNOCKOUT'){
     const state=circuit(s).activeChampionship;
     const heat=state?.stage==='KNOCKOUT'&&!state.completed?heatFor(state):null;
@@ -289,6 +294,17 @@ function crewBriefingUnits(s){
   });
 }
 
+// One authoritative car choice for both the preview and GO TO GRID.
+// Respect a previously locked Championship car before any garage selection.
+function fourWideDisplayCarId(s,state){
+  const owned=s.registry.get('ownedCarIds')||[];
+  const registered=(state.championshipRegisteredCars||[]).filter(id=>
+    owned.includes(id)&&cars[id]);
+  const locked=getChampionshipEventCar(state,'FOUR_WIDE');
+  if(locked&&registered.includes(locked))return locked;
+  const selected=s.registry.get('selectedCarId');
+  return registered.includes(selected)?selected:registered[0]||null;
+}
 function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
     'idle',{proCircuit:true});
@@ -349,10 +365,12 @@ function mainSprites(s,o,view){
     sprite(s,o,player?.key,518,741,550,340);
     sprite(s,o,'champDaichi',742,741,550,350);
     sprite(s,o,'champHiroshi',1438,741,550,340,true,240);
-  }else{
-    sprite(s,o,'champSayaka',198,625,440,246);
-    sprite(s,o,player?.key,447,627,438,260);
-    sprite(s,o,'champDaichi',698,628,420,241);
+  }else if(view==='FOUR_WIDE'){
+    // Same three-person briefing team as Knockouts, but shifted down and left
+    // to make the centre lane available for the registered race car.
+    sprite(s,o,'champSayaka',133,960,680,306);
+    sprite(s,o,player?.key,336,960,677,322);
+    sprite(s,o,'champDaichi',548,960,665,310);
   }
 }
 function standingName(c,row){
