@@ -1,4 +1,4 @@
-import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261110-champ-daynight';
+import { showTokyoChampionshipScreens } from './TokyoChampionshipScreens.js?v=20261110-fourwide-briefing';
 import { createDevTokyoChampionship, createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleTokyoChampionship, TOKYO_CHAMPIONSHIP_PURSES } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261029-r720';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261029-r718';
