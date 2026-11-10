@@ -15,8 +15,8 @@ test('four-wide uses a dedicated uncluttered briefing with no top chrome',()=>{
   assert.match(screens,/hideTopChrome:stage==='KNOCKOUT'\|\|stage==='CREW'\|\|stage==='FOUR_WIDE'/);
   assert.match(screens,/if\(stage==='FOUR_WIDE'\)return showFourWideBriefing/);
   assert.match(entry,/FOUR-WIDE FINALE/);
-  assert.match(entry,/glow\(336,265,190,'ASK ADVICE'/);
-  assert.match(entry,/glow\(548,265,190,'CAR SETUP'/);
+  assert.match(entry,/glow\(336,503,190,'ASK ADVICE'/);
+  assert.match(entry,/glow\(548,503,190,'CAR SETUP'/);
   assert.match(entry,/openPaddock\(s,state,'DRIVER'\)/);
   assert.match(entry,/GO TO GRID/);
   assert.match(entry,/RETURN TO HUB/);
@@ -57,14 +57,14 @@ test('saved championship four-wide heat is exactly four entrants',()=>{
 });
 
 test('four-wide hero car and actor positions use the requested new layout',()=>{
-  assert.match(screens,/sprite\(s,o,player\?\.key,133,740,677,322,true\)/);
-  assert.match(screens,/sprite\(s,o,'champSayaka',336,740,680,306\)/);
-  assert.match(screens,/sprite\(s,o,'champDaichi',548,740,665,310\)/);
-  assert.match(entry,/targetWidth:1137\.5,depth:207/);
+  assert.match(screens,/sprite\(s,o,player\?\.key,133,785,677,322,true\)/);
+  assert.match(screens,/sprite\(s,o,'champSayaka',336,785,680,306\)/);
+  assert.match(screens,/sprite\(s,o,'champDaichi',548,785,665,310\)/);
+  assert.match(entry,/targetWidth:910,depth:207/);
   assert.match(entry,/const bx=24,by=691,bw=212,bh=117/);
-  assert.match(entry,/const px=1169,py=269,pw=357,ph=541/);
-  assert.match(entry,/o\.iconButton\(px\+35,py\+81,'◀'/);
-  assert.match(entry,/o\.iconButton\(px\+pw-35,py\+81,'▶'/);
+  assert.match(entry,/const px=1169,py=76,pw=357,ph=343/);
+  assert.match(entry,/o\.iconButton\(px\+35,py\+66,'◀'/);
+  assert.match(entry,/o\.iconButton\(px\+pw-35,py\+66,'▶'/);
   assert.doesNotMatch(entry,/o\.button\(px\+36,py\+81/);
 });
 
@@ -101,4 +101,17 @@ test('championship Four-Wide race entry accepts paddock switching while knockout
   assert.match(panel,/CAR LOCKED FOR THIS CHAMPIONSHIP EVENT/);
   assert.match(entry,/selectChampionshipFourWideCar\(saved,id,registered/);
   assert.match(screens,/if\(registered\.includes\(selected\)\)return selected/);
+});
+
+test('four-wide grid is detached from fixed lower-right navigation and keeps ranks visible',()=>{
+  assert.match(entry,/const px=1169,py=76,pw=357,ph=343/);
+  assert.match(entry,/o\.panel\(px\+pw\/2,py\+ph\/2,pw,ph/);
+  assert.match(entry,/o\.button\(px\+pw\/2,719,pw-32,54/);
+  assert.match(entry,/o\.button\(px\+pw\/2,781,pw-32,42,'RETURN TO HUB'/);
+  assert.match(entry,/const rank=item\?all\.findIndex\(row=>row\.id===item\.id\)\+1:0/);
+  assert.match(entry,/o\.label\(px\+pw-16,y\+20,'RANK #'/);
+  assert.match(entry,/\.setOrigin\(1,\.5\)/);
+  assert.match(entry,/pw-28,40/);
+  assert.match(entry,/const item=records\[i\],y=py\+146\+i\*47/);
+  assert.doesNotMatch(entry,/o\.button\(px\+pw\/2,py\+ph-/);
 });
