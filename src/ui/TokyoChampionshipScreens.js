@@ -369,9 +369,9 @@ function mainSprites(s,o,view){
   }else if(view==='FOUR_WIDE'){
     // Player faces the grid, with all three characters slightly lower in the
     // frame. Keep the smaller driver standings card below the player's feet.
-    sprite(s,o,player?.key,133,785,677,322,true);
-    sprite(s,o,'champSayaka',336,785,680,306);
-    sprite(s,o,'champDaichi',548,785,665,310);
+    sprite(s,o,player?.key,133,805,677,322,true);
+    sprite(s,o,'champSayaka',336,805,680,306);
+    sprite(s,o,'champDaichi',548,805,665,310);
   }
 }
 function standingName(c,row){
@@ -991,7 +991,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     const carState=s.registry.get('carStates')?.[carId]||{};
     const parts=renderStoryCar(s,car,{
       x:820,groundY:738,targetWidth:910,depth:207,
-      shadow:true,garageGeometry:true,
+      shadow:true,shadowOpacity:.29,shadowWidthScale:1.28,garageGeometry:true,
       paintColor:carState.paintColor??0x8797a6,
     });
     parts.forEach(part=>o.add(part));
@@ -1017,7 +1017,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   // Smaller, independent upper-right grid card. The two race-navigation
   // buttons intentionally remain anchored to the previous bottom-right
   // positions, OUTSIDE this panel, to reveal more of the garage background.
-  const px=1169,py=76,pw=357,ph=343;
+  const px=1169,py=42,pw=357,ph=343;
   o.panel(px+pw/2,py+ph/2,pw,ph,.91,0xd3ad72);
   o.headline(px+18,py+12,'FOUR-WIDE GRID',25,GOLD,pw-36);
   // Previous/next views use glyph-only hotspots (no button boxes).

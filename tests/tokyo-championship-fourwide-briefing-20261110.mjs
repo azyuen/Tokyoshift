@@ -57,12 +57,13 @@ test('saved championship four-wide heat is exactly four entrants',()=>{
 });
 
 test('four-wide hero car and actor positions use the requested new layout',()=>{
-  assert.match(screens,/sprite\(s,o,player\?\.key,133,785,677,322,true\)/);
-  assert.match(screens,/sprite\(s,o,'champSayaka',336,785,680,306\)/);
-  assert.match(screens,/sprite\(s,o,'champDaichi',548,785,665,310\)/);
+  assert.match(screens,/sprite\(s,o,player\?\.key,133,805,677,322,true\)/);
+  assert.match(screens,/sprite\(s,o,'champSayaka',336,805,680,306\)/);
+  assert.match(screens,/sprite\(s,o,'champDaichi',548,805,665,310\)/);
   assert.match(entry,/targetWidth:910,depth:207/);
+  assert.match(entry,/shadowOpacity:\.29,shadowWidthScale:1\.28/);
   assert.match(entry,/const bx=24,by=691,bw=212,bh=117/);
-  assert.match(entry,/const px=1169,py=76,pw=357,ph=343/);
+  assert.match(entry,/const px=1169,py=42,pw=357,ph=343/);
   assert.match(entry,/o\.iconButton\(px\+35,py\+66,'◀'/);
   assert.match(entry,/o\.iconButton\(px\+pw-35,py\+66,'▶'/);
   assert.doesNotMatch(entry,/o\.button\(px\+36,py\+81/);
