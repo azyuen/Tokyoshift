@@ -134,6 +134,16 @@ function loadAssets(s,view,done){
     for(const unit of getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment))
       if(cars[unit.carId])queued+=preloadStoryCar(s,cars[unit.carId]);
   }
+  if(stage==='FOUR_WIDE'){
+    // The selected Championship car is featured on the actual briefing.
+    // Preload all registered cars so garage selection changes are visible.
+    const championship=circuit(s).activeChampionship;
+    const registered=championship?.championshipRegisteredCars||[];
+    const chosen=getChampionshipEventCar(championship,'FOUR_WIDE')||
+      s.registry.get('selectedCarId');
+    for(const id of new Set([...registered,chosen].filter(Boolean)))
+      if(cars[id])queued+=preloadStoryCar(s,cars[id]);
+  }
   if(stage==='KNOCKOUT'){
     const state=circuit(s).activeChampionship;
     const heat=state?.stage==='KNOCKOUT'&&!state.completed?heatFor(state):null;
@@ -343,6 +353,12 @@ function mainSprites(s,o,view){
       o.add(s.add.image(p.x,810,p.key).setOrigin(.5,1)
         .setScale(505/Math.max(1,source.height)).setDepth(209));
     }
+  }else if(view==='FOUR_WIDE'){
+    // Reuse the same three story characters, but shift the whole group left
+    // and lower them to leave the middle of the stage for the player's car.
+    sprite(s,o,'champSayaka',152,920,610,260);
+    sprite(s,o,player?.key,337,920,610,255);
+    sprite(s,o,'champDaichi',520,920,610,250);
   }else if(view==='KNOCKOUT'){
     // Enlarged 25%, shared floor line; Daichi stays anchored on the right.
     sprite(s,o,'champSayaka',306,741,550,340);
@@ -916,9 +932,10 @@ function showEvent(s,stage,actions,displayMode='BRACKET',bracketHalf=0){
   const c=circuit(s),state=c.activeChampionship;
   const active=state.stage===stage&&!state.completed;
   const st=statusFor(state,stage),event=EVENTS[stage];
-  const o=canvas(s,stage,{hideTopChrome:stage==='KNOCKOUT'||stage==='CREW'});o.actions=actions;
+  const o=canvas(s,stage,{hideTopChrome:stage==='KNOCKOUT'||stage==='CREW'||stage==='FOUR_WIDE'});o.actions=actions;
   mainSprites(s,o,stage);
   if(stage==='CREW')return showCrewBattleBriefing(s,o,state,actions);
+  if(stage==='FOUR_WIDE')return showFourWideBriefing(s,o,state,actions,displayMode,bracketHalf);
   const standings=championshipStandings(state);
   const position=standings.findIndex(r=>r.id==='player:driver')+1;
   const points=standings.find(r=>r.id==='player:driver')?.total||0;
