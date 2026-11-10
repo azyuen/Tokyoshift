@@ -8,6 +8,7 @@ on:
       - 'src/data/oshiageElite.js'
       - 'src/main.js'
       - 'tests/oshiage-browser-r522.mjs'
+      - 'src/data/backgroundWebpMap.js'
       - '.github/workflows/oshiage-browser-r522.yml'
   workflow_dispatch:
 jobs:
