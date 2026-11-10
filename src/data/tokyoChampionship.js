@@ -9,17 +9,27 @@ import { cars } from './cars.js?v=20261026-r687';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
 
-// Championship-only road-car pool; Le Mans prototypes are deliberately absent.
-// The car/build snapshots persist in the Championship save and never reroll.
+// Road cars are common; special hero/collector builds are deliberately rare.
+// Le Mans prototypes remain excluded. Save snapshots never reroll mid-event.
 export const CHAMPIONSHIP_AI_CAR_POOL=Object.freeze([
   'r34','evo6','rx7fd','s2000','r32','jza80','gc8','gdb','s15',
 ]);
+export const CHAMPIONSHIP_AI_RARE_CAR_POOL=Object.freeze([
+  'minesR34','topSecretSupra','amuseS2000Gt1','libertyWalkR35','spoonEk9',
+]);
+// Per garage slot, not per frame or race: approximately one in ten rivals'
+// registered vehicles is a special build, and ordinary cars remain dominant.
+export const CHAMPIONSHIP_AI_RARE_CAR_PERCENT=10;
 export function createChampionshipAiGarage(championshipId,entrantId) {
   const pool=CHAMPIONSHIP_AI_CAR_POOL.filter(id=>Boolean(cars[id]));
   if(pool.length<3)throw Error('CHAMPIONSHIP AI CAR POOL INCOMPLETE');
   const offset=hash(championshipId+':'+entrantId)%pool.length;
   return Array.from({length:3},(_,slot)=>{
-    const carId=pool[(offset+slot*3)%pool.length];
+    const rarePool=CHAMPIONSHIP_AI_RARE_CAR_POOL.filter(id=>Boolean(cars[id]));
+    const rarityRoll=hash(championshipId+':'+entrantId+':rarity:'+slot)%100;
+    const carId=rarePool.length&&rarityRoll<CHAMPIONSHIP_AI_RARE_CAR_PERCENT
+      ?rarePool[hash(championshipId+':'+entrantId+':rare-model:'+slot)%rarePool.length]
+      :pool[(offset+slot*3)%pool.length];
     const paintColor=[0xd43135,0x397dc1,0xe8c34a,0x52a57c,0xb0a3d9,0xf2f2ed][hash(entrantId+':paint:'+slot)%6];
     const state=createRivalBuildState(cars[carId],5,{
       seed:championshipId+':'+entrantId+':garage:'+slot,
@@ -84,7 +94,11 @@ export function getChampionshipAiCar(raw,entrantId,stage='KNOCKOUT',round=0) {
   if(!entrant)return null;
   const garage=entrant.garage;
   if(!Array.isArray(garage)||garage.length!==3)return null; // legacy: original selection
-  const slot=stage==='FOUR_WIDE'?2:stage==='CREW'?1:0;
+  // Change cars between Four-Wide rounds, never within a round. Existing
+  // saved garages still work and their builds are not regenerated.
+  const slot=stage==='FOUR_WIDE'
+    ?(2+(Math.max(0,Math.floor(Number(round)||0))%3))%3
+    :stage==='CREW'?1:0;
   return garage[slot];
 }
 
