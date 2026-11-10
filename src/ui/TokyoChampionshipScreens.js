@@ -2,7 +2,7 @@
 // Only presentation, navigation and one-use strategy notes live here.
 // Authoritative scoring, car locks and race settlement remain in the existing modules.
 import { championshipStandings, seedKnockoutBracket, getChampionshipKnockoutHeat, getChampionshipCrewHeat,
-  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar, getChampionshipAiCar } from '../data/tokyoChampionship.js?v=20261030-r724';
+  getChampionshipFourWideHeat, TOKYO_CHAMPIONSHIP_PURSES, getChampionshipEventCar, lockChampionshipEventCar, selectChampionshipFourWideCar, getChampionshipAiCar } from '../data/tokyoChampionship.js?v=20261030-r724';
 import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r741';
 import { getCrewSeriesUnits, getProSeasonDriverCarError } from '../data/proSeason.js?v=20261030-r741';
 import { cars } from '../data/cars.js?v=20261026-r687';
@@ -294,16 +294,17 @@ function crewBriefingUnits(s){
   });
 }
 
-// One authoritative car choice for both the preview and GO TO GRID.
-// Respect a previously locked Championship car before any garage selection.
+// One authoritative car choice for the preview and GO TO GRID.
+// Switching to a Championship-registered car in Pro Paddock takes precedence;
+// the previous Four-Wide choice is only a fallback if nothing is selected.
 function fourWideDisplayCarId(s,state){
   const owned=s.registry.get('ownedCarIds')||[];
   const registered=(state.championshipRegisteredCars||[]).filter(id=>
     owned.includes(id)&&cars[id]);
-  const locked=getChampionshipEventCar(state,'FOUR_WIDE');
-  if(locked&&registered.includes(locked))return locked;
   const selected=s.registry.get('selectedCarId');
-  return registered.includes(selected)?selected:registered[0]||null;
+  if(registered.includes(selected))return selected;
+  const locked=getChampionshipEventCar(state,'FOUR_WIDE');
+  return registered.includes(locked)?locked:registered[0]||null;
 }
 function mainSprites(s,o,view){
   const player=getCharacterVisualAsset(s.registry.get('playerCharacterId')||'renMizuno',
@@ -366,11 +367,12 @@ function mainSprites(s,o,view){
     sprite(s,o,'champDaichi',742,741,550,350);
     sprite(s,o,'champHiroshi',1438,741,550,340,true,240);
   }else if(view==='FOUR_WIDE'){
-    // Same three-person briefing team as Knockouts, but shifted down and left
-    // to make the centre lane available for the registered race car.
-    sprite(s,o,'champSayaka',133,960,680,306);
-    sprite(s,o,player?.key,336,960,677,322);
-    sprite(s,o,'champDaichi',548,960,665,310);
+    // Lift the team by about one third of their previous 680px sprite height.
+    // Player and Sayaka trade places: the player anchors the standings box
+    // on the left and faces right towards the Four-Wide grid.
+    sprite(s,o,player?.key,133,740,677,322,true);
+    sprite(s,o,'champSayaka',336,740,680,306);
+    sprite(s,o,'champDaichi',548,740,665,310);
   }
 }
 function standingName(c,row){
@@ -963,7 +965,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     19,PALE,{stroke:true,width:1025});
   const glow=(x,y,w,label,fn,disabled=false)=>
     addProGlowingHotspot(s,o.add,{x,y,w,h:44,label,onClick:fn,disabled});
-  glow(135,485,206,'ASK ADVICE',()=>{
+  glow(336,265,190,'ASK ADVICE',()=>{
     const c=circuit(s),current=c.activeChampionship;
     if(!current||current.id!==state.id||current.completed||
       current.stage!=='FOUR_WIDE')return;
@@ -977,7 +979,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     }
     showSayakaAdviceManga(s,note);
   },!active);
-  glow(542,485,206,'CAR SETUP',()=>{
+  glow(548,265,190,'CAR SETUP',()=>{
     if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
     openPaddock(s,state,'DRIVER');
   },!active);
@@ -989,15 +991,14 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   if(car){
     const carState=s.registry.get('carStates')?.[carId]||{};
     const parts=renderStoryCar(s,car,{
-      x:815,groundY:736,targetWidth:455,depth:216,
+      x:820,groundY:738,targetWidth:1137.5,depth:207,
       shadow:true,garageGeometry:true,
       paintColor:carState.paintColor??0x8797a6,
     });
     parts.forEach(part=>o.add(part));
-    o.headline(655,764,(car.shortName||car.name||carId).toUpperCase(),
+    o.headline(750,759,(car.shortName||car.name||carId).toUpperCase(),
       22,PALE,337).setDepth(233);
-    o.label(655,791,getChampionshipEventCar(state,'FOUR_WIDE')?
-      'LOCKED FOR FOUR-WIDE':'CHAMPIONSHIP REGISTERED CAR',
+    o.label(750,788,'SELECTED CHAMPIONSHIP CAR',
     15,GOLD,{width:340});
   }else{
     o.headline(655,706,'SELECT A REGISTERED CAR',20,GOLD,365);
@@ -1005,22 +1006,24 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   }
 
   // Compact personal driver standings, matching the other event briefings.
-  const bx=39,by=658,bw=247,bh=151;
+  const bx=24,by=691,bw=212,bh=117;
   o.panel(bx+bw/2,by+bh/2,bw,bh,.94,0xd1ae6c);
-  o.headline(bx+15,by+12,'DRIVER STANDINGS',22,GOLD,bw-30);
-  o.label(bx+17,by+67,'POINTS',15,MUTED);
-  o.label(bx+17,by+91,String(player?.total??0),29,PALE,{font:DISPLAY});
-  o.label(bx+133,by+67,'RANK',15,MUTED);
-  o.label(bx+133,by+93,playerIndex>=0?'#'+(playerIndex+1)+' / '+all.length:'—',
-    23,PALE,{font:DISPLAY});
+  o.headline(bx+13,by+11,'DRIVER STANDINGS',20,GOLD,bw-26);
+  o.label(bx+14,by+52,'POINTS',14,MUTED);
+  o.label(bx+14,by+74,String(player?.total??0),24,PALE,{font:DISPLAY});
+  o.label(bx+110,by+52,'RANK',14,MUTED);
+  o.label(bx+110,by+76,playerIndex>=0?'#'+(playerIndex+1)+' / '+all.length:'—',
+    21,PALE,{font:DISPLAY});
 
   // ONE column in the right panel: next four-car heat, other drivers,
   // or actual archived four-wide results. Never synthesize a future grid.
-  const px=1134,py=184,pw=393,ph=627;
+  const px=1169,py=269,pw=357,ph=541;
   o.panel(px+pw/2,py+ph/2,pw,ph,.94,0xd3ad72);
   o.headline(px+18,py+15,'FOUR-WIDE GRID',26,GOLD,pw-36);
-  o.button(px+36,py+81,49,38,'◀',()=>switchMode(-1));
-  o.button(px+pw-36,py+81,49,38,'▶',()=>switchMode(1));
+  // Glyph-only navigation: retain generous invisible touch targets, without
+  // the outlined button boxes that cluttered the prior four-wide card.
+  o.iconButton(px+35,py+81,'◀',()=>switchMode(-1));
+  o.iconButton(px+pw-35,py+81,'▶',()=>switchMode(1));
   const viewTitle=mode==='HEAT'?(live?'NEXT HEAT':'LAST HEAT'):
     mode==='FIELD'?'DRIVER FIELD':'PREVIOUS RESULTS';
   o.headline(px+75,py+66,viewTitle,21,PALE,pw-150);
@@ -1053,8 +1056,8 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
   }
   o.label(px+19,py+115,detail,17,GOLD,{width:pw-38});
   for(let i=0;i<4;i++){
-    const item=records[i],y=py+167+i*62,mine=item?.id==='player:driver';
-    o.add(s.add.rectangle(px+pw/2,y+20,pw-34,55,
+    const item=records[i],y=py+151+i*57,mine=item?.id==='player:driver';
+    o.add(s.add.rectangle(px+pw/2,y+20,pw-30,52,
       mine?0x4a3925:0x142639,.96)
       .setStrokeStyle(2,mine?0xe8bf72:0x506f89,.92).setDepth(225));
     o.label(px+24,y+3,String(item?.number??(i+1)).padStart(2,'0'),20,
@@ -1065,16 +1068,19 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
     if(item)o.label(px+73,y+31,item.result,14,mine?GOLD:MUTED,
       {width:pw-107});
   }
-  if(mode!=='HEAT'&&maxPage>0){
-    o.button(px+90,py+445,125,37,mode==='RESULTS'?'◀ NEWER':'◀ PREV',
+  if(s.proError){
+    o.label(px+18,py+397,String(s.proError).slice(0,51),14,
+      '#ffadb6',{width:pw-36});
+  }else if(mode!=='HEAT'&&maxPage>0){
+    o.iconButton(px+38,py+405,'◀',
       ()=>show(mode,Math.max(0,shownPage-1)),{disabled:shownPage===0});
-    o.button(px+pw-89,py+445,125,37,mode==='RESULTS'?'OLDER ▶':'NEXT ▶',
+    o.label(px+pw/2,py+395,(shownPage+1)+' / '+(maxPage+1),17,PALE)
+      .setOrigin(.5,0);
+    o.iconButton(px+pw-38,py+405,'▶',
       ()=>show(mode,Math.min(maxPage,shownPage+1)),
       {disabled:shownPage===maxPage});
   }
-  if(s.proError)o.label(px+20,py+489,String(s.proError).slice(0,54),15,
-    '#ffadb6',{width:pw-40});
-  o.button(px+pw/2,py+ph-98,pw-34,58,
+  o.button(px+pw/2,py+ph-91,pw-32,54,
     active?'GO TO GRID':'EVENT COMPLETE',()=>{
       if(!active)return;
       if(needsChampionshipCars(s))return showChampionshipCarRegistration(s,actions);
@@ -1085,7 +1091,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
         return showEvent(s,'FOUR_WIDE',actions,mode,shownPage);
       }
       const registered=saved.championshipRegisteredCars||[];
-      const locked=lockChampionshipEventCar(saved,'FOUR_WIDE',id,registered,
+      const locked=selectChampionshipFourWideCar(saved,id,registered,
         s.registry.get('ownedCarIds')||[],false);
       if(locked.error){
         s.proError=locked.error;
@@ -1103,7 +1109,7 @@ function showFourWideBriefing(s,o,state,actions,displayMode='HEAT',page=0){
       if(!actions.startRace('CHAMP_FOUR',id))
         showTokyoChampionshipScreens(s,{view:'FOUR_WIDE',actions});
     },{red:active,disabled:!active});
-  o.button(px+pw/2,py+ph-34,pw-34,43,'RETURN TO HUB',
+  o.button(px+pw/2,py+ph-29,pw-32,42,'RETURN TO HUB',
     ()=>showTokyoChampionshipScreens(s,{view:'HUB',actions}));
 }
 
