@@ -566,7 +566,8 @@ export default class FourLaneTestScene extends RaceScene {
           raceDistanceM: FOUR_LANE_TEST_DISTANCE_M,
         }),
         config: rivalConfig,
-        paint: rivalRound?.paintColor??getProRaceRivalPaint(index),
+        paint: this.champMode ? getCarPaintColor(state)
+          : rivalRound?.paintColor??getProRaceRivalPaint(index),
         finishSeconds: null, disqualified: false,
       });
     });
