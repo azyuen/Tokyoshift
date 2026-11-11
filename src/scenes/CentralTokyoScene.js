@@ -450,7 +450,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const result=this.autoShowProVictory;
       this.time.delayedCall(0,()=>{
         if(this.sys?.isActive?.())showProVictoryResults(this,{
-          ...result,onContinue:()=>this.renderLocation('tokyoDragComplex'),
+          ...result,onContinue:()=>{
+            this.renderLocation('tokyoDragComplex');
+            if(result.championshipDestination)
+              showTokyoChampionship(this,result.championshipDestination);
+          },
         });
       });
     }
