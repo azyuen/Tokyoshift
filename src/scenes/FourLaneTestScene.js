@@ -1966,7 +1966,29 @@ export default class FourLaneTestScene extends RaceScene {
           playerChampion:next.championId==='player:driver',
           cashPrize:award?.cashPrize||0};
       } catch(error){console.error('[Tokyo SHIFT] Championship settlement failed',error);outcome={status:'ERROR'};}
-      this.showChampionshipRaceResult(standings,outcome);
+      // Match Open Circuit / Pro Season: use the same illustrated win/loss
+      // results sequence after every saved Championship race. Championship
+      // standings and awards were already committed above; this is visual only.
+      if(outcome?.status==='CHAMP_SAVED'){
+        const won=own?.status==='FINISHED'&&own.placing===1;
+        const stageName={KNOCKOUT:'KNOCKOUT',CREW:'CREW BATTLE',FOUR_WIDE:'FOUR-WIDE FINALE'}[this.champState?.stage]||'CHAMPIONSHIP';
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',
+          autoShowProVictory:{
+            kind:'driver',winner:won,eventName:'TOKYO CHAMPIONSHIP // '+stageName,
+            carId:this.playerCarId,
+            opponent:this.aiEntrants.map(e=>e.name).filter(Boolean).join(' / ').slice(0,50),
+            heats:[{roundNumber:(this.champHeat?.round||0)+1,
+              name:stageName,result:won?'WIN':'LOSS',won,
+              ownSeconds:own?.status==='FINISHED'?own.finishSeconds:null}],
+            wins:won?1:0,rounds:1,
+            cashPrize:outcome.completed?outcome.cashPrize:0,
+            statusLabel:outcome.completed?'CHAMPIONSHIP COMPLETE':'RESULT RECORDED',
+            championshipDestination:outcome.completed?'HUB':
+              outcome.nextStage===this.champState?.stage?'EVENT':'HUB',
+          },
+        });
+      }else this.showChampionshipRaceResult(standings,outcome);
       return;
     }
     if (this.proTimed) {
