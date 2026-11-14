@@ -1927,27 +1927,14 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    // Compact NOS status and action live INSIDE the EXHAUST / NOS menu row.
-    // This matters: Crew Space's service/navigation starts at screen y=608,
-    // and the normal Warehouse service button starts at y=662. A separate
-    // bottom-right NOS button would overlap and block those touch targets.
-    const nosRow = this.upgradeButtons.find(item => item.name === 'EXHAUST / NOS');
-    nosRow?.arrow?.setVisible(false);
+    // Keep the compact read-only NOS status. NOS activation is managed only
+    // inside EXHAUST / NOS to avoid duplicate toggles in the garage.
     this.nosHomeStatusText = this.add.text(
       SIDE.x + 24, SIDE.y + 476, '', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#93bfdd',
         wordWrap: { width: SIDE.w - 48 },
       }
     ).setDepth(38);
-    this.nosHomeButton = this.add.rectangle(
-      SIDE.x + SIDE.w - 80, SIDE.y + 381,
-      120, 31, 0x12352e, 1
-    ).setStrokeStyle(1, 0x62e8c7, 1).setDepth(39);
-    this.nosHomeLabel = this.add.text(
-      SIDE.x + SIDE.w - 80, SIDE.y + 381, '', {
-        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eafff6',
-      }
-    ).setOrigin(0.5).setDepth(40);
     this.refreshNosHomeControls();
 
   }
@@ -2001,7 +1988,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   refreshNosHomeControls() {
-    if (!this.nosHomeStatusText?.active || !this.nosHomeButton?.active) return;
+    if (!this.nosHomeStatusText?.active) return;
     const allowed = this.canManageSelectedNos();
     const status = this.getSelectedNosEquipment();
     const description = !allowed ? 'NOS // NO ELIGIBLE CAR'
@@ -2012,34 +1999,7 @@ export default class GarageScene extends Phaser.Scene {
             (status.enabled ? 'ON' : 'OFF') +
             (status.factory ? ' // OEM' : '');
     this.nosHomeStatusText.setText(description);
-    // The home status sits between CHASSIS and Crew Space's top service button.
     this.nosHomeStatusText.setColor(status.active ? '#a9e9cf' : '#93bfdd');
-    this.nosHomeButton.removeAllListeners('pointerdown');
-    const ready = allowed && status.usable;
-    const label = !allowed ? 'NOS N/A'
-      : !status.usable ? 'INSTALL NOS  >'
-        : status.enabled ? 'NOS OFF  >' : 'NOS ON  >';
-    this.nosHomeLabel?.setText(label).setColor(allowed ? '#eafff6' : '#71838c');
-    this.nosHomeButton.setFillStyle(allowed ? 0x12352e : 0x17202a, 1)
-      .setStrokeStyle(1, allowed ? 0x62e8c7 : 0x52616a, 1);
-    if (allowed) {
-      this.nosHomeButton.setInteractive({ useHandCursor: true });
-      this.nosHomeButton.on('pointerdown', () => {
-        if (!this.canManageSelectedNos() || this.engineMode ||
-            this.secondaryMode || this.chassisMode) return;
-        if (ready) {
-          if (this.setSelectedNosEnabled(!status.enabled)) {
-            this.showWorkshopToast(status.enabled
-              ? 'NOS DISABLED // HARDWARE RETAINED' : 'NOS ENABLED');
-          }
-        } else {
-          this.selectUpgrade('EXHAUST / NOS');
-          this.enterSecondaryTuningMode('exhaustNos');
-        }
-      });
-    } else if (this.nosHomeButton.input) {
-      this.nosHomeButton.disableInteractive();
-    }
   }
 
   refreshTuningCategoryAvailability() {
