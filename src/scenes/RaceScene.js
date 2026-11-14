@@ -635,7 +635,9 @@ export default class RaceScene extends Phaser.Scene {
     if (this.invalidRaceEntryCar) {
       this.invalidRaceEntryCar = false;
       this.registry.set('raceEntryError', 'SELECTED CAR UNAVAILABLE // PLEASE SELECT A CAR AGAIN');
-      this.scene.start('MeetScene');
+      const returnScene = this.registry.get('raceReturnScene');
+      this.scene.start(['MeetScene','GarageScene','OshiageScene'].includes(returnScene)
+        ? returnScene : 'MeetScene');
       return;
     }
     if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
