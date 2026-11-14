@@ -382,9 +382,16 @@ export default class RaceScene extends Phaser.Scene {
     startSceneLoading(this, 'PREPARING RACE', queued);
   }
 
-  init() {
-    this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
+  init(data = {}) {
+    const recruitCarId = data?.crewRecruitPlayerCarId;
+    this.selectedCarId = cars[recruitCarId] ? recruitCarId :
+      this.registry.get('selectedCarId') || 'ae86';
     if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
+    // Reconcile the persisted garage selection with the car actually raced.
+    if (cars[recruitCarId] && this.registry.get('selectedCarId') !== recruitCarId) {
+      this.registry.set('selectedCarId', recruitCarId);
+      saveSessionState(this.registry);
+    }
 
     const chosenOpponent = this.registry.get('selectedOpponentCarId');
     const fallbackRivals = carOrder.filter(id => id !== this.selectedCarId && cars[id]);

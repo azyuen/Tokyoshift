@@ -2046,7 +2046,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', 'CREW RECRUITMENT');
     this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    // Explicit handoff prevents stale global selection from replacing the
+    // car chosen in the recruitment picker during scene transitions.
+    this.scene.start('RaceScene', { crewRecruitPlayerCarId: playerCarId });
   }
 
   maybeShowTunerChallengeReveal() {
