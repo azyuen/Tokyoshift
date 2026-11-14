@@ -8256,7 +8256,13 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel',
       this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA DRIVING LESSON' : 'DAICHI PRACTICE RUN');
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   // Scene 05's visitor is a cinematic-only overlay, built with the SAME

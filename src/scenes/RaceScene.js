@@ -383,14 +383,24 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   init(data = {}) {
-    const recruitCarId = data?.crewRecruitPlayerCarId;
-    this.selectedCarId = cars[recruitCarId] ? recruitCarId :
-      this.registry.get('selectedCarId') || 'ae86';
-    if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
-    // Reconcile the persisted garage selection with the car actually raced.
-    if (cars[recruitCarId] && this.registry.get('selectedCarId') !== recruitCarId) {
-      this.registry.set('selectedCarId', recruitCarId);
-      saveSessionState(this.registry);
+    // Race entry owns its car selection. A late global garage selection must
+    // never silently replace the car committed by the preceding scene.
+    const entryCarId = data?.raceEntry?.playerCarId || data?.crewRecruitPlayerCarId;
+    const garageCarId = this.registry.get('selectedCarId');
+    this.selectedCarId = entryCarId || garageCarId;
+    if (!cars[this.selectedCarId]) {
+      console.error('[Tokyo SHIFT] Invalid race-entry car; refusing AE86 substitution', {
+        entryCarId, garageCarId, raceEntry: data?.raceEntry,
+      });
+      this.invalidRaceEntryCar = true;
+      // A valid placeholder is required for the legacy preload path, but the
+      // race itself is blocked before gameplay in create().
+      this.selectedCarId = 'ae86';
+    }
+    if (entryCarId && entryCarId !== garageCarId) {
+      console.warn('[Tokyo SHIFT] Race-entry car differs from garage selection', {
+        entryCarId, garageCarId,
+      });
     }
 
     const chosenOpponent = this.registry.get('selectedOpponentCarId');
@@ -622,6 +632,14 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    if (this.invalidRaceEntryCar) {
+      this.invalidRaceEntryCar = false;
+      this.registry.set('raceEntryError', 'SELECTED CAR UNAVAILABLE // PLEASE SELECT A CAR AGAIN');
+      const returnScene = this.registry.get('raceReturnScene');
+      this.scene.start(['MeetScene','GarageScene','OshiageScene'].includes(returnScene)
+        ? returnScene : 'MeetScene');
+      return;
+    }
     if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
         shouldLaunchDevVaultStory(this.registry)) {
       if (queueSafeSceneStart(this,'DevVaultStoryScene')) {
