@@ -1474,7 +1474,13 @@ export default class MeetScene extends Phaser.Scene {
 
     if (!this.configureCrewBattleRound(state, 0)) return;
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   configureCrewBattleRound(state, index) {
@@ -2048,7 +2054,7 @@ export default class MeetScene extends Phaser.Scene {
     saveSessionState(this.registry);
     // Explicit handoff prevents stale global selection from replacing the
     // car chosen in the recruitment picker during scene transitions.
-    this.scene.start('RaceScene', { crewRecruitPlayerCarId: playerCarId });
+    this.scene.start('RaceScene', { raceEntry: { playerCarId, opponentCarId: challenge.baseCarId, category: 'CREW_RECRUIT' } });
   }
 
   maybeShowTunerChallengeReveal() {
@@ -2382,7 +2388,13 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   drawBase() {
@@ -3887,7 +3899,13 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', location.label);
     saveSessionState(this.registry);
 
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   getCompetitionOfferLifetimeMs() {
@@ -4274,7 +4292,13 @@ export default class MeetScene extends Phaser.Scene {
 
     if (!this.configureCompetitionRound(state, 0)) return;
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   refreshAllLocationOffers({ resetTimer = true, persist = true } = {}) {
@@ -5943,7 +5967,13 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', location.label);
     this.persistMeetRound();
 
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   createCarDisplay(
