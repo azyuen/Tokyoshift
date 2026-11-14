@@ -676,7 +676,13 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR') + ' // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   // Deliberately follows the same 1138px stage, three rival cards and
@@ -988,7 +994,13 @@ export default class OshiageScene extends Phaser.Scene {
     }
     this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    this.scene.start('RaceScene', {
+      raceEntry: {
+        playerCarId: this.registry.get('selectedCarId'),
+        opponentCarId: this.registry.get('selectedOpponentCarId'),
+        category: this.registry.get('selectedRaceCategory'),
+      },
+    });
   }
 
   abandonEliteStreak() {
