@@ -7,8 +7,6 @@ import { getOfficeTrophyLines, getOfficeTrophyRecord } from '../data/officeTroph
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261029-r719';
 import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r663';
-import { showProTeamNameEditor } from './ProTeamIdentity.js?v=20261030-r724';
-import { normaliseProCircuitState } from '../data/proCircuit.js?v=20261030-r724';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -74,33 +72,23 @@ function point(frame, nx, ny) {
 function addHotspot(scene, add, frame, config) {
   const p = point(frame, config.x, config.y);
   const width = frame.w * config.w, height = frame.h * config.h;
-  // Persistent, soft neon frames reveal office interactions on touch screens.
-  // An unfilled image hotspot is almost impossible to discover on a phone.
-  const box = add(scene.add.rectangle(p.x, p.y, width, height,
-    0x43dfff, 0.055)
-    .setStrokeStyle(2, config.color || 0x7ce5ff, 0.75)
+  // Keep the full touch target without drawing neon outlines over the artwork.
+  const box = add(scene.add.rectangle(p.x, p.y, width, height, 0x000000, 0)
     .setDepth(config.depth || 205)
     .setInteractive({ useHandCursor: true }));
-  scene.tweens.add({
-    targets: box, alpha: {from: 0.60, to: 1},
-    duration: 1250, yoyo: true, repeat: -1,
-  });
-  box.on('pointerover', () => {
-    box.setFillStyle(0x43dfff, 0.16);
-    box.setStrokeStyle(3, 0xffffff, 1);
-  });
-  box.on('pointerout', () => {
-    box.setFillStyle(0x43dfff, 0.055);
-    box.setStrokeStyle(2, config.color || 0x7ce5ff, 0.75);
-  });
   box.on('pointerdown', config.onActivate);
   if(config.label){
-    const labelY = p.y + height / 2 - 15;
-    add(scene.add.text(p.x, labelY, config.label, {
+    const labelP = {
+      x: config.labelX == null ? p.x : point(frame, config.labelX, 0).x,
+      y: config.labelY == null ? p.y + height / 2 - 15 : point(frame, 0, config.labelY).y,
+    };
+    const label = add(scene.add.text(labelP.x, labelP.y, config.label, {
       fontFamily: PIXEL_FONT, fontSize: '7px',
       color: '#f2faff', backgroundColor: '#071c2bdc',
       padding: {x: 8, y: 5},
-    }).setOrigin(0.5).setDepth((config.depth || 205) + 1));
+    }).setOrigin(0.5).setDepth((config.depth || 205) + 1)
+      .setInteractive({ useHandCursor: true }));
+    label.on('pointerdown', config.onActivate);
   }
   return box;
 }
@@ -289,21 +277,6 @@ export function showOfficePanel(scene) {
     scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
   }
 
-  // Professional team management belongs in the Office, where the player
-  // can rename GMG RACING without changing its permanent save identity.
-  if (!openingMagazine && scene.registry.get('gameMode') !== 'arkonStory') {
-    const team=normaliseProCircuitState(scene.registry.get('proCircuit'));
-    addHotspot(scene, add, frame, {
-      x: 0.50, y: 0.145, w: 0.33, h: 0.070,
-      color: 0xe9c785, depth: 222,
-      label: 'TEAM // ' + team.playerTeamName + '  [RENAME]',
-      onActivate: () => showProTeamNameEditor(scene, () => {
-        closeOffice();
-        showOfficePanel(scene);
-      }),
-    });
-  }
-
   // Seven regional pennants. The badge positions follow the authored
   // 160x576 flag asset coordinates in garage_assets.json.
   // Keep the achievement wall compact and biased left so the right-hand
@@ -320,12 +293,6 @@ export function showOfficePanel(scene) {
     if (!achievement.visible || !scene.textures.exists(region.key)) return;
 
     const x = frame.x + frame.w * (flagStartX + flagGap * index);
-    const flagGlow=add(scene.add.rectangle(
-      x, flagTop + flagHeight / 2, flagWidth + 12, flagHeight + 13,
-      0x43dfff, 0.035
-    ).setStrokeStyle(2, 0xa5e7ff, 0.82).setDepth(197));
-    scene.tweens.add({targets:flagGlow,alpha:{from:.55,to:1},
-      duration:1450+index*80,yoyo:true,repeat:-1});
     const flag = add(scene.add.image(x, flagTop, region.key)
       .setOrigin(0.5, 0)
       .setDisplaySize(flagWidth, flagHeight)
@@ -374,11 +341,6 @@ export function showOfficePanel(scene) {
       0.36
     ).setAngle(0).setDepth(199));
 
-    const magazineGlow=add(scene.add.rectangle(
-      coverP.x, coverP.y, coverW + 18, coverH + 18, 0x43dfff, 0.04
-    ).setStrokeStyle(2,0x9eeeff,.92).setDepth(201));
-    scene.tweens.add({targets:magazineGlow,alpha:{from:.60,to:1},
-      duration:1050,yoyo:true,repeat:-1});
     const cover = add(scene.add.image(coverP.x, coverP.y, issue.coverKey)
       .setDisplaySize(coverW, coverH)
       .setAngle(0)
@@ -397,11 +359,10 @@ export function showOfficePanel(scene) {
     cover.on('pointerdown', openMagazine);
   }
 
-  // Always-visible touch zones identify the storage/display areas.
-  // The authored office background and shelf contents are unchanged.
+  // Labels sit on the authored shelves; invisible touch zones remain generous.
   addHotspot(scene, add, frame, {
     x: 0.115, y: 0.285, w: 0.17, h: 0.24,
-    label: 'CAR HISTORY',
+    label: 'CAR HISTORY', labelX: 0.145, labelY: 0.336,
     onActivate: () => showCarHistoryLedger(scene),
   });
   const trophyRecord=getOfficeTrophyRecord(scene.registry.get('proCircuit'));
@@ -417,7 +378,7 @@ export function showOfficePanel(scene) {
   }
   addHotspot(scene, add, frame, {
     x: 0.84, y: 0.52, w: 0.25, h: 0.37,
-    label: 'TROPHY CASE',
+    label: 'TROPHY CASE', labelX: 0.865, labelY: 0.717,
     onActivate: () => showOfficePopup(scene,'TROPHY CASE',
       getOfficeTrophyLines(scene.registry.get('proCircuit'))),
   });
@@ -425,7 +386,7 @@ export function showOfficePanel(scene) {
     // Exact bottom-right CAR COUPONS register: sign + coupon cards.
     // Keep this above the broad trophy area so taps always resolve here.
     x: 0.756, y: 0.815, w: 0.145, h: 0.18,
-    depth: 220, color: 0xffd38a,
+    depth: 220,
     onActivate: () => {
       if (typeof scene.showCouponsPopup === 'function') {
         scene.showCouponsPopup();
@@ -437,7 +398,7 @@ export function showOfficePanel(scene) {
   if (scene.registry.get('openingChapter') !== 'magazine') {
     addHotspot(scene, add, frame, {
       x: 0.908, y: 0.815, w: 0.15, h: 0.18,
-      depth: 221, color: 0xffb4d9,
+      depth: 221,
       label: scene.registry.get('gameMode') === 'arkonStory'
         ? 'RECOUNT STORY' : 'STORY ARCHIVE',
       onActivate: () => scene.registry.get('gameMode') === 'arkonStory'

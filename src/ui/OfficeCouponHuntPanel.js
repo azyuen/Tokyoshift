@@ -52,17 +52,19 @@ export function showOfficeCouponHunt(scene) {
   };
   scene._officeCouponClose=close;
   scene.events?.once?.('shutdown',close);
-  const blocker=add(scene.add.rectangle(780,420,1560,840,0x01050a,.87)
+  add(scene.add.rectangle(780,420,1560,840,0x01050a,.87)
     .setDepth(depth).setInteractive());
-  blocker.on('pointerdown',close);
+  // The modal absorbs outside taps; only the CLOSE button dismisses it.
   rectangle(780,420,1150,690,0x0b1723,0x67d8ec);
-  rectangle(490,420,515,565,0x0e2030,0x2b5469);
-  rectangle(1060,420,535,565,0x0e2030,0x2b5469);
+  // Leave a separate padded header above both panels and room below controls.
+  rectangle(490,460,515,560,0x0e2030,0x2b5469);
+  rectangle(1060,460,535,560,0x0e2030,0x2b5469);
   txt(242,102,'CAR COUPONS // HUNT GUIDE',17,true,'#ecfbff');
-  txt(242,143,'Tap a car to find the exact active coupon Showdowns across Tokyo.',17,false,'#9ac4d6');
+  txt(242,143,'Tap a car to find the exact active coupon Showdowns across Tokyo.',17,false,'#9ac4d6')
+    .setWordWrapWidth(1050);
   button(1265,116,112,38,'CLOSE',close,staticNodes);
-  txt(260,194,'YOUR COUPONS',12,true,'#7deaff');
-  txt(805,194,'LIVE COUPON BOARD',12,true,'#7deaff');
+  txt(260,201,'YOUR COUPONS',12,true,'#7deaff');
+  txt(813,201,'LIVE COUPON BOARD',12,true,'#7deaff');
 
   let page=0,selectedId=entries[0]?.carId||null;
   let rotationCountdown=null;
@@ -79,7 +81,7 @@ export function showOfficeCouponHunt(scene) {
     const pageCount=Math.ceil(entries.length/PER_PAGE);
     const start=page*PER_PAGE;
     entries.slice(start,start+PER_PAGE).forEach((entry,i)=>{
-      const y=243+i*46,selected=selectedId===entry.carId,ready=entry.count>=entry.required;
+      const y=255+i*46,selected=selectedId===entry.carId,ready=entry.count>=entry.required;
       const bg=rectangle(490,y,474,41,selected?0x16444d:0x152a3b,
         selected?0x7cf2e1:0x365b71,true,detailNodes);
       const name=txt(267,y,String(entry.label).toUpperCase(),10,true,
@@ -89,28 +91,28 @@ export function showOfficeCouponHunt(scene) {
         ready?'#82f1c6':'#f5d98d',detailNodes).setOrigin(1,.5);
       bg.on('pointerdown',()=>{selectedId=entry.carId;render();});
     });
-    txt(485,635,'PAGE '+(page+1)+' / '+pageCount,10,true,'#afcce0',detailNodes).setOrigin(.5);
-    if(page>0)button(325,681,142,38,'PREV',()=>{page--;render();});
-    if(page<pageCount-1)button(660,681,142,38,'NEXT',()=>{page++;render();});
+    txt(485,650,'PAGE '+(page+1)+' / '+pageCount,10,true,'#afcce0',detailNodes).setOrigin(.5);
+    if(page>0)button(325,702,142,38,'PREV',()=>{page--;render();});
+    if(page<pageCount-1)button(660,702,142,38,'NEXT',()=>{page++;render();});
 
     const picked=entries.find(e=>e.carId===selectedId)||entries[0];
-    const title=txt(813,232,String(picked.label).toUpperCase(),13,true,'#e8fffa',detailNodes);
+    const title=txt(813,244,String(picked.label).toUpperCase(),13,true,'#e8fffa',detailNodes);
     if(title.width>460)title.setScale(460/title.width);
-    txt(813,265,picked.count+' / '+picked.required+' COUPONS // '+
+    txt(813,277,picked.count+' / '+picked.required+' COUPONS // '+
       Math.max(0,picked.required-picked.count)+' MORE NEEDED',14,false,'#f6d48e',detailNodes);
     const current=getStreetShowdownScheduleSlot();
     const live=getActiveStreetShowdownCouponOffers(picked.carId,scene.registry,
       {rotationIndex:current.rotationIndex,now:Date.now()});
-    txt(813,302,'ACTIVE STREET SHOWDOWNS ('+live.length+')',10,true,
+    txt(813,314,'ACTIVE STREET SHOWDOWNS ('+live.length+')',10,true,
       '#85efdb',detailNodes);
-    rotationCountdown=txt(813,326,'NEXT ROTATION // '+
+    rotationCountdown=txt(813,338,'NEXT ROTATION // '+
       minutesUntilNextRotation()+' MIN',11,false,'#d9d0a4',detailNodes);
     if(!live.length){
-      txt(813,367,'NO ACTIVE COUPON OFFERS THIS CYCLE',10,true,
+      txt(813,379,'NO ACTIVE COUPON OFFERS THIS CYCLE',10,true,
         '#d1bcc0',detailNodes);
     }else{
       live.slice(0,3).forEach((offer,i)=>{
-        const y=367+i*55;
+        const y=379+i*55;
         rectangle(1060,y,490,49,offer.unlocked?0x12362e:0x27242d,
           offer.unlocked?0x2b7c6c:0x675357,false,detailNodes);
         const label=txt(830,y-12,offer.regionName+' / '+offer.locationName,10,true,
@@ -119,25 +121,25 @@ export function showOfficeCouponHunt(scene) {
         txt(830,y+10,'COUPON NOW // '+offer.accessLabel,11,false,
           '#b4d0db',detailNodes);
       });
-      if(live.length>3)txt(813,541,'+'+(live.length-3)+' MORE ACTIVE LOCATIONS',
+      if(live.length>3)txt(813,553,'+'+(live.length-3)+' MORE ACTIVE LOCATIONS',
         10,true,'#96d6e4',detailNodes);
     }
     const targets=getStreetShowdownCouponHunts(picked.carId,scene.registry);
-    txt(813,564,'REGIONAL HUNTING LEADS',10,true,'#7deaff',detailNodes);
+    txt(813,576,'REGIONAL HUNTING LEADS',10,true,'#7deaff',detailNodes);
     if(!targets.length){
-      txt(813,596,'NO REGULAR REGIONAL POOL FOUND',11,false,
+      txt(813,608,'NO REGULAR REGIONAL POOL FOUND',11,false,
         '#dfbbb0',detailNodes);
     }else{
       const available=targets.filter(t=>t.unlocked);
       const preferred=available.length?available:targets;
-      txt(813,590,preferred.slice(0,2).map(t=>t.regionName+' / '+
+      txt(813,602,preferred.slice(0,2).map(t=>t.regionName+' / '+
         (t.huntTier==='REGIONAL FAVOURITE'?'FAVOURITE':
           t.huntTier==='CLASS MATCH'?'CLASS MATCH':'NEIGHBOUR')).join('   /   '),
         12,false,'#b4cbd8',detailNodes);
-      txt(813,614,available.length?'Others may be locked.':'Unlock regions for more leads.',
+      txt(813,626,available.length?'Others may be locked.':'Unlock regions for more leads.',
         11,false,'#9ab3c4',detailNodes);
     }
-    const note=txt(813,646,
+    const note=txt(813,658,
       Math.round(STREET_SHOWDOWN_COUPON_CHANCE*100)+
       '% OF SHOWDOWNS OFFER COUPONS // 15-MIN DAY/NIGHT CYCLE.\n'+
       'LIVE = EXACT PRIZE. LEADS = POSSIBLE FUTURE PRIZES.',
