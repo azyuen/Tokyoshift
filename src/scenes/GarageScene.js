@@ -1823,6 +1823,11 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(37);
 
+    // Only the ordinary Career garage uses the expanded home specification layout.
+    // Keep the Crew Space, Pro Paddock and Aruken story presentations unchanged.
+    const nosInSpecs = !this.crewMode && !this.proGarageMode &&
+      this.registry.get('gameMode') !== 'arkonStory';
+    const tuningOffsetY = nosInSpecs ? 40 : 0;
     const rows = [
       ['ENGINE', 'engine'],
       ['POWER', 'power'],
@@ -1830,6 +1835,7 @@ export default class GarageScene extends Phaser.Scene {
       ['WEIGHT', 'weight'],
       ['CLASS', 'class'],
     ];
+    if (nosInSpecs) rows.push(['NOS', 'nos']);
 
     this.specValueTexts = {};
     rows.forEach((row, i) => {
@@ -1869,7 +1875,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.tuningStatusText = this.add.text(
       SIDE.x + 20,
-      SIDE.y + 230,
+      SIDE.y + 230 + tuningOffsetY,
       this.crewMode
         ? 'CREW TUNING // WAREHOUSE HQ'
         : 'TUNING // ' + this.getActiveWorkshop().shortLabel,
@@ -1881,7 +1887,7 @@ export default class GarageScene extends Phaser.Scene {
     const categories = ['ENGINE', 'DRIVETRAIN', 'EXHAUST / NOS', 'CHASSIS'];
 
     categories.forEach((name, i) => {
-      const y = SIDE.y + 285 + i * 48;
+      const y = SIDE.y + 285 + tuningOffsetY + i * 48;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
@@ -1929,7 +1935,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Keep the compact read-only NOS status. NOS activation is managed only
     // inside EXHAUST / NOS to avoid duplicate toggles in the garage.
-    this.nosHomeStatusText = this.add.text(
+    this.nosHomeStatusText = nosInSpecs ? this.specValueTexts.nos : this.add.text(
       SIDE.x + 24, SIDE.y + 476, '', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#93bfdd',
         wordWrap: { width: SIDE.w - 48 },
@@ -1991,6 +1997,18 @@ export default class GarageScene extends Phaser.Scene {
     if (!this.nosHomeStatusText?.active) return;
     const allowed = this.canManageSelectedNos();
     const status = this.getSelectedNosEquipment();
+    if (this.nosHomeStatusText === this.specValueTexts?.nos) {
+      // Compact shot count × shot power, with the same white value style as
+      // the other specs. Retain fitted/usable, enabled and OEM distinctions.
+      const value = !this.selectedCarId ? '—'
+        : !allowed ? 'NOT ELIGIBLE'
+          : !status.fitted ? 'NOT FITTED'
+            : !status.usable ? 'BOTTLE / NEED SHOT'
+              : status.equippedShots + 'x' + status.equippedPowerHp + ' HP / ' +
+                (status.enabled ? 'ON' : 'OFF') + (status.factory ? ' / OEM' : '');
+      this.nosHomeStatusText.setText(value);
+      return;
+    }
     const description = !allowed ? 'NOS // NO ELIGIBLE CAR'
       : !status.fitted ? 'NOS // NOT FITTED'
         : !status.usable ? 'NOS // BOTTLE FITTED, SHOT NEEDED'
@@ -4889,6 +4907,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.weight.setText('—');
     this.specValueTexts.class.setText('—');
     this.specValueTexts.drivetrain?.setText('—');
+    this.refreshNosHomeControls();
     this.tuningStatusText
       ?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel)
       .setColor('#8cc8ec');
@@ -7046,6 +7065,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.class.setText(stockClassFor(car) || '—');
     const resolvedDrive=getCarDrivetrain(car.id);
     this.specValueTexts.drivetrain?.setText(resolvedDrive==='FWD'?'FF':resolvedDrive||'—');
+    if (this.specValueTexts.nos) this.refreshNosHomeControls();
   }
 
   buildSecondaryHotspots(mode) {
