@@ -71,7 +71,14 @@ export default class DynoScene extends Phaser.Scene {
     this.rentalReturnWorkshopId = data?.returnWorkshopId || null;
   }
 
+  hasWarehouseDynoAccess() {
+    return !this.isRentalSession &&
+      this.registry.get('workshopLocationId') === DYNO_WAREHOUSE_ID &&
+      Number(this.registry.get('dynoFacilityTier') || 0) >= 1;
+  }
+
   preload() {
+    if (!this.hasWarehouseDynoAccess()) return;
     let queued = 0;
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
@@ -122,6 +129,14 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   create() {
+    // Reject obsolete rental requests and direct entry from lower garages
+    // before loading a test or modifying cash, car ratings or saved data.
+    if (!this.hasWarehouseDynoAccess()) {
+      const workshopLocationId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+      finishSceneLoading('WORKSHOP');
+      this.scene.start('GarageScene', { workshopLocationId });
+      return;
+    }
     document.body.dataset.scene = 'dyno';
     this.scale.resize(WIDTH, HEIGHT);
     playMusic('workshop');
