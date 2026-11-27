@@ -299,7 +299,14 @@ export default class FourLaneTestScene extends RaceScene {
     const selected = this.champMode ? this.champCarId : this.proCup ? this.proTournament?.carId
       : this.proDuel ? this.proDuelState?.playerCarId
         : this.registry.get('selectedCarId');
-    this.playerCarId = cars[selected] ? selected : 'ae86';
+    // Never silently enter a paid professional or Championship race in AE86.
+    // Keep a valid preload placeholder but refuse the race in create().
+    this.invalidProRaceCar = !selected || !cars[selected];
+    if (this.invalidProRaceCar)
+      console.error('[Tokyo SHIFT] Missing registered professional race car', {
+        mode:data.mode,selected,champCarId:this.champCarId,
+      });
+    this.playerCarId = this.invalidProRaceCar ? 'ae86' : selected;
     const candidates = ['evo6', 'r34', 'rx7fd', 's2000', 'r32', 'jza80']
       .filter(id => Boolean(cars[id]));
     this.aiEntrants = this.proHeat
@@ -444,6 +451,10 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   create() {
+    if (this.invalidProRaceCar) {
+      this.returnToDrag();
+      return;
+    }
     const access = getProCircuitAccess(this.registry);
     if (this.champMode) {
       const owned=this.registry.get('ownedCarIds')||[];
